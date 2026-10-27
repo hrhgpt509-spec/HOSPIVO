@@ -1,9 +1,26 @@
 @import "tailwindcss";
+@import "./theme/theme.css";
+
+@import "@fontsource/noto-sans/400.css";
+@import "@fontsource/noto-sans/500.css";
+@import "@fontsource/noto-sans/600.css";
+@import "@fontsource/noto-sans/700.css";
+@import "@fontsource/noto-sans/800.css";
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
 
 body {
+  font-family: 'Noto Sans', sans-serif;
+  background-color: #F4F6F5;
+  color: #101828;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #f1fcf6;
-  color: #141e1a;
   min-height: 100vh;
+}
+
+html.dark body {
+  background-color: #0f1713;
+  color: #f3f4f6;
 }

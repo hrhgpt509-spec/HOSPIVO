@@ -1,0 +1,30 @@
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Noto Sans', sans-serif;
+
+  --color-brand: #1B8F4A;
+  --color-brand-dark: #136b37;
+  --color-brand-light: #e8f5ee;
+  --color-brand-50: #f1fcf6;
+
+  --color-canvas: #F4F6F5;
+
+  --color-semantic-red: #D92D20;
+  --color-semantic-redBg: #FEF3F2;
+  --color-semantic-red-bg: #FEF3F2;
+
+  --color-semantic-orange: #E06A00;
+  --color-semantic-orangeBg: #FFF6ED;
+  --color-semantic-orange-bg: #FFF6ED;
+
+  --color-semantic-yellow: #DC6803;
+
+  --color-semantic-blue: #026AA2;
+  --color-semantic-blueBg: #F0F9FF;
+  --color-semantic-blue-bg: #F0F9FF;
+
+  --color-semantic-grey: #475467;
+  --color-semantic-greyChipBg: #E9EEF2;
+  --color-semantic-grey-chip-bg: #E9EEF2;
+}
