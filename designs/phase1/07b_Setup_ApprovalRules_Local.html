@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440, height=900">
+  <title>Hospivo - Setup Step 7: Special kaam ki ijazat (Local-only mode)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      width: 1440px;
+      height: 900px;
+      overflow: hidden;
+      background-color: #F4F6F5;
+      color: #111827;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-between p-8 bg-[#F4F6F5]">
+
+  <!-- Top Area: Step Indicator & Title (NO top bar, NO sidebar) -->
+  <div class="w-full max-w-[1160px] mx-auto">
+    <!-- Header row with Progress bar -->
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-[#1B8F4A] text-white flex items-center justify-center font-bold text-xl shadow-sm">
+          +
+        </div>
+        <span class="text-2xl font-bold tracking-tight text-gray-900">Hospivo</span>
+      </div>
+
+      <!-- 7 of 7 Progress Bar (All 7 segments filled) -->
+      <div class="flex items-center gap-2">
+        <div class="flex gap-1.5">
+          <div class="w-8 h-2.5 rounded-full bg-[#1B8F4A]"></div>
+          <div class="w-8 h-2.5 rounded-full bg-[#1B8F4A]"></div>
+          <div class="w-8 h-2.5 rounded-full bg-[#1B8F4A]"></div>
+          <div class="w-8 h-2.5 rounded-full bg-[#1B8F4A]"></div>
+          <div class="w-8 h-2.5 rounded-full bg-[#1B8F4A]"></div>
+          <div class="w-8 h-2.5 rounded-full bg-[#1B8F4A]"></div>
+          <div class="w-8 h-2.5 rounded-full bg-[#1B8F4A]"></div>
+        </div>
+        <span class="text-base font-semibold text-gray-700 ml-2">Step 7 of 7</span>
+      </div>
+    </div>
+
+    <!-- Main Title & Subtitle line -->
+    <div class="mt-2 mb-4">
+      <div class="flex items-baseline gap-3">
+        <h1 class="text-[32px] font-extrabold text-gray-900 tracking-tight leading-tight">
+          Step 7 of 7: Special kaam ki ijazat
+        </h1>
+        <span class="text-xl font-medium text-gray-500">Approval rules</span>
+      </div>
+      <p class="text-[18px] text-gray-700 mt-1 font-medium">
+        Internet na ho to kya hoga, aap chuniye.
+      </p>
+    </div>
+
+    <!-- Blue Info Banner -->
+    <div class="flex items-center gap-3 bg-[#EFF6FF] border border-[#BFDBFE] text-[#1E40AF] px-5 py-3 rounded-2xl mb-4">
+      <svg class="w-6 h-6 shrink-0 text-[#2563EB]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span class="text-[16px] font-semibold">
+        Door se approval ke liye Cloud mode chahiye.
+      </span>
+    </div>
+
+    <!-- 5 Big Rows (70px tall cards) -->
+    <div class="space-y-2.5">
+
+      <!-- Row 1: Bill hatana ya badalna -->
+      <div class="bg-white rounded-2xl px-5 h-[70px] flex items-center justify-between shadow-sm border border-gray-100">
+        <div class="w-[300px]">
+          <span class="text-[18px] font-bold text-gray-900">Bill hatana ya badalna</span>
+        </div>
+        
+        <!-- 3-option Segmented Selector -->
+        <div class="flex items-center gap-2">
+          <!-- Option 1: Owner PIN (yahin) - Selected -->
+          <div class="h-[54px] px-4 rounded-xl bg-[#E8F5E9] border-2 border-[#1B8F4A] text-[#1B8F4A] flex items-center gap-2 font-bold text-[16px]">
+            <svg class="w-5 h-5 text-[#1B8F4A]" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span>Owner PIN (yahin)</span>
+          </div>
+
+          <!-- Option 2: Door se approval - Disabled / Cloud mode mein hi -->
+          <div class="h-[54px] px-4 rounded-xl bg-[#F3F4F6] border border-gray-200 text-gray-400 flex flex-col justify-center items-center opacity-60 cursor-not-allowed min-w-[210px]">
+            <span class="text-[16px] font-semibold text-gray-400 leading-tight">Door se approval</span>
+            <span class="text-[16px] text-gray-400 leading-tight">Cloud mode mein hi</span>
+          </div>
+
+          <!-- Option 3: Offline mein roko - Unselected -->
+          <div class="h-[54px] px-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 flex items-center font-medium text-[16px]">
+            <span>Offline mein roko</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Daam badalna -->
+      <div class="bg-white rounded-2xl px-5 h-[70px] flex items-center justify-between shadow-sm border border-gray-100">
+        <div class="w-[300px]">
+          <span class="text-[18px] font-bold text-gray-900">Daam badalna</span>
+        </div>
+        
+        <!-- 3-option Segmented Selector -->
+        <div class="flex items-center gap-2">
+          <!-- Option 1: Owner PIN (yahin) - Selected -->
+          <div class="h-[54px] px-4 rounded-xl bg-[#E8F5E9] border-2 border-[#1B8F4A] text-[#1B8F4A] flex items-center gap-2 font-bold text-[16px]">
+            <svg class="w-5 h-5 text-[#1B8F4A]" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span>Owner PIN (yahin)</span>
+          </div>
+
+          <!-- Option 2: Door se approval - Disabled / Cloud mode mein hi -->
+          <div class="h-[54px] px-4 rounded-xl bg-[#F3F4F6] border border-gray-200 text-gray-400 flex flex-col justify-center items-center opacity-60 cursor-not-allowed min-w-[210px]">
+            <span class="text-[16px] font-semibold text-gray-400 leading-tight">Door se approval</span>
+            <span class="text-[16px] text-gray-400 leading-tight">Cloud mode mein hi</span>
+          </div>
+
+          <!-- Option 3: Offline mein roko - Unselected -->
+          <div class="h-[54px] px-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 flex items-center font-medium text-[16px]">
+            <span>Offline mein roko</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Bada discount -->
+      <div class="bg-white rounded-2xl px-5 h-[70px] flex items-center justify-between shadow-sm border border-gray-100">
+        <div class="w-[300px]">
+          <span class="text-[18px] font-bold text-gray-900">Bada discount</span>
+        </div>
+        
+        <!-- 3-option Segmented Selector -->
+        <div class="flex items-center gap-2">
+          <!-- Option 1: Owner PIN (yahin) - Selected -->
+          <div class="h-[54px] px-4 rounded-xl bg-[#E8F5E9] border-2 border-[#1B8F4A] text-[#1B8F4A] flex items-center gap-2 font-bold text-[16px]">
+            <svg class="w-5 h-5 text-[#1B8F4A]" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span>Owner PIN (yahin)</span>
+          </div>
+
+          <!-- Option 2: Door se approval - Disabled / Cloud mode mein hi -->
+          <div class="h-[54px] px-4 rounded-xl bg-[#F3F4F6] border border-gray-200 text-gray-400 flex flex-col justify-center items-center opacity-60 cursor-not-allowed min-w-[210px]">
+            <span class="text-[16px] font-semibold text-gray-400 leading-tight">Door se approval</span>
+            <span class="text-[16px] text-gray-400 leading-tight">Cloud mode mein hi</span>
+          </div>
+
+          <!-- Option 3: Offline mein roko - Unselected -->
+          <div class="h-[54px] px-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 flex items-center font-medium text-[16px]">
+            <span>Offline mein roko</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: Stock sudhaar -->
+      <div class="bg-white rounded-2xl px-5 h-[70px] flex items-center justify-between shadow-sm border border-gray-100">
+        <div class="w-[300px]">
+          <span class="text-[18px] font-bold text-gray-900">Stock sudhaar</span>
+        </div>
+        
+        <!-- 3-option Segmented Selector -->
+        <div class="flex items-center gap-2">
+          <!-- Option 1: Owner PIN (yahin) - Unselected -->
+          <div class="h-[54px] px-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 flex items-center font-medium text-[16px]">
+            <span>Owner PIN (yahin)</span>
+          </div>
+
+          <!-- Option 2: Door se approval - Disabled / Cloud mode mein hi -->
+          <div class="h-[54px] px-4 rounded-xl bg-[#F3F4F6] border border-gray-200 text-gray-400 flex flex-col justify-center items-center opacity-60 cursor-not-allowed min-w-[210px]">
+            <span class="text-[16px] font-semibold text-gray-400 leading-tight">Door se approval</span>
+            <span class="text-[16px] text-gray-400 leading-tight">Cloud mode mein hi</span>
+          </div>
+
+          <!-- Option 3: Offline mein roko - Selected -->
+          <div class="h-[54px] px-4 rounded-xl bg-[#E8F5E9] border-2 border-[#1B8F4A] text-[#1B8F4A] flex items-center gap-2 font-bold text-[16px]">
+            <svg class="w-5 h-5 text-[#1B8F4A]" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span>Offline mein roko</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 5: Din Band mein fark -->
+      <div class="bg-white rounded-2xl px-5 h-[70px] flex items-center justify-between shadow-sm border border-gray-100">
+        <div class="w-[300px]">
+          <span class="text-[18px] font-bold text-gray-900">Din Band mein fark</span>
+        </div>
+        
+        <!-- 3-option Segmented Selector -->
+        <div class="flex items-center gap-2">
+          <!-- Option 1: Owner PIN (yahin) - Selected -->
+          <div class="h-[54px] px-4 rounded-xl bg-[#E8F5E9] border-2 border-[#1B8F4A] text-[#1B8F4A] flex items-center gap-2 font-bold text-[16px]">
+            <svg class="w-5 h-5 text-[#1B8F4A]" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span>Owner PIN (yahin)</span>
+          </div>
+
+          <!-- Option 2: Door se approval - Disabled / Cloud mode mein hi -->
+          <div class="h-[54px] px-4 rounded-xl bg-[#F3F4F6] border border-gray-200 text-gray-400 flex flex-col justify-center items-center opacity-60 cursor-not-allowed min-w-[210px]">
+            <span class="text-[16px] font-semibold text-gray-400 leading-tight">Door se approval</span>
+            <span class="text-[16px] text-gray-400 leading-tight">Cloud mode mein hi</span>
+          </div>
+
+          <!-- Option 3: Offline mein roko - Unselected -->
+          <div class="h-[54px] px-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 flex items-center font-medium text-[16px]">
+            <span>Offline mein roko</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Action Buttons Bar (Height >= 56px, 16px radius) -->
+  <div class="w-full max-w-[1160px] mx-auto pt-3 flex items-center justify-between">
+    <!-- Left: Wapas -->
+    <button class="h-[60px] px-8 rounded-[16px] bg-white border border-gray-300 text-gray-800 flex items-center gap-3 hover:bg-gray-50 transition shadow-sm">
+      <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      <div class="flex flex-col text-left">
+        <span class="text-[18px] font-bold leading-tight">Wapas</span>
+        <span class="text-[16px] text-gray-500 font-normal leading-tight">Back</span>
+      </div>
+    </button>
+
+    <!-- Right: Setup Poora Karo (Finish setup) -->
+    <button class="h-[60px] px-10 rounded-[16px] bg-[#1B8F4A] hover:bg-[#167a3e] text-white flex items-center gap-4 transition shadow-md">
+      <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <div class="flex flex-col text-left">
+        <span class="text-[20px] font-extrabold leading-tight">Setup Poora Karo</span>
+        <span class="text-[16px] text-green-100 font-medium leading-tight">Finish setup</span>
+      </div>
+    </button>
+  </div>
+
+</body>
+</html>

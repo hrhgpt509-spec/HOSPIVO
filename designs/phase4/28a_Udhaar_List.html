@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Hospivo POS</title><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-container-highest": "#dae5df", "inverse-surface": "#28332f", "on-primary-container": "#f6fff3", "on-primary-fixed-variant": "#005226", "surface-bright": "#f1fcf6", "error": "#ba1a1a", "on-secondary": "#ffffff", "inverse-primary": "#72dc8e", "on-error": "#ffffff", "outline-variant": "#bdcabc", "surface-container-low": "#ebf6f0", "tertiary-container": "#b75b00", "on-error-container": "#93000a", "primary-fixed-dim": "#72dc8e", "on-primary": "#ffffff", "on-secondary-fixed-variant": "#004786", "tertiary-fixed-dim": "#ffb786", "on-secondary-fixed": "#001c3a", "on-secondary-container": "#003567", "on-primary-fixed": "#00210b", "surface-variant": "#dae5df", "on-background": "#141e1a", "on-surface": "#141e1a", "background": "#f1fcf6", "on-tertiary-fixed-variant": "#723600", "secondary-fixed": "#d4e3ff", "tertiary": "#924700", "primary-container": "#088643", "on-tertiary-container": "#fffbff", "surface": "#f1fcf6", "error-container": "#ffdad6", "surface-container": "#e5f0eb", "tertiary-fixed": "#ffdcc6", "outline": "#6e7a6e", "surface-container-lowest": "#ffffff", "on-surface-variant": "#3e4a3f", "primary": "#006b33", "on-tertiary": "#ffffff", "surface-dim": "#d1ddd7", "secondary-fixed-dim": "#a5c8ff", "inverse-on-surface": "#e8f3ee", "primary-fixed": "#8ef9a7", "on-tertiary-fixed": "#311300", "secondary-container": "#54a0fe", "secondary": "#005faf", "surface-container-high": "#e0ebe5", "surface-tint": "#006d34" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter": "1.5rem", "space-xs": "0.5rem", "space-md": "1rem", "space-sm": "0.75rem", "space-xl": "2.5rem", "margin": "2rem", "gutter-compact": "1rem", "margin-mobile": "1rem", "space-lg": "1.5rem" }, "fontFamily": { "display-total-mobile": [ "Noto Sans" ], "title-hinglish": [ "Noto Sans" ], "display-total": [ "Noto Sans" ], "numpad-number": [ "Noto Sans" ], "button-text": [ "Noto Sans" ], "body-lg": [ "Noto Sans" ], "headline-lg": [ "Noto Sans" ], "body-md": [ "Noto Sans" ], "headline-md": [ "Noto Sans" ], "label-sub-english": [ "Noto Sans" ] }, "fontSize": { "display-total-mobile": [ "36px", { "lineHeight": "44px", "fontWeight": "800" } ], "title-hinglish": [ "20px", { "lineHeight": "26px", "fontWeight": "700" } ], "display-total": [ "48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800" } ], "numpad-number": [ "32px", { "lineHeight": "38px", "fontWeight": "700" } ], "button-text": [ "22px", { "lineHeight": "28px", "fontWeight": "700" } ], "body-lg": [ "20px", { "lineHeight": "28px", "fontWeight": "500" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "body-md": [ "18px", { "lineHeight": "26px", "fontWeight": "400" } ], "headline-md": [ "24px", { "lineHeight": "32px", "fontWeight": "700" } ], "label-sub-english": [ "16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased select-none"><header class="fixed top-0 w-full z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full px-gutter flex items-center justify-between"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><span class="font-headline-lg text-headline-lg text-primary tracking-tight font-extrabold">Hospivo</span><div class="h-6 w-px bg-outline-variant"></div><span class="font-headline-md text-headline-md text-on-surface font-bold">Shree Medical Store</span></div><div class="inline-flex items-center gap-space-xs px-space-sm py-1 bg-surface-container-low rounded-full"><span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span><span class="font-label-sub-english text-label-sub-english text-primary font-bold uppercase tracking-wide">Local mode</span></div></div><div class="flex items-center gap-space-md"><nav class="flex items-center" data-active-classes="bg-primary-container text-on-primary-container rounded-lg shadow-sm"><a aria-current="page" class="flex flex-col items-center justify-center px-space-md py-1.5 transition-colors bg-primary-container text-on-primary-container rounded-lg shadow-sm" data-path="home" href="#"><span class="font-title-hinglish text-title-hinglish leading-tight">घर</span><span class="font-label-sub-english text-label-sub-english leading-tight opacity-90">Home</span></a></nav><div class="h-8 w-px bg-outline-variant"></div><button aria-label="Theme toggle" class="w-11 h-11 flex items-center justify-center rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[24px]">dark_mode</span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="flex flex-col text-right"><span class="font-title-hinglish text-title-hinglish leading-tight text-on-surface">Raju</span><span class="font-label-sub-english text-label-sub-english leading-tight text-on-surface-variant">Pharmacist / Cashier</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-48px)] pb-12"><div class="flex flex-col w-full h-[calc(100vh-80px-48px)] max-w-[1360px] mx-auto px-gutter py-space-sm justify-between overflow-hidden select-none">
+<!-- Header Row: Title & Total Outstanding Pill -->
+<div class="flex items-center justify-between shrink-0">
+<div class="flex flex-col">
+<h1 class="font-headline-lg text-headline-lg font-bold text-on-surface leading-tight">Udhaar</h1>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Credit</span>
+</div>
+<!-- Prominent Total Pill -->
+<div class="bg-error-container text-on-error-container px-space-lg py-space-xs rounded-full flex items-center gap-space-sm shadow-sm">
+<span class="material-symbols-outlined text-error text-[28px]">account_balance_wallet</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-md text-headline-md font-bold text-error">Kul baki: Rs. 5,600</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">(Total outstanding credit)</span>
+</div>
+</div>
+</div>
+<!-- 5 Big Ledger Rows (Exact Total = Rs. 5,600) -->
+<div class="flex flex-col gap-space-sm flex-1 justify-center my-space-xs">
+<!-- Row 1: Ramesh Kumar (18 din > 7 din: Remind Active) -->
+<div class="h-[80px] w-full bg-surface-container-lowest rounded-[16px] px-space-lg flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center gap-space-md min-w-[280px]">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold font-title-hinglish text-title-hinglish">
+          RK
+        </div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold leading-tight">Ramesh Kumar</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">+91 98201 11223 · 18 din se baki</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="text-right">
+<span class="font-headline-md text-headline-md font-extrabold text-error tabular-nums">Rs. 1,500</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<!-- Button 1: Paisa Mila -->
+<button class="h-14 px-space-md rounded-[16px] bg-surface-container-lowest text-primary hover:bg-surface-container-low transition-colors shadow-sm flex items-center gap-space-xs active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px]">payments</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none">Paisa Mila</span>
+<span class="font-label-sub-english text-label-sub-english opacity-80 leading-tight">Got payment</span>
+</div>
+</button>
+<!-- Button 2: Yaad Dilao (Active WhatsApp) -->
+<button class="h-14 px-space-md rounded-[16px] bg-primary text-on-primary hover:bg-primary-container transition-colors shadow-sm flex items-center gap-space-xs active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px]">chat</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none">Yaad Dilao</span>
+<span class="font-label-sub-english text-label-sub-english opacity-90 leading-tight">Remind</span>
+</div>
+</button>
+</div>
+</div>
+</div>
+<!-- Row 2: Sunita Devi (14 din > 7 din: Remind Active) -->
+<div class="h-[80px] w-full bg-surface-container-lowest rounded-[16px] px-space-lg flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center gap-space-md min-w-[280px]">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold font-title-hinglish text-title-hinglish">
+          SD
+        </div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold leading-tight">Sunita Devi</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">+91 98112 33445 · 14 din se baki</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="text-right">
+<span class="font-headline-md text-headline-md font-extrabold text-error tabular-nums">Rs. 1,350</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="h-14 px-space-md rounded-[16px] bg-surface-container-lowest text-primary hover:bg-surface-container-low transition-colors shadow-sm flex items-center gap-space-xs active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px]">payments</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none">Paisa Mila</span>
+<span class="font-label-sub-english text-label-sub-english opacity-80 leading-tight">Got payment</span>
+</div>
+</button>
+<button class="h-14 px-space-md rounded-[16px] bg-primary text-on-primary hover:bg-primary-container transition-colors shadow-sm flex items-center gap-space-xs active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px]">chat</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none">Yaad Dilao</span>
+<span class="font-label-sub-english text-label-sub-english opacity-90 leading-tight">Remind</span>
+</div>
+</button>
+</div>
+</div>
+</div>
+<!-- Row 3: Mohan Lal (10 din > 7 din: Remind Active) -->
+<div class="h-[80px] w-full bg-surface-container-lowest rounded-[16px] px-space-lg flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center gap-space-md min-w-[280px]">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold font-title-hinglish text-title-hinglish">
+          ML
+        </div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold leading-tight">Mohan Lal</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">+91 94250 66778 · 10 din se baki</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="text-right">
+<span class="font-headline-md text-headline-md font-extrabold text-error tabular-nums">Rs. 1,100</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="h-14 px-space-md rounded-[16px] bg-surface-container-lowest text-primary hover:bg-surface-container-low transition-colors shadow-sm flex items-center gap-space-xs active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px]">payments</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none">Paisa Mila</span>
+<span class="font-label-sub-english text-label-sub-english opacity-80 leading-tight">Got payment</span>
+</div>
+</button>
+<button class="h-14 px-space-md rounded-[16px] bg-primary text-on-primary hover:bg-primary-container transition-colors shadow-sm flex items-center gap-space-xs active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px]">chat</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none">Yaad Dilao</span>
+<span class="font-label-sub-english text-label-sub-english opacity-90 leading-tight">Remind</span>
+</div>
+</button>
+</div>
+</div>
+</div>
+<!-- Row 4: Geeta Sharma (6 din <= 7 din: Remind Disabled) -->
+<div class="h-[80px] w-full bg-surface-container-lowest rounded-[16px] px-space-lg flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center gap-space-md min-w-[280px]">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold font-title-hinglish text-title-hinglish">
+          GS
+        </div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold leading-tight">Geeta Sharma</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">+91 97555 88990 · 6 din se baki</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="text-right">
+<span class="font-headline-md text-headline-md font-extrabold text-error tabular-nums">Rs. 900</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="h-14 px-space-md rounded-[16px] bg-surface-container-lowest text-primary hover:bg-surface-container-low transition-colors shadow-sm flex items-center gap-space-xs active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px]">payments</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none">Paisa Mila</span>
+<span class="font-label-sub-english text-label-sub-english opacity-80 leading-tight">Got payment</span>
+</div>
+</button>
+<!-- Disabled Button 2 -->
+<button class="h-14 px-space-md rounded-[16px] bg-surface-container-highest text-outline cursor-not-allowed flex items-center gap-space-xs opacity-75" disabled="" type="button">
+<span class="material-symbols-outlined text-[26px] text-outline">chat</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none text-outline">Yaad Dilao</span>
+<span class="font-label-sub-english text-label-sub-english leading-tight text-outline">Remind</span>
+</div>
+</button>
+</div>
+</div>
+</div>
+<!-- Row 5: Anil Singh (4 din <= 7 din: Remind Disabled) -->
+<div class="h-[80px] w-full bg-surface-container-lowest rounded-[16px] px-space-lg flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center gap-space-md min-w-[280px]">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold font-title-hinglish text-title-hinglish">
+          AS
+        </div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold leading-tight">Anil Singh</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">+91 98930 44556 · 4 din se baki</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="text-right">
+<span class="font-headline-md text-headline-md font-extrabold text-error tabular-nums">Rs. 750</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="h-14 px-space-md rounded-[16px] bg-surface-container-lowest text-primary hover:bg-surface-container-low transition-colors shadow-sm flex items-center gap-space-xs active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px]">payments</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none">Paisa Mila</span>
+<span class="font-label-sub-english text-label-sub-english opacity-80 leading-tight">Got payment</span>
+</div>
+</button>
+<!-- Disabled Button 2 -->
+<button class="h-14 px-space-md rounded-[16px] bg-surface-container-highest text-outline cursor-not-allowed flex items-center gap-space-xs opacity-75" disabled="" type="button">
+<span class="material-symbols-outlined text-[26px] text-outline">chat</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none text-outline">Yaad Dilao</span>
+<span class="font-label-sub-english text-label-sub-english leading-tight text-outline">Remind</span>
+</div>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Row: Back Button -->
+<div class="flex items-center justify-between shrink-0 pt-space-xs">
+<button class="h-14 px-space-lg rounded-[16px] bg-surface-container-lowest text-on-surface hover:bg-surface-container transition-colors shadow-sm flex items-center gap-space-sm active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[28px] text-on-surface-variant">arrow_back</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none">Wapas</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">Back</span>
+</div>
+</button>
+</div>
+</div></main><footer class="fixed bottom-0 left-0 right-0 h-12 bg-surface-container-lowest shadow-[0_-1px_8px_rgba(0,0,0,0.04)] z-40"><div class="h-full w-full px-gutter flex items-center justify-between text-on-surface-variant font-label-sub-english text-label-sub-english"><div>© 2024 Hospivo Pharmacy Systems. Offline-First POS Engine.</div><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[18px] text-primary">support_agent</span><span>24x7 Dawai Helpline: <strong class="text-on-surface font-bold">1800-889-1002</strong></span></div><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[18px] text-secondary">sync</span><span>Data Saved Locally</span></div></div></div></footer></body></html>

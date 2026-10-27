@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospivo - Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              DEFAULT: '#1B8F4A',
+              dark: '#147039',
+              light: '#EAF7EE',
+              surface: '#F4F6F5',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Noto Sans', sans-serif;
+      user-select: none;
+    }
+    html, body {
+      width: 1440px;
+      height: 900px;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #F4F6F5;
+      color: #1F2937;
+    }
+  </style>
+</head>
+<body class="w-[1440px] h-[900px] bg-[#F4F6F5] text-slate-800 flex flex-col justify-between p-8 relative">
+
+  <!-- Main Card Container (Centered, 1440x900 non-scrolling design) -->
+  <div class="w-full max-w-[1376px] mx-auto bg-white rounded-3xl shadow-sm border border-slate-200/80 flex flex-col flex-1 p-8 justify-between relative overflow-hidden">
+    
+    <!-- Top Branding / Header inside Card (No top bar as per rule: setup and login screens have no top bar) -->
+    <div class="flex items-center justify-between pb-6 border-b border-slate-100">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 bg-[#1B8F4A] rounded-2xl flex items-center justify-center text-white shadow-sm shadow-[#1B8F4A]/30">
+          <!-- Hospital / Pharmacy Cross Icon -->
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-3xl font-extrabold tracking-tight text-slate-900 leading-none">Hospivo</div>
+          <div class="text-base text-slate-500 font-medium mt-1">Shree Medical Store • दवा दुकान POS</div>
+        </div>
+      </div>
+
+      <!-- Secure Login Badge -->
+      <div class="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-600">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+        </svg>
+        <span class="text-base font-semibold text-slate-700">Surakshit Login (Secure Access)</span>
+      </div>
+    </div>
+
+    <!-- Main Content Area: Left Half & Right Half -->
+    <div class="grid grid-cols-12 gap-8 my-auto items-center py-4">
+      
+      <!-- LEFT HALF (5.5 Columns): "Kaun hai?" with stacked user buttons -->
+      <div class="col-span-6 flex flex-col justify-center pr-4">
+        
+        <!-- Heading -->
+        <div class="mb-7">
+          <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">Kaun hai?</h1>
+          <p class="text-lg font-medium text-slate-500 mt-1">Who is using?</p>
+        </div>
+
+        <!-- Stacked Big Name Buttons (64px tall each) -->
+        <div class="flex flex-col gap-4 max-w-[540px]">
+          
+          <!-- 1. Owner Button (with Key Icon) -->
+          <button class="w-full h-16 bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-[#1B8F4A] rounded-2xl px-5 flex items-center justify-between transition-all duration-150 shadow-sm group text-left cursor-pointer active:scale-[0.99]">
+            <div class="flex items-center gap-4">
+              <!-- Key Icon in dedicated container -->
+              <div class="w-11 h-11 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                </svg>
+              </div>
+              <div class="flex flex-col">
+                <span class="text-xl font-bold text-slate-900 group-hover:text-[#1B8F4A] leading-tight">Owner</span>
+                <span class="text-base text-slate-500 font-medium leading-tight">Admin & Shop Incharge</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold uppercase tracking-wider bg-amber-50 text-amber-800 px-3 py-1 rounded-lg border border-amber-200">Malik</span>
+              <svg class="w-6 h-6 text-slate-400 group-hover:text-[#1B8F4A] group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </div>
+          </button>
+
+          <!-- 2. Raju Button (Coloured Avatar Circle) -->
+          <button class="w-full h-16 bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-[#1B8F4A] rounded-2xl px-5 flex items-center justify-between transition-all duration-150 shadow-sm group text-left cursor-pointer active:scale-[0.99]">
+            <div class="flex items-center gap-4">
+              <div class="w-11 h-11 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-lg border-2 border-blue-200">
+                R
+              </div>
+              <div class="flex flex-col">
+                <span class="text-xl font-bold text-slate-900 group-hover:text-[#1B8F4A] leading-tight">Raju</span>
+                <span class="text-base text-slate-500 font-medium leading-tight">Counter Staff</span>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <svg class="w-6 h-6 text-slate-400 group-hover:text-[#1B8F4A] group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </div>
+          </button>
+
+          <!-- 3. Sunita Button (Coloured Avatar Circle) -->
+          <button class="w-full h-16 bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-[#1B8F4A] rounded-2xl px-5 flex items-center justify-between transition-all duration-150 shadow-sm group text-left cursor-pointer active:scale-[0.99]">
+            <div class="flex items-center gap-4">
+              <div class="w-11 h-11 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-lg border-2 border-purple-200">
+                S
+              </div>
+              <div class="flex flex-col">
+                <span class="text-xl font-bold text-slate-900 group-hover:text-[#1B8F4A] leading-tight">Sunita</span>
+                <span class="text-base text-slate-500 font-medium leading-tight">Pharmacist</span>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <svg class="w-6 h-6 text-slate-400 group-hover:text-[#1B8F4A] group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </div>
+          </button>
+
+          <!-- 4. Amit Button (Coloured Avatar Circle) -->
+          <button class="w-full h-16 bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-[#1B8F4A] rounded-2xl px-5 flex items-center justify-between transition-all duration-150 shadow-sm group text-left cursor-pointer active:scale-[0.99]">
+            <div class="flex items-center gap-4">
+              <div class="w-11 h-11 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center font-bold text-lg border-2 border-teal-200">
+                A
+              </div>
+              <div class="flex flex-col">
+                <span class="text-xl font-bold text-slate-900 group-hover:text-[#1B8F4A] leading-tight">Amit</span>
+                <span class="text-base text-slate-500 font-medium leading-tight">Billing Assistant</span>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <svg class="w-6 h-6 text-slate-400 group-hover:text-[#1B8F4A] group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </div>
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- RIGHT HALF (6 Columns): Empty state "Naam chuniye" with Lock Icon -->
+      <div class="col-span-6 flex items-center justify-center pl-4">
+        
+        <div class="w-full h-[400px] bg-[#F4F6F5] rounded-3xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-center p-8">
+          
+          <!-- Big Lock Icon inside semantic circle -->
+          <div class="w-24 h-24 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-slate-400 mb-6">
+            <svg class="w-12 h-12 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="5" y="11" width="14" height="10" rx="2" stroke-linecap="round" stroke-linejoin="round"></rect>
+              <path d="M8 11V7a4 4 0 018 0v4" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </div>
+
+          <!-- Empty State Text (Exact label: "Naam chuniye") -->
+          <div class="text-3xl font-extrabold text-slate-800 tracking-tight leading-none mb-2">
+            Naam chuniye
+          </div>
+          
+          <div class="text-lg text-slate-500 font-medium max-w-[360px] leading-relaxed">
+            Apna naam chunein aur 4-digit PIN daal kar billing shuru karein.
+          </div>
+
+          <!-- Subtle prompt indicator -->
+          <div class="mt-6 flex items-center gap-2 text-base font-semibold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200">
+            <svg class="w-5 h-5 text-emerald-600 animate-pulse" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            <span>Baayein taraf se apna naam select karein</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Bottom Bar Area inside card: Helper & Status Chip "Local mode" -->
+    <div class="pt-5 border-t border-slate-100 flex items-center justify-between">
+      
+      <!-- Informational note -->
+      <div class="flex items-center gap-2 text-base font-medium text-slate-500">
+        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>Har staff ka alag PIN hai. Kisi se apna PIN share na karein.</span>
+      </div>
+
+      <!-- Bottom corner: status chip "Local mode" (Exact label required) -->
+      <div class="flex items-center gap-2.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200/80 border border-slate-300 rounded-xl text-slate-700 transition-colors">
+        <span class="w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span>
+        <div class="flex flex-col">
+          <span class="text-base font-bold text-slate-800 leading-none">Local mode</span>
+          <span class="text-xs text-slate-500 font-medium leading-tight mt-0.5">Offline active • Fast billing</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

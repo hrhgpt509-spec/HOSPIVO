@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Hospivo Pharmacy POS</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "error-container": "#ffdad6", "on-error-container": "#93000a", "tertiary-fixed-dim": "#ffb786", "on-error": "#ffffff", "surface-container-high": "#e0ebe5", "inverse-on-surface": "#e8f3ee", "primary-fixed": "#8ef9a7", "surface-container": "#e5f0eb", "surface-container-lowest": "#ffffff", "tertiary-fixed": "#ffdcc6", "secondary-fixed": "#d4e3ff", "on-secondary-container": "#003567", "tertiary-container": "#b75b00", "on-secondary-fixed": "#001c3a", "secondary-container": "#54a0fe", "on-tertiary-fixed": "#311300", "surface-bright": "#f1fcf6", "on-primary": "#ffffff", "surface-container-low": "#ebf6f0", "inverse-surface": "#28332f", "on-surface-variant": "#3e4a3f", "surface": "#f1fcf6", "secondary-fixed-dim": "#a5c8ff", "primary-container": "#088643", "surface-container-highest": "#dae5df", "tertiary": "#924700", "primary-fixed-dim": "#72dc8e", "on-tertiary": "#ffffff", "surface-variant": "#dae5df", "on-tertiary-container": "#fffbff", "on-primary-fixed": "#00210b", "on-tertiary-fixed-variant": "#723600", "error": "#ba1a1a", "on-primary-fixed-variant": "#005226", "background": "#f1fcf6", "on-background": "#141e1a", "on-primary-container": "#f6fff3", "inverse-primary": "#72dc8e", "primary": "#006b33", "secondary": "#005faf", "on-secondary": "#ffffff", "outline": "#6e7a6e", "surface-tint": "#006d34", "outline-variant": "#bdcabc", "on-secondary-fixed-variant": "#004786", "surface-dim": "#d1ddd7", "on-surface": "#141e1a" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter-compact": "1rem", "gutter": "1.5rem", "space-md": "1rem", "space-lg": "1.5rem", "space-xl": "2.5rem", "space-sm": "0.75rem", "space-xs": "0.5rem", "margin": "2rem", "margin-mobile": "1rem" }, "fontFamily": { "button-text": [ "Noto Sans" ], "body-md": [ "Noto Sans" ], "label-sub-english": [ "Noto Sans" ], "body-lg": [ "Noto Sans" ], "numpad-number": [ "Noto Sans" ], "headline-md": [ "Noto Sans" ], "display-total-mobile": [ "Noto Sans" ], "display-total": [ "Noto Sans" ], "title-hinglish": [ "Noto Sans" ], "headline-lg": [ "Noto Sans" ] }, "fontSize": { "button-text": [ "22px", { "lineHeight": "28px", "fontWeight": "700" } ], "body-md": [ "18px", { "lineHeight": "26px", "fontWeight": "400" } ], "label-sub-english": [ "16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "body-lg": [ "20px", { "lineHeight": "28px", "fontWeight": "500" } ], "numpad-number": [ "32px", { "lineHeight": "38px", "fontWeight": "700" } ], "headline-md": [ "24px", { "lineHeight": "32px", "fontWeight": "700" } ], "display-total-mobile": [ "36px", { "lineHeight": "44px", "fontWeight": "800" } ], "display-total": [ "48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800" } ], "title-hinglish": [ "20px", { "lineHeight": "26px", "fontWeight": "700" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ] } } } };</script></head><body class="bg-background font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col justify-between selection:bg-primary-fixed selection:text-on-primary-fixed"><header class="fixed top-0 left-0 right-0 w-full z-50 bg-surface/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)]"><div class="h-20 w-full px-gutter flex items-center justify-between"><div class="flex items-center gap-space-lg"><div class="flex items-baseline gap-space-xs"><span class="font-headline-lg text-headline-lg text-primary tracking-tight">Hospivo</span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant">(Pharmacy POS)</span></div><div class="h-8 w-px bg-surface-container-highest"></div><div class="flex flex-col justify-center"><span class="font-title-hinglish text-title-hinglish text-on-surface leading-tight">Shree Medical Store</span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">Retail License: DL-2024/MH14</span></div><div class="flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-primary-fixed text-on-primary-fixed"><span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span><span class="font-label-sub-english text-label-sub-english font-bold">Local mode</span></div></div><div class="flex items-center gap-space-lg"><nav class="flex items-center" data-active-classes="bg-primary-container text-on-primary-container font-bold rounded-lg shadow-sm"><a aria-current="page" class="px-space-md py-space-xs transition-all flex flex-col items-center leading-tight bg-primary-container text-on-primary-container font-bold rounded-lg shadow-sm" data-path="billing-counter" href="#"><span class="font-title-hinglish text-title-hinglish">Ghar</span><span class="font-label-sub-english text-label-sub-english">Home</span></a></nav><div class="flex items-center p-1 bg-surface-container-high rounded-full" title="Theme Switcher (Day/Night)"><div class="w-8 h-8 rounded-full bg-surface-container-lowest flex items-center justify-center text-on-surface shadow-sm"><span class="material-symbols-outlined text-[18px]">light_mode</span></div><div class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined text-[18px]">dark_mode</span></div></div><div class="h-8 w-px bg-surface-container-highest"></div><div class="flex items-center gap-space-sm"><div class="flex flex-col text-right leading-tight"><span class="font-title-hinglish text-title-hinglish text-on-surface">Raju Chemist</span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Pharmacist / Admin</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 flex-1 bg-background px-gutter"><div class="flex flex-col w-full h-[calc(100vh-8.5rem)] justify-between pb-space-sm">
+<div class="flex flex-col w-full gap-space-md">
+<!-- Header Area -->
+<div class="flex items-center justify-between w-full">
+<div class="flex items-baseline gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Suppliers</h1>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">(Dawai Distributor List)</span>
+</div>
+<!-- Action Button: Naya Supplier -->
+<button class="h-16 px-space-lg rounded-[16px] bg-primary text-on-primary flex items-center gap-space-sm shadow-md hover:bg-primary-container active:scale-[0.99] transition-all cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[28px] leading-none" style="font-variation-settings: 'FILL' 1;">person_add</span>
+<div class="flex flex-col items-start leading-tight">
+<span class="font-title-hinglish text-title-hinglish font-bold">Naya Supplier</span>
+<span class="font-label-sub-english text-label-sub-english text-primary-fixed">New supplier</span>
+</div>
+</button>
+</div>
+<!-- Suppliers List -->
+<div class="flex flex-col w-full gap-space-sm">
+<!-- Row 1: Sharma Agencies -->
+<div class="w-full min-h-[76px] py-space-sm px-space-lg bg-surface-container-lowest rounded-[16px] shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[26px]">local_shipping</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish font-bold text-on-surface">Sharma Agencies</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Authorized C&amp;F Distributor</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="flex items-center gap-space-xs text-on-surface">
+<span class="material-symbols-outlined text-primary text-[22px]">call</span>
+<span class="font-body-md text-body-md">+91 98260 11223</span>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant bg-surface-container px-space-sm py-1 rounded-[8px]">
+<span class="font-label-sub-english text-label-sub-english font-bold">GST:</span>
+<span class="font-label-sub-english text-label-sub-english font-bold text-on-surface">07AAAAA0000A1Z5</span>
+</div>
+<div class="flex flex-col items-end min-w-[200px]">
+<span class="font-headline-md text-headline-md font-bold text-error">Baki: Rs. 12,400</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Pending payment</span>
+</div>
+</div>
+</div>
+<!-- Row 2: Gupta Pharma -->
+<div class="w-full min-h-[76px] py-space-sm px-space-lg bg-surface-container-lowest rounded-[16px] shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[26px]">local_shipping</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish font-bold text-on-surface">Gupta Pharma</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">General &amp; Surgical Supply</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="flex items-center gap-space-xs text-on-surface">
+<span class="material-symbols-outlined text-primary text-[22px]">call</span>
+<span class="font-body-md text-body-md">+91 98111 44556</span>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant bg-surface-container px-space-sm py-1 rounded-[8px]">
+<span class="font-label-sub-english text-label-sub-english font-bold">GST:</span>
+<span class="font-label-sub-english text-label-sub-english font-bold text-on-surface">07BBBBB1111B1Z2</span>
+</div>
+<div class="flex flex-col items-end min-w-[200px]">
+<span class="font-headline-md text-headline-md font-bold text-error">Baki: Rs. 8,750</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Pending payment</span>
+</div>
+</div>
+</div>
+<!-- Row 3: Vardhman Healthcare -->
+<div class="w-full min-h-[76px] py-space-sm px-space-lg bg-surface-container-lowest rounded-[16px] shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[26px]">local_shipping</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish font-bold text-on-surface">Vardhman Healthcare</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Ethical &amp; Critical Care</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="flex items-center gap-space-xs text-on-surface">
+<span class="material-symbols-outlined text-primary text-[22px]">call</span>
+<span class="font-body-md text-body-md">+91 94250 77889</span>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant bg-surface-container px-space-sm py-1 rounded-[8px]">
+<span class="font-label-sub-english text-label-sub-english font-bold">GST:</span>
+<span class="font-label-sub-english text-label-sub-english font-bold text-on-surface">07CCCCC2222C1Z9</span>
+</div>
+<div class="flex flex-col items-end min-w-[200px]">
+<span class="font-headline-md text-headline-md font-bold text-error">Baki: Rs. 15,200</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Pending payment</span>
+</div>
+</div>
+</div>
+<!-- Row 4: Medilink Distributors -->
+<div class="w-full min-h-[76px] py-space-sm px-space-lg bg-surface-container-lowest rounded-[16px] shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[26px]">local_shipping</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish font-bold text-on-surface">Medilink Distributors</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Generic Drugs &amp; OTC</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="flex items-center gap-space-xs text-on-surface">
+<span class="material-symbols-outlined text-primary text-[22px]">call</span>
+<span class="font-body-md text-body-md">+91 97555 33441</span>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant bg-surface-container px-space-sm py-1 rounded-[8px]">
+<span class="font-label-sub-english text-label-sub-english font-bold">GST:</span>
+<span class="font-label-sub-english text-label-sub-english font-bold text-on-surface">07DDDDD3333D1Z4</span>
+</div>
+<div class="flex flex-col items-end min-w-[200px]">
+<span class="font-headline-md text-headline-md font-bold text-error">Baki: Rs. 4,300</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Pending payment</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation / Footer Action -->
+<div class="flex items-center justify-start w-full pt-space-xs">
+<button class="h-14 px-space-lg rounded-[16px] bg-surface-container-lowest text-on-surface flex items-center gap-space-sm shadow-sm hover:bg-surface-container active:scale-[0.99] transition-all cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[28px] text-primary leading-none">arrow_back</span>
+<div class="flex flex-col items-start leading-tight">
+<span class="font-title-hinglish text-title-hinglish font-bold">Wapas</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Back</span>
+</div>
+</button>
+</div>
+</div></main><footer class="w-full bg-surface-container-low shadow-[0_-1px_8px_rgba(0,0,0,0.04)]"><div class="h-14 w-full px-gutter flex items-center justify-between text-on-surface-variant"><div class="flex items-center gap-space-xs"><span class="font-label-sub-english text-label-sub-english font-bold text-on-surface">© 2025 Hospivo POS.</span><span class="font-label-sub-english text-label-sub-english">Sabhi adhikaar surakshit hain (All rights reserved).</span></div><div class="flex items-center gap-space-md font-label-sub-english text-label-sub-english"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-primary text-[18px]">support_agent</span><span>Sahayata Helpline (Support): <strong class="text-on-surface">+91 1800-202-5555</strong></span></div><div class="h-4 w-px bg-surface-container-highest"></div><span>Version 4.2.0 (Fast POS Engine)</span></div></div></footer></body></html>

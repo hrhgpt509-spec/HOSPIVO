@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="hi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440, height=900, initial-scale=1.0">
+  <title>Hospivo - Setup Step 2: Aap Hospivo kaise chalana chahte hain?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      background-color: #F4F6F5;
+      color: #1A1F1C;
+    }
+  </style>
+</head>
+<body class="w-[1440px] h-[900px] max-h-[900px] overflow-hidden bg-[#F4F6F5] flex items-center justify-center p-8 select-none">
+
+  <!-- Main Wizard Container Card -->
+  <div class="w-[1280px] h-[820px] bg-white rounded-3xl shadow-[0_16px_48px_rgba(27,143,74,0.08)] border border-[#E1E8E4] flex flex-col justify-between p-10 box-border">
+
+    <!-- Top Section: Header & 7-Segment Progress Bar -->
+    <div class="w-full">
+      <div class="flex items-center justify-between pb-6 border-b border-[#EBEFEA]">
+        <!-- Brand Identity -->
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-[#1B8F4A] flex items-center justify-center text-white shadow-md shadow-[#1B8F4A]/25">
+            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-[28px] font-extrabold text-[#1B8F4A] leading-none tracking-tight">Hospivo</h1>
+            <p class="text-[16px] font-medium text-[#5A6860] mt-1">दवा दुकान POS • Setup Wizard</p>
+          </div>
+        </div>
+
+        <!-- Step Indicator -->
+        <div class="text-right">
+          <div class="text-[22px] font-bold text-[#1A1F1C]">
+            Step 2 of 7: Aap Hospivo kaise chalana chahte hain?
+          </div>
+          <div class="text-[16px] font-medium text-[#5A6860]">
+            How do you want to run Hospivo?
+          </div>
+        </div>
+      </div>
+
+      <!-- 7-Segment Progress Bar (Segments 1 & 2 Filled) -->
+      <div class="grid grid-cols-7 gap-3 mt-6">
+        <!-- Segment 1: Filled -->
+        <div class="h-3 rounded-full bg-[#1B8F4A]"></div>
+        <!-- Segment 2: Filled (Current Active Step) -->
+        <div class="h-3 rounded-full bg-[#1B8F4A] shadow-sm shadow-[#1B8F4A]/30"></div>
+        <!-- Segment 3: Inactive -->
+        <div class="h-3 rounded-full bg-[#DCE4DF]"></div>
+        <!-- Segment 4: Inactive -->
+        <div class="h-3 rounded-full bg-[#DCE4DF]"></div>
+        <!-- Segment 5: Inactive -->
+        <div class="h-3 rounded-full bg-[#DCE4DF]"></div>
+        <!-- Segment 6: Inactive -->
+        <div class="h-3 rounded-full bg-[#DCE4DF]"></div>
+        <!-- Segment 7: Inactive -->
+        <div class="h-3 rounded-full bg-[#DCE4DF]"></div>
+      </div>
+    </div>
+
+    <!-- Middle Section: Two Large Side-by-Side Selectable Cards -->
+    <div class="grid grid-cols-2 gap-8 my-auto pt-2 pb-2">
+      
+      <!-- Card 1: Selected ("Sirf Dukaan Mein" / Local-only) -->
+      <div class="relative bg-[#F4FAF6] border-2 border-[#1B8F4A] rounded-2xl p-7 flex flex-col justify-between shadow-[0_8px_24px_rgba(27,143,74,0.12)] cursor-pointer transition-all">
+        
+        <div>
+          <!-- Card Header with Radio & Icons -->
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-4">
+              <!-- Shop & Device Icon Container -->
+              <div class="w-16 h-16 rounded-2xl bg-[#E7F7EC] text-[#1B8F4A] flex items-center justify-center border border-[#BDE7CC]">
+                <svg class="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- Shop outline & monitor/device -->
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <path d="M9 22V12h6v10"/>
+                  <rect x="8" y="5" width="8" height="5" rx="1"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-[26px] font-bold text-[#1A1F1C] leading-snug">Sirf Dukaan Mein</h2>
+                <span class="text-[16px] font-semibold text-[#1B8F4A] tracking-wide uppercase">Local-only</span>
+              </div>
+            </div>
+
+            <!-- Radio Indicator (Selected with Green Fill & Tick) -->
+            <div class="w-9 h-9 rounded-full bg-[#1B8F4A] flex items-center justify-center text-white shadow-md shadow-[#1B8F4A]/30">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Bullets -->
+          <ul class="mt-6 space-y-3.5">
+            <li class="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-2 shrink-0"></span>
+              <span class="font-medium">Data sirf is device par rehta hai</span>
+            </li>
+            <li class="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-2 shrink-0"></span>
+              <span class="font-medium">Backup aapke device par</span>
+            </li>
+            <li class="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#9AA5A0] mt-2 shrink-0"></span>
+              <span class="font-normal text-[#4A5550]">Owner mobile par dekh nahi sakta</span>
+            </li>
+            <li class="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#9AA5A0] mt-2 shrink-0"></span>
+              <span class="font-normal text-[#4A5550]">Door se approval nahi</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Blue Info Note -->
+        <div class="mt-6 bg-[#EBF3FB] border border-[#B8D8F8] rounded-xl p-4 flex items-center gap-3.5">
+          <div class="w-8 h-8 rounded-full bg-[#1976D2] text-white flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </div>
+          <p class="text-[16px] font-medium text-[#104D8C] leading-snug">
+            Device kho gaya to backup bhi ja sakta hai.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Card 2: Unselected ("Cloud ke Saath" / Cloud-enabled) -->
+      <div class="relative bg-white border-2 border-[#DCE4DF] hover:border-[#B5C5BD] rounded-2xl p-7 flex flex-col justify-between shadow-sm cursor-pointer transition-all">
+        
+        <div>
+          <!-- Card Header with Radio & Cloud Icon -->
+          <div class="flex items-start justify-between">
+            <div class="flex items-center gap-4">
+              <!-- Cloud Icon Container -->
+              <div class="w-16 h-16 rounded-2xl bg-[#F0F4F2] text-[#3D4C44] flex items-center justify-center border border-[#DCE4DF]">
+                <svg class="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-[26px] font-bold text-[#1A1F1C] leading-snug">Cloud ke Saath</h2>
+                <span class="text-[16px] font-semibold text-[#66766F] tracking-wide uppercase">Cloud-enabled</span>
+              </div>
+            </div>
+
+            <!-- Radio Indicator (Unselected Circle) -->
+            <div class="w-9 h-9 rounded-full border-2 border-[#A2B2AA] bg-white flex items-center justify-center">
+            </div>
+          </div>
+
+          <!-- Bullets -->
+          <ul class="mt-6 space-y-3.5">
+            <li class="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-2 shrink-0"></span>
+              <span class="font-medium">Dukaan offline bhi chalegi</span>
+            </li>
+            <li class="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-2 shrink-0"></span>
+              <span class="font-medium">Internet aane par data sync hoga</span>
+            </li>
+            <li class="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-2 shrink-0"></span>
+              <span class="font-medium">Owner mobile ya web par report dekhe</span>
+            </li>
+            <li class="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-2 shrink-0"></span>
+              <span class="font-medium">Door se approval de sakte hain</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Spacer to balance heights with Card 1's info box -->
+        <div class="mt-6 p-4 rounded-xl opacity-0 pointer-events-none select-none" aria-hidden="true">
+          <p class="text-[16px]">Spacer alignment</p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Bottom Actions Section -->
+    <div class="w-full pt-6 border-t border-[#EBEFEA] flex items-center justify-between">
+      
+      <!-- Back Button ("Wapas" with tiny "Back") -->
+      <button type="button" class="h-16 px-8 rounded-2xl bg-[#EBEFEA] hover:bg-[#DEE5E0] text-[#1A1F1C] font-bold flex items-center gap-3 transition-colors">
+        <svg class="w-6 h-6 text-[#4A5550]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <div class="text-left flex flex-col justify-center">
+          <span class="text-[20px] font-bold leading-tight text-[#1A1F1C]">Wapas</span>
+          <span class="text-[16px] font-normal leading-tight text-[#66766F]">Back</span>
+        </div>
+      </button>
+
+      <!-- Center Helper Reassurance Note -->
+      <p class="text-[16px] font-medium text-[#66766F] text-center">
+        Yeh chunav aap baad mein dukaan ki settings se badal sakte hain
+      </p>
+
+      <!-- Primary Next Button ("Aage" with tiny "Next") -->
+      <button type="button" class="h-16 px-10 rounded-2xl bg-[#1B8F4A] hover:bg-[#16783E] text-white font-bold flex items-center gap-4 shadow-lg shadow-[#1B8F4A]/30 transition-colors">
+        <div class="text-right flex flex-col justify-center">
+          <span class="text-[22px] font-extrabold leading-tight">Aage</span>
+          <span class="text-[16px] font-normal leading-tight text-[#D4F3DF]">Next</span>
+        </div>
+        <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+
+    </div>
+
+  </div>
+
+</body>
+</html>
