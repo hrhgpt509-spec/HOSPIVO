@@ -10,3 +10,11 @@
 6. Never put passwords, PINs or API keys in code or in Git.
 7. Before finishing: run the build (and tests if they exist), then add 3-5 lines to PROGRESS.md.
 8. Keep replies short. No long plans unless asked.
+## Design fidelity rule (very important)
+- The owner's Stitch screens are the exact design. Do NOT redesign, "improve", simplify or restyle.
+- Start from the saved HTML in /designs/<phase>/. Keep the same layout, spacing, colours, fonts, icon style,
+  sizes and Hindi/English text. Only change it to make it work (data, buttons, logic).
+- Use the colours and fonts found inside the Stitch code. Do not invent new ones.
+- Phone screens (390x844) and desktop screens are separate designs. Match each one.
+- If the design conflicts with a rule in RULES.md, do NOT choose silently. Tell the owner in one line and ask.
+- If a design detail is missing, ask the owner. Do not guess.
