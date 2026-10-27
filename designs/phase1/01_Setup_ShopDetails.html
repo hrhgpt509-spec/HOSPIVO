@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospivo - Step 1 of 7: Dukaan ki jaankari</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              green: '#1B8F4A',
+              greenHover: '#16733B',
+              greenLight: '#E7F7EC',
+              greenBg: '#EDF8F1',
+              pageBg: '#F4F6F5',
+              greyDisabled: '#9AA5A0',
+              textDark: '#1A1F1C',
+              textMuted: '#5C6E66',
+              borderLight: '#D2DDD7',
+              inputBg: '#FBFDFB',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      background-color: #EDF8F1;
+      color: #1A1F1C;
+      margin: 0;
+      padding: 0;
+      height: 900px;
+      width: 1440px;
+      overflow: hidden;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+    input, textarea {
+      font-family: 'Noto Sans', sans-serif;
+    }
+  </style>
+</head>
+<body class="w-[1440px] h-[900px] flex items-center justify-center p-8 bg-gradient-to-b from-[#EBF7F0] to-[#E3F2E9]">
+
+  <!-- Centered Wizard Card -->
+  <main class="w-[1200px] h-[836px] bg-white rounded-3xl shadow-[0_12px_40px_rgba(27,143,74,0.08)] border border-[#D5E5DC] flex flex-col justify-between px-12 py-8">
+
+    <!-- Card Top Header: Hospivo Brand Logo & Progress Stepper -->
+    <header class="flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-[#E8EFEA] pb-4">
+        <!-- Logo -->
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-brand-green flex items-center justify-center shadow-md">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </div>
+          <div>
+            <div class="text-[28px] font-extrabold tracking-tight text-brand-green leading-none">Hospivo</div>
+            <div class="text-[16px] text-brand-textMuted font-medium tracking-wide mt-0.5">दवा दुकान POS • Setup Wizard</div>
+          </div>
+        </div>
+
+        <!-- Step Indicator Text -->
+        <div class="text-right">
+          <div class="text-[22px] font-bold text-brand-textDark leading-tight">
+            Step 1 of 7: Dukaan ki jaankari
+          </div>
+          <div class="text-[16px] text-brand-textMuted font-semibold">
+            Shop details
+          </div>
+        </div>
+      </div>
+
+      <!-- 7-Segment Progress Bar -->
+      <div class="flex items-center gap-2.5 pt-1">
+        <!-- Segment 1 (Active / Filled) -->
+        <div class="flex-1 h-3 rounded-full bg-brand-green ring-2 ring-brand-green ring-offset-2 ring-offset-white"></div>
+        <!-- Segment 2 -->
+        <div class="flex-1 h-3 rounded-full bg-[#E0E9E4]"></div>
+        <!-- Segment 3 -->
+        <div class="flex-1 h-3 rounded-full bg-[#E0E9E4]"></div>
+        <!-- Segment 4 -->
+        <div class="flex-1 h-3 rounded-full bg-[#E0E9E4]"></div>
+        <!-- Segment 5 -->
+        <div class="flex-1 h-3 rounded-full bg-[#E0E9E4]"></div>
+        <!-- Segment 6 -->
+        <div class="flex-1 h-3 rounded-full bg-[#E0E9E4]"></div>
+        <!-- Segment 7 -->
+        <div class="flex-1 h-3 rounded-full bg-[#E0E9E4]"></div>
+      </div>
+    </header>
+
+    <!-- Form Container: 2-Column Grid -->
+    <section class="grid grid-cols-2 gap-x-10 gap-y-4 my-auto pt-2">
+
+      <!-- Left Column -->
+      <div class="flex flex-col gap-4">
+
+        <!-- Field 1: Dukaan ka naam -->
+        <div>
+          <label class="block text-[18px] font-bold text-brand-textDark mb-1.5 flex items-center justify-between">
+            <span>Dukaan ka naam</span>
+            <span class="text-[16px] font-medium text-brand-textMuted">Shop Name</span>
+          </label>
+          <div class="relative flex items-center">
+            <div class="absolute left-4 text-brand-green pointer-events-none">
+              <!-- Store Icon -->
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.614A2.998 2.998 0 0 0 12 9.349c.89 0 1.71-.387 2.25-1.014.54.627 1.36 1.014 2.25 1.014a3 3 0 0 0 3.75-.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72L4.318 3.44A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l2.19 2.189a3 3 0 0 1-.62 4.72" />
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              value="Shree Medical Store" 
+              class="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-brand-textDark bg-brand-inputBg border-2 border-brand-borderLight rounded-2xl focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20"
+              placeholder="Jaise: Shree Medical Store"
+            />
+          </div>
+          <p class="text-[16px] text-brand-textMuted mt-1">Medical store ka poora board par likha naam likhein</p>
+        </div>
+
+        <!-- Field 2: Malik ka naam -->
+        <div>
+          <label class="block text-[18px] font-bold text-brand-textDark mb-1.5 flex items-center justify-between">
+            <span>Malik ka naam</span>
+            <span class="text-[16px] font-medium text-brand-textMuted">Owner Name</span>
+          </label>
+          <div class="relative flex items-center">
+            <div class="absolute left-4 text-brand-green pointer-events-none">
+              <!-- Person Icon -->
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              value="Ramesh Sharma" 
+              class="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-brand-textDark bg-brand-inputBg border-2 border-brand-borderLight rounded-2xl focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20"
+              placeholder="Dukaan malik ya sanchalak ka naam"
+            />
+          </div>
+          <p class="text-[16px] text-brand-textMuted mt-1">Bill par aane wala malik ka naam</p>
+        </div>
+
+        <!-- Field 3: Pata (2 lines) -->
+        <div>
+          <label class="block text-[18px] font-bold text-brand-textDark mb-1.5 flex items-center justify-between">
+            <span>Pata</span>
+            <span class="text-[16px] font-medium text-brand-textMuted">Address (2 lines)</span>
+          </label>
+          <div class="relative">
+            <div class="absolute left-4 top-4 text-brand-green pointer-events-none">
+              <!-- Location Marker Icon -->
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+              </svg>
+            </div>
+            <textarea 
+              rows="2"
+              class="w-full h-[90px] pl-14 pr-4 py-3 text-[18px] font-semibold text-brand-textDark bg-brand-inputBg border-2 border-brand-borderLight rounded-2xl focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20 resize-none leading-snug"
+              placeholder="Shop No. 4, Main Market, Mandi Road, Meerut Cantt"
+            >Shop No. 4, Near Civil Hospital Gate, Meerut Cantt, UP - 250001</textarea>
+          </div>
+          <p class="text-[16px] text-brand-textMuted mt-1">Customer parchi aur tax invoice par yahi pata chhapega</p>
+        </div>
+
+      </div>
+
+      <!-- Right Column -->
+      <div class="flex flex-col gap-4">
+
+        <!-- Field 4: Phone number -->
+        <div>
+          <label class="block text-[18px] font-bold text-brand-textDark mb-1.5 flex items-center justify-between">
+            <span>Phone number</span>
+            <span class="text-[16px] font-medium text-brand-textMuted">Mobile / WhatsApp</span>
+          </label>
+          <div class="relative flex items-center">
+            <div class="absolute left-4 text-brand-green pointer-events-none">
+              <!-- Phone Icon -->
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              value="98371 44520" 
+              class="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-brand-textDark bg-brand-inputBg border-2 border-brand-borderLight rounded-2xl focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20 tracking-wide"
+              placeholder="10-digit mobile number"
+            />
+          </div>
+          <p class="text-[16px] text-brand-textMuted mt-1">Grahak ko WhatsApp bill bhejte waqt yahi number dikhega</p>
+        </div>
+
+        <!-- Field 5: GST number -->
+        <div>
+          <label class="block text-[18px] font-bold text-brand-textDark mb-1.5 flex items-center justify-between">
+            <span>GST number</span>
+            <span class="text-[16px] font-medium text-brand-textMuted">GSTIN (Optional)</span>
+          </label>
+          <div class="relative flex items-center">
+            <div class="absolute left-4 text-brand-green pointer-events-none">
+              <!-- Document / Tax Icon -->
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              value="09AAAAA0000A1Z5" 
+              class="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-brand-textDark bg-brand-inputBg border-2 border-brand-borderLight rounded-2xl focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20 uppercase tracking-wider"
+              placeholder="15-digit GSTIN number"
+            />
+          </div>
+          <p class="text-[16px] text-brand-textMuted mt-1">Tax bill aur B2B input tax credit hisaab ke liye</p>
+        </div>
+
+        <!-- Drug Licences (Sub-grid 2 columns) -->
+        <div class="grid grid-cols-2 gap-4">
+
+          <!-- Field 6: Drug licence number 1 -->
+          <div>
+            <label class="block text-[18px] font-bold text-brand-textDark mb-1.5 truncate">
+              Drug licence number 1
+            </label>
+            <div class="relative flex items-center">
+              <div class="absolute left-3.5 text-brand-green pointer-events-none">
+                <!-- Medical Cross / Badge Icon -->
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                </svg>
+              </div>
+              <input 
+                type="text" 
+                value="UP-MRT-20B/8892" 
+                class="w-full h-[60px] pl-11 pr-3 text-[17px] font-semibold text-brand-textDark bg-brand-inputBg border-2 border-brand-borderLight rounded-2xl focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20 uppercase"
+                placeholder="Form 20B No."
+              />
+            </div>
+            <p class="text-[16px] text-brand-textMuted mt-1">Form 20B (Retail DL)</p>
+          </div>
+
+          <!-- Field 7: Drug licence number 2 -->
+          <div>
+            <label class="block text-[18px] font-bold text-brand-textDark mb-1.5 truncate">
+              Drug licence number 2
+            </label>
+            <div class="relative flex items-center">
+              <div class="absolute left-3.5 text-brand-green pointer-events-none">
+                <!-- Certificate Shield Icon -->
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                </svg>
+              </div>
+              <input 
+                type="text" 
+                value="UP-MRT-21B/7419" 
+                class="w-full h-[60px] pl-11 pr-3 text-[17px] font-semibold text-brand-textDark bg-brand-inputBg border-2 border-brand-borderLight rounded-2xl focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20 uppercase"
+                placeholder="Form 21B No."
+              />
+            </div>
+            <p class="text-[16px] text-brand-textMuted mt-1">Form 21B (Schedule C/C1)</p>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- Bottom Actions Footer -->
+    <footer class="flex items-center justify-between border-t border-[#E8EFEA] pt-5">
+
+      <!-- Left Action: Disabled Grey "Wapas" / "Back" -->
+      <button 
+        type="button" 
+        disabled 
+        class="h-[64px] min-w-[200px] px-8 rounded-2xl bg-[#E8ECE9] border-2 border-transparent text-brand-greyDisabled flex items-center gap-3.5 cursor-not-allowed select-none opacity-80"
+      >
+        <!-- Back Arrow Icon -->
+        <svg class="w-7 h-7 text-brand-greyDisabled" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+        <div class="text-left">
+          <div class="text-[22px] font-bold leading-tight">Wapas</div>
+          <div class="text-[16px] font-medium leading-none">Back</div>
+        </div>
+      </button>
+
+      <!-- Step Guidance Micro-copy -->
+      <div class="text-center text-brand-textMuted text-[16px] font-medium">
+        Yeh jaankari aap baad mein dukaan ki settings se badal sakte hain
+      </div>
+
+      <!-- Right Action: Big Green Primary "Aage" / "Next" -->
+      <button 
+        type="button" 
+        class="h-[64px] min-w-[240px] px-10 rounded-2xl bg-brand-green hover:bg-brand-greenHover text-white flex items-center justify-between gap-5 shadow-[0_6px_20px_rgba(27,143,74,0.35)] cursor-pointer select-none transition-all active:scale-[0.98]"
+      >
+        <div class="text-left">
+          <div class="text-[24px] font-extrabold leading-tight tracking-wide">Aage</div>
+          <div class="text-[16px] font-medium text-white/90 leading-none">Next</div>
+        </div>
+        <!-- Big Forward Arrow Icon -->
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+        </svg>
+      </button>
+
+    </footer>
+
+  </main>
+
+</body>
+</html>

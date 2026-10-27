@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Hospivo POS</title><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+        "surface-tint": "#006d34",
+        "on-primary-fixed-variant": "#005226",
+        "surface-container-highest": "#dae5df",
+        "surface-container-low": "#ebf6f0",
+        "tertiary-fixed-dim": "#ffb786",
+        "on-secondary": "#ffffff",
+        "error": "#ba1a1a",
+        "on-tertiary": "#ffffff",
+        "on-primary-container": "#f6fff3",
+        "surface-dim": "#d1ddd7",
+        "outline-variant": "#bdcabc",
+        "on-primary-fixed": "#00210b",
+        "inverse-surface": "#28332f",
+        "on-secondary-container": "#003567",
+        "primary-fixed-dim": "#72dc8e",
+        "tertiary-container": "#b75b00",
+        "outline": "#6e7a6e",
+        "on-tertiary-fixed": "#311300",
+        "on-secondary-fixed-variant": "#004786",
+        "tertiary": "#924700",
+        "surface-container": "#e5f0eb",
+        "on-error-container": "#93000a",
+        "secondary-fixed-dim": "#a5c8ff",
+        "secondary-fixed": "#d4e3ff",
+        "on-tertiary-fixed-variant": "#723600",
+        "background": "#f1fcf6",
+        "secondary": "#005faf",
+        "on-tertiary-container": "#fffbff",
+        "secondary-container": "#54a0fe",
+        "surface-container-lowest": "#ffffff",
+        "tertiary-fixed": "#ffdcc6",
+        "surface-variant": "#dae5df",
+        "primary-container": "#088643",
+        "surface-bright": "#f1fcf6",
+        "on-error": "#ffffff",
+        "on-primary": "#ffffff",
+        "on-surface": "#141e1a",
+        "inverse-primary": "#72dc8e",
+        "primary": "#006b33",
+        "primary-fixed": "#8ef9a7",
+        "on-surface-variant": "#3e4a3f",
+        "error-container": "#ffdad6",
+        "on-secondary-fixed": "#001c3a",
+        "surface": "#f1fcf6",
+        "inverse-on-surface": "#e8f3ee",
+        "surface-container-high": "#e0ebe5",
+        "on-background": "#141e1a"
+      },
+      "borderRadius": {
+        "DEFAULT": "0.25rem",
+        "lg": "0.5rem",
+        "xl": "0.75rem",
+        "full": "9999px"
+      },
+      "spacing": {
+        "gutter": "1.5rem",
+        "space-md": "1rem",
+        "gutter-compact": "1rem",
+        "space-xs": "0.5rem",
+        "margin-mobile": "1rem",
+        "space-sm": "0.75rem",
+        "space-xl": "2.5rem",
+        "margin": "2rem",
+        "space-lg": "1.5rem"
+      },
+      "fontFamily": {
+        "display-total": ["Noto Sans"],
+        "body-lg": ["Noto Sans"],
+        "display-total-mobile": ["Noto Sans"],
+        "title-hinglish": ["Noto Sans"],
+        "label-sub-english": ["Noto Sans"],
+        "headline-md": ["Noto Sans"],
+        "numpad-number": ["Noto Sans"],
+        "headline-lg": ["Noto Sans"],
+        "button-text": ["Noto Sans"],
+        "body-md": ["Noto Sans"]
+      },
+      "fontSize": {
+        "display-total": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+        "body-lg": ["20px", {"lineHeight": "28px", "fontWeight": "500"}],
+        "display-total-mobile": ["36px", {"lineHeight": "44px", "fontWeight": "800"}],
+        "title-hinglish": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+        "label-sub-english": ["16px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+        "numpad-number": ["32px", {"lineHeight": "38px", "fontWeight": "700"}],
+        "headline-lg": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+        "button-text": ["22px", {"lineHeight": "28px", "fontWeight": "700"}],
+        "body-md": ["18px", {"lineHeight": "26px", "fontWeight": "400"}]
+      }
+    }
+  }
+}</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full px-gutter flex items-center justify-between"><div class="flex items-center gap-space-lg"><span class="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">Hospivo</span><div class="h-8 w-0.5 bg-outline-variant"></div><div class="flex flex-col"><span class="font-title-hinglish text-title-hinglish text-on-surface">Shree Medical Store</span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Pharmacy Counter POS</span></div></div><div class="flex items-center gap-space-md"><nav class="flex items-center" data-active-classes="bg-primary-container text-on-primary-container font-bold rounded-lg"><a class="px-space-md py-space-xs transition-colors text-on-surface-variant" data-path="billing-counter" href="#">Home</a></nav><div class="flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-low"><span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Local mode</span></div><button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container-high transition-colors text-on-surface-variant" title="Toggle Mode" type="button"><span class="material-symbols-outlined text-2xl">dark_mode</span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="flex flex-col text-right"><span class="font-title-hinglish text-title-hinglish text-on-surface leading-tight">Raju</span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-none">Chemist Operator</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 bg-surface"><div class="flex flex-col w-full h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] overflow-hidden bg-surface justify-center items-center px-gutter py-space-md select-none">
+<!-- Subtle Ambient Glow -->
+<div class="absolute w-[560px] h-[560px] bg-primary-fixed/30 rounded-full blur-3xl pointer-events-none -z-10"></div>
+<!-- Centered Success POS Card -->
+<div class="w-full max-w-2xl bg-surface-container-lowest rounded-xl shadow-xl p-space-xl flex flex-col items-center text-center relative overflow-hidden">
+<!-- Top Green Accent Strip -->
+<div class="absolute top-0 left-0 right-0 h-2 bg-primary"></div>
+<!-- Pulsing Animated Check Badge -->
+<div class="relative flex items-center justify-center my-space-sm">
+<div class="absolute inset-0 rounded-full bg-primary-fixed animate-ping opacity-25"></div>
+<div class="w-28 h-28 rounded-full bg-surface-container-low flex items-center justify-center shadow-md">
+<div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-lg">
+<span class="material-symbols-outlined text-[52px] leading-none" style="font-variation-settings: 'FILL' 1, 'wght' 700;">check</span>
+</div>
+</div>
+</div>
+<!-- Main Headline (Bilingual Hinglish Primary) -->
+<h1 class="font-display-total-mobile text-display-total-mobile text-on-surface tracking-tight mt-space-sm mb-space-xs">
+      Bill ban gaya
+    </h1>
+<p class="font-body-md text-body-md text-on-surface-variant font-medium">
+      Invoice generated successfully
+    </p>
+<!-- Prominent Bill Details Capsule -->
+<div class="w-full bg-surface-container rounded-xl py-space-md px-space-lg my-space-lg flex items-center justify-center gap-space-md shadow-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[28px]">receipt_long</span>
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface tracking-wide">BILL #214</span>
+</div>
+<span class="w-2.5 h-2.5 rounded-full bg-outline-variant"></span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-md text-headline-md font-bold text-primary">₹</span>
+<span class="font-display-total-mobile text-display-total-mobile text-primary leading-none">182</span>
+</div>
+</div>
+<!-- Action Buttons (Strictly 56px+ height, 16px radius, >=16px secondary micro-labels) -->
+<div class="w-full flex flex-col gap-space-md mt-space-xs">
+<!-- Top Row: Print and WhatsApp Share -->
+<div class="grid grid-cols-2 gap-space-md w-full">
+<!-- Print Button -->
+<button class="group h-[80px] rounded-xl bg-surface-container-high hover:bg-surface-container-highest active:translate-y-0.5 transition-all duration-150 flex items-center justify-center gap-space-md px-space-md text-left shadow-sm" id="btnPrint" type="button">
+<div class="w-12 h-12 rounded-lg bg-surface-container-lowest flex items-center justify-center text-on-surface shadow-sm group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[30px]" style="font-variation-settings: 'FILL' 1;">print</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface leading-tight">Print</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-normal">A4 / Receipt</span>
+</div>
+</button>
+<!-- WhatsApp Button -->
+<button class="group h-[80px] rounded-xl bg-surface-container-high hover:bg-surface-container-highest active:translate-y-0.5 transition-all duration-150 flex items-center justify-center gap-space-md px-space-md text-left shadow-sm" id="btnWhatsapp" type="button">
+<div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-primary shadow-sm group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[30px]" style="font-variation-settings: 'FILL' 1;">share</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface leading-tight">WhatsApp Bhejo</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-normal">Share bill</span>
+</div>
+</button>
+</div>
+<!-- Main Action: Big Green Done Button -->
+<button class="w-full h-[76px] rounded-xl bg-primary hover:bg-primary-container active:translate-y-0.5 transition-all duration-150 flex items-center justify-center gap-space-md px-space-lg text-on-primary shadow-md" id="btnDone" type="button">
+<span class="material-symbols-outlined text-[34px] leading-none" style="font-variation-settings: 'wght' 700;">task_alt</span>
+<div class="flex flex-col items-start text-left">
+<span class="font-button-text text-button-text text-on-primary leading-tight">Done</span>
+<span class="font-label-sub-english text-label-sub-english text-primary-fixed leading-normal">Naya bill shuru karein</span>
+</div>
+</button>
+</div>
+<!-- Quick Keyboard Shortcut Hint (Accessibility for Rapid Chemist Counters) -->
+<div class="flex items-center justify-center gap-space-xs mt-space-lg text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">keyboard</span>
+<span class="font-label-sub-english text-label-sub-english">Enter dabayein agle bill ke liye (Press Enter for Next Bill)</span>
+</div>
+</div>
+<script>
+    (function () {
+      const btnDone = document.getElementById('btnDone');
+      const btnPrint = document.getElementById('btnPrint');
+      const btnWhatsapp = document.getElementById('btnWhatsapp');
+
+      function triggerNextBill() {
+        if (btnDone) {
+          btnDone.classList.add('scale-[0.98]');
+          setTimeout(() => btnDone.classList.remove('scale-[0.98]'), 150);
+        }
+      }
+
+      if (btnDone) {
+        btnDone.addEventListener('click', triggerNextBill);
+      }
+
+      if (btnPrint) {
+        btnPrint.addEventListener('click', function () {
+          window.print();
+        });
+      }
+
+      if (btnWhatsapp) {
+        btnWhatsapp.addEventListener('click', function () {
+          this.classList.add('bg-primary-fixed');
+          setTimeout(() => this.classList.remove('bg-primary-fixed'), 400);
+        });
+      }
+
+      // Enter key shortcut for retail speed
+      window.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          triggerNextBill();
+        }
+      });
+    })();
+  </script>
+</div></main></body></html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html><html lang="hi" class="h-full"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospivo - Home Screen (Local-only mode)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#1B8F4A',
+              dark: '#136b37',
+              light: '#e8f5ee',
+              50: '#f1fcf6'
+            },
+            canvas: '#F4F6F5',
+            semantic: {
+              red: '#D92D20',
+              redBg: '#FEF3F2',
+              orange: '#E06A00',
+              orangeBg: '#FFF6ED',
+              yellow: '#DC6803',
+              blue: '#026AA2',
+              blueBg: '#F0F9FF',
+              grey: '#475467',
+              greyChipBg: '#E9EEF2'
+            }
+          },
+          fontFamily: {
+            sans: ['"Noto Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      background-color: #F4F6F5;
+      color: #101828;
+      width: 1440px;
+      height: 900px;
+      overflow: hidden;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-between p-6 antialiased">
+
+  <!-- TOP BAR (App screen top bar) -->
+  <header class="w-full bg-white rounded-2xl shadow-sm border border-gray-200/80 px-7 py-4 flex items-center justify-between">
+    <!-- Left: Brand + Shop Name -->
+    <div class="flex items-center space-x-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-11 h-11 rounded-xl bg-brand flex items-center justify-center text-white shadow-sm">
+          <svg class="w-6 h-6 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
+          </svg>
+        </div>
+        <div>
+          <span class="text-2xl font-black tracking-wider text-brand">HOSPIVO</span>
+        </div>
+      </div>
+
+      <div class="h-7 w-[2px] bg-gray-200"></div>
+
+      <div class="flex items-center space-x-2">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+        </svg>
+        <span class="text-xl font-bold text-gray-800">Shree Medical Store</span>
+      </div>
+    </div>
+
+    <!-- Right: Status Chips + User + Light/Dark Switch -->
+    <div class="flex items-center space-x-4">
+      <!-- Grey-blue chip: Local mode -->
+      <div class="flex items-center space-x-2 px-4 py-2 bg-[#E9EEF2] text-[#344054] rounded-xl border border-gray-300 font-semibold text-base">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#475467]"></span>
+        <span class="">Local mode</span>
+      </div>
+
+      <!-- Green chip: Backup: Aaj with tick -->
+      <div class="flex items-center space-x-2 px-4 py-2 bg-[#ECFDF3] text-brand border border-[#A6F4C5] rounded-xl font-semibold text-base">
+        <svg class="w-5 h-5 stroke-[2.5] text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
+        </svg>
+        <span class="">Backup: Aaj</span>
+      </div>
+
+      <!-- User name: Raju -->
+      <div class="flex items-center space-x-2.5 px-4 py-2 bg-gray-50 rounded-xl border border-gray-200 text-gray-800">
+        <div class="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm">
+          R
+        </div>
+        <span class="font-bold text-lg">Raju</span>
+      </div>
+
+      <!-- Moon light/dark switch -->
+      <button type="button" aria-label="Toggle light dark" class="w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 border border-gray-300 flex items-center justify-center text-gray-700 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN AREA: 8 BIG SQUARE TILES IN A GRID (About 200px) -->
+  <main class="w-full flex-1 flex items-center justify-center py-4">
+    <div class="grid grid-cols-4 gap-6 w-full max-w-[1392px]">
+      
+      <!-- Tile 1: Dawai Becho (Sell, green, largest and first) -->
+      <div class="bg-brand text-white rounded-2xl flex flex-col justify-between shadow-lg shadow-brand/20 border-2 border-brand hover:brightness-105 cursor-pointer transition h-[225px] p-6">
+        <div class="flex items-start justify-between">
+          <div class="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
+            <!-- Shopping Cart / Medicine Pill Icon -->
+            <svg class="w-8 h-8 text-white stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"></path>
+            </svg>
+          </div>
+          
+        </div>
+        <div>
+          <div class="text-2xl font-bold leading-tight">Dawai Becho</div>
+          <div class="text-base text-white/85 font-medium mt-0.5">Sell</div>
+        </div>
+      </div>
+
+      <!-- Tile 2: Fast Bill (Rush) -->
+      <div class="bg-white text-gray-900 rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6">
+        <div class="w-14 h-14 rounded-xl bg-blue-50 text-semantic-blue flex items-center justify-center">
+          <!-- Lightning Bolt Icon -->
+          <svg class="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-2xl font-bold leading-tight text-gray-900">Fast Bill</div>
+          <div class="text-base text-gray-500 font-medium mt-0.5">Rush</div>
+        </div>
+      </div>
+
+      <!-- Tile 3: Stock Jodo (Add stock) -->
+      <div class="bg-white text-gray-900 rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6">
+        <div class="w-14 h-14 rounded-xl bg-green-50 text-brand flex items-center justify-center">
+          <!-- Plus Box / Inward Stock Icon -->
+          <svg class="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-2xl font-bold leading-tight text-gray-900">Stock Jodo</div>
+          <div class="text-base text-gray-500 font-medium mt-0.5">Add stock</div>
+        </div>
+      </div>
+
+      <!-- Tile 4: Stock Dekho (View stock) -->
+      <div class="bg-white text-gray-900 rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6">
+        <div class="w-14 h-14 rounded-xl bg-slate-100 text-gray-700 flex items-center justify-center">
+          <!-- Eye / Inventory List Icon -->
+          <svg class="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-2xl font-bold leading-tight text-gray-900">Stock Dekho</div>
+          <div class="text-base text-gray-500 font-medium mt-0.5">View stock</div>
+        </div>
+      </div>
+
+      <!-- Tile 5: Expiry (Alerts, orange accent) -->
+      <div class="bg-white text-gray-900 rounded-2xl flex flex-col justify-between shadow-sm border-2 border-semantic-orange/30 hover:border-semantic-orange hover:shadow-md cursor-pointer transition h-[225px] p-6">
+        <div class="flex items-start justify-between">
+          <div class="w-14 h-14 rounded-xl bg-semantic-orangeBg text-semantic-orange flex items-center justify-center">
+            <!-- Calendar Warning Icon -->
+            <svg class="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"></path>
+            </svg>
+          </div>
+          <span class="w-3.5 h-3.5 rounded-full bg-semantic-orange"></span>
+        </div>
+        <div>
+          <div class="text-2xl font-bold leading-tight text-gray-900">Expiry</div>
+          <div class="text-base text-semantic-orange font-bold mt-0.5">Alerts</div>
+        </div>
+      </div>
+
+      <!-- Tile 6: Udhaar (Credit) -->
+      <div class="bg-white text-gray-900 rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6">
+        <div class="w-14 h-14 rounded-xl bg-amber-50 text-semantic-yellow flex items-center justify-center">
+          <!-- Book / Ledger / Khata Icon -->
+          <svg class="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-2xl font-bold leading-tight text-gray-900">Udhaar</div>
+          <div class="text-base text-gray-500 font-medium mt-0.5">Credit</div>
+        </div>
+      </div>
+
+      <!-- Tile 7: Din Band (Close day) -->
+      <div class="bg-white text-gray-900 rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6">
+        <div class="w-14 h-14 rounded-xl bg-rose-50 text-semantic-red flex items-center justify-center">
+          <!-- Cash Register / Shutter / Lock Icon -->
+          <svg class="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-2xl font-bold leading-tight text-gray-900">Din Band</div>
+          <div class="text-base text-gray-500 font-medium mt-0.5">Close day</div>
+        </div>
+      </div>
+
+      <!-- Tile 8: Owner (key icon, Owner PIN) -->
+      <div class="bg-white text-gray-900 rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6">
+        <div class="w-14 h-14 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+          <!-- Key Icon -->
+          <svg class="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-2xl font-bold leading-tight text-gray-900">Owner</div>
+          <div class="text-base text-gray-500 font-medium mt-0.5">Owner PIN</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- BELOW: SUMMARY STRIP WITH FOUR BIG NUMBERS -->
+  <footer class="w-full bg-white rounded-2xl shadow-sm border border-gray-200/80 p-5">
+    <div class="grid grid-cols-4 divide-x divide-gray-200">
+      
+      <!-- Metric 1: Aaj ki bikri Rs. 12,400 -->
+      <div class="px-6 flex flex-col justify-center">
+        <div class="text-lg font-semibold text-gray-600 mb-1">Aaj ki bikri</div>
+        <div class="text-[38px] font-black text-brand tracking-tight leading-none">
+          Rs. 12,400
+        </div>
+      </div>
+
+      <!-- Metric 2: Bills 48 -->
+      <div class="px-6 flex flex-col justify-center">
+        <div class="text-lg font-semibold text-gray-600 mb-1">Bills</div>
+        <div class="text-[38px] font-black text-gray-900 tracking-tight leading-none">
+          48
+        </div>
+      </div>
+
+      <!-- Metric 3: Expiry 30 din: 5 dawai (orange) -->
+      <div class="px-6 flex flex-col justify-center">
+        <div class="flex items-center space-x-2 text-lg font-semibold text-semantic-orange mb-1">
+          <svg class="w-5 h-5 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"></path>
+          </svg>
+          <span class="">Expiry 30 din</span>
+        </div>
+        <div class="text-[38px] font-black text-semantic-orange tracking-tight leading-none">
+          5 dawai
+        </div>
+      </div>
+
+      <!-- Metric 4: Kam stock: 12 dawai (red) -->
+      <div class="px-6 flex flex-col justify-center">
+        <div class="flex items-center space-x-2 text-lg font-semibold text-semantic-red mb-1">
+          <svg class="w-5 h-5 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"></path>
+          </svg>
+          <span class="">Kam stock</span>
+        </div>
+        <div class="text-[38px] font-black text-semantic-red tracking-tight leading-none">
+          12 dawai
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+
+
+
+
+</body></html>

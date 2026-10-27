@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Hospivo POS</title><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base { html, body { margin: 0; padding: 0; } body { overscroll-behavior: none; } main > :first-child { margin-top: 0 !important; } main > :last-child { margin-bottom: 0 !important; } } ::-webkit-scrollbar { display: none; }</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "surface-container-highest": "#dae5df", "inverse-surface": "#28332f", "on-primary-container": "#f6fff3", "on-primary-fixed-variant": "#005226", "surface-bright": "#f1fcf6", "error": "#ba1a1a", "on-secondary": "#ffffff", "inverse-primary": "#72dc8e", "on-error": "#ffffff", "outline-variant": "#bdcabc", "surface-container-low": "#ebf6f0", "tertiary-container": "#b75b00", "on-error-container": "#93000a", "primary-fixed-dim": "#72dc8e", "on-primary": "#ffffff", "on-secondary-fixed-variant": "#004786", "tertiary-fixed-dim": "#ffb786", "on-secondary-fixed": "#001c3a", "on-secondary-container": "#003567", "on-primary-fixed": "#00210b", "surface-variant": "#dae5df", "on-background": "#141e1a", "on-surface": "#141e1a", "background": "#f1fcf6", "on-tertiary-fixed-variant": "#723600", "secondary-fixed": "#d4e3ff", "tertiary": "#924700", "primary-container": "#088643", "on-tertiary-container": "#fffbff", "surface": "#f1fcf6", "error-container": "#ffdad6", "surface-container": "#e5f0eb", "tertiary-fixed": "#ffdcc6", "outline": "#6e7a6e", "surface-container-lowest": "#ffffff", "on-surface-variant": "#3e4a3f", "primary": "#006b33", "on-tertiary": "#ffffff", "surface-dim": "#d1ddd7", "secondary-fixed-dim": "#a5c8ff", "inverse-on-surface": "#e8f3ee", "primary-fixed": "#8ef9a7", "on-tertiary-fixed": "#311300", "secondary-container": "#54a0fe", "secondary": "#005faf", "surface-container-high": "#e0ebe5", "surface-tint": "#006d34" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter": "1.5rem", "space-xs": "0.5rem", "space-md": "1rem", "space-sm": "0.75rem", "space-xl": "2.5rem", "margin": "2rem", "gutter-compact": "1rem", "margin-mobile": "1rem", "space-lg": "1.5rem" }, "fontFamily": { "display-total-mobile": [ "Noto Sans" ], "title-hinglish": [ "Noto Sans" ], "display-total": [ "Noto Sans" ], "numpad-number": [ "Noto Sans" ], "button-text": [ "Noto Sans" ], "body-lg": [ "Noto Sans" ], "headline-lg": [ "Noto Sans" ], "body-md": [ "Noto Sans" ], "headline-md": [ "Noto Sans" ], "label-sub-english": [ "Noto Sans" ] }, "fontSize": { "display-total-mobile": [ "36px", { "lineHeight": "44px", "fontWeight": "800" } ], "title-hinglish": [ "20px", { "lineHeight": "26px", "fontWeight": "700" } ], "display-total": [ "48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800" } ], "numpad-number": [ "32px", { "lineHeight": "38px", "fontWeight": "700" } ], "button-text": [ "22px", { "lineHeight": "28px", "fontWeight": "700" } ], "body-lg": [ "20px", { "lineHeight": "28px", "fontWeight": "500" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "body-md": [ "18px", { "lineHeight": "26px", "fontWeight": "400" } ], "headline-md": [ "24px", { "lineHeight": "32px", "fontWeight": "700" } ], "label-sub-english": [ "16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased select-none"><header class="fixed top-0 w-full z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full px-gutter flex items-center justify-between"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><span class="font-headline-lg text-headline-lg text-primary tracking-tight font-extrabold">Hospivo</span><div class="h-6 w-px bg-outline-variant"></div><span class="font-headline-md text-headline-md text-on-surface font-bold">Shree Medical Store</span></div><div class="inline-flex items-center gap-space-xs px-space-sm py-1 bg-surface-container-low rounded-full"><span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span><span class="font-label-sub-english text-label-sub-english text-primary font-bold uppercase tracking-wide">Local mode</span></div></div><div class="flex items-center gap-space-md"><nav class="flex items-center" data-active-classes="bg-primary-container text-on-primary-container rounded-lg shadow-sm"><a class="flex flex-col items-center justify-center px-space-md py-1.5 transition-colors text-on-surface-variant" data-path="home" href="#"><span class="font-title-hinglish text-title-hinglish leading-tight">घर</span><span class="font-label-sub-english text-label-sub-english leading-tight opacity-90">Home</span></a></nav><div class="h-8 w-px bg-outline-variant"></div><button aria-label="Theme toggle" class="w-11 h-11 flex items-center justify-center rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[24px]">dark_mode</span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="flex flex-col text-right"><span class="font-title-hinglish text-title-hinglish leading-tight text-on-surface">Raju</span><span class="font-label-sub-english text-label-sub-english leading-tight text-on-surface-variant">Pharmacist / Cashier</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 bg-surface min-h-[calc(100vh-48px)] pb-12"><div class="flex flex-col w-full relative">
+<!-- Dimmed Udhaar Ledger Background (Non-interactive backdrop) -->
+<div aria-hidden="true" class="w-full flex flex-col px-gutter gap-space-lg pointer-events-none opacity-40 blur-[1px] select-none">
+<!-- Ledger Top Summary Bar -->
+<div class="w-full flex items-center justify-between pt-2">
+<div class="flex flex-col">
+<h1 class="font-headline-lg text-headline-lg font-bold text-on-surface leading-tight">Udhaar</h1>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Credit</span>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container-high px-space-lg py-space-sm rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-tertiary text-[28px]">account_balance_wallet</span>
+<span class="font-headline-md text-headline-md text-error font-extrabold tracking-tight">Kul baki: Rs. 5,600</span>
+</div>
+</div>
+<!-- Ledger Customer Rows Grid / Table -->
+<div class="w-full flex flex-col gap-space-sm">
+<!-- Ramesh Kumar Row (Active target) -->
+<div class="w-full h-20 bg-surface-container-lowest rounded-lg shadow-sm px-space-lg flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold font-title-hinglish text-title-hinglish">
+            RK
+          </div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold">Ramesh Kumar</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">+91 98765 43210 • Pichhla bill 3 din pehle</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="flex flex-col text-right">
+<span class="font-title-hinglish text-title-hinglish text-error font-extrabold">Rs. 1,500</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Baki</span>
+</div>
+<div class="px-space-md py-2 bg-surface-container-high rounded-lg text-on-surface-variant font-title-hinglish text-title-hinglish">
+            Khaton ki soochi
+          </div>
+</div>
+</div>
+<!-- Sunita Devi Row -->
+<div class="w-full h-20 bg-surface-container-lowest rounded-lg shadow-sm px-space-lg flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary font-bold font-title-hinglish text-title-hinglish">
+            SD
+          </div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold">Sunita Devi</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">+91 94120 11223 • Pichhla bill 7 din pehle</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="flex flex-col text-right">
+<span class="font-title-hinglish text-title-hinglish text-error font-extrabold">Rs. 2,100</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Baki</span>
+</div>
+<div class="px-space-md py-2 bg-surface-container-high rounded-lg text-on-surface-variant font-title-hinglish text-title-hinglish">
+            Khaton ki soochi
+          </div>
+</div>
+</div>
+<!-- Mohan Lal Row -->
+<div class="w-full h-20 bg-surface-container-lowest rounded-lg shadow-sm px-space-lg flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary font-bold font-title-hinglish text-title-hinglish">
+            ML
+          </div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold">Mohan Lal</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">+91 98290 88990 • Pichhla bill kal</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="flex flex-col text-right">
+<span class="font-title-hinglish text-title-hinglish text-error font-extrabold">Rs. 850</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Baki</span>
+</div>
+<div class="px-space-md py-2 bg-surface-container-high rounded-lg text-on-surface-variant font-title-hinglish text-title-hinglish">
+            Khaton ki soochi
+          </div>
+</div>
+</div>
+<!-- Rajesh Sharma Row -->
+<div class="w-full h-20 bg-surface-container-lowest rounded-lg shadow-sm px-space-lg flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold font-title-hinglish text-title-hinglish">
+            RS
+          </div>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold">Rajesh Sharma</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">+91 97112 33445 • Pichhla bill 10 din pehle</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xl">
+<div class="flex flex-col text-right">
+<span class="font-title-hinglish text-title-hinglish text-error font-extrabold">Rs. 1,150</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Baki</span>
+</div>
+<div class="px-space-md py-2 bg-surface-container-high rounded-lg text-on-surface-variant font-title-hinglish text-title-hinglish">
+            Khaton ki soochi
+          </div>
+</div>
+</div>
+</div>
+</div>
+<!-- Centered Modal Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 select-none">
+<!-- Modal Card (max-width ~540px, rounded-xl 16px, elevated shadow) -->
+<div class="w-full max-w-[540px] bg-surface-container-lowest rounded-xl shadow-2xl p-space-lg flex flex-col gap-space-md">
+<!-- 1. Heading: Yaad Dilao / WhatsApp reminder -->
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface leading-tight">Yaad Dilao</h2>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">WhatsApp reminder</span>
+</div>
+<div class="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">chat</span>
+</div>
+</div>
+<!-- 2. Customer Details Section -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Grahak</span>
+<span class="font-title-hinglish text-title-hinglish font-bold text-on-surface">Ramesh Kumar</span>
+</div>
+<div class="flex flex-col text-right">
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Baki raqam</span>
+<span class="font-title-hinglish text-title-hinglish font-bold text-error">Baki: Rs. 1,500</span>
+</div>
+</div>
+<!-- 3. Chat-style Green WhatsApp Message Bubble -->
+<div class="w-full py-space-xs flex flex-col">
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium mb-1.5">Sandesh (Message preview):</span>
+<div class="relative w-full bg-[#DCF8C6] rounded-xl p-space-md shadow-sm">
+<!-- WhatsApp Chat Tail Accent -->
+<div class="absolute -top-1.5 left-6 w-3 h-3 bg-[#DCF8C6] rotate-45"></div>
+<p class="font-body-md text-body-md text-on-surface font-normal leading-relaxed relative z-10">
+            Namaste, aapka Rs. 1,500 baki hai. Kripya jaldi de dein. - Shree Medical Store
+          </p>
+<div class="w-full flex items-center justify-end gap-1 mt-2">
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant text-right">Abhi bhejein</span>
+<span class="material-symbols-outlined text-secondary text-[18px]">done_all</span>
+</div>
+</div>
+</div>
+<!-- 4. Action Buttons (56px+ height, 16px radius, no tiny text) -->
+<div class="flex items-center gap-space-md pt-2">
+<!-- Wapas Button -->
+<button class="flex-1 h-16 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface flex items-center justify-center gap-space-sm shadow-sm active:translate-y-0.5 transition-all" onclick="history.back()" type="button">
+<span class="material-symbols-outlined text-on-surface-variant text-[26px]">arrow_back</span>
+<div class="flex flex-col text-left leading-none">
+<span class="font-title-hinglish text-title-hinglish font-bold">Wapas</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Back</span>
+</div>
+</button>
+<!-- Big Green WhatsApp Kholo Button -->
+<a class="flex-[1.4] h-16 rounded-xl bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center gap-space-sm shadow-md active:translate-y-0.5 transition-all" href="https://api.whatsapp.com/send?phone=919876543210&amp;text=Namaste%2C%20aapka%20Rs.%201%2C500%20baki%20hai.%20Kripya%20jaldi%20de%20dein.%20-%20Shree%20Medical%20Store" rel="noopener noreferrer" target="_blank">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">sms</span>
+<div class="flex flex-col text-left leading-none">
+<span class="font-title-hinglish text-title-hinglish font-bold text-on-primary">WhatsApp Kholo</span>
+<span class="font-label-sub-english text-label-sub-english text-on-primary opacity-90 font-medium">Open WhatsApp</span>
+</div>
+</a>
+</div>
+</div>
+</div>
+</div></main><footer class="fixed bottom-0 left-0 right-0 h-12 bg-surface-container-lowest shadow-[0_-1px_8px_rgba(0,0,0,0.04)] z-40"><div class="h-full w-full px-gutter flex items-center justify-between text-on-surface-variant font-label-sub-english text-label-sub-english"><div>© 2024 Hospivo Pharmacy Systems. Offline-First POS Engine.</div><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[18px] text-primary">support_agent</span><span>24x7 Dawai Helpline: <strong class="text-on-surface font-bold">1800-889-1002</strong></span></div><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[18px] text-secondary">sync</span><span>Data Saved Locally</span></div></div></div></footer><div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm select-none p-4"><div class="w-full max-w-[620px] bg-surface-container-lowest rounded-[24px] shadow-2xl p-8 flex flex-col gap-5 border border-outline-variant/30"><div class="flex items-center justify-between border-b border-outline-variant/40 pb-4"><div><h2 class="font-headline-lg text-[30px] font-bold text-on-surface leading-tight">Paisa Mila</h2><span class="font-label-sub-english text-[16px] text-on-surface-variant font-medium">Record payment</span></div><div class="flex items-center gap-space-xs px-3 py-1.5 bg-primary/10 rounded-full"><span class="material-symbols-outlined text-primary text-[22px]">payments</span><span class="font-label-sub-english text-[16px] text-primary font-bold">Udhaar Vasooli</span></div></div><div class="bg-surface-container-low rounded-[16px] p-4 flex items-center justify-between border border-outline-variant/50"><div><span class="font-label-sub-english text-[16px] text-on-surface-variant">Grahak / Customer</span><h3 class="font-title-hinglish text-[22px] font-bold text-on-surface leading-tight">Ramesh Kumar</h3></div><div class="text-right"><span class="font-label-sub-english text-[16px] text-on-surface-variant">Baki balance</span><div class="font-headline-md text-[22px] font-bold text-error leading-tight">Baki: Rs. 1,500</div></div></div><div class="flex flex-col gap-1.5"><div class="flex items-center justify-between"><label class="font-title-hinglish text-[18px] font-bold text-on-surface">Kitne paise mile</label><span class="font-label-sub-english text-[16px] text-on-surface-variant">Amount received</span></div><div class="w-full bg-surface-container-lowest border-2 border-primary rounded-[16px] px-5 py-3 flex items-center justify-between shadow-sm"><div class="flex items-baseline gap-2"><span class="text-[28px] font-bold text-primary">Rs.</span><span class="text-[38px] font-extrabold text-primary tabular-nums tracking-tight">500</span></div><div class="flex items-center gap-2"><span class="w-1 h-8 bg-primary rounded-full animate-pulse"></span><span class="material-symbols-outlined text-primary text-[28px]">currency_rupee</span></div></div><div class="flex items-center justify-between px-1 pt-1"><span class="font-title-hinglish text-[18px] font-bold text-on-surface-variant">Baki rahega: <strong class="text-error font-extrabold">Rs. 1,000</strong></span><span class="font-label-sub-english text-[16px] text-outline font-medium">Remaining: Rs. 1,000</span></div></div><div class="grid grid-cols-3 gap-3 pt-1"><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface font-extrabold text-[32px] flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button">1</button><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface font-extrabold text-[32px] flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button">2</button><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface font-extrabold text-[32px] flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button">3</button><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface font-extrabold text-[32px] flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button">4</button><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface font-extrabold text-[32px] flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button">5</button><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface font-extrabold text-[32px] flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button">6</button><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface font-extrabold text-[32px] flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button">7</button><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface font-extrabold text-[32px] flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button">8</button><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface font-extrabold text-[32px] flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button">9</button><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-extrabold text-[28px] flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button">C</button><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface font-extrabold text-[32px] flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button">0</button><button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface-variant flex items-center justify-center border border-outline-variant/60 shadow-sm active:translate-y-0.5 transition-all" type="button"><span class="material-symbols-outlined text-[32px]">backspace</span></button></div><div class="flex items-center gap-4 pt-2"><button class="flex-1 h-14 rounded-[16px] bg-surface-container-low hover:bg-surface-container text-on-surface border border-outline-variant flex items-center justify-center gap-space-xs shadow-sm active:translate-y-0.5 transition-colors" type="button"><span class="material-symbols-outlined text-[26px] text-on-surface-variant">arrow_back</span><div class="flex flex-col text-left leading-none"><span class="font-title-hinglish text-[18px] font-bold">Wapas</span><span class="font-label-sub-english text-[16px] text-on-surface-variant">Back</span></div></button><button class="flex-1 h-14 rounded-[16px] bg-[#1B8F4A] hover:bg-[#15733b] text-on-primary flex items-center justify-center gap-space-xs shadow-md active:translate-y-0.5 transition-colors" type="button"><span class="material-symbols-outlined text-[26px]">check_circle</span><div class="flex flex-col text-left leading-none"><span class="font-title-hinglish text-[18px] font-bold">Pakka Karo</span><span class="font-label-sub-english text-[16px] opacity-90">Confirm</span></div></button></div></div></div></body></html>

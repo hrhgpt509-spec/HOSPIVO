@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Hospivo Pharmacy POS</title><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "outline-variant": "#bdcabc", "error": "#ba1a1a", "surface-container-high": "#e0ebe5", "tertiary": "#924700", "on-error": "#ffffff", "on-error-container": "#93000a", "surface-tint": "#006d34", "on-primary": "#ffffff", "on-secondary-container": "#003567", "on-tertiary-fixed": "#311300", "surface-container-lowest": "#ffffff", "inverse-surface": "#28332f", "surface-dim": "#d1ddd7", "secondary": "#005faf", "on-tertiary": "#ffffff", "surface-container": "#e5f0eb", "surface-container-low": "#ebf6f0", "on-primary-fixed-variant": "#005226", "surface": "#f1fcf6", "primary-container": "#088643", "surface-bright": "#f1fcf6", "on-surface": "#141e1a", "background": "#f1fcf6", "tertiary-fixed-dim": "#ffb786", "on-tertiary-container": "#fffbff", "surface-variant": "#dae5df", "secondary-container": "#54a0fe", "tertiary-fixed": "#ffdcc6", "outline": "#6e7a6e", "primary-fixed": "#8ef9a7", "error-container": "#ffdad6", "on-surface-variant": "#3e4a3f", "on-primary-container": "#f6fff3", "primary": "#006b33", "on-secondary-fixed": "#001c3a", "on-secondary-fixed-variant": "#004786", "on-background": "#141e1a", "surface-container-highest": "#dae5df", "secondary-fixed": "#d4e3ff", "on-primary-fixed": "#00210b", "primary-fixed-dim": "#72dc8e", "inverse-primary": "#72dc8e", "on-tertiary-fixed-variant": "#723600", "secondary-fixed-dim": "#a5c8ff", "tertiary-container": "#b75b00", "inverse-on-surface": "#e8f3ee", "on-secondary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "margin-mobile": "1rem", "gutter": "1.5rem", "gutter-compact": "1rem", "space-xs": "0.5rem", "space-sm": "0.75rem", "margin": "2rem", "space-md": "1rem", "space-xl": "2.5rem", "space-lg": "1.5rem" }, "fontFamily": { "label-sub-english": [ "Noto Sans" ], "display-total-mobile": [ "Noto Sans" ], "body-lg": [ "Noto Sans" ], "display-total": [ "Noto Sans" ], "title-hinglish": [ "Noto Sans" ], "button-text": [ "Noto Sans" ], "headline-md": [ "Noto Sans" ], "headline-lg": [ "Noto Sans" ], "body-md": [ "Noto Sans" ], "numpad-number": [ "Noto Sans" ] }, "fontSize": { "label-sub-english": [ "16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "display-total-mobile": [ "36px", { "lineHeight": "44px", "fontWeight": "800" } ], "body-lg": [ "20px", { "lineHeight": "28px", "fontWeight": "500" } ], "display-total": [ "48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800" } ], "title-hinglish": [ "20px", { "lineHeight": "26px", "fontWeight": "700" } ], "button-text": [ "22px", { "lineHeight": "28px", "fontWeight": "700" } ], "headline-md": [ "24px", { "lineHeight": "32px", "fontWeight": "700" } ], "headline-lg": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "body-md": [ "18px", { "lineHeight": "26px", "fontWeight": "400" } ], "numpad-number": [ "32px", { "lineHeight": "38px", "fontWeight": "700" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-md"><div class="flex items-baseline gap-space-xs"><span class="font-headline-lg text-headline-lg text-primary tracking-tight font-extrabold">HOSPIVO</span><span class="font-body-md text-body-md text-outline font-semibold">/</span><span class="font-title-hinglish text-title-hinglish text-on-surface font-bold">Shree Medical Store</span></div><div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container text-on-surface-variant font-label-sub-english text-label-sub-english"><span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span><span>Local Mode</span></div></div><div class="flex items-center gap-space-md"><nav class="flex items-center" data-active-classes="bg-primary text-on-primary font-bold shadow-sm"><a aria-current="page" class="px-space-md py-2.5 rounded-lg transition-all bg-primary text-on-primary font-bold shadow-sm" data-path="counter-billing" href="#">Ghar / Home</a></nav><button aria-label="Theme Switcher" class="w-11 h-11 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface flex items-center justify-center transition-all" type="button"><span class="material-symbols-outlined text-[22px]">dark_mode</span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="text-right"><div class="font-title-hinglish text-title-hinglish leading-tight text-on-surface">Owner</div><div class="font-label-sub-english text-label-sub-english text-outline leading-tight">Operator</div></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 bg-surface min-h-screen"><div class="flex flex-col w-full h-[calc(100vh-80px-56px)] justify-between overflow-hidden px-space-lg py-space-md bg-surface">
+<!-- Top Action & Title Row -->
+<div class="flex items-center justify-between gap-space-md shrink-0">
+<div class="flex flex-col">
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight leading-none">
+        Staff
+      </h1>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium pt-1">
+        Manage staff
+      </span>
+</div>
+<!-- Big Action Button "Naya Staff Jodo" -->
+<button class="h-16 px-space-lg rounded-[16px] bg-primary hover:bg-primary-container text-on-primary shadow-md hover:shadow-lg transition-all flex items-center gap-space-sm active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[32px] text-on-primary">person_add</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish text-on-primary font-bold leading-tight">Naya Staff Jodo</span>
+<span class="font-label-sub-english text-label-sub-english text-on-primary-container leading-tight">Add staff</span>
+</div>
+</button>
+</div>
+<!-- Staff Row List (Exactly 3 Staff Cards, strictly fitting 900px vertical constraint) -->
+<div class="flex flex-col gap-space-sm justify-between flex-1 py-space-sm">
+<!-- Row 1: Raju Sharma -->
+<div class="h-[108px] bg-surface-container-lowest rounded-[16px] p-space-md shadow-sm flex items-center justify-between gap-space-md transition-shadow hover:shadow-md">
+<!-- Left Info: Avatar + Details -->
+<div class="flex items-center gap-space-md min-w-0">
+<!-- Avatar Circle -->
+<div class="w-16 h-16 rounded-full bg-primary-container/15 flex items-center justify-center shrink-0">
+<span class="font-headline-md text-headline-md text-primary font-extrabold tracking-normal">RS</span>
+</div>
+<!-- Name, Role & Activity -->
+<div class="flex flex-col gap-1 min-w-0">
+<div class="flex items-center gap-space-sm">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold truncate">Raju Sharma</span>
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sub-english text-label-sub-english font-medium whitespace-nowrap">
+              Counter staff
+            </span>
+</div>
+<div class="font-body-md text-body-md text-on-surface-variant truncate">
+            Aaj: 30 bills • 2 discount • 0 void • 1 PIN request
+          </div>
+</div>
+</div>
+<!-- Right Row Actions -->
+<div class="flex items-center gap-space-sm shrink-0">
+<!-- Action 1: PIN Badlo (Neutral/Grey) -->
+<button class="h-16 min-w-[136px] px-space-md rounded-[16px] bg-surface-container hover:bg-surface-container-high text-on-surface transition-all flex items-center justify-center gap-2 active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px] text-on-surface-variant">key</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none text-on-surface">PIN Badlo</span>
+<span class="font-label-sub-english text-label-sub-english font-medium text-on-surface-variant leading-tight">Reset PIN</span>
+</div>
+</button>
+<!-- Action 2: Roko (Careful Semantic Orange) -->
+<button class="h-16 min-w-[118px] px-space-md rounded-[16px] bg-tertiary-fixed hover:bg-tertiary-fixed-dim text-on-tertiary-fixed transition-all flex items-center justify-center gap-2 active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px] text-tertiary">pause_circle</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none text-tertiary">Roko</span>
+<span class="font-label-sub-english text-label-sub-english font-medium text-tertiary leading-tight">Pause</span>
+</div>
+</button>
+<!-- Action 3: Hatao (Danger Semantic Red) -->
+<button class="h-16 min-w-[124px] px-space-md rounded-[16px] bg-error-container hover:bg-error-container/80 text-on-error-container transition-all flex items-center justify-center gap-2 active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px] text-error">delete</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none text-error">Hatao</span>
+<span class="font-label-sub-english text-label-sub-english font-medium text-error leading-tight">Remove</span>
+</div>
+</button>
+</div>
+</div>
+<!-- Row 2: Amit Verma -->
+<div class="h-[108px] bg-surface-container-lowest rounded-[16px] p-space-md shadow-sm flex items-center justify-between gap-space-md transition-shadow hover:shadow-md">
+<!-- Left Info: Avatar + Details -->
+<div class="flex items-center gap-space-md min-w-0">
+<!-- Avatar Circle -->
+<div class="w-16 h-16 rounded-full bg-secondary-fixed flex items-center justify-center shrink-0">
+<span class="font-headline-md text-headline-md text-secondary font-extrabold tracking-normal">AV</span>
+</div>
+<!-- Name, Role & Activity -->
+<div class="flex flex-col gap-1 min-w-0">
+<div class="flex items-center gap-space-sm">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold truncate">Amit Verma</span>
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sub-english text-label-sub-english font-medium whitespace-nowrap">
+              Counter staff
+            </span>
+</div>
+<div class="font-body-md text-body-md text-on-surface-variant truncate">
+            Aaj: 18 bills • 0 discount • 0 void • 0 PIN request
+          </div>
+</div>
+</div>
+<!-- Right Row Actions -->
+<div class="flex items-center gap-space-sm shrink-0">
+<!-- Action 1: PIN Badlo -->
+<button class="h-16 min-w-[136px] px-space-md rounded-[16px] bg-surface-container hover:bg-surface-container-high text-on-surface transition-all flex items-center justify-center gap-2 active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px] text-on-surface-variant">key</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none text-on-surface">PIN Badlo</span>
+<span class="font-label-sub-english text-label-sub-english font-medium text-on-surface-variant leading-tight">Reset PIN</span>
+</div>
+</button>
+<!-- Action 2: Roko (Orange) -->
+<button class="h-16 min-w-[118px] px-space-md rounded-[16px] bg-tertiary-fixed hover:bg-tertiary-fixed-dim text-on-tertiary-fixed transition-all flex items-center justify-center gap-2 active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px] text-tertiary">pause_circle</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none text-tertiary">Roko</span>
+<span class="font-label-sub-english text-label-sub-english font-medium text-tertiary leading-tight">Pause</span>
+</div>
+</button>
+<!-- Action 3: Hatao (Red) -->
+<button class="h-16 min-w-[124px] px-space-md rounded-[16px] bg-error-container hover:bg-error-container/80 text-on-error-container transition-all flex items-center justify-center gap-2 active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px] text-error">delete</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none text-error">Hatao</span>
+<span class="font-label-sub-english text-label-sub-english font-medium text-error leading-tight">Remove</span>
+</div>
+</button>
+</div>
+</div>
+<!-- Row 3: Suresh Patel -->
+<div class="h-[108px] bg-surface-container-lowest rounded-[16px] p-space-md shadow-sm flex items-center justify-between gap-space-md transition-shadow hover:shadow-md">
+<!-- Left Info: Avatar + Details -->
+<div class="flex items-center gap-space-md min-w-0">
+<!-- Avatar Circle -->
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center shrink-0">
+<span class="font-headline-md text-headline-md text-on-surface font-extrabold tracking-normal">SP</span>
+</div>
+<!-- Name, Role & Activity -->
+<div class="flex flex-col gap-1 min-w-0">
+<div class="flex items-center gap-space-sm">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold truncate">Suresh Patel</span>
+<span class="px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sub-english text-label-sub-english font-medium whitespace-nowrap">
+              Counter staff
+            </span>
+</div>
+<div class="font-body-md text-body-md text-on-surface-variant truncate">
+            Aaj: 12 bills • 1 discount • 0 void • 0 PIN request
+          </div>
+</div>
+</div>
+<!-- Right Row Actions -->
+<div class="flex items-center gap-space-sm shrink-0">
+<!-- Action 1: PIN Badlo -->
+<button class="h-16 min-w-[136px] px-space-md rounded-[16px] bg-surface-container hover:bg-surface-container-high text-on-surface transition-all flex items-center justify-center gap-2 active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px] text-on-surface-variant">key</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none text-on-surface">PIN Badlo</span>
+<span class="font-label-sub-english text-label-sub-english font-medium text-on-surface-variant leading-tight">Reset PIN</span>
+</div>
+</button>
+<!-- Action 2: Roko (Orange) -->
+<button class="h-16 min-w-[118px] px-space-md rounded-[16px] bg-tertiary-fixed hover:bg-tertiary-fixed-dim text-on-tertiary-fixed transition-all flex items-center justify-center gap-2 active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px] text-tertiary">pause_circle</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none text-tertiary">Roko</span>
+<span class="font-label-sub-english text-label-sub-english font-medium text-tertiary leading-tight">Pause</span>
+</div>
+</button>
+<!-- Action 3: Hatao (Red) -->
+<button class="h-16 min-w-[124px] px-space-md rounded-[16px] bg-error-container hover:bg-error-container/80 text-on-error-container transition-all flex items-center justify-center gap-2 active:translate-y-0.5" type="button">
+<span class="material-symbols-outlined text-[26px] text-error">delete</span>
+<div class="flex flex-col text-left">
+<span class="font-title-hinglish text-title-hinglish font-bold leading-none text-error">Hatao</span>
+<span class="font-label-sub-english text-label-sub-english font-medium text-error leading-tight">Remove</span>
+</div>
+</button>
+</div>
+</div>
+</div>
+<!-- Bottom Visual Activity Bar / Live Counter Metric Context (Fits clean 900px viewport, strictly under limit) -->
+<div class="h-14 bg-surface-container-low px-space-md rounded-[16px] flex items-center justify-between shrink-0 font-label-sub-english text-label-sub-english text-on-surface-variant">
+<div class="flex items-center gap-space-sm">
+<span class="w-3 h-3 rounded-full bg-primary animate-pulse"></span>
+<span class="text-on-surface font-semibold">3 Counter Operators Active</span>
+<span>•</span>
+<span>Kul Aaj Ka Kaam (Total Today): 60 Bills Generated</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-primary">verified_user</span>
+<span class="text-on-surface font-medium">Terminal #1 Shree Medical Store • All Permissions Synced</span>
+</div>
+</div>
+</div></main><footer class="w-full bg-surface-container-low py-space-md shadow-[0_-1px_6px_rgba(0,0,0,0.02)]"><div class="w-full px-space-lg flex flex-col md:flex-row items-center justify-between gap-space-xs font-label-sub-english text-label-sub-english text-on-surface-variant"><div><span>Shree Medical Store • GSTIN: 27AABCU9603R1ZM</span></div><div><span>Desktop POS Terminal #1 • Hospivo Offline Sync Active</span></div></div></footer></body></html>

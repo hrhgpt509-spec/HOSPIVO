@@ -1,0 +1,256 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><title>Hospivo Pharmacy POS</title><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-error-container":"#93000a","on-primary-container":"#f6fff3","tertiary-fixed":"#ffdcc6","primary-fixed":"#8ef9a7","inverse-surface":"#28332f","on-secondary-fixed":"#001c3a","on-secondary-fixed-variant":"#004786","on-primary":"#ffffff","tertiary-container":"#b75b00","on-secondary-container":"#003567","surface-container-low":"#ebf6f0","error":"#ba1a1a","tertiary-fixed-dim":"#ffb786","on-primary-fixed-variant":"#005226","on-tertiary":"#ffffff","on-tertiary-fixed-variant":"#723600","on-tertiary-container":"#fffbff","surface-container":"#e5f0eb","outline":"#6e7a6e","secondary-container":"#54a0fe","surface":"#f1fcf6","inverse-primary":"#72dc8e","surface-variant":"#dae5df","surface-container-high":"#e0ebe5","primary-fixed-dim":"#72dc8e","inverse-on-surface":"#e8f3ee","surface-container-highest":"#dae5df","error-container":"#ffdad6","on-primary-fixed":"#00210b","surface-dim":"#d1ddd7","secondary-fixed-dim":"#a5c8ff","on-error":"#ffffff","tertiary":"#924700","secondary-fixed":"#d4e3ff","background":"#f1fcf6","on-surface-variant":"#3e4a3f","surface-container-lowest":"#ffffff","on-surface":"#141e1a","secondary":"#005faf","surface-bright":"#f1fcf6","primary-container":"#088643","on-tertiary-fixed":"#311300","on-secondary":"#ffffff","surface-tint":"#006d34","outline-variant":"#bdcabc","primary":"#006b33","on-background":"#141e1a"},borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},spacing:{"space-xl":"2.5rem","space-sm":"0.75rem",margin:"2rem","space-lg":"1.5rem","margin-mobile":"1rem",gutter:"1.5rem","gutter-compact":"1rem","space-md":"1rem","space-xs":"0.5rem"},fontFamily:{"label-sub-english":["Noto Sans"],"body-lg":["Noto Sans"],"display-total-mobile":["Noto Sans"],"numpad-number":["Noto Sans"],"body-md":["Noto Sans"],"display-total":["Noto Sans"],"button-text":["Noto Sans"],"headline-lg":["Noto Sans"],"headline-md":["Noto Sans"],"title-hinglish":["Noto Sans"]},fontSize:{"label-sub-english":["16px",{lineHeight:"20px",letterSpacing:"0.01em",fontWeight:"500"}],"body-lg":["20px",{lineHeight:"28px",fontWeight:"500"}],"display-total-mobile":["36px",{lineHeight:"44px",fontWeight:"800"}],"numpad-number":["32px",{lineHeight:"38px",fontWeight:"700"}],"body-md":["18px",{lineHeight:"26px",fontWeight:"400"}],"display-total":["48px",{lineHeight:"56px",letterSpacing:"-0.02em",fontWeight:"800"}],"button-text":["22px",{lineHeight:"28px",fontWeight:"700"}],"headline-lg":["28px",{lineHeight:"36px",fontWeight:"700"}],"headline-md":["24px",{lineHeight:"32px",fontWeight:"700"}],"title-hinglish":["20px",{lineHeight:"26px",fontWeight:"700"}]}}}}</script></head><body class="bg-background font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full px-gutter flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-primary-container text-[24px]">local_pharmacy</span></div><div class="flex flex-col"><span class="font-headline-md text-headline-md tracking-tight text-primary leading-tight">Hospivo</span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">Shree Medical Store - Pharmacy Counter POS</span></div></div><nav class="flex items-center pl-space-md" data-active-classes="bg-primary-container text-on-primary-container font-headline-md"><a class="px-space-md py-space-xs rounded-lg transition-all text-on-surface-variant" data-path="pos-counter" href="#">Home</a></nav></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1.5 rounded-full shadow-[0_1px_4px_rgba(0,0,0,0.02)]"><span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Local mode</span></div><button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[24px]">light_mode</span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="text-right"><div class="font-headline-md text-headline-md leading-tight text-on-surface">Raju Chemist</div><div class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">Operator</div></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 bg-background min-h-screen"><div class="flex flex-col w-full h-[calc(100vh-5rem)] overflow-hidden bg-background select-none">
+<div class="flex flex-1 w-full p-space-md gap-space-lg overflow-hidden">
+<!-- LEFT PANEL: Pending Bills (30%) -->
+<aside class="w-[30%] flex flex-col justify-between h-full bg-surface-container-low rounded-xl p-space-md shadow-sm">
+<div class="flex flex-col gap-space-md overflow-hidden">
+<!-- Left Header -->
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-on-surface">Pending Bills</span>
+<span class="font-headline-md text-headline-md px-space-xs py-0.5 rounded-full bg-primary-container text-on-primary-container">3</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant uppercase tracking-wider">Queue</span>
+</div>
+<!-- 3 Big Rows (80px tall) -->
+<div class="flex flex-col gap-space-sm" id="billsList">
+<!-- Row 1: Selected (Green Accent) -->
+<div class="h-20 w-full bg-surface-container-lowest rounded-xl p-space-sm flex items-center justify-between shadow-md relative overflow-hidden ring-2 ring-primary">
+<div class="absolute left-0 top-0 bottom-0 w-2 bg-primary"></div>
+<div class="flex flex-col justify-center pl-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface leading-tight">Bill 1</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">7 dawai · 2 min pehle</span>
+</div>
+<div class="flex items-center gap-1.5 bg-primary-container text-on-primary-container px-space-sm py-1.5 rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-title-hinglish text-title-hinglish font-bold">Ready</span>
+</div>
+</div>
+<!-- Row 2: Overdue Caution (Orange Accent) -->
+<div class="h-20 w-full bg-surface-container-lowest rounded-xl p-space-sm flex items-center justify-between shadow-sm relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-2 bg-tertiary"></div>
+<div class="flex flex-col justify-center pl-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface leading-tight">Bill 2</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">3 dawai · 6 min</span>
+</div>
+<div class="flex items-center gap-1.5 bg-tertiary-fixed text-on-tertiary-fixed px-space-sm py-1.5 rounded-lg">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-label-sub-english text-label-sub-english font-bold">Ready · der ho rahi hai</span>
+</div>
+</div>
+<!-- Row 3: In Scanning State (Grey Accent) -->
+<div class="h-20 w-full bg-surface-container-lowest rounded-xl p-space-sm flex items-center justify-between shadow-sm relative overflow-hidden opacity-90">
+<div class="absolute left-0 top-0 bottom-0 w-2 bg-outline-variant"></div>
+<div class="flex flex-col justify-center pl-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface leading-tight">Bill 3</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">2 dawai</span>
+</div>
+<div class="flex items-center gap-1.5 bg-surface-container-highest text-on-surface-variant px-space-sm py-1.5 rounded-lg">
+<span class="material-symbols-outlined text-[20px]">barcode_scanner</span>
+<span class="font-label-sub-english text-label-sub-english font-bold">Scan ho raha hai</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Hardware Indicator -->
+<div class="h-16 w-full bg-surface-container rounded-xl px-space-sm flex items-center gap-space-sm shadow-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-primary shadow-xs">
+<span class="material-symbols-outlined text-[24px]">usb</span>
+</div>
+<div class="flex flex-col leading-none">
+<span class="font-title-hinglish text-title-hinglish text-on-surface flex items-center gap-1.5">
+            Scanner Connected
+            <span class="w-2.5 h-2.5 rounded-full bg-primary inline-block"></span>
+</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant pt-0.5">USB Scanner Port 2 · Ready</span>
+</div>
+</div>
+</aside>
+<!-- RIGHT PANEL: Confirmation & Salt Alternative Card (70%) -->
+<section class="w-[70%] flex flex-col justify-between h-full bg-surface-container-lowest rounded-xl p-space-lg shadow-md">
+<div class="flex flex-col gap-space-md">
+<!-- Card Top Bar: Bill & Progress -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-lg text-headline-lg text-on-surface">Bill 1</span>
+<span class="px-space-xs py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sub-english text-label-sub-english">Customer Counter</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="font-title-hinglish text-title-hinglish text-on-surface">Dawai 2 / 7</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">(28%)</span>
+</div>
+</div>
+<!-- Thin Progress Bar -->
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-300" style="width: 28.5%;"></div>
+</div>
+</div>
+<!-- Danger Banner: Stock Khatam -->
+<div class="w-full bg-error-container text-on-error-container rounded-xl p-space-md flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-error text-on-error flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">error</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md text-on-error-container leading-tight">Stock khatam: AZITHRAL 500</span>
+<span class="font-label-sub-english text-label-sub-english text-on-error-container/90">Azithromycin 500mg Tablet · Requested Qty: 10 Tablets</span>
+</div>
+</div>
+<div class="px-space-sm py-1 bg-on-error-container/10 rounded-lg text-on-error-container font-label-sub-english text-label-sub-english font-bold">
+            0 In Stock
+          </div>
+</div>
+<!-- Section Callout -->
+<div class="flex items-center justify-between pt-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface">Isi composition ki ye dawai hain:</span>
+<span class="font-label-sub-english text-label-sub-english text-primary font-bold">Generic Salt: Azithromycin 500mg</span>
+</div>
+<!-- 3 Big Selectable Rows -->
+<div class="flex flex-col gap-space-sm" id="substituteOptions">
+<!-- Option 1: Selected State -->
+<div class="alt-row cursor-pointer h-20 bg-surface-container-low rounded-xl px-space-lg flex items-center justify-between shadow-sm ring-2 ring-primary transition-all relative overflow-hidden" data-id="1">
+<div class="flex items-center gap-space-md">
+<div class="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface leading-tight">Azee 500</span>
+<span class="px-2 py-0.5 rounded bg-primary-container text-on-primary-container font-label-sub-english text-label-sub-english">Cipla</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">S-02 par hai · 20 pcs uplabdh</span>
+</div>
+</div>
+<div class="flex items-baseline gap-1 text-right">
+<span class="font-headline-md text-headline-md text-primary font-bold">₹112</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">/ strip</span>
+</div>
+</div>
+<!-- Option 2: Default State -->
+<div class="alt-row cursor-pointer h-20 bg-surface rounded-xl px-space-lg flex items-center justify-between shadow-xs hover:bg-surface-container-low transition-all" data-id="2">
+<div class="flex items-center gap-space-md">
+<div class="w-9 h-9 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0">
+<span class="font-title-hinglish text-title-hinglish font-bold">2</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface leading-tight">Zithrox 500</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sub-english text-label-sub-english">Mankind</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">S-05 par hai · 8 pcs uplabdh</span>
+</div>
+</div>
+<div class="flex items-baseline gap-1 text-right">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">₹120</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">/ strip</span>
+</div>
+</div>
+<!-- Option 3: Default State -->
+<div class="alt-row cursor-pointer h-20 bg-surface rounded-xl px-space-lg flex items-center justify-between shadow-xs hover:bg-surface-container-low transition-all" data-id="3">
+<div class="flex items-center gap-space-md">
+<div class="w-9 h-9 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0">
+<span class="font-title-hinglish text-title-hinglish font-bold">3</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface leading-tight">Azicip 500</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sub-english text-label-sub-english">Cipla Generic</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">S-06 par hai · 15 pcs uplabdh</span>
+</div>
+</div>
+<div class="flex items-baseline gap-1 text-right">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">₹109</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">/ strip</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Buttons & Shortcuts Area -->
+<div class="flex flex-col gap-space-md pt-space-xs">
+<!-- Two Action Buttons (min 56px, 16px radius) -->
+<div class="grid grid-cols-12 gap-space-md">
+<!-- Skip Button -->
+<button class="col-span-4 h-16 rounded-xl bg-surface-container-high hover:bg-surface-container-highest active:translate-y-0.5 text-on-surface flex items-center justify-center gap-space-sm px-space-md shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[28px] text-on-surface-variant">fast_forward</span>
+<div class="flex flex-col items-start leading-none">
+<span class="font-title-hinglish text-title-hinglish text-on-surface">S = Skip</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant pt-0.5">Aage Badho</span>
+</div>
+</button>
+<!-- Primary Green Chuno Button -->
+<button class="col-span-8 h-16 rounded-xl bg-primary hover:bg-primary-container active:translate-y-0.5 text-on-primary flex items-center justify-between px-space-lg shadow-md transition-all" type="button">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-lg bg-on-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px] text-on-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex flex-col items-start leading-none text-left">
+<span class="font-button-text text-button-text text-on-primary">Chuno (Azee 500)</span>
+<span class="font-label-sub-english text-label-sub-english text-primary-fixed pt-0.5">Select Alternative</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 bg-black/20 px-space-sm py-1.5 rounded-lg text-on-primary font-headline-md text-headline-md">
+<span class="">Press ENTER</span>
+<span class="material-symbols-outlined text-[20px]">keyboard_return</span>
+</div>
+</button>
+</div>
+<!-- POS Keyboard Shortcuts Strip (>=16px font) -->
+<div class="w-full h-12 bg-surface-container rounded-xl px-space-md flex items-center justify-between text-on-surface-variant shadow-xs">
+<div class="flex items-center gap-1.5 font-label-sub-english text-label-sub-english">
+<kbd class="px-2 py-0.5 bg-surface-container-lowest rounded shadow-xs font-bold text-on-surface">Enter</kbd>
+<span class="">= Aage</span>
+</div>
+<div class="flex items-center gap-1.5 font-label-sub-english text-label-sub-english">
+<kbd class="px-2 py-0.5 bg-surface-container-lowest rounded shadow-xs font-bold text-on-surface">←</kbd>
+<span class="">= Wapas</span>
+</div>
+<div class="flex items-center gap-1.5 font-label-sub-english text-label-sub-english">
+<kbd class="px-2 py-0.5 bg-surface-container-lowest rounded shadow-xs font-bold text-on-surface">S</kbd>
+<span class="">= Skip</span>
+</div>
+<div class="flex items-center gap-1.5 font-label-sub-english text-label-sub-english">
+<kbd class="px-2 py-0.5 bg-surface-container-lowest rounded shadow-xs font-bold text-on-surface">L</kbd>
+<span class="">= Loose</span>
+</div>
+<div class="flex items-center gap-1.5 font-label-sub-english text-label-sub-english">
+<kbd class="px-2 py-0.5 bg-surface-container-lowest rounded shadow-xs font-bold text-on-surface">Delete</kbd>
+<span class="">= Hatao</span>
+</div>
+<div class="flex items-center gap-1.5 font-label-sub-english text-label-sub-english">
+<kbd class="px-2 py-0.5 bg-surface-container-lowest rounded shadow-xs font-bold text-on-surface">B</kbd>
+<span class="">= Batch badlo</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<script>
+  // Simple interactive selection logic for fast counter flow
+  document.querySelectorAll('.alt-row').forEach(row => {
+    row.addEventListener('click', () => {
+      document.querySelectorAll('.alt-row').forEach(r => {
+        r.classList.remove('ring-2', 'ring-primary', 'bg-surface-container-low');
+        r.classList.add('bg-surface');
+        const iconDiv = r.querySelector('.rounded-full');
+        if (iconDiv) {
+          iconDiv.className = 'w-9 h-9 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0';
+          iconDiv.innerHTML = `<span class="font-title-hinglish text-title-hinglish font-bold">${r.dataset.id}</span>`;
+        }
+      });
+      row.classList.remove('bg-surface');
+      row.classList.add('ring-2', 'ring-primary', 'bg-surface-container-low');
+      const iconDiv = row.querySelector('.rounded-full');
+      if (iconDiv) {
+        iconDiv.className = 'w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0';
+        iconDiv.innerHTML = `<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">check</span>`;
+      }
+    });
+  });
+</script></main><footer class="w-full bg-surface-container-low py-space-md"><div class="w-full px-gutter flex items-center justify-between text-on-surface-variant font-label-sub-english text-label-sub-english"><span class="">© Hospivo Healthcare Cloud. Licensed to Shree Medical Store.</span><span class="">Physical Counter POS • Terminal 01</span></div></footer>
+
+</body></html>

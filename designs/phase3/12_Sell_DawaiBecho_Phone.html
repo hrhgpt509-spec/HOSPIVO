@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=390, height=844, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Hospivo - Dawai Becho (Mobile)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#1B8F4A',
+              dark: '#136b37',
+              light: '#E8F5ED',
+            },
+            canvas: '#F4F6F5',
+            surface: '#FFFFFF',
+            bordercol: '#E5E7EB',
+            textmain: '#111827',
+            textmuted: '#4B5563',
+          },
+          fontFamily: {
+            sans: ['"Noto Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    html, body {
+      width: 390px;
+      height: 844px;
+      margin: 0;
+      padding: 0;
+      background-color: #F4F6F5;
+      font-family: 'Noto Sans', sans-serif;
+      color: #111827;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body class="w-[390px] h-[844px] bg-[#F4F6F5] flex flex-col justify-between relative overflow-hidden select-none">
+<!-- Top Container -->
+<div class="flex flex-col w-full px-4 pt-3 pb-2 gap-3 shrink-0">
+<!-- Top Navigation Header -->
+<header class="flex items-center justify-between w-full h-14">
+<!-- Left: Home Button (56px tall, rounded 16px) -->
+<button class="flex items-center gap-2 px-4 h-14 bg-white border border-[#E5E7EB] rounded-2xl shadow-sm text-[#111827] active:scale-95 transition-transform" type="button">
+<svg class="w-6 h-6 text-[#1B8F4A]" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+<span class="text-[17px] font-bold tracking-tight">Home</span>
+</button>
+<!-- Center / Screen Title -->
+<h1 class="text-[20px] font-bold text-[#111827] tracking-tight">
+        Dawai Becho
+      </h1>
+<!-- Right: User chip -->
+<div class="flex items-center justify-end">
+<div class="flex items-center gap-1.5 px-3 py-1.5 bg-[#E8F5ED] rounded-xl border border-[#1B8F4A]/20">
+<span class="w-2 h-2 rounded-full bg-[#1B8F4A]"></span>
+<span class="text-[16px] font-semibold text-[#1B8F4A]">Raju</span>
+</div>
+</div>
+</header>
+<!-- Search Box (Big with scan icon) -->
+<div class="w-full relative">
+<div class="flex items-center w-full bg-white border-2 border-[#1B8F4A] rounded-2xl shadow-sm px-3.5 h-14 focus-within:ring-2 focus-within:ring-[#1B8F4A]/30">
+<svg class="w-6 h-6 text-[#1B8F4A] shrink-0 mr-2.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
+<circle cx="11" cy="11" r="8"></circle>
+<line x1="21" x2="16.65" y1="21" y2="16.65"></line>
+</svg>
+<input class="w-full bg-transparent text-[17px] font-medium text-[#111827] placeholder-[#6B7280] outline-none" placeholder="Dawai ka naam, short code ya scan karein" readonly="" type="text" value="Crocin"/>
+<!-- Barcode / Scan Icon Button -->
+<button aria-label="Scan" class="w-10 h-10 flex items-center justify-center bg-[#E8F5ED] text-[#1B8F4A] rounded-xl ml-1 shrink-0 active:scale-95 transition-transform" type="button">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+<path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+<path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+<path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+<line x1="7" x2="7" y1="8" y2="16"></line>
+<line x1="12" x2="12" y1="8" y2="16"></line>
+<line x1="17" x2="17" y1="8" y2="16"></line>
+</svg>
+</button>
+</div>
+</div>
+</div>
+<!-- Main Content: 3 Big Result Rows -->
+<main class="flex-1 w-full px-4 py-1 flex flex-col gap-3.5 overflow-hidden"><!-- Result Row 1 -->
+<div class="w-full h-[72px] bg-white border border-[#E5E7EB] rounded-2xl px-4 flex items-center justify-between active:border-[#1B8F4A] transition-all shadow-sm shrink-0">
+<div class="flex flex-col justify-center min-w-0 pr-2">
+<h2 class="text-[20px] font-bold text-[#111827] leading-tight truncate">Crocin 500</h2>
+<p class="text-[16px] font-medium text-[#4B5563] leading-tight mt-0.5">
+          S-04 par hai · 25 pcs · Rs. 32
+        </p>
+</div>
+<!-- Add Button: 56px square/rounded -->
+<button aria-label="Add Crocin 500" class="w-14 h-14 min-w-[56px] min-h-[56px] rounded-2xl bg-[#E8F5ED] text-[#1B8F4A] flex items-center justify-center font-bold active:bg-[#1B8F4A] active:text-white transition-colors shrink-0" type="button">
+<svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<line x1="12" x2="12" y1="5" y2="19"></line>
+<line x1="5" x2="19" y1="12" y2="12"></line>
+</svg>
+</button>
+</div>
+<!-- Result Row 2 -->
+<div class="w-full h-[72px] bg-white border border-[#E5E7EB] rounded-2xl px-4 flex items-center justify-between active:border-[#1B8F4A] transition-all shadow-sm shrink-0">
+<div class="flex flex-col justify-center min-w-0 pr-2">
+<h2 class="text-[20px] font-bold text-[#111827] leading-tight truncate">Crocin Advance</h2>
+<p class="text-[16px] font-medium text-[#4B5563] leading-tight mt-0.5">
+          S-04 par hai · 10 pcs · Rs. 45
+        </p>
+</div>
+<!-- Add Button: 56px square/rounded -->
+<button aria-label="Add Crocin Advance" class="w-14 h-14 min-w-[56px] min-h-[56px] rounded-2xl bg-[#E8F5ED] text-[#1B8F4A] flex items-center justify-center font-bold active:bg-[#1B8F4A] active:text-white transition-colors shrink-0" type="button">
+<svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<line x1="12" x2="12" y1="5" y2="19"></line>
+<line x1="5" x2="19" y1="12" y2="12"></line>
+</svg>
+</button>
+</div>
+<!-- Result Row 3 -->
+<div class="w-full h-[72px] bg-white border border-[#E5E7EB] rounded-2xl px-4 flex items-center justify-between active:border-[#1B8F4A] transition-all shadow-sm shrink-0">
+<div class="flex flex-col justify-center min-w-0 pr-2">
+<h2 class="text-[20px] font-bold text-[#111827] leading-tight truncate">Azithral 500</h2>
+<p class="text-[16px] font-medium text-[#4B5563] leading-tight mt-0.5">
+          S-02 par hai · 14 pcs · Rs. 118
+        </p>
+</div>
+<!-- Add Button: 56px square/rounded -->
+<button aria-label="Add Azithral 500" class="w-14 h-14 min-w-[56px] min-h-[56px] rounded-2xl bg-[#E8F5ED] text-[#1B8F4A] flex items-center justify-center font-bold active:bg-[#1B8F4A] active:text-white transition-colors shrink-0" type="button">
+<svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<line x1="12" x2="12" y1="5" y2="19"></line>
+<line x1="5" x2="19" y1="12" y2="12"></line>
+</svg>
+</button>
+</div>
+<!-- Result Row 4 (Newly requested Dolo 650) -->
+<div class="w-full h-[72px] bg-white border border-[#E5E7EB] rounded-2xl px-4 flex items-center justify-between active:border-[#1B8F4A] transition-all shadow-sm shrink-0">
+<div class="flex flex-col justify-center min-w-0 pr-2">
+<h2 class="text-[20px] font-bold text-[#111827] leading-tight truncate">Dolo 650</h2>
+<p class="text-[16px] font-medium text-[#4B5563] leading-tight mt-0.5">
+          S-01 par hai · 50 pcs · Rs. 30
+        </p>
+</div>
+<!-- Add Button: 56px square/rounded -->
+<button aria-label="Add Dolo 650" class="w-14 h-14 min-w-[56px] min-h-[56px] rounded-2xl bg-[#E8F5ED] text-[#1B8F4A] flex items-center justify-center font-bold active:bg-[#1B8F4A] active:text-white transition-colors shrink-0" type="button">
+<svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<line x1="12" x2="12" y1="5" y2="19"></line>
+<line x1="5" x2="19" y1="12" y2="12"></line>
+</svg>
+</button>
+</div></main>
+<!-- Sticky Bottom Bar -->
+<footer class="w-full bg-white border-t-2 border-[#E5E7EB] rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-5 flex flex-col gap-3 shrink-0"><!-- Top Summary Row: Up arrow & Bill Summary (18px font-bold), Dawai list removed -->
+<div class="flex items-center gap-2.5 w-full pt-0.5">
+<button aria-label="Open bill panel" class="w-10 h-10 rounded-full bg-[#F4F6F5] border border-[#E5E7EB] flex items-center justify-center text-[#111827] active:scale-95 transition-transform shrink-0" type="button">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24">
+<polyline points="18 15 12 9 6 15"></polyline>
+</svg>
+</button>
+<div class="text-[18px] font-bold text-[#111827] tracking-tight">
+        BILL #214 · 2 items · <span class="text-[#1B8F4A]">Rs. 182</span>
+</div>
+</div>
+<!-- Big Green Action Button: Bill Banao (60px tall, rounded-2xl / 16px radius) -->
+<button class="w-full h-[60px] bg-[#1B8F4A] hover:bg-[#136b37] text-white rounded-2xl px-5 flex items-center justify-center gap-3 shadow-md shadow-[#1B8F4A]/25 active:scale-[0.98] transition-all" type="button">
+<svg class="w-7 h-7 text-white shrink-0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+<polyline points="14 2 14 8 20 8"></polyline>
+<line x1="16" x2="8" y1="13" y2="13"></line>
+<line x1="16" x2="8" y1="17" y2="17"></line>
+<line x1="10" x2="8" y1="9" y2="9"></line>
+</svg>
+<div class="flex flex-col items-start justify-center text-left leading-tight">
+<span class="text-[20px] font-extrabold tracking-tight">Bill Banao</span>
+<span class="text-[16px] font-normal text-white/90">Make bill</span>
+</div>
+</button></footer>
+</body>
+</html>

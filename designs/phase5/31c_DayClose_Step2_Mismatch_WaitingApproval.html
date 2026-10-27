@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hospivo - Din Band (Step 2 of 4: Milan)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#1B8F4A",
+            "page-bg": "#F4F6F5",
+            "orange-banner-bg": "#FFF3E0",
+            "orange-banner-border": "#E65100",
+            "orange-banner-text": "#E65100",
+            "danger": "#BA1A1A",
+            "danger-bg": "#FFDAD6",
+            "danger-text": "#93000A"
+          },
+          fontFamily: {
+            sans: ["Noto Sans", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      overscroll-behavior: none;
+    }
+  </style>
+</head>
+<body class="bg-[#F4F6F5] text-[#141E1A] antialiased overflow-hidden h-[900px] max-h-[900px] w-full select-none flex flex-col justify-between">
+<!-- Top Bar -->
+<header class="h-20 w-full bg-white border-b-2 border-[#E0EBE5] px-8 flex items-center justify-between shrink-0 shadow-sm">
+<!-- Left: Brand & Shop Info -->
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2.5">
+<div class="w-11 h-11 rounded-lg bg-[#006B33] flex items-center justify-center text-white shadow-sm">
+<span class="material-symbols-outlined text-[26px]">local_pharmacy</span>
+</div>
+<span class="text-[26px] font-bold text-[#006B33] tracking-tight">Hospivo</span>
+</div>
+<div class="h-8 w-[2px] bg-[#CFDCD5]"></div>
+<div class="flex flex-col justify-center">
+<span class="text-[20px] font-bold text-[#141E1A] leading-tight">Shree Medical Store</span>
+</div>
+</div>
+<!-- Center: Status Chip -->
+<div class="flex items-center">
+<div class="flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E5F0EB] border border-[#BDCABC]">
+<span class="w-3 h-3 rounded-full bg-[#006B33] inline-block animate-pulse"></span>
+<span class="text-[16px] font-bold text-[#141E1A]">Local mode</span>
+</div>
+</div>
+<!-- Right: Theme, User & Home -->
+<div class="flex items-center gap-4">
+<!-- Light / Dark Switch -->
+<button aria-label="Toggle Light and Dark Mode" class="w-12 h-12 rounded-lg bg-[#EBF6F0] border border-[#BDCABC] flex items-center justify-center text-[#3E4A3F] hover:bg-[#E0EBE5] transition-colors" type="button">
+<span class="material-symbols-outlined text-[24px]">light_mode</span>
+</button>
+<!-- User Profile -->
+<div class="flex items-center gap-3 pl-2.5 pr-4 py-1.5 rounded-lg bg-[#EBF6F0] border border-[#BDCABC]">
+<div class="w-9 h-9 rounded-full bg-[#006B33] flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[20px]">person</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[18px] font-bold text-[#141E1A] leading-tight">Raju</span>
+<span class="text-[16px] font-medium text-[#3E4A3F] leading-tight">Cashier / Pharmacist</span>
+</div>
+</div>
+<!-- Home Button -->
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#006B33] text-white shadow hover:bg-[#088643] transition-colors" type="button">
+<span class="material-symbols-outlined text-[24px]">home</span>
+<div class="flex flex-col items-start leading-none">
+<span class="text-[18px] font-bold leading-tight">Ghar</span>
+<span class="text-[16px] text-white/90 leading-tight">Home</span>
+</div>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="w-full flex-1 max-w-[1400px] mx-auto px-8 py-4 flex flex-col justify-between">
+<!-- Header & Progress -->
+<div class="flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="text-[28px] font-bold text-[#141E1A]">Din Band</span>
+<span class="text-[24px] text-[#6E7A6E]">/</span>
+<div class="flex items-baseline gap-2">
+<span class="text-[24px] font-bold text-[#1B8F4A]">Step 2 of 4: Milan</span>
+<span class="text-[18px] text-[#3E4A3F] font-medium">(Match cash)</span>
+</div>
+</div>
+<div class="flex items-center bg-[#E0EBE5] px-4 py-1.5 rounded-full">
+<span class="text-[16px] text-[#141E1A] font-bold">Step 2 / 4</span>
+</div>
+</div>
+<!-- Exactly 2 filled in green, 2 track segments in grey -->
+<div class="grid grid-cols-4 gap-3 w-full h-3">
+<div class="bg-[#1B8F4A] rounded-full h-full shadow-sm"></div>
+<div class="bg-[#1B8F4A] rounded-full h-full shadow-sm"></div>
+<div class="bg-[#DAE5DF] rounded-full h-full"></div>
+<div class="bg-[#DAE5DF] rounded-full h-full"></div>
+</div>
+</div>
+<!-- Semantic Orange Banner -->
+<div class="w-full bg-[#FFF3E0] border-2 border-[#E65100] text-[#E65100] rounded-2xl px-6 py-3.5 flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[30px]" style="font-variation-settings: 'FILL' 1;">cloud_off</span>
+<span class="text-[20px] font-bold tracking-tight">Internet nahi hai · Owner tak nahi pahunchi</span>
+</div>
+<div class="px-4 py-1.5 rounded-full bg-white/80 border border-[#E65100] text-[#E65100] text-[16px] font-semibold">
+        Waiting for internet — not sent to owner
+      </div>
+</div>
+<!-- 3 Big Comparison Rows on White Cards -->
+<div class="flex flex-col gap-3">
+<!-- Row 1: Expected -->
+<div class="bg-white rounded-2xl px-8 py-4 border border-[#E0EBE5] shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-xl bg-[#E5F0EB] flex items-center justify-center text-[#141E1A]">
+<span class="material-symbols-outlined text-[32px]">point_of_sale</span>
+</div>
+<span class="text-[24px] font-bold text-[#141E1A]">Hona chahiye: Rs. 18,240</span>
+</div>
+<span class="text-[40px] font-extrabold text-[#141E1A] tracking-tight">Rs. 18,240</span>
+</div>
+<!-- Row 2: Counted -->
+<div class="bg-white rounded-2xl px-8 py-4 border border-[#E0EBE5] shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-xl bg-[#E5F0EB] flex items-center justify-center text-[#141E1A]">
+<span class="material-symbols-outlined text-[32px]">payments</span>
+</div>
+<span class="text-[24px] font-bold text-[#141E1A]">Aapne gina: Rs. 18,100</span>
+</div>
+<span class="text-[40px] font-extrabold text-[#141E1A] tracking-tight">Rs. 18,100</span>
+</div>
+<!-- Row 3: Difference -->
+<div class="bg-white rounded-2xl px-8 py-4 border-2 border-[#BA1A1A] shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-xl bg-[#FFDAD6] flex items-center justify-center text-[#BA1A1A]">
+<span class="material-symbols-outlined text-[32px]">trending_down</span>
+</div>
+<span class="text-[24px] font-bold text-[#BA1A1A]">Fark</span>
+</div>
+<span class="text-[40px] font-extrabold text-[#BA1A1A] tracking-tight">Fark: Rs. 140 kam</span>
+</div>
+</div>
+<!-- Red Dedicated Alert Box -->
+<div class="w-full bg-[#FFDAD6] border-2 border-[#BA1A1A] text-[#93000A] rounded-2xl px-6 py-3.5 flex items-center gap-3 shadow-sm">
+<span class="material-symbols-outlined text-[30px] text-[#BA1A1A]" style="font-variation-settings: 'FILL' 1;">error</span>
+<span class="text-[20px] font-bold text-[#BA1A1A]">Din Band abhi poora nahi hua.</span>
+</div>
+<!-- Bottom Action Bar -->
+<div class="w-full bg-white rounded-2xl px-6 py-3.5 border border-[#E0EBE5] shadow-md flex items-center justify-between">
+<!-- Left button: Wapas -->
+<button class="min-h-[58px] min-w-[200px] px-6 rounded-2xl bg-[#E5F0EB] hover:bg-[#DAE5DF] active:translate-y-[1px] transition-all flex items-center justify-center gap-3 text-[#141E1A]" type="button">
+<span class="material-symbols-outlined text-[28px] text-[#141E1A]">arrow_back</span>
+<div class="flex flex-col items-start leading-none">
+<span class="text-[20px] font-bold text-[#141E1A]">Wapas</span>
+<span class="text-[16px] text-[#3E4A3F] font-medium mt-0.5">Back</span>
+</div>
+</button>
+<!-- Middle/Center-Right Active button: Cash Ginti Save Karo -->
+<button class="min-h-[58px] min-w-[340px] px-8 rounded-2xl bg-[#1B8F4A] hover:bg-[#15773D] text-white active:translate-y-[1px] transition-all flex items-center justify-center gap-3 shadow-md" type="button">
+<span class="material-symbols-outlined text-[28px] text-white" style="font-variation-settings: 'FILL' 1;">save</span>
+<div class="flex flex-col items-start leading-none">
+<span class="text-[20px] font-bold text-white">Cash Ginti Save Karo</span>
+<span class="text-[16px] text-white/90 font-medium mt-0.5">Save count</span>
+</div>
+</button>
+<!-- Right Disabled button: Aage -->
+<button aria-disabled="true" class="min-h-[58px] min-w-[200px] px-6 rounded-2xl bg-[#E0EBE5] text-[#6E7A6E] opacity-75 cursor-not-allowed flex items-center justify-center gap-3 border border-[#BDCABC]" disabled="" type="button">
+<div class="flex flex-col items-start leading-none">
+<span class="text-[20px] font-bold text-[#6E7A6E]">Aage</span>
+<span class="text-[16px] text-[#6E7A6E] font-medium mt-0.5">Next</span>
+</div>
+<span class="material-symbols-outlined text-[26px] text-[#6E7A6E]">lock</span>
+</button>
+</div>
+</main>
+</body></html>

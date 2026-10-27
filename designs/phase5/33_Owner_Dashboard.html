@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Hospivo POS</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"tertiary":"#924700","background":"#f1fcf6","on-error":"#ffffff","inverse-primary":"#72dc8e","surface":"#f1fcf6","surface-container-high":"#e0ebe5","on-primary-fixed-variant":"#005226","secondary-fixed-dim":"#a5c8ff","outline":"#6e7a6e","error":"#ba1a1a","on-tertiary-container":"#fffbff","primary":"#006b33","surface-dim":"#d1ddd7","error-container":"#ffdad6","on-error-container":"#93000a","primary-fixed-dim":"#72dc8e","primary-container":"#088643","on-secondary-container":"#003567","surface-bright":"#f1fcf6","inverse-on-surface":"#e8f3ee","on-tertiary-fixed-variant":"#723600","tertiary-fixed-dim":"#ffb786","tertiary-container":"#b75b00","surface-variant":"#dae5df","on-primary-container":"#f6fff3","on-secondary-fixed-variant":"#004786","on-tertiary":"#ffffff","outline-variant":"#bdcabc","on-surface-variant":"#3e4a3f","secondary-container":"#54a0fe","surface-container-highest":"#dae5df","primary-fixed":"#8ef9a7","tertiary-fixed":"#ffdcc6","on-primary-fixed":"#00210b","on-primary":"#ffffff","secondary-fixed":"#d4e3ff","secondary":"#005faf","surface-container":"#e5f0eb","on-secondary":"#ffffff","surface-container-low":"#ebf6f0","on-surface":"#141e1a","on-secondary-fixed":"#001c3a","surface-tint":"#006d34","inverse-surface":"#28332f","on-tertiary-fixed":"#311300","surface-container-lowest":"#ffffff","on-background":"#141e1a"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin-mobile":"1rem","space-sm":"0.75rem","space-md":"1rem","space-xl":"2.5rem","space-lg":"1.5rem","gutter":"1.5rem","margin":"2rem","gutter-compact":"1rem","space-xs":"0.5rem"},"fontFamily":{"body-md":["Noto Sans"],"display-total":["Noto Sans"],"display-total-mobile":["Noto Sans"],"label-sub-english":["Noto Sans"],"headline-lg":["Noto Sans"],"title-hinglish":["Noto Sans"],"headline-md":["Noto Sans"],"body-lg":["Noto Sans"],"numpad-number":["Noto Sans"],"button-text":["Noto Sans"]},"fontSize":{"body-md":["18px",{"lineHeight":"26px","fontWeight":"400"}],"display-total":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"800"}],"display-total-mobile":["36px",{"lineHeight":"44px","fontWeight":"800"}],"label-sub-english":["16px",{"lineHeight":"20px","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg":["28px",{"lineHeight":"36px","fontWeight":"700"}],"title-hinglish":["20px",{"lineHeight":"26px","fontWeight":"700"}],"headline-md":["24px",{"lineHeight":"32px","fontWeight":"700"}],"body-lg":["20px",{"lineHeight":"28px","fontWeight":"500"}],"numpad-number":["32px",{"lineHeight":"38px","fontWeight":"700"}],"button-text":["22px",{"lineHeight":"28px","fontWeight":"700"}]}}}}</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased select-none"><header class="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full px-gutter flex items-center justify-between"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs"><span class="text-primary font-headline-md text-headline-md tracking-tight uppercase">HOSPIVO</span><span class="text-outline-variant font-body-lg text-body-lg leading-none">|</span><span class="font-title-hinglish text-title-hinglish text-on-surface">Shree Medical Store</span></div><div class="inline-flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-low"><span class="w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-primary/20"></span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Local mode</span></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-space-sm py-1.5 rounded-lg bg-surface-container-low"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="flex flex-col"><span class="font-label-sub-english text-label-sub-english text-on-surface font-bold leading-tight">Owner</span><span class="text-[11px] text-on-surface-variant font-medium leading-none">Operator</span></div></div><button aria-label="Toggle Light or Dark theme" class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[20px]">dark_mode</span></button><nav class="flex items-center" data-active-classes="bg-primary text-on-primary shadow-sm"><a class="inline-flex items-center gap-space-xs h-10 px-space-md rounded-lg font-title-hinglish transition-all text-on-surface-variant" data-path="billing-counter" href="#"><span class="material-symbols-outlined text-[20px]">home</span><span>Ghar / Home</span></a></nav></div></div></header><main class="w-full pt-16 bg-surface"><div class="flex flex-col w-full h-[calc(100vh-64px)] max-h-[836px] overflow-hidden px-gutter py-space-sm gap-space-sm box-border select-none bg-surface">
+<!-- Header Area -->
+<div class="flex items-baseline gap-space-xs flex-shrink-0">
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight">
+      Dashboard
+    </h1>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">
+      Overview
+    </span>
+</div>
+<!-- Row 1: 4 Key Metric Stat Cards -->
+<div class="grid grid-cols-4 gap-space-md flex-shrink-0">
+<!-- Stat 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-[20px] shadow-sm flex flex-col justify-between">
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">
+        Aaj ki bikri
+      </div>
+<div class="font-display-total-mobile text-display-total-mobile text-on-surface font-bold tracking-tight mt-1">
+        Rs. 12,400
+      </div>
+</div>
+<!-- Stat 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-[20px] shadow-sm flex flex-col justify-between">
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">
+        Is mahine ki bikri
+      </div>
+<div class="font-display-total-mobile text-display-total-mobile text-on-surface font-bold tracking-tight mt-1">
+        Rs. 3,40,000
+      </div>
+</div>
+<!-- Stat 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-[20px] shadow-sm flex flex-col justify-between">
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">
+        Munafa
+      </div>
+<div class="font-display-total-mobile text-display-total-mobile text-primary font-bold tracking-tight mt-1">
+        Rs. 48,000
+      </div>
+</div>
+<!-- Stat 4 -->
+<div class="bg-surface-container-lowest rounded-xl p-[20px] shadow-sm flex flex-col justify-between">
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">
+        Udhaar baki
+      </div>
+<div class="font-display-total-mobile text-display-total-mobile text-error font-bold tracking-tight mt-1">
+        Rs. 5,600
+      </div>
+</div>
+</div>
+<!-- Row 2: Cash / UPI / Udhaar Proportional Split Strip -->
+<div class="bg-surface-container-lowest rounded-xl px-space-lg py-space-sm shadow-sm flex flex-col justify-center gap-space-xs flex-shrink-0">
+<div class="flex items-center justify-between">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold">
+        Cash / UPI / Udhaar
+      </span>
+<!-- Legend -->
+<div class="flex items-center gap-space-lg font-label-sub-english text-label-sub-english">
+<div class="flex items-center gap-space-xs">
+<span class="w-3.5 h-3.5 rounded-full bg-primary flex-shrink-0"></span>
+<span class="text-on-surface-variant">Cash</span>
+<span class="font-bold text-on-surface">Rs. 7,200</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="w-3.5 h-3.5 rounded-full bg-secondary flex-shrink-0"></span>
+<span class="text-on-surface-variant">UPI</span>
+<span class="font-bold text-on-surface">Rs. 3,900</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<span class="w-3.5 h-3.5 rounded-full bg-tertiary flex-shrink-0"></span>
+<span class="text-on-surface-variant">Udhaar</span>
+<span class="font-bold text-on-surface">Rs. 1,300</span>
+</div>
+</div>
+</div>
+<!-- Segmented Strip -->
+<div class="w-full h-3 rounded-full overflow-hidden flex bg-surface-container">
+<div class="h-full bg-primary" style="width: 58%;"></div>
+<div class="h-full bg-secondary" style="width: 31%;"></div>
+<div class="h-full bg-tertiary" style="width: 11%;"></div>
+</div>
+</div>
+<!-- Row 3: 3 Column Detailed Status Cards -->
+<div class="grid grid-cols-3 gap-space-md flex-1 min-h-0">
+<!-- Column 1: Zyada bikne wali dawai -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="font-title-hinglish text-title-hinglish text-on-surface font-bold">
+        Zyada bikne wali dawai
+      </div>
+<div class="flex flex-col gap-1.5 font-body-md text-body-md">
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">1. Paracetamol 500mg</span>
+<span class="text-on-surface-variant font-bold flex-shrink-0 ml-2">120 strips</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">2. Azithral 500</span>
+<span class="text-on-surface-variant font-bold flex-shrink-0 ml-2">85 strips</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">3. Pan 40</span>
+<span class="text-on-surface-variant font-bold flex-shrink-0 ml-2">74 strips</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">4. Dolo 650</span>
+<span class="text-on-surface-variant font-bold flex-shrink-0 ml-2">62 strips</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">5. Limcee 500mg</span>
+<span class="text-on-surface-variant font-bold flex-shrink-0 ml-2">50 strips</span>
+</div>
+</div>
+</div>
+<!-- Column 2: Expiry alert -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold">
+          Expiry alert
+        </span>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed font-label-sub-english text-label-sub-english font-bold px-space-sm py-0.5 rounded-full">
+          5 dawai in 30 din
+        </span>
+</div>
+<div class="flex flex-col gap-1.5 font-body-md text-body-md">
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">Augmentin 625 Duo</span>
+<span class="text-tertiary font-bold flex-shrink-0 ml-2">14 din baaki</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">Cipcal 500</span>
+<span class="text-tertiary font-bold flex-shrink-0 ml-2">18 din baaki</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">Allegra 120mg</span>
+<span class="text-tertiary font-bold flex-shrink-0 ml-2">21 din baaki</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">Ascoril LS Syrup</span>
+<span class="text-tertiary font-bold flex-shrink-0 ml-2">25 din baaki</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">Betadine 10% Ointment</span>
+<span class="text-tertiary font-bold flex-shrink-0 ml-2">29 din baaki</span>
+</div>
+</div>
+</div>
+<!-- Column 3: Kam stock -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-center justify-between">
+<span class="font-title-hinglish text-title-hinglish text-on-surface font-bold">
+          Kam stock
+        </span>
+<span class="bg-error-container text-on-error-container font-label-sub-english text-label-sub-english font-bold px-space-sm py-0.5 rounded-full">
+          12 dawai
+        </span>
+</div>
+<div class="flex flex-col gap-1.5 font-body-md text-body-md">
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">Montair LC</span>
+<span class="text-error font-bold flex-shrink-0 ml-2">2 strips bache</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">Pantocid DSR</span>
+<span class="text-error font-bold flex-shrink-0 ml-2">3 strips bache</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">Telma 40mg</span>
+<span class="text-error font-bold flex-shrink-0 ml-2">4 strips bache</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">Shelcal 500</span>
+<span class="text-error font-bold flex-shrink-0 ml-2">5 strips bache</span>
+</div>
+<div class="flex items-center justify-between py-1 bg-surface-container-low px-space-sm rounded-lg">
+<span class="text-on-surface font-medium truncate">Becosules Z</span>
+<span class="text-error font-bold flex-shrink-0 ml-2">6 strips bache</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Row 4: Operational Status & Staff Activity -->
+<div class="grid grid-cols-2 gap-space-md flex-shrink-0 mb-1">
+<!-- Backup Status Block -->
+<div class="bg-surface-container-lowest rounded-xl px-space-lg py-3 shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div class="flex items-center gap-space-xs font-title-hinglish text-title-hinglish text-on-surface font-bold">
+<span>Backup: Aaj</span>
+</div>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-primary font-bold bg-surface-container-low px-space-sm py-1 rounded-lg">
+        Surakshit
+      </span>
+</div>
+<!-- Staff Work Activity Block -->
+<div class="bg-surface-container-lowest rounded-xl px-space-lg py-3 shadow-sm flex items-center justify-between">
+<div class="font-title-hinglish text-title-hinglish text-on-surface font-bold flex-shrink-0">
+        Staff ki kaam
+      </div>
+<div class="font-body-md text-body-md text-on-surface bg-surface-container-low px-space-md py-1 rounded-lg">
+<span class="font-bold text-on-surface">Raju</span>
+<span class="text-outline-variant mx-1">·</span>
+<span class="font-medium text-on-surface-variant">30 bills</span>
+<span class="text-outline-variant mx-1">·</span>
+<span class="font-medium text-on-surface-variant">2 discount</span>
+<span class="text-outline-variant mx-1">·</span>
+<span class="font-medium text-on-surface-variant">0 void</span>
+</div>
+</div>
+</div>
+</div></main></body></html>

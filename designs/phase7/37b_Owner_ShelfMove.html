@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="hi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440, height=900, initial-scale=1.0">
+  <title>Hospivo - Dawai ki self badlo Dialog</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#1B8F4A',
+              dark: '#146C38',
+              light: '#E8F5EE',
+              surface: '#F4F6F5',
+            },
+            text: {
+              main: '#1A2E26',
+              muted: '#52695E',
+            }
+          },
+          fontFamily: {
+            sans: ['"Noto Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 1440px;
+      height: 900px;
+      background-color: #F4F6F5;
+      color: #1A2E26;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="relative w-[1440px] h-[900px] overflow-hidden bg-[#F4F6F5] flex flex-col justify-between">
+
+  <!-- ================= BACKGROUND BASE SCREEN: SELF (SHELF MAP) ================= -->
+  <div class="absolute inset-0 flex flex-col justify-between z-0 pointer-events-none select-none filter blur-[1px]">
+    <!-- Top Bar -->
+    <header class="h-[76px] bg-white border-b border-gray-200 px-8 flex items-center justify-between shadow-sm">
+      <div class="flex items-center space-x-6">
+        <div class="flex items-center space-x-2">
+          <span class="text-2xl font-black tracking-tight text-[#1B8F4A]">HOSPIVO</span>
+          <span class="text-gray-300 font-light text-xl">|</span>
+          <span class="text-xl font-bold text-gray-800">Shree Medical Store</span>
+        </div>
+        <div class="inline-flex items-center px-3.5 py-1.5 rounded-full text-base font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mr-2"></span>
+          Local mode
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-5">
+        <div class="px-5 py-2.5 rounded-2xl bg-gray-100 border border-gray-200 flex items-center space-x-2 text-gray-700 font-medium text-lg">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span class="font-bold">Ghar / Home</span>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        </div>
+        <div class="flex items-center space-x-3 pl-3 border-l border-gray-200">
+          <div class="text-right">
+            <div class="text-lg font-bold text-gray-900 leading-tight">Owner</div>
+            <div class="text-base text-gray-500">Operator</div>
+          </div>
+          <div class="w-11 h-11 rounded-full bg-[#1B8F4A] text-white flex items-center justify-center font-bold text-lg">
+            O
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Area Background (Shelf Map) -->
+    <main class="flex-1 p-8 grid grid-cols-12 gap-8 overflow-hidden">
+      <!-- Left 8 columns: Shelf Grid -->
+      <div class="col-span-8 flex flex-col">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 leading-tight">Self</h1>
+            <p class="text-base font-semibold text-gray-500">Shelf map</p>
+          </div>
+          <div class="px-5 py-3 rounded-2xl bg-[#1B8F4A] text-white font-bold text-lg flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>Naya Self</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-4 flex-1">
+          <!-- S-01 to S-08 -->
+          <div class="bg-white rounded-2xl p-4 border border-gray-200 flex flex-col justify-between">
+            <div class="flex justify-between items-center"><span class="font-bold text-xl">S-01</span><span class="text-sm font-mono">QR</span></div>
+            <div class="h-28 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-800 font-bold text-lg">Shelves</div>
+            <div class="text-base text-gray-600 font-medium">24 dawai</div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 border border-gray-200 flex flex-col justify-between">
+            <div class="flex justify-between items-center"><span class="font-bold text-xl">S-02</span><span class="text-sm font-mono">QR</span></div>
+            <div class="h-28 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-800 font-bold text-lg">Syrups</div>
+            <div class="text-base text-gray-600 font-medium">18 dawai</div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 border border-gray-200 flex flex-col justify-between">
+            <div class="flex justify-between items-center"><span class="font-bold text-xl">S-03</span><span class="text-sm font-mono">QR</span></div>
+            <div class="h-28 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-800 font-bold text-lg">Strips</div>
+            <div class="text-base text-gray-600 font-medium">32 dawai</div>
+          </div>
+          <div class="bg-emerald-50 rounded-2xl p-4 border-2 border-[#1B8F4A] flex flex-col justify-between">
+            <div class="flex justify-between items-center"><span class="font-bold text-xl text-[#1B8F4A]">S-04 •</span><span class="text-sm font-mono text-[#1B8F4A]">QR</span></div>
+            <div class="h-28 bg-white rounded-xl border border-emerald-200 flex items-center justify-center text-emerald-800 font-bold text-lg">Tablets</div>
+            <div class="text-base font-bold text-[#1B8F4A]">28 dawai</div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 border border-gray-200 flex flex-col justify-between">
+            <div class="flex justify-between items-center"><span class="font-bold text-xl">S-05</span><span class="text-sm font-mono">QR</span></div>
+            <div class="h-28 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 font-bold text-lg">Creams</div>
+            <div class="text-base text-gray-600 font-medium">19 dawai</div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 border border-gray-200 flex flex-col justify-between">
+            <div class="flex justify-between items-center"><span class="font-bold text-xl">S-06</span><span class="text-sm font-mono">QR</span></div>
+            <div class="h-28 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 font-bold text-lg">Digestives</div>
+            <div class="text-base text-gray-600 font-medium">41 dawai</div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 border border-gray-200 flex flex-col justify-between">
+            <div class="flex justify-between items-center"><span class="font-bold text-xl">S-07</span><span class="text-sm font-mono">QR</span></div>
+            <div class="h-28 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 font-bold text-lg">Pediatric</div>
+            <div class="text-base text-gray-600 font-medium">15 dawai</div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 border border-gray-200 flex flex-col justify-between">
+            <div class="flex justify-between items-center"><span class="font-bold text-xl">S-08</span><span class="text-sm font-mono">QR</span></div>
+            <div class="h-28 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 font-bold text-lg">Cardiac</div>
+            <div class="text-base text-gray-600 font-medium">36 dawai</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right 4 columns: S-04 Detail -->
+      <div class="col-span-4 bg-white rounded-3xl p-6 border border-gray-200 flex flex-col justify-between">
+        <div>
+          <div class="flex justify-between items-center mb-4">
+            <span class="text-2xl font-bold text-gray-900">S-04</span>
+            <span class="px-3.5 py-1 rounded-full bg-emerald-50 text-emerald-800 font-bold text-base">28 dawai</span>
+          </div>
+          <div class="space-y-3">
+            <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-200 flex justify-between">
+              <span class="font-bold text-base">Crocin 500</span>
+              <span class="text-base text-emerald-700 font-semibold">45 strips</span>
+            </div>
+            <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-200 flex justify-between">
+              <span class="font-bold text-base">Augmentin 625 Duo</span>
+              <span class="text-base text-emerald-700 font-semibold">28 strips</span>
+            </div>
+            <div class="p-3.5 rounded-xl bg-gray-50 border border-gray-200 flex justify-between">
+              <span class="font-bold text-base">Allegra 120mg</span>
+              <span class="text-base text-emerald-700 font-semibold">34 strips</span>
+            </div>
+          </div>
+        </div>
+        <div class="w-full py-4 rounded-2xl bg-gray-200 text-gray-700 font-bold text-lg text-center">
+          Dusri self par bhejo
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer Strip -->
+    <footer class="h-10 bg-white border-t border-gray-200 px-8 flex items-center justify-between text-base text-gray-500 font-medium">
+      <div>Shree Medical Store • GSTIN: 27AABCU9603R1ZM</div>
+      <div>Desktop POS Terminal #1 • Hospivo Local Sync Active</div>
+    </footer>
+  </div>
+
+  <!-- ================= DIMMED BACKDROP OVERLAY ================= -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-10 transition-opacity"></div>
+
+  <!-- ================= CENTERED DIALOG: DAWAI KI SELF BADLO ================= -->
+  <div class="relative z-20 w-full h-full flex items-center justify-center p-8 pointer-events-auto">
+    <div class="w-[680px] bg-white rounded-3xl shadow-2xl border border-gray-200 p-8 flex flex-col justify-between animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Dialog Header -->
+      <div class="border-b border-gray-100 pb-5 mb-6">
+        <div class="flex items-start justify-between">
+          <div>
+            <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              Dawai ki self badlo
+            </h2>
+            <p class="text-base font-semibold text-gray-500 mt-1">
+              Move medicine
+            </p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-[#1B8F4A] flex items-center justify-center">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dialog Body Content -->
+      <div class="space-y-6">
+
+        <!-- Medicine Name & Current Shelf Card -->
+        <div class="bg-[#F4F6F5] rounded-2xl p-5 border border-gray-200 flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-[#1B8F4A]">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <div>
+              <div class="text-xs uppercase font-extrabold tracking-wider text-gray-500">Dawai</div>
+              <div class="text-2xl font-extrabold text-gray-900 leading-tight">
+                Crocin 500
+              </div>
+            </div>
+          </div>
+
+          <!-- Current Shelf Badge -->
+          <div class="text-right">
+            <div class="text-xs uppercase font-extrabold tracking-wider text-gray-500">Current shelf</div>
+            <div class="inline-flex items-center px-4 py-1.5 rounded-xl bg-white border border-gray-300 shadow-sm text-lg font-bold text-gray-800 mt-0.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-2"></span>
+              Abhi: S-04
+            </div>
+          </div>
+        </div>
+
+        <!-- Shelf Picker (Nayi self) -->
+        <div>
+          <label class="block text-lg font-bold text-gray-800 mb-2.5">
+            Nayi self
+            <span class="text-base font-normal text-gray-500 ml-1.5">(Select target shelf)</span>
+          </label>
+          <div class="relative">
+            <div class="w-full h-16 bg-white border-2 border-[#1B8F4A] rounded-2xl px-5 flex items-center justify-between shadow-sm cursor-pointer hover:bg-emerald-50/20 transition-colors">
+              <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-100 text-[#1B8F4A] flex items-center justify-center font-bold text-base">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                  <span class="text-2xl font-extrabold text-gray-900">S-08</span>
+                  <span class="text-base font-medium text-gray-500">• Cardiac & Fever section</span>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2 text-[#1B8F4A]">
+                <span class="text-base font-bold">Badlo</span>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit & Transfer Summary Line -->
+        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center space-x-3 text-emerald-950">
+          <div class="w-8 h-8 rounded-full bg-[#1B8F4A] text-white flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="text-lg font-bold">
+            S-04 se S-08, Owner, aaj
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Dialog Action Buttons (56px+ tall, 16px radius, Big Icon + Hindi label + tiny English word) -->
+      <div class="grid grid-cols-2 gap-4 pt-8 mt-4 border-t border-gray-100">
+        
+        <!-- Wapas Button -->
+        <button type="button" class="h-16 rounded-2xl border-2 border-gray-200 bg-white hover:bg-gray-50 text-gray-700 flex items-center justify-center space-x-3 transition-colors active:scale-[0.99]">
+          <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <div class="text-left">
+            <div class="text-xl font-bold leading-tight">Wapas</div>
+            <div class="text-base text-gray-500 font-medium leading-none">Cancel</div>
+          </div>
+        </button>
+
+        <!-- Pakka Karo Button (Big Green) -->
+        <button type="button" class="h-16 rounded-2xl bg-[#1B8F4A] hover:bg-[#146C38] text-white flex items-center justify-center space-x-3 shadow-lg shadow-emerald-700/20 transition-colors active:scale-[0.99]">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.8" d="M5 13l4 4L19 7" />
+          </svg>
+          <div class="text-left">
+            <div class="text-xl font-extrabold leading-tight">Pakka Karo</div>
+            <div class="text-base text-emerald-100 font-medium leading-none">Confirm move</div>
+          </div>
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

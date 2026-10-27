@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Hospivo POS</title><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+        "surface-tint": "#006d34",
+        "on-primary-fixed-variant": "#005226",
+        "surface-container-highest": "#dae5df",
+        "surface-container-low": "#ebf6f0",
+        "tertiary-fixed-dim": "#ffb786",
+        "on-secondary": "#ffffff",
+        "error": "#ba1a1a",
+        "on-tertiary": "#ffffff",
+        "on-primary-container": "#f6fff3",
+        "surface-dim": "#d1ddd7",
+        "outline-variant": "#bdcabc",
+        "on-primary-fixed": "#00210b",
+        "inverse-surface": "#28332f",
+        "on-secondary-container": "#003567",
+        "primary-fixed-dim": "#72dc8e",
+        "tertiary-container": "#b75b00",
+        "outline": "#6e7a6e",
+        "on-tertiary-fixed": "#311300",
+        "on-secondary-fixed-variant": "#004786",
+        "tertiary": "#924700",
+        "surface-container": "#e5f0eb",
+        "on-error-container": "#93000a",
+        "secondary-fixed-dim": "#a5c8ff",
+        "secondary-fixed": "#d4e3ff",
+        "on-tertiary-fixed-variant": "#723600",
+        "background": "#f1fcf6",
+        "secondary": "#005faf",
+        "on-tertiary-container": "#fffbff",
+        "secondary-container": "#54a0fe",
+        "surface-container-lowest": "#ffffff",
+        "tertiary-fixed": "#ffdcc6",
+        "surface-variant": "#dae5df",
+        "primary-container": "#088643",
+        "surface-bright": "#f1fcf6",
+        "on-error": "#ffffff",
+        "on-primary": "#ffffff",
+        "on-surface": "#141e1a",
+        "inverse-primary": "#72dc8e",
+        "primary": "#006b33",
+        "primary-fixed": "#8ef9a7",
+        "on-surface-variant": "#3e4a3f",
+        "error-container": "#ffdad6",
+        "on-secondary-fixed": "#001c3a",
+        "surface": "#f1fcf6",
+        "inverse-on-surface": "#e8f3ee",
+        "surface-container-high": "#e0ebe5",
+        "on-background": "#141e1a"
+      },
+      "borderRadius": {
+        "DEFAULT": "0.25rem",
+        "lg": "0.5rem",
+        "xl": "0.75rem",
+        "full": "9999px"
+      },
+      "spacing": {
+        "gutter": "1.5rem",
+        "space-md": "1rem",
+        "gutter-compact": "1rem",
+        "space-xs": "0.5rem",
+        "margin-mobile": "1rem",
+        "space-sm": "0.75rem",
+        "space-xl": "2.5rem",
+        "margin": "2rem",
+        "space-lg": "1.5rem"
+      },
+      "fontFamily": {
+        "display-total": ["Noto Sans"],
+        "body-lg": ["Noto Sans"],
+        "display-total-mobile": ["Noto Sans"],
+        "title-hinglish": ["Noto Sans"],
+        "label-sub-english": ["Noto Sans"],
+        "headline-md": ["Noto Sans"],
+        "numpad-number": ["Noto Sans"],
+        "headline-lg": ["Noto Sans"],
+        "button-text": ["Noto Sans"],
+        "body-md": ["Noto Sans"]
+      },
+      "fontSize": {
+        "display-total": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+        "body-lg": ["20px", {"lineHeight": "28px", "fontWeight": "500"}],
+        "display-total-mobile": ["36px", {"lineHeight": "44px", "fontWeight": "800"}],
+        "title-hinglish": ["20px", {"lineHeight": "26px", "fontWeight": "700"}],
+        "label-sub-english": ["16px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+        "numpad-number": ["32px", {"lineHeight": "38px", "fontWeight": "700"}],
+        "headline-lg": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+        "button-text": ["22px", {"lineHeight": "28px", "fontWeight": "700"}],
+        "body-md": ["18px", {"lineHeight": "26px", "fontWeight": "400"}]
+      }
+    }
+  }
+}</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full px-gutter flex items-center justify-between"><div class="flex items-center gap-space-lg"><span class="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">Hospivo</span><div class="h-8 w-0.5 bg-outline-variant"></div><div class="flex flex-col"><span class="font-title-hinglish text-title-hinglish text-on-surface">Shree Medical Store</span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Pharmacy Counter POS</span></div></div><div class="flex items-center gap-space-md"><nav class="flex items-center" data-active-classes="bg-primary-container text-on-primary-container font-bold rounded-lg"><a class="px-space-md py-space-xs transition-colors text-on-surface-variant" data-path="billing-counter" href="#">Home</a></nav><div class="flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-surface-container-low"><span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Local mode</span></div><button class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-surface-container-high transition-colors text-on-surface-variant" title="Toggle Mode" type="button"><span class="material-symbols-outlined text-2xl">dark_mode</span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="flex flex-col text-right"><span class="font-title-hinglish text-title-hinglish text-on-surface leading-tight">Raju</span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-none">Chemist Operator</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 bg-surface"><div class="flex flex-col w-full">
+<div class="relative w-full h-[calc(100vh-5rem)] overflow-hidden bg-background select-none">
+<!-- Underneath Dimmed App Screen (Billing Context with Bill #213) -->
+<div class="w-full h-full p-gutter grid grid-cols-12 gap-space-lg pointer-events-none opacity-40 filter blur-[1px]">
+<!-- Left 65%: Bill Details & Inventory Context -->
+<div class="col-span-8 flex flex-col gap-space-md">
+<!-- Invoice Header Row -->
+<div class="p-space-lg bg-surface-container-lowest rounded-xl shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-primary text-4xl">receipt_long</span>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md text-on-surface">Bill #213</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Customer: Amit Sharma • 9876543210</span>
+</div>
+</div>
+<div class="px-space-md py-space-xs rounded-full bg-error-container text-on-error-container font-title-hinglish text-title-hinglish">
+            Cancel Pending
+          </div>
+</div>
+<!-- Simulated Table Rows -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-xs">
+<div class="p-space-md bg-surface-container-low rounded-lg flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface">Dolo 650mg Tablet</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Batch: DL908 • Strip of 15 • Exp: 12/26</span>
+</div>
+<div class="text-right">
+<span class="font-title-hinglish text-title-hinglish text-on-surface">₹62.00</span>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant">Qty: 2</div>
+</div>
+</div>
+<div class="p-space-md bg-surface-container-low rounded-lg flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface">Azithral 500 Tablet</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Batch: AZ102 • Strip of 5 • Exp: 09/25</span>
+</div>
+<div class="text-right">
+<span class="font-title-hinglish text-title-hinglish text-on-surface">₹119.50</span>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant">Qty: 1</div>
+</div>
+</div>
+<div class="p-space-md bg-surface-container-low rounded-lg flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-on-surface">Pan 40mg Tablet</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Batch: PN441 • Strip of 15 • Exp: 04/26</span>
+</div>
+<div class="text-right">
+<span class="font-title-hinglish text-title-hinglish text-on-surface">₹89.00</span>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant">Qty: 1</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right 35%: Grand Total Deck Context -->
+<div class="col-span-4 flex flex-col gap-space-md">
+<div class="p-space-lg bg-surface-container-lowest rounded-xl shadow-sm flex flex-col gap-space-md">
+<div class="p-space-md bg-surface-container rounded-lg">
+<span class="font-title-hinglish text-title-hinglish text-on-surface-variant">Kul Rakam (Total Amount)</span>
+<div class="font-display-total text-display-total text-primary mt-1">₹270.50</div>
+</div>
+<div class="h-16 rounded-xl bg-surface-container-high"></div>
+<div class="h-16 rounded-xl bg-surface-container-high"></div>
+</div>
+</div>
+</div>
+<!-- Semi-Transparent Dark Backdrop Overlay -->
+<div class="absolute inset-0 z-40 bg-on-surface/45 backdrop-blur-[2px] flex items-center justify-center p-gutter">
+<!-- Elevated Dialog Card (560px Wide, 24px radius, 32px padding) -->
+<div class="relative w-full max-w-[560px] bg-surface-container-lowest rounded-[24px] shadow-2xl p-8 flex flex-col gap-6 z-50">
+<!-- Dialog Header & Status Chip Row -->
+<div class="flex items-start justify-between gap-4">
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-lg text-headline-lg text-on-surface leading-tight">Owner ko poocho</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Ask owner</span>
+</div>
+</div>
+<!-- Status Chip -->
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-tertiary-fixed text-tertiary flex-shrink-0 font-medium"><span class="material-symbols-outlined text-xl">wifi_off</span><span class="font-label-sub-english text-label-sub-english text-tertiary font-bold">Waiting for internet — not sent to owner</span></div>
+</div>
+<!-- Action & Details Block -->
+<div class="w-full p-4 rounded-[16px] bg-tertiary-fixed/40 border border-tertiary-fixed-dim flex items-center gap-3 text-tertiary"><span class="material-symbols-outlined text-2xl flex-shrink-0">wifi_off</span><div class="flex flex-col"><span class="font-title-hinglish text-title-hinglish font-bold leading-tight">Internet nahi hai · Owner tak nahi pahunchi</span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant">No internet connection · Request not delivered yet</span></div></div><div class="bg-surface-container-low rounded-[16px] p-5 flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md text-on-surface-variant">Shop / Dukaan:</span>
+<span class="font-body-md text-body-md text-on-surface font-bold">Shree Medical Store</span>
+</div>
+<div class="flex items-center justify-between bg-surface-container-lowest p-3 rounded-lg shadow-sm">
+<span class="font-body-md text-body-md text-on-surface-variant">Action:</span>
+<span class="font-title-hinglish text-title-hinglish text-error font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-2xl">delete</span>
+              Bill #213 hatana
+            </span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-md text-on-surface-variant">Requester:</span>
+<span class="font-body-md text-body-md text-on-surface font-bold">Raju</span>
+</div>
+</div>
+<!-- Reason Input Field -->
+<div class="flex flex-col gap-2">
+<label class="font-body-md text-body-md font-bold text-on-surface" for="cancel-reason">
+            Kaaran likhein
+          </label>
+<div class="relative">
+<textarea class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-[16px] p-4 resize-none outline-none focus:bg-surface-container-lowest transition-all placeholder:text-on-surface-variant shadow-inner" id="cancel-reason" placeholder="Kaaran likhein" rows="3">Grahak ne dawai lene se mana kiya</textarea>
+</div>
+</div>
+<!-- Footer Action Buttons Row -->
+<div class="p-4 rounded-[16px] bg-surface-container-low border border-outline-variant/40 flex items-start gap-3"><span class="material-symbols-outlined text-tertiary text-2xl flex-shrink-0 mt-0.5">info</span><div class="flex flex-col"><span class="font-body-md text-body-md font-bold text-on-surface leading-snug">Jab tak approval nahi milta, ye kaam nahi hoga.</span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant">This action will not proceed until approval is received.</span></div></div><div class="grid grid-cols-2 gap-4 pt-1">
+<!-- Back Button (Wapas) -->
+<button class="h-16 min-h-[56px] rounded-[16px] bg-surface-container-high hover:bg-surface-container-highest active:scale-[0.98] transition-transform flex flex-col items-center justify-center text-on-surface shadow-sm" type="button">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+<span class="font-title-hinglish text-title-hinglish leading-tight">Wapas</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-none">Back</span>
+</button>
+<!-- Primary Green Action Button (Request Bhejo) -->
+<button class="h-16 min-h-[56px] rounded-[16px] bg-surface-container-highest text-on-surface-variant/50 cursor-not-allowed opacity-50 flex flex-col items-center justify-center shadow-none select-none" disabled="" type="button"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-2xl">send</span><span class="font-title-hinglish text-title-hinglish leading-tight">Request Bhejo</span></div><span class="font-label-sub-english text-label-sub-english leading-none">Send request</span></button>
+</div>
+</div>
+</div>
+</div>
+</div></main></body></html>

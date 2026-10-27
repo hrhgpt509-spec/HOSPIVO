@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Hospivo Pharmacy POS</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "tertiary-fixed-dim": "#ffb786", "error": "#ba1a1a", "secondary-fixed-dim": "#a5c8ff", "surface-tint": "#006d34", "on-surface": "#141e1a", "surface-container-low": "#ebf6f0", "error-container": "#ffdad6", "on-secondary-fixed-variant": "#004786", "inverse-on-surface": "#e8f3ee", "surface-bright": "#f1fcf6", "on-tertiary-container": "#fffbff", "on-tertiary-fixed": "#311300", "surface-container": "#e5f0eb", "primary-container": "#088643", "tertiary": "#924700", "primary-fixed": "#8ef9a7", "primary": "#006b33", "on-secondary-fixed": "#001c3a", "on-primary-fixed-variant": "#005226", "surface-container-lowest": "#ffffff", "on-error-container": "#93000a", "surface-variant": "#dae5df", "surface-container-high": "#e0ebe5", "on-primary": "#ffffff", "inverse-surface": "#28332f", "background": "#f1fcf6", "secondary-fixed": "#d4e3ff", "surface-container-highest": "#dae5df", "inverse-primary": "#72dc8e", "surface": "#f1fcf6", "on-primary-fixed": "#00210b", "on-background": "#141e1a", "on-surface-variant": "#3e4a3f", "tertiary-fixed": "#ffdcc6", "on-tertiary-fixed-variant": "#723600", "surface-dim": "#d1ddd7", "on-primary-container": "#f6fff3", "on-secondary-container": "#003567", "outline-variant": "#bdcabc", "secondary": "#005faf", "on-error": "#ffffff", "tertiary-container": "#b75b00", "outline": "#6e7a6e", "secondary-container": "#54a0fe", "on-tertiary": "#ffffff", "primary-fixed-dim": "#72dc8e", "on-secondary": "#ffffff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-sm": "0.75rem", "space-xs": "0.5rem", "space-xl": "2.5rem", "space-md": "1rem", "gutter": "1.5rem", "space-lg": "1.5rem", "gutter-compact": "1rem", "margin-mobile": "1rem", "margin": "2rem" }, "fontFamily": { "headline-lg": [ "Noto Sans" ], "body-lg": [ "Noto Sans" ], "title-hinglish": [ "Noto Sans" ], "display-total-mobile": [ "Noto Sans" ], "label-sub-english": [ "Noto Sans" ], "numpad-number": [ "Noto Sans" ], "headline-md": [ "Noto Sans" ], "button-text": [ "Noto Sans" ], "display-total": [ "Noto Sans" ], "body-md": [ "Noto Sans" ] }, "fontSize": { "headline-lg": [ "28px", { "lineHeight": "36px", "fontWeight": "700" } ], "body-lg": [ "20px", { "lineHeight": "28px", "fontWeight": "500" } ], "title-hinglish": [ "20px", { "lineHeight": "26px", "fontWeight": "700" } ], "display-total-mobile": [ "36px", { "lineHeight": "44px", "fontWeight": "800" } ], "label-sub-english": [ "16px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "numpad-number": [ "32px", { "lineHeight": "38px", "fontWeight": "700" } ], "headline-md": [ "24px", { "lineHeight": "32px", "fontWeight": "700" } ], "button-text": [ "22px", { "lineHeight": "28px", "fontWeight": "700" } ], "display-total": [ "48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800" } ], "body-md": [ "18px", { "lineHeight": "26px", "fontWeight": "400" } ] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 w-full z-50 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full px-gutter flex items-center justify-between"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-primary text-[28px]">local_pharmacy</span><span class="font-headline-md text-headline-md tracking-tight uppercase text-primary">HOSPIVO</span></div><span class="font-body-md text-body-md text-outline-variant">|</span><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">storefront</span><span class="font-title-hinglish text-title-hinglish text-on-surface">Shree Medical Store</span></div><nav data-active-classes="bg-primary-container text-on-primary-container font-bold rounded-lg"><a aria-current="page" class="inline-flex items-center gap-space-xs px-space-sm py-space-xs transition-all bg-primary-container text-on-primary-container font-bold rounded-lg" data-path="billing-counter" href="#"><span class="material-symbols-outlined text-[20px]">home</span>Home</a></nav></div><div class="flex items-center gap-space-md"><div class="inline-flex items-center gap-space-xs px-space-sm py-space-xs rounded-full bg-surface-container-high"><span class="w-2.5 h-2.5 rounded-full bg-primary"></span><span class="font-label-sub-english text-label-sub-english text-on-surface">Local mode</span></div><button aria-label="Toggle dark mode" class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">dark_mode</span></button><div class="flex items-center gap-space-xs pl-space-xs"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><span class="font-title-hinglish text-title-hinglish text-on-surface">Raju</span></div></div></div></header><main class="w-full pt-16 bg-surface min-h-[calc(100vh-4rem)]"><div class="flex flex-col w-full h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-hidden bg-[#F4F6F5] p-space-md">
+<div class="grid grid-cols-12 gap-space-md h-full w-full max-w-[1408px] mx-auto min-h-0">
+<!-- LEFT COLUMN (60% width -> col-span-7) -->
+<div class="col-span-7 flex flex-col gap-space-md h-full min-h-0">
+<!-- 1. Big Search Input Card -->
+<div class="h-[60px] bg-surface-container-lowest rounded-2xl shadow-sm px-space-md flex items-center justify-between transition-all focus-within:shadow-md">
+<div class="flex items-center gap-space-sm flex-1">
+<span class="material-symbols-outlined text-primary text-[28px]">search</span>
+<input autofocus="" class="w-full bg-transparent border-none outline-none font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/70 tracking-normal" placeholder="Dawai ka naam, short code ya scan karein" type="text"/>
+</div>
+<button aria-label="Scan barcode" class="w-11 h-11 rounded-xl bg-surface-container flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[26px]">barcode_scanner</span>
+</button>
+</div>
+<!-- 2. Search Results List (4 big result rows, ~72px tall each) -->
+<div class="flex flex-col gap-space-sm flex-1 overflow-hidden">
+<!-- Row 1: Crocin 500 -->
+<div class="h-[74px] bg-surface-container-lowest rounded-2xl shadow-sm px-space-lg flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-all">
+<div class="flex flex-col justify-center min-w-0">
+<span class="font-title-hinglish text-title-hinglish text-on-surface leading-tight">Crocin 500</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">S-04 par hai · 25 pcs · Rs. 32</span>
+</div>
+<button aria-label="Add Crocin 500" class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+<!-- Row 2: Crocin Advance -->
+<div class="h-[74px] bg-surface-container-lowest rounded-2xl shadow-sm px-space-lg flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-all">
+<div class="flex flex-col justify-center min-w-0">
+<span class="font-title-hinglish text-title-hinglish text-on-surface leading-tight">Crocin Advance</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">S-04 par hai · 10 pcs · Rs. 45</span>
+</div>
+<button aria-label="Add Crocin Advance" class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+<!-- Row 3: Azithral 500 -->
+<div class="h-[74px] bg-surface-container-lowest rounded-2xl shadow-sm px-space-lg flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-all">
+<div class="flex flex-col justify-center min-w-0">
+<span class="font-title-hinglish text-title-hinglish text-on-surface leading-tight">Azithral 500</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">S-02 par hai · 14 pcs · Rs. 118</span>
+</div>
+<button aria-label="Add Azithral 500" class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+<!-- Row 4: Dolo 650 -->
+<div class="h-[74px] bg-surface-container-lowest rounded-2xl shadow-sm px-space-lg flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-all">
+<div class="flex flex-col justify-center min-w-0">
+<span class="font-title-hinglish text-title-hinglish text-on-surface leading-tight">Dolo 650</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">S-03 par hai · 40 pcs · Rs. 31</span>
+</div>
+<button aria-label="Add Dolo 650" class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[24px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN (40% width -> col-span-5) -->
+<div class="col-span-5 flex flex-col gap-space-md h-full min-h-0">
+<!-- 1. Bill Panel Card -->
+<div class="flex-1 bg-surface-container-lowest rounded-2xl shadow-md p-space-lg flex flex-col justify-between min-h-0">
+<!-- Header -->
+<div class="flex items-center justify-between pb-space-xs">
+<span class="font-headline-md text-headline-md text-on-surface tracking-tight font-bold">BILL #214</span>
+<button class="flex flex-col items-center justify-center px-space-md py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface transition-all" type="button">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[20px] text-tertiary">pause_circle</span>
+<span class="font-label-sub-english text-label-sub-english font-bold">Rukao</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-none text-[16px]">Hold</span>
+</button>
+</div>
+<!-- Bill Items List -->
+<div class="flex flex-col gap-space-md my-auto py-space-xs min-h-0 overflow-y-auto">
+<!-- Row 1: Crocin 500 -->
+<div class="bg-surface-container-low rounded-xl p-space-sm flex items-center justify-between gap-space-sm">
+<div class="flex flex-col min-w-0 flex-1">
+<span class="font-body-md text-body-md font-bold text-on-surface leading-tight">Crocin 500</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">batch B2231, exp 08/27</span>
+<div class="mt-1">
+<button class="px-space-xs py-0.5 rounded-lg bg-surface-container text-on-surface font-label-sub-english text-label-sub-english hover:bg-surface-container-highest transition-colors" type="button">
+                  Strip / Loose
+                </button>
+</div>
+</div>
+<!-- Quantity control & Price -->
+<div class="flex items-center gap-space-md shrink-0">
+<div class="flex items-center gap-space-xs bg-surface-container-lowest rounded-xl p-1 shadow-sm">
+<button aria-label="Decrease quantity" class="w-9 h-9 rounded-lg bg-surface-container-low text-on-surface flex items-center justify-center font-bold text-title-hinglish hover:bg-surface-container-high transition-colors" type="button">−</button>
+<span class="font-title-hinglish text-title-hinglish w-6 text-center text-on-surface">2</span>
+<button aria-label="Increase quantity" class="w-9 h-9 rounded-lg bg-surface-container-low text-on-surface flex items-center justify-center font-bold text-title-hinglish hover:bg-surface-container-high transition-colors" type="button">+</button>
+</div>
+<span class="font-title-hinglish text-title-hinglish text-on-surface w-18 text-right font-bold">Rs. 64</span>
+</div>
+</div>
+<!-- Row 2: Azithral 500 -->
+<div class="bg-surface-container-low rounded-xl p-space-sm flex items-center justify-between gap-space-sm">
+<div class="flex flex-col min-w-0 flex-1">
+<span class="font-body-md text-body-md font-bold text-on-surface leading-tight">Azithral 500</span>
+<div class="mt-1">
+<button class="px-space-xs py-0.5 rounded-lg bg-surface-container text-on-surface font-label-sub-english text-label-sub-english hover:bg-surface-container-highest transition-colors" type="button">
+                  Strip / Loose
+                </button>
+</div>
+</div>
+<!-- Quantity control & Price -->
+<div class="flex items-center gap-space-md shrink-0">
+<div class="flex items-center gap-space-xs bg-surface-container-lowest rounded-xl p-1 shadow-sm">
+<button aria-label="Decrease quantity" class="w-9 h-9 rounded-lg bg-surface-container-low text-on-surface flex items-center justify-center font-bold text-title-hinglish hover:bg-surface-container-high transition-colors" type="button">−</button>
+<span class="font-title-hinglish text-title-hinglish w-6 text-center text-on-surface">1</span>
+<button aria-label="Increase quantity" class="w-9 h-9 rounded-lg bg-surface-container-low text-on-surface flex items-center justify-center font-bold text-title-hinglish hover:bg-surface-container-high transition-colors" type="button">+</button>
+</div>
+<span class="font-title-hinglish text-title-hinglish text-on-surface w-18 text-right font-bold">Rs. 118</span>
+</div>
+</div>
+</div>
+<!-- Bottom of Bill Panel -->
+<div class="flex flex-col gap-space-sm pt-space-xs">
+<!-- Total display -->
+<div class="flex items-baseline justify-between bg-surface-container-low rounded-xl px-space-md py-2">
+<span class="font-title-hinglish text-title-hinglish text-on-surface-variant font-bold">TOTAL</span>
+<span class="font-display-total text-[40px] leading-[44px] font-extrabold text-[#1B8F4A]">Rs. 182</span>
+</div>
+<!-- Big green button -->
+<button class="w-full h-16 rounded-2xl bg-[#1B8F4A] hover:bg-primary text-on-primary shadow-lg flex items-center justify-center gap-space-md active:translate-y-0.5 transition-all" type="button">
+<span class="material-symbols-outlined text-[32px]">receipt_long</span>
+<div class="flex flex-col items-start justify-center leading-none">
+<span class="font-button-text text-button-text font-bold leading-tight">Bill Banao</span>
+<span class="font-label-sub-english text-label-sub-english text-primary-fixed leading-tight">Make bill</span>
+</div>
+</button>
+</div>
+</div>
+<!-- 2. Under the Bill Panel Action Row -->
+<div class="grid grid-cols-4 gap-space-xs shrink-0">
+<!-- Naya Bill -->
+<button class="h-14 rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm flex items-center justify-center px-1 font-label-sub-english text-label-sub-english font-bold transition-all" type="button">
+          Naya Bill
+        </button>
+<!-- Purane Bill -->
+<button class="h-14 rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm flex items-center justify-center px-1 font-label-sub-english text-label-sub-english font-bold transition-all" type="button">
+          Purane Bill
+        </button>
+<!-- Wapsi -->
+<button class="h-14 rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm flex items-center justify-center px-1 font-label-sub-english text-label-sub-english font-bold transition-all" type="button">
+          Wapsi
+        </button>
+<!-- Wapas -->
+<button class="h-14 rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm flex items-center justify-center px-1 font-label-sub-english text-label-sub-english font-bold transition-all" type="button">
+          Wapas
+        </button>
+</div>
+</div>
+</div>
+</div></main></body></html>

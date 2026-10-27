@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Hospivo POS</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+        "on-tertiary-container": "#fffbff",
+        "on-tertiary": "#ffffff",
+        "tertiary-fixed-dim": "#ffb786",
+        "outline": "#6e7a6e",
+        "surface-container-low": "#ebf6f0",
+        "primary-container": "#088643",
+        "on-secondary-container": "#003567",
+        "surface-dim": "#d1ddd7",
+        "background": "#f1fcf6",
+        "primary-fixed": "#8ef9a7",
+        "secondary": "#005faf",
+        "outline-variant": "#bdcabc",
+        "on-secondary-fixed-variant": "#004786",
+        "on-primary-fixed": "#00210b",
+        "tertiary": "#924700",
+        "on-primary": "#ffffff",
+        "on-surface": "#141e1a",
+        "tertiary-container": "#b75b00",
+        "inverse-primary": "#72dc8e",
+        "tertiary-fixed": "#ffdcc6",
+        "surface-container": "#e5f0eb",
+        "on-secondary-fixed": "#001c3a",
+        "on-primary-container": "#f6fff3",
+        "secondary-fixed-dim": "#a5c8ff",
+        "surface-container-high": "#e0ebe5",
+        "error": "#ba1a1a",
+        "inverse-on-surface": "#e8f3ee",
+        "on-secondary": "#ffffff",
+        "on-tertiary-fixed": "#311300",
+        "secondary-fixed": "#d4e3ff",
+        "error-container": "#ffdad6",
+        "surface-variant": "#dae5df",
+        "surface-bright": "#f1fcf6",
+        "on-primary-fixed-variant": "#005226",
+        "surface-tint": "#006d34",
+        "secondary-container": "#54a0fe",
+        "primary-fixed-dim": "#72dc8e",
+        "surface-container-lowest": "#ffffff",
+        "on-error": "#ffffff",
+        "surface-container-highest": "#dae5df",
+        "inverse-surface": "#28332f",
+        "primary": "#006b33",
+        "on-surface-variant": "#3e4a3f",
+        "on-background": "#141e1a",
+        "on-tertiary-fixed-variant": "#723600",
+        "surface": "#f1fcf6",
+        "on-error-container": "#93000a"
+      },
+      "borderRadius": {
+        "DEFAULT": "0.25rem",
+        "lg": "0.5rem",
+        "xl": "0.75rem",
+        "full": "9999px"
+      },
+      "spacing": {
+        "margin-mobile": "1rem",
+        "space-xs": "0.5rem",
+        "space-xl": "2.5rem",
+        "space-sm": "0.75rem",
+        "margin": "2rem",
+        "gutter": "1.5rem",
+        "space-md": "1rem",
+        "space-lg": "1.5rem",
+        "gutter-compact": "1rem"
+      },
+      "fontFamily": {
+        "button-text": [
+          "Noto Sans"
+        ],
+        "headline-lg": [
+          "Noto Sans"
+        ],
+        "headline-md": [
+          "Noto Sans"
+        ],
+        "display-total-mobile": [
+          "Noto Sans"
+        ],
+        "title-hinglish": [
+          "Noto Sans"
+        ],
+        "body-md": [
+          "Noto Sans"
+        ],
+        "numpad-number": [
+          "Noto Sans"
+        ],
+        "body-lg": [
+          "Noto Sans"
+        ],
+        "label-sub-english": [
+          "Noto Sans"
+        ],
+        "display-total": [
+          "Noto Sans"
+        ]
+      },
+      "fontSize": {
+        "button-text": [
+          "22px",
+          {
+            "lineHeight": "28px",
+            "fontWeight": "700"
+          }
+        ],
+        "headline-lg": [
+          "28px",
+          {
+            "lineHeight": "36px",
+            "fontWeight": "700"
+          }
+        ],
+        "headline-md": [
+          "24px",
+          {
+            "lineHeight": "32px",
+            "fontWeight": "700"
+          }
+        ],
+        "display-total-mobile": [
+          "36px",
+          {
+            "lineHeight": "44px",
+            "fontWeight": "800"
+          }
+        ],
+        "title-hinglish": [
+          "20px",
+          {
+            "lineHeight": "26px",
+            "fontWeight": "700"
+          }
+        ],
+        "body-md": [
+          "18px",
+          {
+            "lineHeight": "26px",
+            "fontWeight": "400"
+          }
+        ],
+        "numpad-number": [
+          "32px",
+          {
+            "lineHeight": "38px",
+            "fontWeight": "700"
+          }
+        ],
+        "body-lg": [
+          "20px",
+          {
+            "lineHeight": "28px",
+            "fontWeight": "500"
+          }
+        ],
+        "label-sub-english": [
+          "16px",
+          {
+            "lineHeight": "20px",
+            "letterSpacing": "0.01em",
+            "fontWeight": "500"
+          }
+        ],
+        "display-total": [
+          "48px",
+          {
+            "lineHeight": "56px",
+            "letterSpacing": "-0.02em",
+            "fontWeight": "800"
+          }
+        ]
+      }
+    }
+  }
+}</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)]"><div class="h-20 w-full px-gutter flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg"><div class="flex items-baseline gap-space-xs"><span class="font-headline-lg text-headline-lg text-primary tracking-tight font-extrabold">HOSPIVO</span><span class="font-body-lg text-body-lg text-on-surface-variant font-bold">|</span><span class="font-title-hinglish text-title-hinglish text-on-surface font-bold">Shree Medical Store</span></div><div class="inline-flex items-center gap-space-xs px-space-sm py-1 bg-surface-container-low rounded-full shadow-[0_1px_4px_rgba(0,0,0,0.04)]"><span class="w-2.5 h-2.5 rounded-full bg-primary inline-block animate-pulse"></span><span class="font-label-sub-english text-label-sub-english text-primary font-bold">Local mode</span></div></div><div class="flex items-center gap-space-md"><nav class="flex items-center" data-active-classes="bg-primary-container text-on-primary-container font-bold rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.08)]"><a aria-current="page" class="inline-flex items-center gap-space-xs px-space-md py-2 transition-all active:translate-y-0.5 bg-primary-container text-on-primary-container font-bold rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.08)]" data-path="billing-counter" href="#"><span class="material-symbols-outlined text-[20px]">home</span><div class="flex flex-col text-left"><span class="font-label-sub-english text-label-sub-english font-bold leading-tight">Ghar / Home</span></div></a></nav><div class="flex items-center gap-space-xs px-space-sm py-1.5 bg-surface-container-low rounded-full"><button class="w-7 h-7 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary shadow-sm" type="button"><span class="material-symbols-outlined text-[18px]">light_mode</span></button><button class="w-7 h-7 rounded-full flex items-center justify-center text-on-surface-variant" type="button"><span class="material-symbols-outlined text-[18px]">dark_mode</span></button></div><div class="flex items-center gap-space-sm pl-space-sm"><div class="text-right leading-tight"><div class="font-title-hinglish text-title-hinglish text-on-surface font-bold">Owner</div><div class="font-label-sub-english text-label-sub-english text-on-surface-variant">(Operator)</div></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-sm"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 pb-16 bg-surface min-h-[calc(100vh-4rem)]"><div class="flex flex-col w-full h-[calc(100vh-5rem)] max-h-[820px] overflow-hidden justify-between px-gutter py-space-sm select-none">
+<!-- Top Summary & Title Row (Zero Ambiguity, High Cognitive Ease) -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-sm bg-surface-container-lowest p-space-md rounded-xl shadow-[0_2px_8px_rgba(20,30,26,0.05)]">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[32px]">shelves</span>
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight">Subah ki self jaanch</h1>
+</div>
+<p class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium mt-0.5">Morning shelf check</p>
+</div>
+<!-- Live Status Overview Banner -->
+<div class="flex flex-wrap items-center gap-space-md">
+<div class="flex items-center gap-space-xs">
+<span class="font-button-text text-button-text text-on-surface font-extrabold">Aaj 6 / 8 self scan hui</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1.5 bg-surface-container-low text-primary rounded-lg font-label-sub-english text-label-sub-english font-bold">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>6 Ho Gayi (Done)</span>
+</div>
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1.5 bg-tertiary-fixed text-tertiary rounded-lg font-label-sub-english text-label-sub-english font-bold">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">warning</span>
+<span>2 Chhooti Hui (Pending)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 8 Shelf Cards Grid (Strict 4 Columns x 2 Rows, Balanced Desktop Layout, No Scroll) -->
+<div class="grid grid-cols-4 grid-rows-2 gap-space-md flex-1 my-space-sm">
+<!-- Shelf S-01 (Done) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md flex flex-col justify-between shadow-[0_2px_6px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface font-extrabold">S-01</span>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Antibiotics &amp; Syrups</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">shelves</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sub-english text-label-sub-english font-medium">
+<span class="material-symbols-outlined text-[20px] text-primary">medication</span>
+<span>42 dawai darj</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1.5 bg-surface-container-low text-primary rounded-lg font-label-sub-english text-label-sub-english font-bold">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Scan hui</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-bold">Subah 08:30</span>
+</div>
+</div>
+<!-- Shelf S-02 (Done) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md flex flex-col justify-between shadow-[0_2px_6px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface font-extrabold">S-02</span>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Pain &amp; Fever Relief</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">shelves</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sub-english text-label-sub-english font-medium">
+<span class="material-symbols-outlined text-[20px] text-primary">medication</span>
+<span>38 dawai darj</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1.5 bg-surface-container-low text-primary rounded-lg font-label-sub-english text-label-sub-english font-bold">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Scan hui</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-bold">Subah 08:34</span>
+</div>
+</div>
+<!-- Shelf S-03 (Missed - Explicitly Attention State) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md flex flex-col justify-between shadow-[0_4px_12px_rgba(183,91,0,0.08)]">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-tertiary-container font-extrabold">S-03</span>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Cardiac &amp; BP Care</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[24px]">priority_high</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sub-english text-label-sub-english font-medium">
+<span class="material-symbols-outlined text-[20px] text-tertiary">inventory_2</span>
+<span>29 dawai darj</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1.5 bg-tertiary-fixed text-tertiary rounded-lg font-label-sub-english text-label-sub-english font-bold">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">error</span>
+<span>Chhoot gayi</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-tertiary font-bold">Scan nahi hua</span>
+</div>
+</div>
+<!-- Shelf S-04 (Done) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md flex flex-col justify-between shadow-[0_2px_6px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface font-extrabold">S-04</span>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Diabetes Care</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">shelves</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sub-english text-label-sub-english font-medium">
+<span class="material-symbols-outlined text-[20px] text-primary">medication</span>
+<span>51 dawai darj</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1.5 bg-surface-container-low text-primary rounded-lg font-label-sub-english text-label-sub-english font-bold">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Scan hui</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-bold">Subah 08:41</span>
+</div>
+</div>
+<!-- Shelf S-05 (Done) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md flex flex-col justify-between shadow-[0_2px_6px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface font-extrabold">S-05</span>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Vitamins &amp; Calcium</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">shelves</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sub-english text-label-sub-english font-medium">
+<span class="material-symbols-outlined text-[20px] text-primary">medication</span>
+<span>34 dawai darj</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1.5 bg-surface-container-low text-primary rounded-lg font-label-sub-english text-label-sub-english font-bold">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Scan hui</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-bold">Subah 08:47</span>
+</div>
+</div>
+<!-- Shelf S-06 (Done) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md flex flex-col justify-between shadow-[0_2px_6px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface font-extrabold">S-06</span>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Ointments &amp; Creams</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">shelves</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sub-english text-label-sub-english font-medium">
+<span class="material-symbols-outlined text-[20px] text-primary">medication</span>
+<span>22 dawai darj</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1.5 bg-surface-container-low text-primary rounded-lg font-label-sub-english text-label-sub-english font-bold">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Scan hui</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-bold">Subah 08:52</span>
+</div>
+</div>
+<!-- Shelf S-07 (Missed - Explicitly Attention State) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md flex flex-col justify-between shadow-[0_4px_12px_rgba(183,91,0,0.08)]">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-tertiary-container font-extrabold">S-07</span>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">Drops &amp; Inhalers</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[24px]">priority_high</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sub-english text-label-sub-english font-medium">
+<span class="material-symbols-outlined text-[20px] text-tertiary">inventory_2</span>
+<span>19 dawai darj</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1.5 bg-tertiary-fixed text-tertiary rounded-lg font-label-sub-english text-label-sub-english font-bold">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">error</span>
+<span>Chhoot gayi</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-tertiary font-bold">Scan nahi hua</span>
+</div>
+</div>
+<!-- Shelf S-08 (Done) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md flex flex-col justify-between shadow-[0_2px_6px_rgba(0,0,0,0.04)] hover:shadow-md transition-shadow">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-headline-lg text-headline-lg text-on-surface font-extrabold">S-08</span>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">First Aid &amp; Surgical</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">shelves</span>
+</div>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sub-english text-label-sub-english font-medium">
+<span class="material-symbols-outlined text-[20px] text-primary">medication</span>
+<span>46 dawai darj</span>
+</div>
+<div class="flex items-center justify-between pt-space-xs">
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1.5 bg-surface-container-low text-primary rounded-lg font-label-sub-english text-label-sub-english font-bold">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span>Scan hui</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant font-bold">Subah 08:58</span>
+</div>
+</div>
+</div>
+<!-- Bottom Quick Information Line (Pharmacist Note) -->
+<div class="flex items-center justify-between px-space-md py-space-xs bg-surface-container-low rounded-lg text-on-surface-variant">
+<div class="flex items-center gap-space-xs font-label-sub-english text-label-sub-english font-medium">
+<span class="material-symbols-outlined text-primary text-[20px]">info</span>
+<span>Aakhri update: Aaj Subah 09:00 AM • Shelf jaanch operator: Rahul (Helper #2)</span>
+</div>
+<div class="font-label-sub-english text-label-sub-english font-bold text-tertiary">
+      S-03 aur S-07 par barcode scanning baaki hai
+    </div>
+</div>
+</div></main><footer class="w-full bg-surface-container-low py-4 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]"><div class="w-full px-gutter flex flex-col md:flex-row items-center justify-between gap-space-xs text-on-surface-variant font-label-sub-english text-label-sub-english"><div class="font-medium tracking-wide">Shree Medical Store • GSTIN: 27AABCU9603R1ZM</div><div class="flex items-center gap-space-xs font-medium"><span class="w-2 h-2 rounded-full bg-primary inline-block"></span><span>Desktop POS Terminal #1 • Hospivo Local Sync Active</span></div></div></footer></body></html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Hospivo Pharmacy POS</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-error-container":"#93000a","on-primary-container":"#f6fff3","tertiary-fixed":"#ffdcc6","primary-fixed":"#8ef9a7","inverse-surface":"#28332f","on-secondary-fixed":"#001c3a","on-secondary-fixed-variant":"#004786","on-primary":"#ffffff","tertiary-container":"#b75b00","on-secondary-container":"#003567","surface-container-low":"#ebf6f0","error":"#ba1a1a","tertiary-fixed-dim":"#ffb786","on-primary-fixed-variant":"#005226","on-tertiary":"#ffffff","on-tertiary-fixed-variant":"#723600","on-tertiary-container":"#fffbff","surface-container":"#e5f0eb","outline":"#6e7a6e","secondary-container":"#54a0fe","surface":"#f1fcf6","inverse-primary":"#72dc8e","surface-variant":"#dae5df","surface-container-high":"#e0ebe5","primary-fixed-dim":"#72dc8e","inverse-on-surface":"#e8f3ee","surface-container-highest":"#dae5df","error-container":"#ffdad6","on-primary-fixed":"#00210b","surface-dim":"#d1ddd7","secondary-fixed-dim":"#a5c8ff","on-error":"#ffffff","tertiary":"#924700","secondary-fixed":"#d4e3ff","background":"#f1fcf6","on-surface-variant":"#3e4a3f","surface-container-lowest":"#ffffff","on-surface":"#141e1a","secondary":"#005faf","surface-bright":"#f1fcf6","primary-container":"#088643","on-tertiary-fixed":"#311300","on-secondary":"#ffffff","surface-tint":"#006d34","outline-variant":"#bdcabc","primary":"#006b33","on-background":"#141e1a"},borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},spacing:{"space-xl":"2.5rem","space-sm":"0.75rem",margin:"2rem","space-lg":"1.5rem","margin-mobile":"1rem",gutter:"1.5rem","gutter-compact":"1rem","space-md":"1rem","space-xs":"0.5rem"},fontFamily:{"label-sub-english":["Noto Sans"],"body-lg":["Noto Sans"],"display-total-mobile":["Noto Sans"],"numpad-number":["Noto Sans"],"body-md":["Noto Sans"],"display-total":["Noto Sans"],"button-text":["Noto Sans"],"headline-lg":["Noto Sans"],"headline-md":["Noto Sans"],"title-hinglish":["Noto Sans"]},fontSize:{"label-sub-english":["16px",{lineHeight:"20px",letterSpacing:"0.01em",fontWeight:"500"}],"body-lg":["20px",{lineHeight:"28px",fontWeight:"500"}],"display-total-mobile":["36px",{lineHeight:"44px",fontWeight:"800"}],"numpad-number":["32px",{lineHeight:"38px",fontWeight:"700"}],"body-md":["18px",{lineHeight:"26px",fontWeight:"400"}],"display-total":["48px",{lineHeight:"56px",letterSpacing:"-0.02em",fontWeight:"800"}],"button-text":["22px",{lineHeight:"28px",fontWeight:"700"}],"headline-lg":["28px",{lineHeight:"36px",fontWeight:"700"}],"headline-md":["24px",{lineHeight:"32px",fontWeight:"700"}],"title-hinglish":["20px",{lineHeight:"26px",fontWeight:"700"}]}}}}</script></head><body class="bg-background font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 bg-surface/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-20 w-full px-gutter flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-primary-container text-[24px]">local_pharmacy</span></div><div class="flex flex-col"><span class="font-headline-md text-headline-md tracking-tight text-primary leading-tight">Hospivo</span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">Shree Medical Store - Pharmacy Counter POS</span></div></div><nav class="flex items-center pl-space-md" data-active-classes="bg-primary-container text-on-primary-container font-headline-md"><a aria-current="page" class="px-space-md py-space-xs rounded-lg transition-all bg-primary-container text-on-primary-container font-headline-md" data-path="pos-counter" href="#">Home</a></nav></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1.5 rounded-full shadow-[0_1px_4px_rgba(0,0,0,0.02)]"><span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span><span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Local mode</span></div><button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[24px]">light_mode</span></button><div class="flex items-center gap-space-sm pl-space-xs"><div class="text-right"><div class="font-headline-md text-headline-md leading-tight text-on-surface">Raju Chemist</div><div class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">Operator</div></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-20 bg-background min-h-screen"><div class="flex flex-col w-full relative h-[calc(100vh-5rem)] overflow-hidden select-none bg-background">
+<!-- POS Counter Background (Dimmed & Blurred for Owner Authorization Modal) -->
+<div aria-hidden="true" class="absolute inset-0 flex w-full h-full filter blur-[6px] opacity-40 pointer-events-none p-gutter gap-gutter bg-surface-container-low">
+<!-- Left Workspace (65%) -->
+<div class="w-[65%] flex flex-col gap-space-md">
+<!-- Search Bar -->
+<div class="w-full h-14 bg-surface-container-lowest rounded-xl flex items-center px-space-md shadow-sm">
+<span class="material-symbols-outlined text-primary text-[28px] mr-space-sm">search</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Dawai ka naam ya barcode scan karein (Search medicine...)</span>
+</div>
+<!-- Bill Line Items Card -->
+<div class="flex-1 bg-surface-container-lowest rounded-xl p-space-lg flex flex-col shadow-sm">
+<div class="flex justify-between items-center pb-space-sm mb-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-md text-headline-md text-on-surface">Bill #213</span>
+<span class="bg-error-container text-on-error-container px-space-sm py-1 rounded-full font-label-sub-english text-label-sub-english">Hataane ki request (Deletion pending)</span>
+</div>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Grahak: Walk-in Patient</span>
+</div>
+<div class="flex flex-col gap-space-sm">
+<div class="flex justify-between items-center p-space-md bg-surface-container-low rounded-lg">
+<div>
+<div class="font-headline-md text-headline-md text-on-surface">Dolo 650mg Tablet</div>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant">Batch: DL9081 • 15 Tablets • Exp: 12/26</div>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">₹31.50</span>
+</div>
+<div class="flex justify-between items-center p-space-md bg-surface-container-low rounded-lg">
+<div>
+<div class="font-headline-md text-headline-md text-on-surface">Augmentin 625 Duo Tablet</div>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant">Batch: AG4420 • 10 Tablets • Exp: 09/25</div>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">₹204.00</span>
+</div>
+<div class="flex justify-between items-center p-space-md bg-surface-container-low rounded-lg">
+<div>
+<div class="font-headline-md text-headline-md text-on-surface">Pan 40 D Capsule</div>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant">Batch: PN1123 • 15 Capsules • Exp: 04/26</div>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">₹142.50</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Workspace (35% Payment Deck) -->
+<div class="w-[35%] flex flex-col gap-space-md">
+<div class="bg-primary/10 rounded-xl p-space-lg flex flex-col justify-between shadow-sm">
+<span class="font-title-hinglish text-title-hinglish text-primary">Kul Rakam (Total Amount)</span>
+<span class="font-display-total text-display-total text-primary mt-space-xs">₹378.00</span>
+</div>
+<div class="flex-1 bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between">
+<div class="space-y-space-md">
+<div class="h-16 bg-surface-container rounded-xl flex items-center justify-between px-space-md">
+<span class="font-headline-md text-headline-md text-on-surface">Cash Diya</span>
+<span class="font-headline-md text-headline-md text-on-surface">₹500.00</span>
+</div>
+<div class="h-16 bg-surface-container-high rounded-xl flex items-center justify-between px-space-md">
+<span class="font-headline-md text-headline-md text-primary">Wapas Karein</span>
+<span class="font-headline-md text-headline-md text-primary font-bold">₹122.00</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Foreground Darkening Overlay -->
+<div class="absolute inset-0 bg-inverse-surface/35 backdrop-blur-[2px]"></div>
+<!-- Elevated Owner PIN Verification Dialog -->
+<div class="relative z-10 m-auto w-full max-w-[540px] bg-surface-container-lowest rounded-[24px] shadow-2xl p-space-lg flex flex-col gap-space-md">
+<!-- 1. Dialog Header -->
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-on-primary shadow-md">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">shield_lock</span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight leading-tight">Owner PIN daalein</h2>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Enter owner PIN</span>
+</div>
+</div>
+<!-- Top-right Local mode chip -->
+<div class="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1.5 rounded-full shadow-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface font-semibold">Local mode</span>
+</div>
+</div>
+<!-- 2. Context Info Strip -->
+<div class="w-full bg-surface-container-low rounded-xl px-space-md py-space-sm flex items-center justify-between shadow-sm">
+<div class="flex items-center gap-space-sm text-error">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">delete</span>
+<div class="flex flex-col">
+<span class="font-title-hinglish text-title-hinglish text-error leading-tight">Bill #213 hatana</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant leading-tight">Bill deletion approval</span>
+</div>
+</div>
+<div class="text-right">
+<div class="font-label-sub-english text-label-sub-english text-on-surface font-bold">Shree Medical Store</div>
+<div class="font-label-sub-english text-label-sub-english text-on-surface-variant">Store Owner Access</div>
+</div>
+</div>
+<!-- 3. 6 PIN Dots Indicator -->
+<div class="flex justify-center items-center gap-5 my-2">
+<!-- Dot 1: Active/Filled -->
+<div class="w-[22px] h-[22px] rounded-full bg-primary shadow-sm ring-4 ring-primary/20"></div>
+<!-- Dot 2: Active/Filled -->
+<div class="w-[22px] h-[22px] rounded-full bg-primary shadow-sm ring-4 ring-primary/20"></div>
+<!-- Dot 3: Active/Filled -->
+<div class="w-[22px] h-[22px] rounded-full bg-primary shadow-sm ring-4 ring-primary/20"></div>
+<!-- Dot 4: Outlined/Empty -->
+<div class="w-[22px] h-[22px] rounded-full bg-surface-container-high ring-2 ring-outline-variant"></div>
+<!-- Dot 5: Outlined/Empty -->
+<div class="w-[22px] h-[22px] rounded-full bg-surface-container-high ring-2 ring-outline-variant"></div>
+<!-- Dot 6: Outlined/Empty -->
+<div class="w-[22px] h-[22px] rounded-full bg-surface-container-high ring-2 ring-outline-variant"></div>
+</div>
+<!-- 4. Touch Number Pad (88px Height Blocks, 16px Radius) -->
+<div class="grid grid-cols-3 gap-3">
+<!-- Row 1 -->
+<button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container-high active:translate-y-0.5 active:bg-primary-fixed transition-all flex flex-col items-center justify-center shadow-sm text-on-surface" type="button">
+<span class="font-numpad-number text-numpad-number">1</span>
+</button>
+<button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container-high active:translate-y-0.5 active:bg-primary-fixed transition-all flex flex-col items-center justify-center shadow-sm text-on-surface" type="button">
+<span class="font-numpad-number text-numpad-number">2</span>
+</button>
+<button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container-high active:translate-y-0.5 active:bg-primary-fixed transition-all flex flex-col items-center justify-center shadow-sm text-on-surface" type="button">
+<span class="font-numpad-number text-numpad-number">3</span>
+</button>
+<!-- Row 2 -->
+<button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container-high active:translate-y-0.5 active:bg-primary-fixed transition-all flex flex-col items-center justify-center shadow-sm text-on-surface" type="button">
+<span class="font-numpad-number text-numpad-number">4</span>
+</button>
+<button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container-high active:translate-y-0.5 active:bg-primary-fixed transition-all flex flex-col items-center justify-center shadow-sm text-on-surface" type="button">
+<span class="font-numpad-number text-numpad-number">5</span>
+</button>
+<button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container-high active:translate-y-0.5 active:bg-primary-fixed transition-all flex flex-col items-center justify-center shadow-sm text-on-surface" type="button">
+<span class="font-numpad-number text-numpad-number">6</span>
+</button>
+<!-- Row 3 -->
+<button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container-high active:translate-y-0.5 active:bg-primary-fixed transition-all flex flex-col items-center justify-center shadow-sm text-on-surface" type="button">
+<span class="font-numpad-number text-numpad-number">7</span>
+</button>
+<button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container-high active:translate-y-0.5 active:bg-primary-fixed transition-all flex flex-col items-center justify-center shadow-sm text-on-surface" type="button">
+<span class="font-numpad-number text-numpad-number">8</span>
+</button>
+<button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container-high active:translate-y-0.5 active:bg-primary-fixed transition-all flex flex-col items-center justify-center shadow-sm text-on-surface" type="button">
+<span class="font-numpad-number text-numpad-number">9</span>
+</button>
+<!-- Row 4 -->
+<button class="h-[88px] rounded-[16px] bg-error-container text-on-error-container hover:opacity-90 active:translate-y-0.5 transition-all flex flex-col items-center justify-center shadow-sm" type="button">
+<span class="font-headline-md text-headline-md font-bold">Clear</span>
+<span class="font-label-sub-english text-label-sub-english opacity-80">Mitaayein</span>
+</button>
+<button class="h-[88px] rounded-[16px] bg-surface-container-low hover:bg-surface-container-high active:translate-y-0.5 active:bg-primary-fixed transition-all flex flex-col items-center justify-center shadow-sm text-on-surface" type="button">
+<span class="font-numpad-number text-numpad-number">0</span>
+</button>
+<button class="h-[88px] rounded-[16px] bg-surface-container-high text-on-surface hover:bg-surface-dim active:translate-y-0.5 transition-all flex flex-col items-center justify-center shadow-sm" type="button">
+<span class="material-symbols-outlined text-[36px]">backspace</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">Kaatein</span>
+</button>
+</div>
+<!-- 5. Action Buttons at the Bottom -->
+<div class="mt-space-xs">
+<button class="w-full h-16 rounded-[16px] bg-surface-container-high text-on-surface hover:bg-surface-dim active:translate-y-0.5 transition-all flex items-center justify-center gap-space-md shadow-sm" type="button">
+<span class="material-symbols-outlined text-[28px]">arrow_back</span>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-button-text text-button-text">Wapas</span>
+<span class="font-label-sub-english text-label-sub-english text-on-surface-variant">(Back)</span>
+</div>
+</button>
+</div>
+</div>
+</div></main><footer class="w-full bg-surface-container-low py-space-md"><div class="w-full px-gutter flex items-center justify-between text-on-surface-variant font-label-sub-english text-label-sub-english"><span>© Hospivo Healthcare Cloud. Licensed to Shree Medical Store.</span><span>Physical Counter POS • Terminal 01</span></div></footer></body></html>

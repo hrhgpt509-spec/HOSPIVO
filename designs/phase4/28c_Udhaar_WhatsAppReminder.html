@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1440, height=900, initial-scale=1.0">
+  <title>Hospivo - Udhaar (Yaad Dilao Dialog - Ramesh Kumar)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Noto Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 1440px;
+      height: 900px;
+      overflow: hidden;
+      background-color: #F4F6F5;
+      color: #111827;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="relative w-[1440px] h-[900px] bg-[#F4F6F5] flex flex-col justify-between">
+
+  <!-- ==================== BACKGROUND: UDHAAR SCREEN ==================== -->
+  <div class="w-full flex flex-col flex-1 pointer-events-none select-none">
+    <!-- TOP NAVIGATION BAR -->
+    <header class="w-full h-[76px] bg-white border-b border-[#E5E7EB] px-8 flex items-center justify-between z-10">
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-3">
+          <span class="text-[28px] font-extrabold tracking-tight text-[#1B8F4A]">Hospivo</span>
+          <span class="text-[#9CA3AF] text-2xl font-light">|</span>
+          <span class="text-[22px] font-bold text-[#1F2937]">Shree Medical Store</span>
+        </div>
+        <div class="inline-flex items-center gap-2 bg-[#E8F5E9] text-[#1B8F4A] px-3.5 py-1.5 rounded-full text-base font-semibold border border-[#C8E6C9]">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#1B8F4A]"></span>
+          Local mode
+        </div>
+      </div>
+
+      <div class="flex items-center gap-5">
+        <!-- Home Button -->
+        <div class="h-12 px-5 rounded-2xl bg-[#1B8F4A] text-white font-bold flex items-center gap-2.5 shadow-sm">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+          <div class="flex flex-col items-start leading-tight">
+            <span class="text-[17px] font-bold">Ghar</span>
+            <span class="text-[12px] font-medium opacity-85">Home</span>
+          </div>
+        </div>
+
+        <!-- Moon switch -->
+        <div class="w-12 h-12 rounded-2xl bg-[#F3F4F6] border border-[#E5E7EB] flex items-center justify-center text-[#4B5563]">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+        </div>
+
+        <!-- User profile -->
+        <div class="flex items-center gap-3 pl-3 border-l border-[#E5E7EB]">
+          <div class="flex flex-col text-right leading-tight">
+            <span class="text-[18px] font-bold text-[#111827]">Raju</span>
+            <span class="text-[14px] text-[#6B7280]">Pharmacist / Cashier</span>
+          </div>
+          <div class="w-11 h-11 rounded-full bg-[#1B8F4A] text-white flex items-center justify-center font-bold text-lg shadow-sm">
+            R
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN UDHAAR CONTENT (Dimmed Background Reference) -->
+    <main class="w-full flex-1 px-8 py-5 flex flex-col justify-between overflow-hidden">
+      <div>
+        <!-- Screen Subheader -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-baseline gap-3">
+            <h1 class="text-[32px] font-extrabold text-[#111827] tracking-tight leading-none">Udhaar</h1>
+            <span class="text-[18px] font-semibold text-[#6B7280]">Credit</span>
+          </div>
+          <div class="inline-flex items-center gap-3 bg-[#FEE2E2] border border-[#FECACA] px-5 py-2.5 rounded-2xl">
+            <svg class="w-6 h-6 text-[#DC2626]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <span class="text-[20px] font-extrabold text-[#DC2626]">Kul baki: Rs. 5,600</span>
+          </div>
+        </div>
+
+        <!-- 5 Customer Rows (80px each) -->
+        <div class="space-y-3">
+          <!-- Ramesh Kumar -->
+          <div class="h-[80px] bg-white border border-[#E5E7EB] rounded-2xl px-6 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-[#E8F5E9] text-[#1B8F4A] flex items-center justify-center font-bold text-lg">RK</div>
+              <div>
+                <div class="text-[20px] font-bold text-[#111827]">Ramesh Kumar</div>
+                <div class="text-[16px] text-[#6B7280] font-medium">+91 98201 11223 · 18 din se baki</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-6">
+              <span class="text-[26px] font-black text-[#DC2626]">Rs. 1,500</span>
+              <div class="flex items-center gap-3">
+                <div class="h-14 px-5 rounded-2xl border-2 border-[#1B8F4A] bg-white text-[#1B8F4A] font-bold flex items-center gap-2">
+                  <span class="text-[18px]">Paisa Mila</span>
+                </div>
+                <div class="h-14 px-5 rounded-2xl bg-[#1B8F4A] text-white font-bold flex items-center gap-2">
+                  <span class="text-[18px]">Yaad Dilao</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sunita Devi -->
+          <div class="h-[80px] bg-white border border-[#E5E7EB] rounded-2xl px-6 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-[#E8F5E9] text-[#1B8F4A] flex items-center justify-center font-bold text-lg">SD</div>
+              <div>
+                <div class="text-[20px] font-bold text-[#111827]">Sunita Devi</div>
+                <div class="text-[16px] text-[#6B7280] font-medium">+91 98112 33445 · 14 din se baki</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-6">
+              <span class="text-[26px] font-black text-[#DC2626]">Rs. 1,350</span>
+              <div class="flex items-center gap-3">
+                <div class="h-14 px-5 rounded-2xl border-2 border-[#1B8F4A] bg-white text-[#1B8F4A] font-bold flex items-center gap-2">
+                  <span class="text-[18px]">Paisa Mila</span>
+                </div>
+                <div class="h-14 px-5 rounded-2xl bg-[#1B8F4A] text-white font-bold flex items-center gap-2">
+                  <span class="text-[18px]">Yaad Dilao</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mohan Lal -->
+          <div class="h-[80px] bg-white border border-[#E5E7EB] rounded-2xl px-6 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-[#E8F5E9] text-[#1B8F4A] flex items-center justify-center font-bold text-lg">ML</div>
+              <div>
+                <div class="text-[20px] font-bold text-[#111827]">Mohan Lal</div>
+                <div class="text-[16px] text-[#6B7280] font-medium">+91 94250 66778 · 10 din se baki</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-6">
+              <span class="text-[26px] font-black text-[#DC2626]">Rs. 1,100</span>
+              <div class="flex items-center gap-3">
+                <div class="h-14 px-5 rounded-2xl border-2 border-[#1B8F4A] bg-white text-[#1B8F4A] font-bold flex items-center gap-2">
+                  <span class="text-[18px]">Paisa Mila</span>
+                </div>
+                <div class="h-14 px-5 rounded-2xl bg-[#1B8F4A] text-white font-bold flex items-center gap-2">
+                  <span class="text-[18px]">Yaad Dilao</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Back Button -->
+      <div class="pt-2">
+        <div class="h-14 px-6 rounded-2xl bg-white border border-[#D1D5DB] text-[#374151] font-bold inline-flex items-center gap-2.5">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          <div class="flex flex-col items-start leading-tight">
+            <span class="text-[18px] font-bold">Wapas</span>
+            <span class="text-[13px] font-medium text-[#6B7280]">Back</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full h-10 bg-white border-t border-[#E5E7EB] px-8 flex items-center justify-between text-[#6B7280] text-sm font-medium">
+      <span>© 2024 Hospivo Pharmacy Systems. Offline-First POS Engine.</span>
+      <div class="flex items-center gap-6">
+        <span>24x7 Dawai Helpline: <strong class="text-[#111827]">1800-889-1002</strong></span>
+        <span>Data Saved Locally</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ==================== MODAL OVERLAY & CENTERED DIALOG ==================== -->
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-[3px] flex items-center justify-center z-50 p-6">
+    <div class="w-[560px] bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 flex flex-col gap-6">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between border-b border-[#F3F4F6] pb-4">
+        <div>
+          <h2 class="text-[28px] font-extrabold text-[#111827] tracking-tight leading-tight">Yaad Dilao</h2>
+          <p class="text-[16px] font-medium text-[#6B7280] mt-0.5">WhatsApp reminder</p>
+        </div>
+        <div class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#E8F5E9] text-[#1B8F4A] border border-[#C8E6C9] text-[16px] font-bold">
+          <svg class="w-5 h-5 text-[#25D366]" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.456 5.711 1.457h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          <span>WhatsApp Alert</span>
+        </div>
+      </div>
+
+      <!-- Customer Summary Row -->
+      <div class="bg-[#F8FAF9] border border-[#E5E7EB] rounded-2xl p-4 flex items-center justify-between">
+        <div>
+          <span class="text-[16px] text-[#6B7280] font-medium block">Grahak / Customer</span>
+          <span class="text-[22px] font-bold text-[#111827]">Ramesh Kumar</span>
+        </div>
+        <div class="text-right">
+          <span class="text-[16px] text-[#6B7280] font-medium block">Baki balance</span>
+          <span class="text-[22px] font-extrabold text-[#DC2626]">Baki: Rs. 1,500</span>
+        </div>
+      </div>
+
+      <!-- Chat Bubble Box -->
+      <div class="flex flex-col gap-2">
+        <label class="text-[16px] font-semibold text-[#4B5563]">WhatsApp Sandesh / Message Preview</label>
+        
+        <!-- WhatsApp Chat Style Container -->
+        <div class="bg-[#ECE5DD] rounded-2xl p-5 border border-[#DFD7CE] relative">
+          <!-- WhatsApp Green Chat Bubble -->
+          <div class="bg-[#DCF8C6] border border-[#C5E1A5] rounded-2xl rounded-tl-sm p-4 text-[#111827] shadow-sm relative max-w-[92%]">
+            <p class="text-[18px] font-medium leading-relaxed">
+              &ldquo;Namaste, aapka Rs. 1,500 baki hai. Kripya jaldi de dein. - Shree Medical Store&rdquo;
+            </p>
+            <div class="flex items-center justify-end gap-1 mt-2 text-[#4B5563]">
+              <span class="text-[14px]">10:45 AM</span>
+              <svg class="w-4 h-4 text-[#34B7F1]" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 1.854 7.146a.5.5 0 1 0-.708.708l3.5 3.5a.5.5 0 0 0 .708 0l7-7zm-4.208 7-.896-.897.707-.707.543.543 6.646-6.647a.5.5 0 0 1 .708.708l-7 7a.5.5 0 0 1-.708 0z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons (Height 56px+, Radius 16px) -->
+      <div class="flex items-center gap-4 pt-2">
+        <!-- Wapas Button -->
+        <button type="button" class="h-16 px-6 rounded-2xl bg-[#F3F4F6] hover:bg-[#E5E7EB] border border-[#D1D5DB] text-[#374151] flex items-center justify-center gap-3 transition-colors flex-1">
+          <svg class="w-6 h-6 text-[#4B5563]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          <div class="flex flex-col items-start leading-tight">
+            <span class="text-[18px] font-bold text-[#1F2937]">Wapas</span>
+            <span class="text-[16px] font-medium text-[#6B7280]">Back</span>
+          </div>
+        </button>
+
+        <!-- Big Green WhatsApp Kholo Button -->
+        <button type="button" class="h-16 px-8 rounded-2xl bg-[#1B8F4A] hover:bg-[#15733b] text-white flex items-center justify-center gap-3.5 shadow-lg shadow-[#1B8F4A]/25 transition-all flex-[1.6]">
+          <svg class="w-7 h-7 text-white fill-current" viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.456 5.711 1.457h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          <div class="flex flex-col items-start leading-tight">
+            <span class="text-[20px] font-extrabold text-white">WhatsApp Kholo</span>
+            <span class="text-[16px] font-semibold text-white/90">Open WhatsApp</span>
+          </div>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
