@@ -18,3 +18,9 @@
 - Phone screens (390x844) and desktop screens are separate designs. Match each one.
 - If the design conflicts with a rule in RULES.md, do NOT choose silently. Tell the owner in one line and ask.
 - If a design detail is missing, ask the owner. Do not guess.
+## Save the owner's credits
+- Do NOT open a browser, take screenshots, or run browser tests. The owner checks the screen by eye.
+- Do NOT run lint or tests unless the prompt asks. Run only "npm run build".
+- Do NOT re-read files you do not need. Read only the files named in the prompt.
+- Build 2-4 closely related screens per prompt when told to, never the whole app.
+- If a step fails twice, STOP and explain in simple words. Do not keep trying.
