@@ -8,8 +8,14 @@
 - Auto-lock after inactivity (default 5 min, owner can change).
 
 ## Protected actions and approvals
-- Protected: delete/correct a finished bill, change a price, discount above limit, stock correction, cash mismatch at Din Band.
-- For EACH action category the owner sets an offline rule: (a) local Owner PIN, (b) remote approval (Cloud mode only), (c) blocked while offline.
+- Risky actions: delete/correct a finished bill, change a price, discount above limit, stock correction, cash mismatch at Din Band.
+- Risky actions are approved with a separate APPROVAL PIN ("Ijazat PIN", English: "Approval PIN"), NOT the Owner login PIN.
+- Approval PIN is 4-6 digits and must differ from the Owner login PIN and every staff PIN. Wherever rules say "local Owner PIN" for risky actions it now means the Approval PIN.
+- Opening the Owner area from Home still uses the Owner login PIN. Even when the owner is logged in, risky actions ask for the Approval PIN.
+- 3 wrong tries lock it for 5 minutes. The lock is saved in the database so a refresh does not clear it.
+- Every wrong try, lock and successful use goes to the audit log (never the PIN itself).
+- Staff PINs added or changed later must differ from the Approval PIN.
+- For EACH action category the owner sets an offline rule: (a) Ijazat PIN (Approval PIN), (b) remote approval (Cloud mode only, built later), (c) blocked while offline.
 - One approval = one request = one action on one record. It can NEVER be reused for another bill/action.
 - Staff presses "Owner ko poocho". Request has: exact action, record, requester, reason, shop/device, time.
 - Offline remote request shows "Waiting for internet - not sent to owner". Action does NOT run until a valid approval is verified.
