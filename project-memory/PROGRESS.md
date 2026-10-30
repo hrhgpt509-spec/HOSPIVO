@@ -3,7 +3,7 @@
 Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 
 - [x] Phase 0: project folder, memory files, Git, scaffold, theme from Stitch
-- [~] Phase 1: database, login, PIN, roles, setup screens, Home (Local), approval check, shared dialogs
+- [x] Phase 1: database, login, PIN, roles, setup screens, Home (Local), approval check, shared dialogs
 - [ ] Phase 2: medicine list, Stock Jodo, Stock Dekho, suppliers
 - [ ] Phase 3: Dawai Becho, payment, bill done, old bills, returns
 - [ ] Phase 4: Expiry, Udhaar, customers, referral report
@@ -13,14 +13,20 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Phase 1: Auto-capitalize helper, owner setup hints, shared physical keyboard PIN support, and 4-digit PIN standardization
+Phase 1 completed: Reusable dialogs, Web Audio feedback synthesizer, Owner PIN gate, Ijazat PIN dialog, placeholder navigation, and role helpers
 
 ## Known problems
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 - DEV ONLY: ?reset=1 query parameter in App.tsx clears the database and must be removed before release.
 - DEV ONLY: "DEV: Reset test data" button on Login screen clears database and must be removed before release.
+- DEV ONLY: "DEV: Test Ijazat PIN" test button on Home screen must be removed before release.
 
 ## Log (newest first)
+- Phase 1: Built reusable ConfirmDialog, EmptyState, StatusChip, and FeedbackOverlay matching designs 46a, 46b, 46c, 46d.
+- Generated offline audio feedback (positive chime and error buzz) via Web Audio API with screen flash and toasts.
+- Built OwnerPinGate (32a) and ApprovalDialog (18c) verifying Ijazat PIN with 3-try lock and audit logging.
+- Connected all 8 Home action tiles to EmptyState placeholders with Ghar buttons, and added DEV Ijazat PIN test button.
+- Implemented roles.ts helpers (isOwner, canSeeProfit, canSeePurchasePrice); vitest (14 tests) and build pass cleanly.
 - Phase 1: Added shared format.ts helper for auto-capitalization (preserving case and women's apostrophe), uppercase GST/licences, and digit-only phone.
 - Updated Setup placeholders with owner's shop details (Maa Durga Medical Hall, Sunil Kumar, Samastipur) and noted in Known problems.
 - Created shared usePinKeyboard hook and connected physical keyboard across setup Owner PIN, repeat PIN, staff PIN, Ijazat PIN, and Login.

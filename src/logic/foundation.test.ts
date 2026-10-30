@@ -216,6 +216,8 @@ describe('auth.ts Login wait tests', () => {
 });
 
 import { capitalizeWords, toUpperAlphanumeric, filterDigits } from './format';
+import { isOwner, canSeeProfit, canSeePurchasePrice } from './roles';
+import type { DBUser } from '../db';
 
 describe('format.ts auto-capitalization and input helpers', () => {
   it('capitalizes first letter of words, preserves uppercase, and does not capitalize after apostrophes', () => {
@@ -238,4 +240,56 @@ describe('format.ts auto-capitalization and input helpers', () => {
     expect(toUpperAlphanumeric('up-mrt-20b/8892')).toBe('UP-MRT-20B/8892');
   });
 });
+
+describe('roles.ts role helper tests', () => {
+  const ownerUser: DBUser = {
+    id: 'owner-1',
+    name: 'Sunil Kumar',
+    role: 'owner',
+    pinHash: 'dummy_hash',
+    pinSalt: 'dummy_salt',
+    active: true,
+  };
+
+  const cashierUser: DBUser = {
+    id: 'cashier-1',
+    name: 'Raju Cashier',
+    role: 'cashier',
+    pinHash: 'dummy_hash',
+    pinSalt: 'dummy_salt',
+    active: true,
+  };
+
+  const runnerUser: DBUser = {
+    id: 'runner-1',
+    name: 'Mohan Runner',
+    role: 'runner',
+    pinHash: 'dummy_hash',
+    pinSalt: 'dummy_salt',
+    active: true,
+  };
+
+  it('correctly identifies owner', () => {
+    expect(isOwner(ownerUser)).toBe(true);
+    expect(isOwner(cashierUser)).toBe(false);
+    expect(isOwner(runnerUser)).toBe(false);
+    expect(isOwner(null)).toBe(false);
+    expect(isOwner(undefined)).toBe(false);
+  });
+
+  it('owner can see profit, cashier and runner cannot', () => {
+    expect(canSeeProfit(ownerUser)).toBe(true);
+    expect(canSeeProfit(cashierUser)).toBe(false);
+    expect(canSeeProfit(runnerUser)).toBe(false);
+    expect(canSeeProfit(null)).toBe(false);
+  });
+
+  it('owner can see purchase price, cashier and runner cannot', () => {
+    expect(canSeePurchasePrice(ownerUser)).toBe(true);
+    expect(canSeePurchasePrice(cashierUser)).toBe(false);
+    expect(canSeePurchasePrice(runnerUser)).toBe(false);
+    expect(canSeePurchasePrice(null)).toBe(false);
+  });
+});
+
 

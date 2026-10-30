@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Home } from './screens/Home';
 import { Login } from './screens/Login';
 import { Setup } from './screens/Setup';
+import { FeedbackOverlay } from './components/FeedbackOverlay';
 import { db, type DBUser } from './db';
 
 // 5 minutes of inactivity triggers the auto-lock screen
@@ -84,45 +85,54 @@ export function App() {
     resetInactivityTimer();
   };
 
-  if (screen === 'loading') {
-    return (
-      <div className="w-full min-h-screen bg-[#F4F6F5] flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-[#1B8F4A] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const renderActiveScreen = () => {
+    if (screen === 'loading') {
+      return (
+        <div className="w-full min-h-screen bg-[#F4F6F5] flex items-center justify-center">
+          <div className="w-10 h-10 border-4 border-[#1B8F4A] border-t-transparent rounded-full animate-spin" />
+        </div>
+      );
+    }
 
-  if (isLocked) {
+    if (isLocked) {
+      return (
+        <Login
+          isLocked={true}
+          lockedUser={currentUser}
+          onUnlock={handleUnlock}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      );
+    }
+
+    if (screen === 'setup') {
+      return (
+        <Setup
+          onComplete={() => {
+            setScreen('login');
+          }}
+        />
+      );
+    }
+
+    if (screen === 'home') {
+      return <Home currentUser={currentUser} />;
+    }
+
     return (
       <Login
-        isLocked={true}
-        lockedUser={currentUser}
-        onUnlock={handleUnlock}
         onLoginSuccess={handleLoginSuccess}
+        isLocked={false}
+        onResetToSetup={() => setScreen('setup')}
       />
     );
-  }
-
-  if (screen === 'setup') {
-    return (
-      <Setup
-        onComplete={() => {
-          setScreen('login');
-        }}
-      />
-    );
-  }
-
-  if (screen === 'home') {
-    return <Home currentUser={currentUser} />;
-  }
+  };
 
   return (
-    <Login
-      onLoginSuccess={handleLoginSuccess}
-      isLocked={false}
-      onResetToSetup={() => setScreen('setup')}
-    />
+    <>
+      <FeedbackOverlay />
+      {renderActiveScreen()}
+    </>
   );
 }
 
