@@ -4,13 +4,13 @@
 - Owner sees everything incl. profit and purchase price. Cashier: selling screens only; NO profit, NO purchase price,
   cannot edit MRP, cannot edit/delete a finished bill. Runner: scanner only.
 - Login: tap a name, type PIN on a big number pad. Wrong PIN -> red "PIN galat hai", pad clears.
-- Owner PIN is 4-6 digits. Store PINs only as a salted hash, never as plain text.
+- PINs are 4 digits by default. A 6-digit option is an Owner setting, to be built in Phase 5 (Settings). Changing the length later means every user must set a new PIN. Store PINs only as a salted hash, never as plain text.
 - Auto-lock after inactivity (default 5 min, owner can change).
 
 ## Protected actions and approvals
 - Risky actions: delete/correct a finished bill, change a price, discount above limit, stock correction, cash mismatch at Din Band.
 - Risky actions are approved with a separate APPROVAL PIN ("Ijazat PIN", English: "Approval PIN"), NOT the Owner login PIN.
-- Approval PIN is 4-6 digits and must differ from the Owner login PIN and every staff PIN. Wherever rules say "local Owner PIN" for risky actions it now means the Approval PIN.
+- Approval PIN is 4 digits by default and must differ from the Owner login PIN and every staff PIN. Wherever rules say "local Owner PIN" for risky actions it now means the Approval PIN.
 - Opening the Owner area from Home still uses the Owner login PIN. Even when the owner is logged in, risky actions ask for the Approval PIN.
 - 3 wrong tries lock it for 5 minutes. The lock is saved in the database so a refresh does not clear it.
 - Every wrong try, lock and successful use goes to the audit log (never the PIN itself).

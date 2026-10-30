@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Home } from './screens/Home';
-import { Login, STAFF_USERS, type StaffUser } from './screens/Login';
+import { Login } from './screens/Login';
 import { Setup } from './screens/Setup';
-import { db } from './db';
+import { db, type DBUser } from './db';
 
 // 5 minutes of inactivity triggers the auto-lock screen
 const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
@@ -12,7 +12,7 @@ type AppScreen = 'loading' | 'setup' | 'login' | 'home';
 export function App() {
   const [screen, setScreen] = useState<AppScreen>('loading');
   const [isLocked, setIsLocked] = useState<boolean>(false);
-  const [currentUser, setCurrentUser] = useState<StaffUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<DBUser | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -72,7 +72,7 @@ export function App() {
     };
   }, [resetInactivityTimer]);
 
-  const handleLoginSuccess = (user: StaffUser) => {
+  const handleLoginSuccess = (user: DBUser) => {
     setCurrentUser(user);
     setScreen('home');
     setIsLocked(false);
@@ -96,7 +96,7 @@ export function App() {
     return (
       <Login
         isLocked={true}
-        lockedUser={currentUser || STAFF_USERS[1]}
+        lockedUser={currentUser}
         onUnlock={handleUnlock}
         onLoginSuccess={handleLoginSuccess}
       />
@@ -114,7 +114,7 @@ export function App() {
   }
 
   if (screen === 'home') {
-    return <Home />;
+    return <Home currentUser={currentUser} />;
   }
 
   return (

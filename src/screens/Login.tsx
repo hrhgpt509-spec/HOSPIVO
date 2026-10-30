@@ -1,72 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { db } from '../db';
-
-// TEMP: replace with database in the next task
-const DEMO_PIN = '1234';
-
-export interface StaffUser {
-  id: string;
-  name: string;
-  role: string;
-  roleHindi: string;
-  avatarColor: string;
-  avatarBg: string;
-  avatarBorder: string;
-  initial: string;
-  isOwner?: boolean;
-}
-
-export const STAFF_USERS: StaffUser[] = [
-  {
-    id: 'owner',
-    name: 'Owner',
-    role: 'Admin & Shop Incharge',
-    roleHindi: 'Malik',
-    avatarColor: 'text-amber-700',
-    avatarBg: 'bg-amber-100',
-    avatarBorder: 'border-amber-200',
-    initial: 'O',
-    isOwner: true,
-  },
-  {
-    id: 'raju',
-    name: 'Raju',
-    role: 'Counter Staff',
-    roleHindi: '',
-    avatarColor: 'text-blue-700',
-    avatarBg: 'bg-blue-100',
-    avatarBorder: 'border-blue-200',
-    initial: 'R',
-  },
-  {
-    id: 'sunita',
-    name: 'Sunita',
-    role: 'Pharmacist',
-    roleHindi: '',
-    avatarColor: 'text-purple-700',
-    avatarBg: 'bg-purple-100',
-    avatarBorder: 'border-purple-200',
-    initial: 'S',
-  },
-  {
-    id: 'amit',
-    name: 'Amit',
-    role: 'Billing Assistant',
-    roleHindi: '',
-    avatarColor: 'text-teal-800',
-    avatarBg: 'bg-teal-100',
-    avatarBorder: 'border-teal-200',
-    initial: 'A',
-  },
-];
+import React, { useState, useEffect, useCallback } from 'react';
+import { db, type DBUser } from '../db';
+import { attemptUserLogin, getLoginLock } from '../logic/auth';
+import { usePinKeyboard } from '../logic/usePinKeyboard';
 
 interface LoginProps {
-  onLoginSuccess: (user: StaffUser) => void;
+  onLoginSuccess: (user: DBUser) => void;
   isLocked?: boolean;
-  lockedUser?: StaffUser | null;
+  lockedUser?: DBUser | null;
   onUnlock?: () => void;
   onResetToSetup?: () => void;
 }
+
+const AVATAR_PALETTES = [
+  { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200' },
+  { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
+  { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200' },
+  { bg: 'bg-teal-100', text: 'text-teal-800', border: 'border-teal-200' },
+];
 
 export const Login: React.FC<LoginProps> = ({
   onLoginSuccess,
@@ -75,110 +25,188 @@ export const Login: React.FC<LoginProps> = ({
   onUnlock,
   onResetToSetup,
 }) => {
-  const [selectedUser, setSelectedUser] = useState<StaffUser | null>(null);
+  const [users, setUsers] = useState<DBUser[]>([]);
+  const [shopName, setShopName] = useState<string>('Shree Medical Store');
+  const [selectedUser, setSelectedUser] = useState<DBUser | null>(null);
   const [pin, setPin] = useState<string>('');
   const [hasError, setHasError] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [lockPin, setLockPin] = useState<string>('');
   const [lockError, setLockError] = useState<boolean>(false);
+  const [lockCountdownSeconds, setLockCountdownSeconds] = useState<number>(0);
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
 
-  // Active user for lock screen defaults to lockedUser or Raju or selectedUser
-  const activeLockUser = lockedUser || selectedUser || STAFF_USERS[1];
+  // Load real users and shop from database
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const allUsers = await db.users.filter((u) => u.active !== false).toArray();
+        allUsers.sort((a, b) => (a.role === 'owner' ? -1 : b.role === 'owner' ? 1 : 0));
+        setUsers(allUsers);
 
-  const handleSelectUser = (user: StaffUser) => {
+        const shop = await db.shop.toCollection().first();
+        if (shop?.name) {
+          setShopName(shop.name);
+        }
+      } catch (err) {
+        console.error('Failed to load login users:', err);
+      }
+    }
+    loadData();
+  }, []);
+
+  // Timer countdown for lockout
+  useEffect(() => {
+    if (lockCountdownSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setLockCountdownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setHasError(false);
+          setErrorMessage('');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockCountdownSeconds]);
+
+  // Active user for lock screen defaults to lockedUser or first user
+  const activeLockUser = lockedUser || selectedUser || users[0] || null;
+
+  // On entering lock screen, check if activeLockUser is locked
+  useEffect(() => {
+    if (isLocked && activeLockUser) {
+      getLoginLock(activeLockUser.id).then((lock) => {
+        if (lock.isLocked) {
+          setLockCountdownSeconds(lock.secondsLeft);
+        }
+      });
+    }
+  }, [isLocked, activeLockUser]);
+
+  const handleSelectUser = async (user: DBUser) => {
     setSelectedUser(user);
     setPin('');
     setHasError(false);
+    setErrorMessage('');
+    const lock = await getLoginLock(user.id);
+    if (lock.isLocked) {
+      setLockCountdownSeconds(lock.secondsLeft);
+    } else {
+      setLockCountdownSeconds(0);
+    }
   };
 
-  const handleAddDigit = (digit: string) => {
-    if (isLocked) {
-      if (lockPin.length < 4) {
-        const nextPin = lockPin + digit;
-        setLockPin(nextPin);
+  const verifyLockPin = useCallback(
+    async (pinToTest: string) => {
+      if (!activeLockUser) return;
+      const res = await attemptUserLogin(activeLockUser, pinToTest);
+      if (res.status === 'ok') {
+        setLockPin('');
         setLockError(false);
-        if (nextPin.length === 4) {
-          verifyLockPin(nextPin);
+        if (onUnlock) {
+          onUnlock();
+        }
+      } else if (res.status === 'locked') {
+        setLockError(true);
+        setLockCountdownSeconds(res.secondsLeft);
+        setLockPin('');
+      } else {
+        setLockError(true);
+        setLockPin('');
+      }
+    },
+    [activeLockUser, onUnlock]
+  );
+
+  const verifyPin = useCallback(
+    async (pinToTest: string, user: DBUser) => {
+      const res = await attemptUserLogin(user, pinToTest);
+      if (res.status === 'ok') {
+        onLoginSuccess(user);
+      } else if (res.status === 'locked') {
+        setHasError(true);
+        setErrorMessage(`${res.minutesLeft} minute baad try karein`);
+        setLockCountdownSeconds(res.secondsLeft);
+        setPin('');
+      } else {
+        setHasError(true);
+        setErrorMessage('PIN galat hai');
+        setPin('');
+      }
+    },
+    [onLoginSuccess]
+  );
+
+  const handleAddDigit = useCallback(
+    (digit: string) => {
+      if (lockCountdownSeconds > 0) return;
+
+      if (isLocked) {
+        const targetLen = 4;
+        if (lockPin.length < targetLen) {
+          const nextPin = lockPin + digit;
+          setLockPin(nextPin);
+          setLockError(false);
+          if (nextPin.length === targetLen) {
+            verifyLockPin(nextPin);
+          }
+        }
+        return;
+      }
+
+      if (!selectedUser) return;
+      const targetLen = 4;
+      if (pin.length < targetLen) {
+        const nextPin = pin + digit;
+        setPin(nextPin);
+        setHasError(false);
+        setErrorMessage('');
+
+        if (nextPin.length === targetLen) {
+          verifyPin(nextPin, selectedUser);
         }
       }
-      return;
-    }
+    },
+    [lockCountdownSeconds, isLocked, lockPin, verifyLockPin, selectedUser, pin, verifyPin]
+  );
 
-    if (!selectedUser) return;
-    if (pin.length < 4) {
-      const nextPin = pin + digit;
-      setPin(nextPin);
-      setHasError(false);
-
-      if (nextPin.length === 4) {
-        verifyPin(nextPin);
-      }
-    }
-  };
-
-  const verifyPin = (pinToTest: string) => {
-    if (pinToTest === DEMO_PIN) {
-      if (selectedUser) {
-        onLoginSuccess(selectedUser);
-      }
-    } else {
-      setHasError(true);
-      setPin('');
-    }
-  };
-
-  const verifyLockPin = (pinToTest: string) => {
-    if (pinToTest === DEMO_PIN) {
-      setLockPin('');
-      setLockError(false);
-      if (onUnlock) {
-        onUnlock();
-      }
-    } else {
-      setLockError(true);
-      setLockPin('');
-    }
-  };
-
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     if (isLocked) {
       setLockPin('');
       setLockError(false);
     } else {
       setPin('');
       setHasError(false);
+      setErrorMessage('');
     }
-  };
+  }, [isLocked]);
 
-  const handleBackspace = () => {
+  const handleBackspace = useCallback(() => {
     if (isLocked) {
       setLockPin((prev) => prev.slice(0, -1));
       setLockError(false);
     } else {
       setPin((prev) => prev.slice(0, -1));
       setHasError(false);
+      setErrorMessage('');
     }
-  };
+  }, [isLocked]);
 
-  // Keyboard navigation support
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (/^[0-9]$/.test(e.key)) {
-        handleAddDigit(e.key);
-      } else if (e.key === 'Backspace') {
-        handleBackspace();
-      } else if (e.key === 'Escape') {
-        handleClear();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedUser, pin, isLocked, lockPin]);
+  // Shared keyboard navigation support for PIN entry
+  usePinKeyboard({
+    onDigit: handleAddDigit,
+    onBackspace: handleBackspace,
+    onClear: handleClear,
+  });
 
   // -------------------------------------------------------------
   // STATE 3: Lock Screen (08c_Login_LockScreen.html)
   // -------------------------------------------------------------
   if (isLocked) {
+    const lockTargetLen = 4;
     return (
       <div className="w-full min-h-screen bg-[#f1fcf6] flex items-center justify-center p-0 m-0 select-none relative overflow-hidden">
         {/* Background blurred representation of the app (matches 08c) */}
@@ -187,7 +215,7 @@ export const Login: React.FC<LoginProps> = ({
             <div className="flex items-center gap-4">
               <span className="text-2xl text-[#006b33] font-bold">HOSPIVO PHARMA POS</span>
               <span className="bg-[#dae5df] px-3 py-1 rounded-full text-sm text-[#3e4a3f]">
-                Counter #01 • Shree Medical Store
+                Counter #01 • {shopName}
               </span>
             </div>
             <div className="flex items-center gap-6">
@@ -203,88 +231,86 @@ export const Login: React.FC<LoginProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                 </svg>
               </div>
-              <div className="flex-1 flex flex-col gap-2">
-                <div className="flex justify-between items-center py-2 px-4 bg-[#ebf6f0] rounded-lg">
-                  <span className="font-bold text-[#141e1a]">Dolo 650mg Tablet (15 Tab)</span>
-                  <span className="text-sm text-[#3e4a3f]">Batch: DL9021 • Exp: 09/26</span>
-                  <span className="text-xl text-[#006b33] font-bold">₹31.50</span>
-                </div>
-                <div className="flex justify-between items-center py-2 px-4 bg-white rounded-lg">
-                  <span className="font-bold text-[#141e1a]">Pan-D Capsule (15 Cap)</span>
-                  <span className="text-sm text-[#3e4a3f]">Batch: PND442 • Exp: 01/26</span>
-                  <span className="text-xl text-[#006b33] font-bold">₹198.00</span>
-                </div>
-                <div className="flex justify-between items-center py-2 px-4 bg-[#ebf6f0] rounded-lg">
-                  <span className="font-bold text-[#141e1a]">Augmentin 625 Duo (10 Tab)</span>
-                  <span className="text-sm text-[#3e4a3f]">Batch: AG1029 • Exp: 11/25</span>
-                  <span className="text-xl text-[#006b33] font-bold">₹201.20</span>
-                </div>
-                <div className="flex justify-between items-center py-2 px-4 bg-white rounded-lg">
-                  <span className="font-bold text-[#141e1a]">Azee 500 Tablet (5 Tab)</span>
-                  <span className="text-sm text-[#3e4a3f]">Batch: AZ7710 • Exp: 04/26</span>
-                  <span className="text-xl text-[#006b33] font-bold">₹119.50</span>
-                </div>
-              </div>
-            </div>
-            <div className="w-1/3 bg-white rounded-xl p-6 flex flex-col justify-between shadow-sm">
-              <div className="flex flex-col gap-4">
-                <span className="font-bold text-[#141e1a]">Parcha Summary</span>
-                <div className="p-4 bg-[#ebf6f0] rounded-xl flex flex-col gap-1">
-                  <span className="text-sm text-[#3e4a3f]">Kul Rakam (Total Amount)</span>
-                  <span className="text-4xl text-[#006b33] font-extrabold leading-none">₹550.20</span>
-                </div>
-              </div>
-              <div className="h-16 bg-[#006b33] rounded-xl flex items-center justify-center">
-                <span className="text-xl text-white font-bold">Payment Receive Karein</span>
-              </div>
             </div>
           </div>
         </div>
 
-        {/* Modal Overlay (matches 08c) */}
-        <div className="absolute inset-0 bg-[#28332f]/40 backdrop-blur-md flex items-center justify-center z-10 p-4">
-          <div className="w-full max-w-[520px] bg-white rounded-2xl shadow-2xl p-8 flex flex-col items-center relative">
+        {/* Floating Centered Unlock Card (Matches 08c: 440px wide) */}
+        <div className="relative z-10 w-[440px] max-w-[95vw] bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden flex flex-col items-center">
+          
+          {/* Green top bar */}
+          <div className="w-full h-2.5 bg-[#006b33]"></div>
+
+          <div className="w-full p-8 flex flex-col items-center">
             
-            {/* Lock icon */}
-            <div className="w-16 h-16 rounded-full bg-[#8ef9a7] flex items-center justify-center text-[#006b33] mb-3 shadow-sm">
-              <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 17a2 2 0 100-4 2 2 0 000 4zm6-9h-1V6a5 5 0 00-10 0v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6-5a3 3 0 013 3v2H9V6a3 3 0 013-3zm6 15H6V10h12v10z" />
+            {/* Padlock Icon & Auto-Lock Header */}
+            <div className="w-14 h-14 rounded-full bg-[#ebf6f0] flex items-center justify-center text-[#006b33] mb-3 shadow-inner">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
               </svg>
             </div>
 
-            {/* User pill */}
-            <div className="flex items-center gap-3 bg-[#ebf6f0] px-4 py-1.5 rounded-full mb-2">
-              <div className="w-8 h-8 rounded-full bg-[#006b33] text-white flex items-center justify-center font-bold text-base leading-none">
-                {activeLockUser.initial}
-              </div>
-              <span className="font-bold text-[#141e1a] text-xl">{activeLockUser.name}</span>
-            </div>
-
-            <p className="text-lg text-[#3e4a3f] text-center mb-5 font-medium">
-              5 minute se use nahi hua, PIN dalein
+            <h2 className="text-2xl font-extrabold text-[#141e1a] tracking-tight text-center">
+              Screen Lock Hai
+            </h2>
+            <p className="text-sm font-medium text-[#6e7a6e] mt-0.5 text-center">
+              5 minute se koi action nahi hua (Auto-locked)
             </p>
 
-            {/* PIN Indicator dots */}
-            <div className="flex items-center justify-center gap-4 mb-4">
-              {[0, 1, 2, 3].map((idx) => (
+            {/* Active User Pill in Modal */}
+            <div className="mt-4 mb-4 px-4 py-2 bg-[#f1fcf6] rounded-xl border border-[#dae5df] flex items-center gap-3 w-full justify-center">
+              <div className="w-8 h-8 rounded-full bg-[#006b33] text-white flex items-center justify-center font-bold text-sm">
+                {activeLockUser?.role === 'owner' ? (
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                  </svg>
+                ) : (
+                  activeLockUser?.name.charAt(0).toUpperCase() || 'U'
+                )}
+              </div>
+              <div className="flex flex-col text-left">
+                <span className="text-sm font-bold text-[#141e1a] leading-tight">
+                  {activeLockUser?.name || 'Staff User'}
+                </span>
+                <span className="text-xs text-[#3e4a3f]">
+                  {activeLockUser?.role === 'owner' ? 'Admin & Shop Incharge' : 'Counter Staff'}
+                </span>
+              </div>
+            </div>
+
+            {/* PIN Dots */}
+            <div className="flex items-center gap-4 my-2">
+              {Array.from({ length: lockTargetLen }).map((_, idx) => (
                 <div
                   key={idx}
-                  className={`w-5 h-5 rounded-full transition-all duration-150 ${
+                  className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
                     idx < lockPin.length
-                      ? 'bg-[#006b33] scale-110 shadow-sm'
-                      : 'bg-[#dae5df]'
+                      ? 'bg-[#006b33] border-[#006b33] scale-110'
+                      : 'border-[#b6c2bb] bg-white'
                   }`}
                 />
               ))}
             </div>
 
             {/* Wrong PIN feedback on lock screen */}
-            {lockError && (
+            {lockError && lockCountdownSeconds <= 0 && (
               <div className="mb-3 px-4 py-1.5 rounded-full bg-red-100 border border-red-300 text-red-700 flex items-center gap-2 animate-bounce">
                 <svg className="w-4 h-4 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <span className="text-sm font-bold tracking-wide">PIN galat hai</span>
+              </div>
+            )}
+
+            {/* Lockout countdown on lock screen */}
+            {lockCountdownSeconds > 0 && (
+              <div className="mb-3 px-4 py-1.5 rounded-full bg-amber-100 border border-amber-300 text-amber-800 flex items-center gap-2 animate-pulse">
+                <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm font-bold tracking-wide">
+                  {Math.ceil(lockCountdownSeconds / 60)} minute baad try karein ({lockCountdownSeconds}s)
+                </span>
               </div>
             )}
 
@@ -353,6 +379,8 @@ export const Login: React.FC<LoginProps> = ({
   // -------------------------------------------------------------
   // STATES 1 & 2: 08a (Choose Name) & 08b (Active PIN / Wrong PIN)
   // -------------------------------------------------------------
+  const selectedUserPinLength = 4;
+
   return (
     <div className="w-full min-h-screen bg-[#F4F6F5] text-slate-800 flex flex-col justify-center items-center p-4 md:p-8 select-none">
       
@@ -369,7 +397,7 @@ export const Login: React.FC<LoginProps> = ({
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 leading-none">Hospivo</h1>
-              <p className="text-sm md:text-base text-slate-500 font-medium mt-1">Shree Medical Store • दवा दुकान POS</p>
+              <p className="text-sm md:text-base text-slate-500 font-medium mt-1">{shopName} • दवा दुकान POS</p>
             </div>
           </div>
 
@@ -396,8 +424,18 @@ export const Login: React.FC<LoginProps> = ({
 
             {/* Stacked Big Name Buttons (64px tall each) */}
             <div className="flex flex-col gap-3.5 max-w-[540px]">
-              {STAFF_USERS.map((user) => {
+              {users.map((user, idx) => {
                 const isSelected = selectedUser?.id === user.id;
+                const isOwner = user.role === 'owner';
+                const palette = isOwner
+                  ? AVATAR_PALETTES[0]
+                  : AVATAR_PALETTES[(idx % (AVATAR_PALETTES.length - 1)) + 1];
+                const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+                const roleDesc = isOwner
+                  ? 'Admin & Shop Incharge'
+                  : user.role === 'cashier'
+                  ? 'Counter Staff'
+                  : 'Runner';
 
                 if (isSelected) {
                   // Active Green State (Matches 08b line 100)
@@ -410,17 +448,17 @@ export const Login: React.FC<LoginProps> = ({
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-11 h-11 rounded-xl bg-white text-[#1B8F4A] flex items-center justify-center text-xl font-extrabold shadow-sm">
-                          {user.isOwner ? (
+                          {isOwner ? (
                             <svg className="w-6 h-6 text-[#1B8F4A]" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                             </svg>
                           ) : (
-                            user.initial
+                            initial
                           )}
                         </div>
                         <div className="text-left">
                           <div className="text-xl font-bold text-white leading-tight">{user.name}</div>
-                          <div className="text-xs text-green-100 font-medium leading-tight">{user.role}</div>
+                          <div className="text-xs text-green-100 font-medium leading-tight">{roleDesc}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 text-white">
@@ -444,15 +482,15 @@ export const Login: React.FC<LoginProps> = ({
                     className="w-full h-16 bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-[#1B8F4A] rounded-2xl px-5 flex items-center justify-between transition-all duration-150 shadow-sm group text-left cursor-pointer active:scale-[0.99]"
                   >
                     <div className="flex items-center gap-4">
-                      {user.isOwner ? (
-                        <div className={`w-11 h-11 rounded-xl ${user.avatarBg} ${user.avatarColor} flex items-center justify-center font-bold`}>
+                      {isOwner ? (
+                        <div className={`w-11 h-11 rounded-xl ${palette.bg} ${palette.text} flex items-center justify-center font-bold`}>
                           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                           </svg>
                         </div>
                       ) : (
-                        <div className={`w-11 h-11 rounded-full ${user.avatarBg} ${user.avatarColor} flex items-center justify-center font-bold text-lg border-2 ${user.avatarBorder}`}>
-                          {user.initial}
+                        <div className={`w-11 h-11 rounded-full ${palette.bg} ${palette.text} flex items-center justify-center font-bold text-lg border-2 ${palette.border}`}>
+                          {initial}
                         </div>
                       )}
                       <div className="flex flex-col">
@@ -460,14 +498,14 @@ export const Login: React.FC<LoginProps> = ({
                           {user.name}
                         </span>
                         <span className="text-sm text-slate-500 font-medium leading-tight">
-                          {user.role}
+                          {roleDesc}
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {user.roleHindi && (
+                      {isOwner && (
                         <span className="text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-800 px-3 py-1 rounded-lg border border-amber-200">
-                          {user.roleHindi}
+                          Malik
                         </span>
                       )}
                       <svg className="w-6 h-6 text-slate-400 group-hover:text-[#1B8F4A] group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -484,7 +522,7 @@ export const Login: React.FC<LoginProps> = ({
               <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Har staff ka alag 4-digit PIN hai. Kisi se PIN share na karein.</span>
+              <span>Har staff ka alag PIN hai. Kisi se PIN share na karein.</span>
             </div>
 
           </div>
@@ -505,7 +543,7 @@ export const Login: React.FC<LoginProps> = ({
                   Naam chuniye
                 </div>
                 <div className="text-lg text-slate-500 font-medium max-w-[360px] leading-relaxed">
-                  Apna naam chunein aur 4-digit PIN daal kar billing shuru karein.
+                  Apna naam chunein aur PIN daal kar billing shuru karein.
                 </div>
                 <div className="mt-6 flex items-center gap-2 text-base font-semibold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200">
                   <svg className="w-5 h-5 text-emerald-600 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -522,12 +560,12 @@ export const Login: React.FC<LoginProps> = ({
                 <div className="w-full flex items-center justify-between pb-3 border-b border-slate-200/80">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-[#1B8F4A] text-white flex items-center justify-center text-xl font-black shadow-md shadow-[#1B8F4A]/30">
-                      {selectedUser.isOwner ? (
+                      {selectedUser.role === 'owner' ? (
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                         </svg>
                       ) : (
-                        selectedUser.initial
+                        selectedUser.name.charAt(0).toUpperCase()
                       )}
                     </div>
                     <div>
@@ -535,7 +573,7 @@ export const Login: React.FC<LoginProps> = ({
                         <h3 className="text-2xl font-black text-slate-900 leading-tight">{selectedUser.name}</h3>
                         <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">Selected</span>
                       </div>
-                      <p className="text-sm font-medium text-slate-500">Apna 4-digit PIN daal kar billing shuru karein</p>
+                      <p className="text-sm font-medium text-slate-500">Apna {selectedUserPinLength}-digit PIN daal kar billing shuru karein</p>
                     </div>
                   </div>
 
@@ -546,10 +584,10 @@ export const Login: React.FC<LoginProps> = ({
                   </div>
                 </div>
 
-                {/* PIN Dots (4 digits) */}
+                {/* PIN Dots */}
                 <div className="my-3 flex flex-col items-center">
                   <div className="flex items-center gap-4">
-                    {[0, 1, 2, 3].map((idx) => (
+                    {Array.from({ length: selectedUserPinLength }).map((_, idx) => (
                       <div
                         key={idx}
                         className={`w-5 h-5 rounded-full border-2 transition-all duration-150 ${
@@ -562,13 +600,27 @@ export const Login: React.FC<LoginProps> = ({
                   </div>
 
                   {/* Red semantic danger message: "PIN galat hai" (08b) */}
-                  {hasError && (
+                  {hasError && lockCountdownSeconds <= 0 && (
                     <div className="mt-3 px-4 py-1.5 rounded-full bg-red-100 border border-red-300 text-red-700 flex items-center gap-2 animate-bounce">
                       <svg className="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
-                      <span className="text-base font-bold tracking-wide">PIN galat hai</span>
-                      <span className="text-xs font-medium text-red-600/80">(Incorrect PIN, dobara try karein)</span>
+                      <span className="text-base font-bold tracking-wide">{errorMessage || 'PIN galat hai'}</span>
+                      {errorMessage === 'PIN galat hai' && (
+                        <span className="text-xs font-medium text-red-600/80">(Incorrect PIN, dobara try karein)</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Lockout countdown */}
+                  {lockCountdownSeconds > 0 && (
+                    <div className="mt-3 px-4 py-2 rounded-full bg-amber-100 border border-amber-300 text-amber-800 flex items-center gap-2 animate-pulse">
+                      <svg className="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-base font-bold tracking-wide">
+                        {Math.ceil(lockCountdownSeconds / 60)} minute baad try karein ({lockCountdownSeconds}s)
+                      </span>
                     </div>
                   )}
                 </div>

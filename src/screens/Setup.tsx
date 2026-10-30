@@ -8,6 +8,8 @@ import {
   type ApprovalActionCategory,
   type ApprovalRuleType,
 } from '../logic/approvals';
+import { capitalizeWords, toUpperAlphanumeric, filterDigits } from '../logic/format';
+import { usePinKeyboard } from '../logic/usePinKeyboard';
 
 interface SetupProps {
   onComplete: () => void;
@@ -25,13 +27,13 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1);
 
   // Step 1: Shop details
-  const [shopName, setShopName] = useState('Shree Medical Store');
-  const [ownerName, setOwnerName] = useState('Ramesh Sharma');
-  const [address, setAddress] = useState('Shop No. 4, Near Civil Hospital Gate, Meerut Cantt, UP - 250001');
-  const [phone, setPhone] = useState('98371 44520');
-  const [gstNo, setGstNo] = useState('09AAAAA0000A1Z5');
-  const [dl1, setDl1] = useState('UP-MRT-20B/8892');
-  const [dl2, setDl2] = useState('UP-MRT-21B/7419');
+  const [shopName, setShopName] = useState('');
+  const [ownerName, setOwnerName] = useState('');
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+  const [gstNo, setGstNo] = useState('');
+  const [dl1, setDl1] = useState('');
+  const [dl2, setDl2] = useState('');
   const [step1Error, setStep1Error] = useState('');
 
   // Step 2: Mode choice
@@ -88,7 +90,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const handleOwnerPinDigit = (digit: string) => {
     setOwnerPinError('');
     if (activeOwnerPinField === 1) {
-      if (ownerPin1.length < 6) {
+      if (ownerPin1.length < 4) {
         const next = ownerPin1 + digit;
         setOwnerPin1(next);
         if (next.length === 4) {
@@ -96,7 +98,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
         }
       }
     } else {
-      if (ownerPin2.length < 6) {
+      if (ownerPin2.length < 4) {
         setOwnerPin2(ownerPin2 + digit);
       }
     }
@@ -121,7 +123,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const handleStep3Next = () => {
     const val1 = validatePin(ownerPin1, true);
     if (!val1.valid) {
-      setOwnerPinError(val1.error || 'Owner PIN 4 se 6 digits ka hona chahiye');
+      setOwnerPinError(val1.error || 'Owner PIN 4 digits ka hona chahiye');
       return;
     }
     if (ownerPin1 !== ownerPin2) {
@@ -133,6 +135,14 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     setStep(4);
   };
 
+  // Keyboard navigation for Step 3 (Owner PIN)
+  usePinKeyboard({
+    onDigit: handleOwnerPinDigit,
+    onBackspace: handleOwnerPinBackspace,
+    onClear: handleOwnerPinClearAll,
+    disabled: step !== 3,
+  });
+
   // --------------------------------------------------------------------------
   // STEP 4 (STAFF) HANDLERS
   // --------------------------------------------------------------------------
@@ -143,7 +153,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     }
     const val = validatePin(staffPin, false);
     if (!val.valid) {
-      setStaffError(val.error || 'Staff PIN 4 se 6 digits ka hona chahiye');
+      setStaffError(val.error || 'Staff PIN 4 digits ka hona chahiye');
       return;
     }
 
@@ -166,6 +176,19 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     setStaffPin('');
     setStaffError('');
   };
+
+  // Keyboard navigation for Step 4 (Staff PIN entry)
+  usePinKeyboard({
+    onDigit: (digit) => {
+      setStaffPin((prev) => (prev.length < 4 ? prev + digit : prev));
+      setStaffError('');
+    },
+    onBackspace: () => {
+      setStaffPin((prev) => prev.slice(0, -1));
+      setStaffError('');
+    },
+    disabled: step !== 4,
+  });
 
   const handleRemoveStaff = (id: string) => {
     setStaffList((prev) => prev.filter((s) => s.id !== id));
@@ -196,7 +219,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const handleApprovalPinDigit = (digit: string) => {
     setApprovalPinError('');
     if (activeApprovalPinField === 1) {
-      if (approvalPin1.length < 6) {
+      if (approvalPin1.length < 4) {
         const next = approvalPin1 + digit;
         setApprovalPin1(next);
         if (next.length === 4) {
@@ -204,7 +227,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
         }
       }
     } else {
-      if (approvalPin2.length < 6) {
+      if (approvalPin2.length < 4) {
         setApprovalPin2(approvalPin2 + digit);
       }
     }
@@ -229,7 +252,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const handleStep7Next = () => {
     const val = validatePin(approvalPin1, false);
     if (!val.valid) {
-      setApprovalPinError(val.error || 'Ijazat PIN 4 se 6 digits ka hona chahiye');
+      setApprovalPinError(val.error || 'Ijazat PIN 4 digits ka hona chahiye');
       return;
     }
     if (approvalPin1 !== approvalPin2) {
@@ -244,6 +267,14 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     setApprovalPinError('');
     setStep(8);
   };
+
+  // Keyboard navigation for Step 7 (Ijazat PIN)
+  usePinKeyboard({
+    onDigit: handleApprovalPinDigit,
+    onBackspace: handleApprovalPinBackspace,
+    onClear: handleApprovalPinClearAll,
+    disabled: step !== 7,
+  });
 
   // --------------------------------------------------------------------------
   // STEP 8 (APPROVAL RULES) TOGGLE
@@ -281,6 +312,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
       role: 'owner',
       pinHash: ownerHash,
       pinSalt: ownerSalt,
+      pinLength: ownerPin1.length,
       active: true,
       createdAt: new Date().toISOString(),
     });
@@ -294,6 +326,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
         role: 'cashier',
         pinHash: staff.pinHash,
         pinSalt: staff.pinSalt,
+        pinLength: staff.plainPin.length,
         active: true,
         createdAt: new Date().toISOString(),
       });
@@ -303,10 +336,11 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     // 4. Save Approval PIN (salted hash only)
     await setApprovalPin(approvalPin1, [ownerPin1, ...staffList.map((s) => s.plainPin)]);
 
-    // 5. Save settings (approval rules, auto-lock minutes, backup folder)
+    // 5. Save settings (approval rules, auto-lock minutes, backup folder, pinLength)
     await db.settings.put({ key: 'approval_rules', value: approvalRules });
     await db.settings.put({ key: 'auto_lock_minutes', value: 5 });
     await db.settings.put({ key: 'backup_folder', value: backupFolder });
+    await db.settings.put({ key: 'pinLength', value: 4 });
 
     // 6. Audit entry for setup completion
     await addAudit('Setup', 'setup_complete', shopName.trim(), 'Initial setup completed successfully');
@@ -398,9 +432,10 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <input
                     type="text"
                     value={shopName}
-                    onChange={(e) => setShopName(e.target.value)}
+                    autoCapitalize="words"
+                    onChange={(e) => setShopName(capitalizeWords(e.target.value))}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
-                    placeholder="Jaise: Shree Medical Store"
+                    placeholder="Jaise: Maa Durga Medical Hall"
                   />
                 </div>
                 <p className="text-[15px] text-[#5C6E66] mt-1">Medical store ka poora board par likha naam likhein</p>
@@ -420,9 +455,10 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <input
                     type="text"
                     value={ownerName}
-                    onChange={(e) => setOwnerName(e.target.value)}
+                    autoCapitalize="words"
+                    onChange={(e) => setOwnerName(capitalizeWords(e.target.value))}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
-                    placeholder="Dukaan malik ya sanchalak ka naam"
+                    placeholder="Jaise: Sunil Kumar"
                   />
                 </div>
                 <p className="text-[15px] text-[#5C6E66] mt-1">Bill par aane wala malik ka naam</p>
@@ -443,9 +479,10 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <textarea
                     rows={2}
                     value={address}
-                    onChange={(e) => setAddress(e.target.value)}
+                    autoCapitalize="words"
+                    onChange={(e) => setAddress(capitalizeWords(e.target.value))}
                     className="w-full h-[90px] pl-14 pr-4 py-3 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none resize-none leading-snug"
-                    placeholder="Shop No. 4, Main Market, Mandi Road..."
+                    placeholder="Jaise: Old Women's College Road, Near Kranti Hotel, Samastipur, Bihar"
                   />
                 </div>
                 <p className="text-[15px] text-[#5C6E66] mt-1">Customer parchi aur tax invoice par yahi pata chhapega</p>
@@ -466,10 +503,11 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </div>
                   <input
                     type="text"
+                    inputMode="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(filterDigits(e.target.value))}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
-                    placeholder="10-digit mobile number"
+                    placeholder="Jaise: 9006286255"
                   />
                 </div>
                 <p className="text-[15px] text-[#5C6E66] mt-1">Grahak ko WhatsApp bill bhejte waqt yahi number dikhega</p>
@@ -489,9 +527,9 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <input
                     type="text"
                     value={gstNo}
-                    onChange={(e) => setGstNo(e.target.value)}
+                    onChange={(e) => setGstNo(toUpperAlphanumeric(e.target.value))}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none uppercase"
-                    placeholder="15-digit GSTIN number"
+                    placeholder="Jaise: 09AAAAA0000A1Z5"
                   />
                 </div>
                 <p className="text-[15px] text-[#5C6E66] mt-1">Tax bill aur B2B input tax credit hisaab ke liye</p>
@@ -505,9 +543,9 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <input
                     type="text"
                     value={dl1}
-                    onChange={(e) => setDl1(e.target.value)}
+                    onChange={(e) => setDl1(toUpperAlphanumeric(e.target.value))}
                     className="w-full h-[60px] px-4 text-[17px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none uppercase"
-                    placeholder="Form 20B"
+                    placeholder="Jaise: UP-MRT-20B/8892"
                   />
                   <p className="text-[14px] text-[#5C6E66] mt-1">Form 20B (Retail DL)</p>
                 </div>
@@ -518,9 +556,9 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <input
                     type="text"
                     value={dl2}
-                    onChange={(e) => setDl2(e.target.value)}
+                    onChange={(e) => setDl2(toUpperAlphanumeric(e.target.value))}
                     className="w-full h-[60px] px-4 text-[17px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none uppercase"
-                    placeholder="Form 21B"
+                    placeholder="Jaise: UP-MRT-21B/7419"
                   />
                   <p className="text-[14px] text-[#5C6E66] mt-1">Form 21B (Schedule C/C1)</p>
                 </div>
@@ -748,7 +786,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <svg className="w-6 h-6 text-[#1B8F4A]" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 17a2 2 0 100-4 2 2 0 000 4zm6-9h-1V6a5 5 0 00-10 0v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6-5a3 3 0 013 3v2H9V6a3 3 0 013-3zm6 15H6V10h12v10z" />
               </svg>
-              <span className="text-[18px] text-[#1A1F1C] font-medium">Ye PIN sirf malik ko pata hona chahiye (4 se 6 digits).</span>
+              <span className="text-[18px] text-[#1A1F1C] font-medium">Ye PIN sirf malik ko pata hona chahiye (4 digits).</span>
             </div>
           </div>
 
@@ -769,7 +807,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-2 pt-2 pb-1">
-                  {[0, 1, 2, 3, 4, 5].map((idx) => (
+                  {[0, 1, 2, 3].map((idx) => (
                     <div
                       key={idx}
                       className={`w-5 h-5 rounded-full transition-all flex items-center justify-center text-xs font-bold ${
@@ -797,7 +835,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <span className="text-[14px] font-medium text-slate-500">Kadam 2</span>
                 </div>
                 <div className="flex items-center justify-between px-2 pt-2 pb-1">
-                  {[0, 1, 2, 3, 4, 5].map((idx) => (
+                  {[0, 1, 2, 3].map((idx) => (
                     <div
                       key={idx}
                       className={`w-5 h-5 rounded-full transition-all flex items-center justify-center text-xs font-bold ${
@@ -941,8 +979,9 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <input
                     type="text"
                     value={staffName}
-                    onChange={(e) => setStaffName(e.target.value)}
-                    placeholder="e.g. Raju Kumar"
+                    autoCapitalize="words"
+                    onChange={(e) => setStaffName(capitalizeWords(e.target.value))}
+                    placeholder="Jaise: Raju Kumar"
                     className="w-full h-[62px] pl-14 pr-4 rounded-2xl bg-slate-50 text-[#1A1F1C] font-semibold text-lg border-2 border-slate-200 focus:border-[#1B8F4A] focus:outline-none"
                   />
                 </div>
@@ -951,7 +990,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <div className="flex flex-col gap-1.5">
                 <label className="text-[18px] font-bold text-[#1A1F1C] flex items-center gap-2">
                   Staff PIN
-                  <span className="text-[16px] font-normal text-slate-500">(4-6 Digit Secret Code)</span>
+                  <span className="text-[16px] font-normal text-slate-500">(4-Digit Secret Code)</span>
                 </label>
                 <div className="relative flex items-center">
                   <div className="absolute left-4 text-slate-400">
@@ -962,15 +1001,16 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </div>
                   <input
                     type="password"
-                    maxLength={6}
+                    maxLength={4}
+                    inputMode="numeric"
                     value={staffPin}
-                    onChange={(e) => setStaffPin(e.target.value)}
+                    onChange={(e) => setStaffPin(filterDigits(e.target.value).slice(0, 4))}
                     placeholder="••••"
                     className="w-full h-[62px] pl-14 pr-4 rounded-2xl bg-slate-50 text-[#1A1F1C] font-mono text-2xl tracking-[0.3em] border-2 border-slate-200 focus:border-[#1B8F4A] focus:outline-none"
                   />
                 </div>
                 <span className="text-sm text-slate-500 pl-1">
-                  Billing counter login ke liye 4-6 digit PIN
+                  Billing counter login ke liye 4-digit PIN
                 </span>
               </div>
 
@@ -1451,7 +1491,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <path d="M12 17a2 2 0 100-4 2 2 0 000 4zm6-9h-1V6a5 5 0 00-10 0v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6-5a3 3 0 013 3v2H9V6a3 3 0 013-3zm6 15H6V10h12v10z" />
               </svg>
               <span className="text-[18px] text-[#1A1F1C] font-medium">
-                Special kaam (discount, bill hatana) ki ijazat ke liye (4 se 6 digits).
+                Special kaam (discount, bill hatana) ki ijazat ke liye (4 digits).
               </span>
             </div>
           </div>
@@ -1473,7 +1513,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-2 pt-2 pb-1">
-                  {[0, 1, 2, 3, 4, 5].map((idx) => (
+                  {[0, 1, 2, 3].map((idx) => (
                     <div
                       key={idx}
                       className={`w-5 h-5 rounded-full transition-all flex items-center justify-center text-xs font-bold ${
@@ -1501,7 +1541,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <span className="text-[14px] font-medium text-slate-500">Kadam 2</span>
                 </div>
                 <div className="flex items-center justify-between px-2 pt-2 pb-1">
-                  {[0, 1, 2, 3, 4, 5].map((idx) => (
+                  {[0, 1, 2, 3].map((idx) => (
                     <div
                       key={idx}
                       className={`w-5 h-5 rounded-full transition-all flex items-center justify-center text-xs font-bold ${

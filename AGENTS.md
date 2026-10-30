@@ -24,3 +24,6 @@
 - Do NOT re-read files you do not need. Read only the files named in the prompt.
 - Build 2-4 closely related screens per prompt when told to, never the whole app.
 - If a step fails twice, STOP and explain in simple words. Do not keep trying.
+
+## Sample data
+Stitch designs contain example data. Never copy it into the app as real data. Forms start empty; examples may only be grey placeholders.

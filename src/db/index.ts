@@ -20,6 +20,7 @@ export interface DBUser {
   role: UserRole;
   pinHash: string;
   pinSalt: string;
+  pinLength?: number;
   active: boolean;
   createdAt?: string;
 }
@@ -28,6 +29,7 @@ export interface SettingsMap {
   discount_limit: number; // percentage, e.g. 10
   auto_lock_minutes: number; // default 5
   approval_rules: Record<ApprovalActionCategory, ApprovalRuleType>;
+  pinLength: number; // default 4
   [key: string]: unknown;
 }
 

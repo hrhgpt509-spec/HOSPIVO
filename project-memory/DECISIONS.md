@@ -9,9 +9,10 @@
 - One computer first. Several devices sharing data = Cloud phase only.
 - Build one screen or one small feature per prompt.
 - Setup: only shop name and owner name are required; all other shop fields are optional.
-- Staff PINs are 4-6 digits, same as the Owner PIN.
+- Staff PINs are 4 digits by default, same as the Owner PIN.
+- PINs are 4 digits by default. A 6-digit option is an Owner setting, to be built in Phase 5 (Settings). Changing the length later means every user must set a new PIN.
 - Risky actions are approved with a separate APPROVAL PIN ("Ijazat PIN", English: "Approval PIN"), NOT the Owner login PIN.
-- Approval PIN is 4-6 digits and must differ from the Owner login PIN and every staff PIN. Wherever RULES.md says "local Owner PIN" for risky actions it now means the Approval PIN.
+- Approval PIN is 4 digits by default and must differ from the Owner login PIN and every staff PIN. Wherever RULES.md says "local Owner PIN" for risky actions it now means the Approval PIN.
 - Risky actions: delete/correct bill, price change, discount above limit, stock correction, cash mismatch.
 - Opening the Owner area from Home still uses the Owner login PIN. Even when the owner is logged in, risky actions ask for the Approval PIN.
 - 3 wrong tries lock it for 5 minutes. The lock is saved in the database so a refresh does not clear it.

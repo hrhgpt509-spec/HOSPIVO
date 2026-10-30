@@ -143,7 +143,7 @@ async function recordAudit(who: string, action: string, record: string, details:
 
 /**
  * Sets the Approval PIN ("Ijazat PIN").
- * - Validates length (4-6 digits, numbers only).
+ * - Validates length (4 digits by default, numbers only).
  * - Must differ from Owner PIN and every staff PIN.
  * - Stores salted hash in settings (never plain text).
  */
@@ -153,7 +153,7 @@ export async function setApprovalPin(
 ): Promise<SetApprovalPinResult> {
   const validation = validatePin(pin);
   if (!validation.valid) {
-    return { ok: false, error: validation.error || 'Ijazat PIN 4 se 6 digits ka hona chahiye' };
+    return { ok: false, error: validation.error || 'Ijazat PIN 4 digits ka hona chahiye' };
   }
 
   // 1. Reject if candidate equals any plain PIN passed in (e.g. from setup wizard)

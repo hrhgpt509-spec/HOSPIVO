@@ -13,15 +13,24 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Phase 1: Separate Approval PIN ("Ijazat PIN"), 8-step setup, and login reset added and tested
+Phase 1: Auto-capitalize helper, owner setup hints, shared physical keyboard PIN support, and 4-digit PIN standardization
 
 ## Known problems
-- TEMP PIN 1234 in Login.tsx must be removed before any real shop uses the app.
+- Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 - DEV ONLY: ?reset=1 query parameter in App.tsx clears the database and must be removed before release.
 - DEV ONLY: "DEV: Reset test data" button on Login screen clears database and must be removed before release.
-- Home screen status bar ('Backup: Aaj', sales numbers) is still hard-coded sample data.
 
 ## Log (newest first)
+- Phase 1: Added shared format.ts helper for auto-capitalization (preserving case and women's apostrophe), uppercase GST/licences, and digit-only phone.
+- Updated Setup placeholders with owner's shop details (Maa Durga Medical Hall, Sunil Kumar, Samastipur) and noted in Known problems.
+- Created shared usePinKeyboard hook and connected physical keyboard across setup Owner PIN, repeat PIN, staff PIN, Ijazat PIN, and Login.
+- Enforced 4-digit PIN default across database, screens, validation, DECISIONS.md, and RULES.md; updated tests rejecting 3, 5, 6 digits.
+- Verified vitest suite and compilation build passing cleanly with zero errors.
+- Phase 1: Removed sample data from Setup forms (fields start empty with grey placeholders) and added Sample data rule to AGENTS.md.
+- Loaded Login name buttons from users table, verified real PINs via attemptUserLogin, and completely removed TEMP PIN 1234.
+- Implemented 5 wrong tries 2-minute lockout with live countdown, persistent DB settings, and audit logging.
+- Updated Home screen with real DB values (Rs. 0, 0 bills, 0 alerts) and honest red "Backup lo" status.
+- Added unit tests in foundation.test.ts for login lockout and countdown; all 9 tests passing.
 - Phase 1: Separated Approval PIN ("Ijazat PIN") from Owner login PIN in approvals.ts, RULES.md, and DECISIONS.md.
 - Implemented setApprovalPin and verifyApprovalPin with salted hash, 3-try 5-minute database lock, and audit logging.
 - Expanded setup wizard to 8 steps with 8-dot progress bar, adding Step 7 for Ijazat PIN and Step 8 for approval rules.
