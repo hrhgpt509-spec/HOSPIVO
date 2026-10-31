@@ -4,7 +4,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 
 - [x] Phase 0: project folder, memory files, Git, scaffold, theme from Stitch
 - [x] Phase 1: database, login, PIN, roles, setup screens, Home (Local), approval check, shared dialogs
-- [ ] Phase 2: medicine list, Stock Jodo, Stock Dekho, suppliers
+- [~] Phase 2: medicine list, Stock Jodo, Stock Dekho, suppliers
 - [ ] Phase 3: Dawai Becho, payment, bill done, old bills, returns
 - [ ] Phase 4: Expiry, Udhaar, customers, referral report
 - [ ] Phase 5: Din Band, Owner area, reports, audit log, settings, backup/restore
@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Phase 1 completed: Reusable dialogs, Web Audio feedback synthesizer, Owner PIN gate, Ijazat PIN dialog, placeholder navigation, and role helpers
+Phase 2: Data foundation for medicines, batches, stockMovements, suppliers, and purchases in src/db and src/logic
 
 ## Known problems
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
@@ -22,6 +22,11 @@ Phase 1 completed: Reusable dialogs, Web Audio feedback synthesizer, Owner PIN g
 - DEV ONLY: "DEV: Test Ijazat PIN" test button on Home screen must be removed before release.
 
 ## Log (newest first)
+- Phase 2: Expanded Dexie database (v2) with medicines, batches, append-only stockMovements, suppliers, purchases, and purchaseLines.
+- Stored all stock in smallest units (loose tablets) with whole-paise money and batch expiry valid through last day of entered month.
+- Created src/logic/stock.ts for batch stock, expiry alerts, FEFO picking (no expired/zero stock, split sales), unique short codes, and duplicate detection.
+- Fixed DEV reset to close DB connections before deleting; added fake-indexeddb and 13 unit tests in stock.test.ts (27 total tests passing).
+- Phase 1: Built reusable ConfirmDialog, EmptyState, StatusChip, and FeedbackOverlay matching designs 46a, 46b, 46c, 46d.
 - Phase 1: Built reusable ConfirmDialog, EmptyState, StatusChip, and FeedbackOverlay matching designs 46a, 46b, 46c, 46d.
 - Generated offline audio feedback (positive chime and error buzz) via Web Audio API with screen flash and toasts.
 - Built OwnerPinGate (32a) and ApprovalDialog (18c) verifying Ijazat PIN with 3-try lock and audit logging.

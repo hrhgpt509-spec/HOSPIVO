@@ -726,6 +726,7 @@ export const Login: React.FC<LoginProps> = ({
           onCancel={() => setShowResetConfirm(false)}
           onConfirm={async () => {
             // DEV ONLY: remove before release
+            db.close();
             await db.delete();
             await db.open();
             setShowResetConfirm(false);

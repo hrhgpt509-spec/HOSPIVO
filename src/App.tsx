@@ -32,6 +32,7 @@ export function App() {
       // DEV ONLY: remove before release
       const params = new URLSearchParams(window.location.search);
       if (params.get('reset') === '1') {
+        db.close();
         await db.delete();
         await db.open();
         const url = new URL(window.location.href);

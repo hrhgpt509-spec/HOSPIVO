@@ -19,6 +19,9 @@
 - Every wrong try, lock and successful use goes to the audit log (never the PIN itself).
 - Staff PINs added or changed later must differ from the Approval PIN.
 - Remote approval is built later, in Cloud mode only.
+- All stock is stored in the SMALLEST unit (loose tablets). Packs = units / unitsPerPack. Money is whole paise.
+- Batch expiry date is valid through the LAST day of the entered month (e.g. 08/2027 means valid through 31 Aug 2027; expired starting 1 Sep 2027).
+- stockMovements table is strictly append-only. Corrections and returns append new signed movements, never editing or deleting existing records.
 
 ## Open questions (ask the owner when the phase starts)
 - Default discount limit.

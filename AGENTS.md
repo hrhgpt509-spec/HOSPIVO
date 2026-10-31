@@ -25,5 +25,13 @@
 - Build 2-4 closely related screens per prompt when told to, never the whole app.
 - If a step fails twice, STOP and explain in simple words. Do not keep trying.
 
+## Words and languages
+- Never type visible words directly inside a screen. Every label, message, hint and button text comes from src/i18n (en.ts = DEFAULT, hinglish.ts = Hindi in English letters) through t("key"). A Hindi-script file may be added later.
+- Every new text needs both versions at the same time. Stored data (audit log, records) uses fixed English codes, never translated sentences.
+
 ## Sample data
-Stitch designs contain example data. Never copy it into the app as real data. Forms start empty; examples may only be grey placeholders.
+- Stitch designs contain example data. Never copy it into the app as real data. Forms start empty; examples may only be grey placeholders.
+
+## Converting Stitch HTML to React
+- Use React names, not HTML names: className, strokeWidth, strokeLinecap, strokeLinejoin, fillRule, clipRule, viewBox.
+- The browser console must show no red errors after a screen is built.

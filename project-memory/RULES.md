@@ -44,6 +44,7 @@
 - Also: tile wall (top 100 medicines, owner can pin/remove) and short code entry with Undo.
 
 ## Stock
+- All stock is stored in the SMALLEST unit (loose tablets). Packs = units / unitsPerPack. Money is whole paise.
 - Stock is tracked batch by batch (batch no, expiry month/year, qty, shelf).
 - Stock Jodo = 4 steps: Supplier+invoice no/date -> Invoice photo (REQUIRED, shrink it) -> Medicine lines
   (name, batch, expiry, packs, free packs, purchase rate, MRP) -> Check and "Pakka Karo". NOTHING saved until last step.
@@ -52,6 +53,7 @@
 - Stock corrections (damaged/lost/count) need authorisation and are written in a log.
 
 ## Expiry
+- Batch expiry date is valid through the LAST day of the entered month (e.g. 08/2027 means valid through 31 Aug 2027; expired starting 1 Sep 2027).
 - Tabs: 30 din (red), 60 (orange), 90 (yellow), Expire ho gaya (black). Row: medicine, batch, expiry, qty, shelf.
 - "Supplier ko wapas" starts a return record; status: pending, sent, credit received, rejected.
 - Owner sees "Pichle saal expiry se nuksan: Rs. X" + month-by-month loss.
