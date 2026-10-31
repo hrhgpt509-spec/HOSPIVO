@@ -10,6 +10,8 @@ import {
 } from '../logic/approvals';
 import { capitalizeWords, toUpperAlphanumeric, filterDigits } from '../logic/format';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
+import { useTranslation, tButton } from '../i18n';
+import { LanguageSwitch } from '../components/LanguageSwitch';
 
 interface SetupProps {
   onComplete: () => void;
@@ -24,7 +26,14 @@ interface AddedStaffMember {
 }
 
 export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1);
+
+  const btnBack = tButton('common.btn_back');
+  const btnNext = tButton('common.btn_next');
+  const btnSkip = tButton('common.btn_skip');
+  const clearBtn = tButton('common.btn_clear');
+  const btnFinish = tButton('setup.step8_finish_btn');
 
   // Step 1: Shop details
   const [shopName, setShopName] = useState('');
@@ -73,11 +82,11 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // --------------------------------------------------------------------------
   const handleStep1Next = () => {
     if (!shopName.trim()) {
-      setStep1Error('Dukaan ka naam likhna zaroori hai (Shop name is required)');
+      setStep1Error(t('setup.step1_err_shop'));
       return;
     }
     if (!ownerName.trim()) {
-      setStep1Error('Malik ka naam likhna zaroori hai (Owner name is required)');
+      setStep1Error(t('setup.step1_err_owner'));
       return;
     }
     setStep1Error('');
@@ -123,11 +132,11 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const handleStep3Next = () => {
     const val1 = validatePin(ownerPin1, true);
     if (!val1.valid) {
-      setOwnerPinError(val1.error || 'Owner PIN 4 digits ka hona chahiye');
+      setOwnerPinError(val1.error || t('setup.step3_err_length'));
       return;
     }
     if (ownerPin1 !== ownerPin2) {
-      setOwnerPinError('PIN match nahi hua');
+      setOwnerPinError(t('setup.step3_err_mismatch'));
       return;
     }
 
@@ -148,17 +157,17 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // --------------------------------------------------------------------------
   const handleAddStaff = async () => {
     if (!staffName.trim()) {
-      setStaffError('Staff ka naam likhein');
+      setStaffError(t('setup.staff_err_name'));
       return;
     }
     const val = validatePin(staffPin, false);
     if (!val.valid) {
-      setStaffError(val.error || 'Staff PIN 4 digits ka hona chahiye');
+      setStaffError(val.error || t('setup.staff_err_pin'));
       return;
     }
 
     if (staffPin === ownerPin1) {
-      setStaffError('Staff PIN Owner PIN se alag hona chahiye');
+      setStaffError(t('setup.staff_err_owner_pin'));
       return;
     }
 
@@ -252,15 +261,15 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const handleStep7Next = () => {
     const val = validatePin(approvalPin1, false);
     if (!val.valid) {
-      setApprovalPinError(val.error || 'Ijazat PIN 4 digits ka hona chahiye');
+      setApprovalPinError(val.error || t('setup.step7_err_length'));
       return;
     }
     if (approvalPin1 !== approvalPin2) {
-      setApprovalPinError('PIN match nahi hua');
+      setApprovalPinError(t('setup.step7_err_mismatch'));
       return;
     }
     if (approvalPin1 === ownerPin1 || staffList.some((s) => s.plainPin === approvalPin1)) {
-      setApprovalPinError('Ijazat PIN Malik ya Staff PIN se alag hona chahiye');
+      setApprovalPinError(t('setup.step7_err_same_as_owner'));
       return;
     }
 
@@ -352,54 +361,61 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // --------------------------------------------------------------------------
   // RENDER STEPPER (8 STEPS)
   // --------------------------------------------------------------------------
-  const renderProgress = (currentStep: number, titleHindi: string, titleEnglish: string) => (
-    <header className="flex flex-col gap-4">
-      <div className="flex items-center justify-between border-b border-[#E8EFEA] pb-4">
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#1B8F4A] flex items-center justify-center shadow-md text-white">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
+  const renderProgress = (currentStep: number, _titleHindi: string, titleEnglish: string) => {
+    const badgeKey = `setup.step${currentStep}_badge` as any;
+    const badgeText = t(badgeKey);
+    return (
+      <header className="flex flex-col gap-4">
+        <div className="flex items-center justify-between border-b border-[#E8EFEA] pb-4">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#1B8F4A] flex items-center justify-center shadow-md text-white">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </div>
+            <div>
+              <div className="text-[28px] font-extrabold tracking-tight text-[#1B8F4A] leading-none">{t('common.app_name')}</div>
+              <div className="text-[16px] text-[#5C6E66] font-medium tracking-wide mt-0.5">{t('login.pos_title')} • Setup Wizard</div>
+            </div>
           </div>
-          <div>
-            <div className="text-[28px] font-extrabold tracking-tight text-[#1B8F4A] leading-none">Hospivo</div>
-            <div className="text-[16px] text-[#5C6E66] font-medium tracking-wide mt-0.5">दवा दुकान POS • Setup Wizard</div>
+
+          {/* Step Indicator & Language Switch on Step 1 */}
+          <div className="flex items-center gap-4">
+            {currentStep === 1 && <LanguageSwitch />}
+            <div className="text-right">
+              <div className="text-[22px] font-bold text-[#1A1F1C] leading-tight">
+                {badgeText}
+              </div>
+              <div className="text-[16px] text-[#5C6E66] font-semibold">
+                {titleEnglish}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Step Indicator */}
-        <div className="text-right">
-          <div className="text-[22px] font-bold text-[#1A1F1C] leading-tight">
-            Step {currentStep} of 8: {titleHindi}
-          </div>
-          <div className="text-[16px] text-[#5C6E66] font-semibold">
-            {titleEnglish}
-          </div>
+        {/* 8-Segment Progress Bar */}
+        <div className="flex items-center gap-2 pt-1">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => {
+            const isFilled = num <= currentStep;
+            const isCurrent = num === currentStep;
+            return (
+              <div
+                key={num}
+                className={`flex-1 h-3 rounded-full transition-all ${
+                  isFilled
+                    ? isCurrent
+                      ? 'bg-[#1B8F4A] ring-2 ring-[#1B8F4A] ring-offset-2 ring-offset-white shadow-sm'
+                      : 'bg-[#1B8F4A]'
+                    : 'bg-[#E0E9E4]'
+                }`}
+              />
+            );
+          })}
         </div>
-      </div>
-
-      {/* 8-Segment Progress Bar */}
-      <div className="flex items-center gap-2 pt-1">
-        {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => {
-          const isFilled = num <= currentStep;
-          const isCurrent = num === currentStep;
-          return (
-            <div
-              key={num}
-              className={`flex-1 h-3 rounded-full transition-all ${
-                isFilled
-                  ? isCurrent
-                    ? 'bg-[#1B8F4A] ring-2 ring-[#1B8F4A] ring-offset-2 ring-offset-white shadow-sm'
-                    : 'bg-[#1B8F4A]'
-                  : 'bg-[#E0E9E4]'
-              }`}
-            />
-          );
-        })}
-      </div>
-    </header>
-  );
+      </header>
+    );
+  };
 
   // ==========================================================================
   // VIEW: STEP 1 (01_Setup_ShopDetails.html)
@@ -420,7 +436,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             <div className="flex flex-col gap-4">
               <div>
                 <label className="block text-[18px] font-bold text-[#1A1F1C] mb-1.5 flex items-center justify-between">
-                  <span>Dukaan ka naam <span className="text-red-500">*</span></span>
+                  <span>{t('setup.shop_name_label')} <span className="text-red-500">*</span></span>
                   <span className="text-[16px] font-medium text-[#5C6E66]">Shop Name</span>
                 </label>
                 <div className="relative flex items-center">
@@ -435,7 +451,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     autoCapitalize="words"
                     onChange={(e) => setShopName(capitalizeWords(e.target.value))}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
-                    placeholder="Jaise: Maa Durga Medical Hall"
+                    placeholder={`Jaise: ${t('setup.shop_name_hint')}`}
                   />
                 </div>
                 <p className="text-[15px] text-[#5C6E66] mt-1">Medical store ka poora board par likha naam likhein</p>
@@ -443,7 +459,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
 
               <div>
                 <label className="block text-[18px] font-bold text-[#1A1F1C] mb-1.5 flex items-center justify-between">
-                  <span>Malik ka naam <span className="text-red-500">*</span></span>
+                  <span>{t('setup.owner_name_label')} <span className="text-red-500">*</span></span>
                   <span className="text-[16px] font-medium text-[#5C6E66]">Owner Name</span>
                 </label>
                 <div className="relative flex items-center">
@@ -458,7 +474,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     autoCapitalize="words"
                     onChange={(e) => setOwnerName(capitalizeWords(e.target.value))}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
-                    placeholder="Jaise: Sunil Kumar"
+                    placeholder={`Jaise: ${t('setup.owner_name_hint')}`}
                   />
                 </div>
                 <p className="text-[15px] text-[#5C6E66] mt-1">Bill par aane wala malik ka naam</p>
@@ -466,7 +482,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
 
               <div>
                 <label className="block text-[18px] font-bold text-[#1A1F1C] mb-1.5 flex items-center justify-between">
-                  <span>Pata</span>
+                  <span>{t('setup.address_label')}</span>
                   <span className="text-[16px] font-medium text-[#5C6E66]">Address (2 lines)</span>
                 </label>
                 <div className="relative">
@@ -482,7 +498,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     autoCapitalize="words"
                     onChange={(e) => setAddress(capitalizeWords(e.target.value))}
                     className="w-full h-[90px] pl-14 pr-4 py-3 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none resize-none leading-snug"
-                    placeholder="Jaise: Old Women's College Road, Near Kranti Hotel, Samastipur, Bihar"
+                    placeholder={`Jaise: ${t('setup.address_hint')}`}
                   />
                 </div>
                 <p className="text-[15px] text-[#5C6E66] mt-1">Customer parchi aur tax invoice par yahi pata chhapega</p>
@@ -492,7 +508,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             <div className="flex flex-col gap-4">
               <div>
                 <label className="block text-[18px] font-bold text-[#1A1F1C] mb-1.5 flex items-center justify-between">
-                  <span>Phone number</span>
+                  <span>{t('setup.phone_label')}</span>
                   <span className="text-[16px] font-medium text-[#5C6E66]">Mobile / WhatsApp</span>
                 </label>
                 <div className="relative flex items-center">
@@ -507,15 +523,15 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     value={phone}
                     onChange={(e) => setPhone(filterDigits(e.target.value))}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
-                    placeholder="Jaise: 9006286255"
+                    placeholder={`Jaise: ${t('setup.phone_hint')}`}
                   />
                 </div>
-                <p className="text-[15px] text-[#5C6E66] mt-1">Grahak ko WhatsApp bill bhejte waqt yahi number dikhega</p>
+                <p className="text-[15px] text-[#5C6E66] mt-1">{t('setup.phone_sub')}</p>
               </div>
 
               <div>
                 <label className="block text-[18px] font-bold text-[#1A1F1C] mb-1.5 flex items-center justify-between">
-                  <span>GST number</span>
+                  <span>{t('setup.gst_label')}</span>
                   <span className="text-[16px] font-medium text-[#5C6E66]">GSTIN (Optional)</span>
                 </label>
                 <div className="relative flex items-center">
@@ -529,38 +545,38 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     value={gstNo}
                     onChange={(e) => setGstNo(toUpperAlphanumeric(e.target.value))}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none uppercase"
-                    placeholder="Jaise: 09AAAAA0000A1Z5"
+                    placeholder={t('setup.gst_hint')}
                   />
                 </div>
-                <p className="text-[15px] text-[#5C6E66] mt-1">Tax bill aur B2B input tax credit hisaab ke liye</p>
+                <p className="text-[15px] text-[#5C6E66] mt-1">{t('setup.gst_sub')}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[17px] font-bold text-[#1A1F1C] mb-1.5 truncate">
-                    Drug licence 1
+                    {t('setup.dl1_label')}
                   </label>
                   <input
                     type="text"
                     value={dl1}
                     onChange={(e) => setDl1(toUpperAlphanumeric(e.target.value))}
                     className="w-full h-[60px] px-4 text-[17px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none uppercase"
-                    placeholder="Jaise: UP-MRT-20B/8892"
+                    placeholder={t('setup.dl1_hint')}
                   />
-                  <p className="text-[14px] text-[#5C6E66] mt-1">Form 20B (Retail DL)</p>
+                  <p className="text-[14px] text-[#5C6E66] mt-1">{t('setup.dl1_sub')}</p>
                 </div>
                 <div>
                   <label className="block text-[17px] font-bold text-[#1A1F1C] mb-1.5 truncate">
-                    Drug licence 2
+                    {t('setup.dl2_label')}
                   </label>
                   <input
                     type="text"
                     value={dl2}
                     onChange={(e) => setDl2(toUpperAlphanumeric(e.target.value))}
                     className="w-full h-[60px] px-4 text-[17px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none uppercase"
-                    placeholder="Jaise: UP-MRT-21B/7419"
+                    placeholder={t('setup.dl2_hint')}
                   />
-                  <p className="text-[14px] text-[#5C6E66] mt-1">Form 21B (Schedule C/C1)</p>
+                  <p className="text-[14px] text-[#5C6E66] mt-1">{t('setup.dl2_sub')}</p>
                 </div>
               </div>
             </div>
@@ -576,13 +592,13 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
               </svg>
               <div className="text-left">
-                <div className="text-[22px] font-bold leading-tight">Wapas</div>
-                <div className="text-[16px] font-medium leading-none">Back</div>
+                <div className="text-[22px] font-bold leading-tight">{btnBack.main}</div>
+                {btnBack.sub ? <div className="text-[16px] font-medium leading-none">{btnBack.sub}</div> : null}
               </div>
             </button>
 
             <div className="text-center text-[#5C6E66] text-[16px] font-medium">
-              Yeh jaankari aap baad mein dukaan ki settings se badal sakte hain
+              {t('setup.step2_note')}
             </div>
 
             <button
@@ -591,8 +607,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               className="h-[64px] min-w-[240px] px-10 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white flex items-center justify-between gap-5 shadow-[0_6px_20px_rgba(27,143,74,0.35)] cursor-pointer transition-all active:scale-[0.98]"
             >
               <div className="text-left">
-                <div className="text-[24px] font-extrabold leading-tight tracking-wide">Aage</div>
-                <div className="text-[16px] font-medium text-white/90 leading-none">Next</div>
+                <div className="text-[24px] font-extrabold leading-tight tracking-wide">{btnNext.main}</div>
+                {btnNext.sub ? <div className="text-[16px] font-medium text-white/90 leading-none">{btnNext.sub}</div> : null}
               </div>
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth={2.8} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -611,7 +627,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     return (
       <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
         <main className="w-full max-w-[1280px] min-h-[820px] bg-white rounded-3xl shadow-[0_16px_48px_rgba(27,143,74,0.08)] border border-[#E1E8E4] flex flex-col justify-between p-8 md:p-10">
-          {renderProgress(2, 'Aap Hospivo kaise chalana chahte hain?', 'How do you want to run Hospivo?')}
+          {renderProgress(2, t('setup.step2_title'), 'How do you want to run Hospivo?')}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-auto pt-4 pb-4">
             {/* Card 1: Local-only */}
@@ -627,8 +643,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                       </svg>
                     </div>
                     <div>
-                      <h2 className="text-[26px] font-bold text-[#1A1F1C] leading-snug">Sirf Dukaan Mein</h2>
-                      <span className="text-[16px] font-semibold text-[#1B8F4A] tracking-wide uppercase">Local-only</span>
+                      <h2 className="text-[26px] font-bold text-[#1A1F1C] leading-snug">{t('setup.local_card_title')}</h2>
+                      <span className="text-[16px] font-semibold text-[#1B8F4A] tracking-wide uppercase">{t('setup.local_card_sub')}</span>
                     </div>
                   </div>
 
@@ -642,19 +658,15 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <ul className="mt-6 space-y-3.5">
                   <li className="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-2 shrink-0"></span>
-                    <span className="font-medium">Data sirf is device par rehta hai</span>
+                    <span className="font-medium">{t('setup.local_card_bullet1')}</span>
                   </li>
                   <li className="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-2 shrink-0"></span>
-                    <span className="font-medium">Backup aapke device par</span>
+                    <span className="font-medium">{t('setup.local_card_bullet2')}</span>
                   </li>
                   <li className="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#9AA5A0] mt-2 shrink-0"></span>
-                    <span className="font-normal text-[#4A5550]">Owner mobile par dekh nahi sakta</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#9AA5A0] mt-2 shrink-0"></span>
-                    <span className="font-normal text-[#4A5550]">Door se approval nahi</span>
+                    <span className="font-normal text-[#4A5550]">{t('setup.local_card_bullet3')}</span>
                   </li>
                 </ul>
               </div>
@@ -668,7 +680,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </svg>
                 </div>
                 <p className="text-[16px] font-medium text-[#104D8C] leading-snug">
-                  Device kho gaya to backup bhi ja sakta hai.
+                  {t('setup.local_card_tag')}
                 </p>
               </div>
             </div>
@@ -685,12 +697,12 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     </div>
                     <div>
                       <div className="flex items-center gap-2.5">
-                        <h2 className="text-[26px] font-bold text-slate-700 leading-snug">Cloud ke Saath</h2>
+                        <h2 className="text-[26px] font-bold text-slate-700 leading-snug">{t('setup.cloud_card_title')}</h2>
                         <span className="px-2.5 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-bold uppercase tracking-wider">
-                          Jald aa raha hai
+                          {t('setup.cloud_card_locked')}
                         </span>
                       </div>
-                      <span className="text-[16px] font-semibold text-slate-500 tracking-wide uppercase">Cloud-enabled</span>
+                      <span className="text-[16px] font-semibold text-slate-500 tracking-wide uppercase">{t('setup.cloud_card_sub')}</span>
                     </div>
                   </div>
 
@@ -705,19 +717,15 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <ul className="mt-6 space-y-3.5">
                   <li className="flex items-start gap-3 text-[18px] text-slate-600">
                     <span className="w-2.5 h-2.5 rounded-full bg-slate-400 mt-2 shrink-0"></span>
-                    <span className="font-medium">Dukaan offline bhi chalegi</span>
+                    <span className="font-medium">{t('setup.cloud_card_bullet1')}</span>
                   </li>
                   <li className="flex items-start gap-3 text-[18px] text-slate-600">
                     <span className="w-2.5 h-2.5 rounded-full bg-slate-400 mt-2 shrink-0"></span>
-                    <span className="font-medium">Internet aane par data sync hoga</span>
+                    <span className="font-medium">{t('setup.cloud_card_bullet2')}</span>
                   </li>
                   <li className="flex items-start gap-3 text-[18px] text-slate-600">
                     <span className="w-2.5 h-2.5 rounded-full bg-slate-400 mt-2 shrink-0"></span>
-                    <span className="font-medium">Owner mobile ya web par report dekhe</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-[18px] text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-400 mt-2 shrink-0"></span>
-                    <span className="font-medium">Door se approval de sakte hain</span>
+                    <span className="font-medium">{t('setup.cloud_card_bullet3')}</span>
                   </li>
                 </ul>
               </div>
@@ -744,13 +752,13 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <polyline points="12 19 5 12 12 5" />
               </svg>
               <div className="text-left flex flex-col justify-center">
-                <span className="text-[20px] font-bold leading-tight text-[#1A1F1C]">Wapas</span>
-                <span className="text-[16px] font-normal leading-tight text-[#66766F]">Back</span>
+                <span className="text-[20px] font-bold leading-tight text-[#1A1F1C]">{btnBack.main}</span>
+                {btnBack.sub ? <span className="text-[16px] font-normal leading-tight text-[#66766F]">{btnBack.sub}</span> : null}
               </div>
             </button>
 
             <p className="text-[16px] font-medium text-[#66766F] text-center">
-              Yeh chunav aap baad mein dukaan ki settings se badal sakte hain
+              {t('setup.step2_note')}
             </p>
 
             <button
@@ -759,8 +767,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               className="h-16 px-10 rounded-2xl bg-[#1B8F4A] hover:bg-[#16783E] text-white font-bold flex items-center gap-4 shadow-lg shadow-[#1B8F4A]/30 cursor-pointer"
             >
               <div className="text-right flex flex-col justify-center">
-                <span className="text-[22px] font-extrabold leading-tight">Aage</span>
-                <span className="text-[16px] font-normal leading-tight text-[#D4F3DF]">Next</span>
+                <span className="text-[22px] font-extrabold leading-tight">{btnNext.main}</span>
+                {btnNext.sub ? <span className="text-[16px] font-normal leading-tight text-[#D4F3DF]">{btnNext.sub}</span> : null}
               </div>
               <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12" />
@@ -777,16 +785,18 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // VIEW: STEP 3 (03_Setup_OwnerPIN.html)
   // ==========================================================================
   if (step === 3) {
+    const clearBtn = tButton('common.btn_clear');
+
     return (
       <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
         <main className="w-full max-w-[1240px] min-h-[852px] bg-white rounded-3xl shadow-[0_16px_40px_rgba(0,107,51,0.08)] border border-slate-200 flex flex-col justify-between p-8">
           <div>
-            {renderProgress(3, 'Owner PIN banao', 'Create Owner PIN')}
+            {renderProgress(3, t('setup.step3_title'), 'Create Owner PIN')}
             <div className="flex items-center gap-2 pt-3">
               <svg className="w-6 h-6 text-[#1B8F4A]" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 17a2 2 0 100-4 2 2 0 000 4zm6-9h-1V6a5 5 0 00-10 0v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6-5a3 3 0 013 3v2H9V6a3 3 0 013-3zm6 15H6V10h12v10z" />
               </svg>
-              <span className="text-[18px] text-[#1A1F1C] font-medium">Ye PIN sirf malik ko pata hona chahiye (4 digits).</span>
+              <span className="text-[18px] text-[#1A1F1C] font-medium">{t('setup.step3_security_note')}</span>
             </div>
           </div>
 
@@ -801,9 +811,9 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[20px] font-bold text-[#1B8F4A]">PIN likhein</span>
+                  <span className="text-[20px] font-bold text-[#1B8F4A]">{t('setup.step3_input1_label')}</span>
                   <span className="text-[14px] font-bold px-2 py-0.5 rounded-md bg-[#8ef9a7] text-[#005226]">
-                    Kadam 1
+                    1
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-2 pt-2 pb-1">
@@ -831,8 +841,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[20px] font-bold text-[#1A1F1C]">PIN dobara likhein</span>
-                  <span className="text-[14px] font-medium text-slate-500">Kadam 2</span>
+                  <span className="text-[20px] font-bold text-[#1A1F1C]">{t('setup.step3_input2_label')}</span>
+                  <span className="text-[14px] font-medium text-slate-500">2</span>
                 </div>
                 <div className="flex items-center justify-between px-2 pt-2 pb-1">
                   {[0, 1, 2, 3].map((idx) => (
@@ -871,7 +881,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
                   )}
                 </svg>
-                <span>{showOwnerPin ? 'PIN chupao' : 'PIN dikhao'}</span>
+                <span>{showOwnerPin ? t('setup.step3_hide_pin') : t('setup.step3_show_pin')}</span>
               </button>
             </div>
 
@@ -892,8 +902,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 onClick={handleOwnerPinClearAll}
                 className="h-[80px] w-[118px] rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 flex flex-col items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
               >
-                <span className="text-[18px] font-bold text-slate-700 leading-none">Mitao</span>
-                <span className="text-xs font-semibold text-slate-500 mt-1 leading-none">Clear</span>
+                <span className="text-[18px] font-bold text-slate-700 leading-none">{clearBtn.main}</span>
+                {clearBtn.sub ? <span className="text-xs font-semibold text-slate-500 mt-1 leading-none">{clearBtn.sub}</span> : null}
               </button>
 
               <button
@@ -907,6 +917,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <button
                 type="button"
                 onClick={handleOwnerPinBackspace}
+                aria-label="Backspace"
                 className="h-[80px] w-[118px] rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
               >
                 <svg className="w-8 h-8 text-slate-700" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -926,13 +937,13 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
               <div className="text-left flex flex-col justify-center">
-                <span className="text-[20px] font-bold leading-tight">Wapas</span>
-                <span className="text-[16px] font-normal leading-tight text-slate-500">Back</span>
+                <span className="text-[20px] font-bold leading-tight">{btnBack.main}</span>
+                {btnBack.sub ? <span className="text-[16px] font-normal leading-tight text-slate-500">{btnBack.sub}</span> : null}
               </div>
             </button>
 
             <div className="text-[16px] font-medium text-slate-500">
-              Yeh PIN aap baad mein settings se badal sakte hain
+              {t('setup.step7_note')}
             </div>
 
             <button
@@ -941,8 +952,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               className="h-16 min-w-[200px] px-8 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white font-bold flex items-center justify-center gap-4 shadow-md cursor-pointer transition-all"
             >
               <div className="text-left flex flex-col justify-center">
-                <span className="text-[22px] font-extrabold leading-tight">Aage</span>
-                <span className="text-[16px] font-normal leading-tight text-emerald-100">Next</span>
+                <span className="text-[22px] font-extrabold leading-tight">{btnNext.main}</span>
+                {btnNext.sub ? <span className="text-[16px] font-normal leading-tight text-emerald-100">{btnNext.sub}</span> : null}
               </div>
               <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
@@ -958,16 +969,18 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // VIEW: STEP 4 (04_Setup_AddStaff.html)
   // ==========================================================================
   if (step === 4) {
+    const addStaffBtn = tButton('setup.staff_btn_add');
+
     return (
       <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
         <main className="w-full max-w-[1240px] min-h-[820px] bg-white rounded-3xl shadow-xl border border-slate-200 flex flex-col justify-between p-8">
-          {renderProgress(4, 'Staff jodo', 'Add staff')}
+          {renderProgress(4, t('setup.step4_title'), 'Add staff')}
 
           <div className="grid grid-cols-12 gap-8 items-start my-auto py-4">
             <div className="col-span-12 lg:col-span-7 flex flex-col gap-4 pr-0 lg:pr-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[18px] font-bold text-[#1A1F1C] flex items-center gap-2">
-                  Staff ka naam
+                  {t('setup.staff_name_label')}
                   <span className="text-[16px] font-normal text-slate-500">(Staff Name)</span>
                 </label>
                 <div className="relative flex items-center">
@@ -981,7 +994,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     value={staffName}
                     autoCapitalize="words"
                     onChange={(e) => setStaffName(capitalizeWords(e.target.value))}
-                    placeholder="Jaise: Raju Kumar"
+                    placeholder={`Jaise: ${t('setup.staff_name_hint')}`}
                     className="w-full h-[62px] pl-14 pr-4 rounded-2xl bg-slate-50 text-[#1A1F1C] font-semibold text-lg border-2 border-slate-200 focus:border-[#1B8F4A] focus:outline-none"
                   />
                 </div>
@@ -989,7 +1002,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[18px] font-bold text-[#1A1F1C] flex items-center gap-2">
-                  Staff PIN
+                  {t('setup.staff_pin_label')}
                   <span className="text-[16px] font-normal text-slate-500">(4-Digit Secret Code)</span>
                 </label>
                 <div className="relative flex items-center">
@@ -1029,8 +1042,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="flex flex-col items-start leading-tight">
-                  <span className="text-[20px] font-bold">Staff Jodo</span>
-                  <span className="text-xs text-emerald-100 font-medium">Add</span>
+                  <span className="text-[20px] font-bold">{addStaffBtn.main}</span>
+                  {addStaffBtn.sub ? <span className="text-xs text-emerald-100 font-medium">{addStaffBtn.sub}</span> : null}
                 </div>
               </button>
 
@@ -1047,7 +1060,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             <div className="col-span-12 lg:col-span-5 flex flex-col gap-3 bg-slate-50 border border-slate-200 rounded-3xl p-5 min-h-[360px]">
               <div className="flex items-center justify-between px-1">
                 <span className="text-[22px] font-bold text-[#1A1F1C]">
-                  Jode gaye staff ({staffList.length})
+                  {t('setup.staff_list_title', { count: staffList.length })}
                 </span>
                 <span className="text-xs bg-slate-200 text-slate-700 px-3 py-1 rounded-full font-bold">
                   {staffList.length} Added
@@ -1059,7 +1072,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <svg className="w-12 h-12 mb-2 text-slate-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
                   </svg>
-                  <p className="text-base font-medium">Abhi koi staff nahi joda gaya hai.</p>
+                  <p className="text-base font-medium">{t('setup.staff_no_one_yet')}</p>
                   <p className="text-sm">Aap baad mein bhi staff jod sakte hain.</p>
                 </div>
               ) : (
@@ -1081,7 +1094,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
 
                       <div className="flex items-center gap-2">
                         <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-semibold">
-                          Counter staff
+                          {t('login.counter_staff')}
                         </span>
                         <button
                           type="button"
@@ -1103,7 +1116,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <svg className="w-5 h-5 text-slate-500 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25z" />
                 </svg>
-                <span>Staff pin se sirf sale bill banega, khata band nahi hoga.</span>
+                <span>{t('login.staff_note')}</span>
               </div>
             </div>
           </div>
@@ -1119,8 +1132,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
                 <div className="text-left leading-none">
-                  <span className="text-[18px] font-bold block">Wapas</span>
-                  <span className="text-xs text-slate-500 font-normal">Back</span>
+                  <span className="text-[18px] font-bold block">{btnBack.main}</span>
+                  {btnBack.sub ? <span className="text-xs text-slate-500 font-normal">{btnBack.sub}</span> : null}
                 </div>
               </button>
 
@@ -1134,8 +1147,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
                 <div className="text-left leading-none">
-                  <span className="text-[18px] font-bold block">Baad mein karunga</span>
-                  <span className="text-xs text-slate-500 font-normal">Skip for now</span>
+                  <span className="text-[18px] font-bold block">{btnSkip.main}</span>
+                  {btnSkip.sub ? <span className="text-xs text-slate-500 font-normal">{btnSkip.sub}</span> : null}
                 </div>
               </button>
             </div>
@@ -1150,8 +1163,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               className="h-[60px] min-w-[170px] px-8 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white shadow-md flex items-center justify-center gap-3 cursor-pointer transition-all active:scale-[0.98]"
             >
               <div className="text-right leading-none">
-                <span className="text-[20px] font-extrabold block">Aage</span>
-                <span className="text-xs text-emerald-100 font-normal">Next</span>
+                <span className="text-[20px] font-extrabold block">{btnNext.main}</span>
+                {btnNext.sub ? <span className="text-xs text-emerald-100 font-normal">{btnNext.sub}</span> : null}
               </div>
               <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
@@ -1170,19 +1183,19 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     return (
       <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
         <main className="w-full max-w-[1160px] min-h-[740px] bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between p-8 md:p-10">
-          {renderProgress(5, 'Medicine list', 'Import medicines')}
+          {renderProgress(5, t('setup.step5_title'), 'Import medicines')}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-auto py-4">
             {/* Option 1: File se Jodo (LOCKED with "Jald aa raha hai") */}
             <div className="bg-slate-50 border-2 border-slate-200 h-[360px] p-7 rounded-2xl flex flex-col justify-between items-center text-center opacity-75 cursor-not-allowed">
               <div className="flex flex-col items-center">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-[24px] font-bold text-slate-700">File se Jodo</h2>
+                  <h2 className="text-[24px] font-bold text-slate-700">{t('setup.step5_import_title')}</h2>
                   <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-bold uppercase tracking-wider">
-                    Jald aa raha hai
+                    {t('setup.step5_import_locked')}
                   </span>
                 </div>
-                <span className="text-[16px] text-slate-500 font-medium">Import from file</span>
+                <span className="text-[16px] text-slate-500 font-medium">{t('setup.step5_import_sub')}</span>
               </div>
 
               <div className="w-full max-w-[380px] bg-white border border-slate-200 rounded-xl p-5 flex flex-col items-center justify-center">
@@ -1216,8 +1229,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               className="bg-[#F4FAF6] border-2 border-[#1B8F4A] h-[360px] p-7 rounded-2xl flex flex-col justify-between items-center text-center cursor-pointer shadow-md shadow-[#1B8F4A]/10 hover:brightness-105 transition-all"
             >
               <div className="flex flex-col items-center">
-                <h2 className="text-[24px] font-bold text-[#1A1F1C]">Khaali Shuru Karo</h2>
-                <span className="text-[16px] text-[#1B8F4A] font-semibold">Start empty</span>
+                <h2 className="text-[24px] font-bold text-[#1A1F1C]">{t('setup.step5_empty_title')}</h2>
+                <span className="text-[16px] text-[#1B8F4A] font-semibold">{t('setup.step5_empty_sub')}</span>
               </div>
 
               <div className="w-full max-w-[380px] bg-white border border-[#BDE7CC] rounded-xl p-5 flex flex-col items-center justify-center text-center">
@@ -1250,7 +1263,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="flex flex-col text-left">
-                  <span className="text-[18px] font-bold leading-tight">Fresh shuru karein</span>
+                  <span className="text-[18px] font-bold leading-tight">{t('setup.step5_empty_tag')}</span>
                   <span className="text-[13px] text-emerald-100 leading-tight">Blank catalog</span>
                 </div>
               </button>
@@ -1267,8 +1280,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
               <div className="flex flex-col text-left leading-tight">
-                <span className="text-[18px] font-bold">Wapas</span>
-                <span className="text-xs text-slate-500 font-normal">Back</span>
+                <span className="text-[18px] font-bold">{btnBack.main}</span>
+                {btnBack.sub ? <span className="text-xs text-slate-500 font-normal">{btnBack.sub}</span> : null}
               </div>
             </button>
 
@@ -1276,7 +1289,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
               </svg>
-              <span>Yeh chunav aap baad mein dukaan ki settings se bhi badal sakte hain</span>
+              <span>{t('setup.step5_note')}</span>
             </div>
 
             <button
@@ -1285,8 +1298,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               className="h-[58px] min-w-[170px] px-7 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white flex items-center justify-center gap-3 shadow-md cursor-pointer transition-all active:scale-[0.98]"
             >
               <div className="flex flex-col text-right leading-tight">
-                <span className="text-[18px] font-bold">Aage</span>
-                <span className="text-xs text-emerald-100 font-normal">Next</span>
+                <span className="text-[18px] font-bold">{btnNext.main}</span>
+                {btnNext.sub ? <span className="text-xs text-emerald-100 font-normal">{btnNext.sub}</span> : null}
               </div>
               <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
@@ -1305,7 +1318,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     return (
       <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
         <main className="w-full max-w-[1240px] min-h-[820px] bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between p-8 md:p-10">
-          {renderProgress(6, 'Backup', 'Data backup & safety')}
+          {renderProgress(6, t('setup.step6_title'), 'Data backup & safety')}
 
           <div className="flex flex-col w-full bg-slate-50 border border-slate-200 rounded-2xl p-6 md:p-8 justify-between gap-6 my-auto">
             <div className="flex flex-col items-center text-center gap-3">
@@ -1318,7 +1331,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               </div>
               <div className="flex flex-col items-center">
                 <h1 className="text-[26px] font-bold text-[#1A1F1C]">
-                  Roz ek backup file banegi taaki dukaan ka data surakshit rahe.
+                  {t('setup.step6_desc')}
                 </h1>
                 <p className="text-[16px] text-slate-500 font-medium">
                   A daily backup file will be created to keep your shop data safe.
@@ -1348,7 +1361,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </svg>
                 </div>
                 <div className="flex flex-col justify-center">
-                  <span className="text-[17px] font-bold text-amber-950">Device kho gaya to sirf device wala backup bhi kho sakta hai.</span>
+                  <span className="text-[17px] font-bold text-amber-950">{t('setup.step6_warning')}</span>
                   <span className="text-[14px] text-amber-700">Keep a copy on pen drive or cloud if possible</span>
                 </div>
               </div>
@@ -1362,7 +1375,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </svg>
                 </div>
                 <div className="flex flex-col truncate">
-                  <span className="text-[17px] font-bold text-[#1A1F1C]">Backup folder:</span>
+                  <span className="text-[17px] font-bold text-[#1A1F1C]">{t('setup.step6_folder_label')}</span>
                   <span className="text-[15px] font-mono text-slate-600 truncate">{backupFolder}</span>
                 </div>
               </div>
@@ -1402,7 +1415,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   <div className="flex flex-col text-left leading-tight">
-                    <span className="text-[17px]">Ijazat Mil Gayi</span>
+                    <span className="text-[17px]">{t('setup.step6_status_granted')}</span>
                     <span className="text-xs text-emerald-800 font-normal">Storage surakshit hai</span>
                   </div>
                 </div>
@@ -1413,7 +1426,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   className="h-14 px-5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-2.5 font-bold cursor-pointer"
                 >
                   <div className="flex flex-col text-left leading-tight">
-                    <span className="text-[16px]">Ijazat nahi mili (Dobara try karein)</span>
+                    <span className="text-[16px]">{t('setup.step6_status_denied')}</span>
                     <span className="text-xs text-amber-800 font-normal">Storage permission retry</span>
                   </div>
                 </button>
@@ -1427,7 +1440,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
                   </svg>
                   <div className="flex flex-col text-left leading-tight">
-                    <span className="text-[17px]">Ijazat Do</span>
+                    <span className="text-[17px]">{t('setup.step6_persist_btn')}</span>
                     <span className="text-xs text-emerald-100 font-normal">Allow Storage</span>
                   </div>
                 </button>
@@ -1445,17 +1458,17 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
               <div className="flex flex-col text-left leading-tight">
-                <span className="text-[18px] font-bold">Wapas</span>
-                <span className="text-xs text-slate-500 font-normal">Back</span>
+                <span className="text-[18px] font-bold">{btnBack.main}</span>
+                {btnBack.sub ? <span className="text-xs text-slate-500 font-normal">{btnBack.sub}</span> : null}
               </div>
             </button>
 
             <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
-              <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <rect x="5" y="11" width="14" height="10" rx="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M8 11V7a4 4 0 0 1 8 0v4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span>Backup settings aap dashboard mein jaakar kabhi bhi badal sakte hain</span>
+              <span>{t('setup.step2_note')}</span>
             </div>
 
             <button
@@ -1464,8 +1477,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               className="h-14 min-w-[190px] px-6 rounded-xl bg-[#1B8F4A] hover:bg-[#16733B] text-white flex items-center justify-center gap-3 cursor-pointer font-bold shadow-md transition-all active:scale-[0.98]"
             >
               <div className="flex flex-col text-right leading-tight">
-                <span className="text-[18px] font-bold">Aage</span>
-                <span className="text-xs text-emerald-100 font-normal">Next Step</span>
+                <span className="text-[18px] font-bold">{btnNext.main}</span>
+                {btnNext.sub ? <span className="text-xs text-emerald-100 font-normal">{btnNext.sub}</span> : null}
               </div>
               <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
@@ -1485,13 +1498,13 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
       <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
         <main className="w-full max-w-[1240px] min-h-[852px] bg-white rounded-3xl shadow-[0_16px_40px_rgba(0,107,51,0.08)] border border-slate-200 flex flex-col justify-between p-8">
           <div>
-            {renderProgress(7, 'Ijazat PIN banao', 'Create Approval PIN')}
+            {renderProgress(7, t('setup.step7_title'), t('setup.step7_sub'))}
             <div className="flex items-center gap-2 pt-3">
               <svg className="w-6 h-6 text-[#1B8F4A]" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 17a2 2 0 100-4 2 2 0 000 4zm6-9h-1V6a5 5 0 00-10 0v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V10a2 2 0 00-2-2zm-6-5a3 3 0 013 3v2H9V6a3 3 0 013-3zm6 15H6V10h12v10z" />
               </svg>
               <span className="text-[18px] text-[#1A1F1C] font-medium">
-                Special kaam (discount, bill hatana) ki ijazat ke liye (4 digits).
+                {t('setup.step7_note')}
               </span>
             </div>
           </div>
@@ -1507,9 +1520,9 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[20px] font-bold text-[#1B8F4A]">PIN likhein</span>
+                  <span className="text-[20px] font-bold text-[#1B8F4A]">{t('setup.step7_input1_label')}</span>
                   <span className="text-[14px] font-bold px-2 py-0.5 rounded-md bg-[#8ef9a7] text-[#005226]">
-                    Kadam 1
+                    1
                   </span>
                 </div>
                 <div className="flex items-center justify-between px-2 pt-2 pb-1">
@@ -1537,8 +1550,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[20px] font-bold text-[#1A1F1C]">PIN dobara likhein</span>
-                  <span className="text-[14px] font-medium text-slate-500">Kadam 2</span>
+                  <span className="text-[20px] font-bold text-[#1A1F1C]">{t('setup.step7_input2_label')}</span>
+                  <span className="text-[14px] font-medium text-slate-500">2</span>
                 </div>
                 <div className="flex items-center justify-between px-2 pt-2 pb-1">
                   {[0, 1, 2, 3].map((idx) => (
@@ -1577,7 +1590,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
                   )}
                 </svg>
-                <span>{showApprovalPin ? 'PIN chupao' : 'PIN dikhao'}</span>
+                <span>{showApprovalPin ? t('setup.step7_hide_pin') : t('setup.step7_show_pin')}</span>
               </button>
             </div>
 
@@ -1598,8 +1611,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 onClick={handleApprovalPinClearAll}
                 className="h-[80px] w-[118px] rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 flex flex-col items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
               >
-                <span className="text-[18px] font-bold text-slate-700 leading-none">Mitao</span>
-                <span className="text-xs font-semibold text-slate-500 mt-1 leading-none">Clear</span>
+                <span className="text-[18px] font-bold text-slate-700 leading-none">{clearBtn.main}</span>
+                {clearBtn.sub ? <span className="text-xs font-semibold text-slate-500 mt-1 leading-none">{clearBtn.sub}</span> : null}
               </button>
 
               <button
@@ -1632,13 +1645,13 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
               <div className="text-left flex flex-col justify-center">
-                <span className="text-[20px] font-bold leading-tight">Wapas</span>
-                <span className="text-[16px] font-normal leading-tight text-slate-500">Back</span>
+                <span className="text-[20px] font-bold leading-tight">{btnBack.main}</span>
+                {btnBack.sub ? <span className="text-[16px] font-normal leading-tight text-slate-500">{btnBack.sub}</span> : null}
               </div>
             </button>
 
             <div className="text-[16px] font-medium text-slate-500">
-              Yeh PIN aap baad mein settings se badal sakte hain
+              {t('setup.step7_footer_note')}
             </div>
 
             <button
@@ -1647,8 +1660,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               className="h-16 min-w-[200px] px-8 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white font-bold flex items-center justify-center gap-4 shadow-md cursor-pointer transition-all"
             >
               <div className="text-left flex flex-col justify-center">
-                <span className="text-[22px] font-extrabold leading-tight">Aage</span>
-                <span className="text-[16px] font-normal leading-tight text-emerald-100">Next</span>
+                <span className="text-[22px] font-extrabold leading-tight">{btnNext.main}</span>
+                {btnNext.sub ? <span className="text-[16px] font-normal leading-tight text-emerald-100">{btnNext.sub}</span> : null}
               </div>
               <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
@@ -1667,22 +1680,22 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     category: ApprovalActionCategory;
     title: string;
   }[] = [
-    { category: 'delete_or_correct_bill', title: 'Bill hatana ya badalna' },
-    { category: 'price_change', title: 'Daam badalna' },
-    { category: 'discount_above_limit', title: 'Bada discount' },
-    { category: 'stock_correction', title: 'Stock sudhaar' },
-    { category: 'cash_mismatch', title: 'Din Band mein fark' },
+    { category: 'delete_or_correct_bill', title: t('setup.step8_rule_delete_bill') },
+    { category: 'price_change', title: t('setup.step8_rule_price_change') },
+    { category: 'discount_above_limit', title: t('setup.step8_rule_discount_limit') },
+    { category: 'stock_correction', title: t('setup.step8_rule_stock_correction') },
+    { category: 'cash_mismatch', title: t('setup.step8_rule_cash_mismatch') },
   ];
 
   return (
     <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
       <main className="w-full max-w-[1160px] min-h-[820px] bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between p-8 md:p-10">
         <div>
-          {renderProgress(8, 'Special kaam ki ijazat', 'Approval rules')}
+          {renderProgress(8, t('setup.step8_title'), t('setup.step8_sub'))}
 
           <div className="mt-3 mb-3">
             <p className="text-[18px] text-gray-700 font-medium">
-              Internet na ho to kya hoga, aap chuniye.
+              {t('setup.step8_desc')}
             </p>
           </div>
 
@@ -1694,7 +1707,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
             <span className="text-[16px] font-semibold">
-              Door se approval ke liye Cloud mode chahiye.
+              {t('setup.step8_banner')}
             </span>
           </div>
 
@@ -1729,7 +1742,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                       )}
-                      <span>Ijazat PIN (yahin)</span>
+                      <span>{t('setup.step8_opt_pin')}</span>
                     </button>
 
                     {/* Option 2: Door se approval (Disabled in Local-only) */}
@@ -1737,8 +1750,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                       className="h-[54px] px-4 rounded-xl bg-[#F3F4F6] border border-gray-200 text-gray-400 flex flex-col justify-center items-center opacity-60 cursor-not-allowed min-w-[210px]"
                       title="Remote approval is locked in Local-only mode"
                     >
-                      <span className="text-[15px] font-semibold text-gray-400 leading-tight">Door se approval</span>
-                      <span className="text-[13px] text-gray-400 leading-tight">Cloud mode mein hi</span>
+                      <span className="text-[15px] font-semibold text-gray-400 leading-tight">{t('setup.step8_opt_remote_title')}</span>
+                      <span className="text-[13px] text-gray-400 leading-tight">{t('setup.step8_opt_remote_sub')}</span>
                     </div>
 
                     {/* Option 3: Offline mein roko */}
@@ -1756,7 +1769,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                       )}
-                      <span>Offline mein roko</span>
+                      <span>{t('setup.step8_opt_blocked')}</span>
                     </button>
                   </div>
                 </div>
@@ -1776,8 +1789,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
             <div className="flex flex-col text-left leading-tight">
-              <span className="text-[18px] font-bold">Wapas</span>
-              <span className="text-xs text-gray-500 font-normal">Back</span>
+              <span className="text-[18px] font-bold">{btnBack.main}</span>
+              {btnBack.sub ? <span className="text-xs text-gray-500 font-normal">{btnBack.sub}</span> : null}
             </div>
           </button>
 
@@ -1790,8 +1803,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
             <div className="flex flex-col text-left leading-tight">
-              <span className="text-[20px] font-extrabold">Setup Poora Karo</span>
-              <span className="text-xs text-green-100 font-medium">Finish setup</span>
+              <span className="text-[20px] font-extrabold">{btnFinish.main}</span>
+              {btnFinish.sub ? <span className="text-xs text-green-100 font-medium">{btnFinish.sub}</span> : null}
             </div>
           </button>
         </footer>

@@ -13,15 +13,21 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Phase 2: Data foundation for medicines, batches, stockMovements, suppliers, and purchases in src/db and src/logic
+Prompt T: Dual-language support (English default, Hinglish second)
 
 ## Known problems
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 - DEV ONLY: ?reset=1 query parameter in App.tsx clears the database and must be removed before release.
 - DEV ONLY: "DEV: Reset test data" button on Login screen clears database and must be removed before release.
 - DEV ONLY: "DEV: Test Ijazat PIN" test button on Home screen must be removed before release.
+- DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Built complete i18n system (src/i18n) supporting English as default and Hinglish as second language.
+- Replaced all visible screen text across Login, Setup (all 8 steps), Home, and dialogs with t("key").
+- Implemented two-line button helper {main, sub} with clean vertical centering in English mode.
+- Preserved identical grey placeholder hints across languages and enforced fixed English codes in database/audit log.
+- Added comprehensive unit tests in i18n.test.ts; all 33 tests and production build pass cleanly.
 - Phase 2: Expanded Dexie database (v2) with medicines, batches, append-only stockMovements, suppliers, purchases, and purchaseLines.
 - Stored all stock in smallest units (loose tablets) with whole-paise money and batch expiry valid through last day of entered month.
 - Created src/logic/stock.ts for batch stock, expiry alerts, FEFO picking (no expired/zero stock, split sales), unique short codes, and duplicate detection.

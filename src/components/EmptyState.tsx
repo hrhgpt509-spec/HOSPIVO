@@ -1,8 +1,9 @@
 import React from 'react';
+import { useTranslation, tButton } from '../i18n';
 
 export interface EmptyStateProps {
-  title: string;
-  subtitle: string;
+  title?: string;
+  subtitle?: string;
   actionLabel?: string;
   actionSubLabel?: string;
   onAction?: () => void;
@@ -13,12 +14,22 @@ export interface EmptyStateProps {
 export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   subtitle,
-  actionLabel = 'Pehli Dawai Jodo',
-  actionSubLabel = 'Add first medicine',
+  actionLabel,
+  actionSubLabel,
   onAction,
-  hintText = 'Hospivo Retail Cloud • Dawai ki dukaan ka surakshit system',
+  hintText,
   icon,
 }) => {
+  const { t } = useTranslation();
+
+  const defaultBtn = tButton('dialogs.empty_shelf_btn');
+  const activeTitle = title ?? t('dialogs.empty_shelf_title');
+  const activeSubtitle = subtitle ?? t('dialogs.empty_shelf_sub');
+  const activeHint = hintText !== undefined ? hintText : t('dialogs.empty_shelf_hint');
+
+  const activeMain = actionLabel ?? defaultBtn.main;
+  const activeSub = actionSubLabel !== undefined ? actionSubLabel : defaultBtn.sub;
+
   return (
     <div className="w-full flex-1 flex items-center justify-center p-6 min-h-0 select-none">
       <div className="w-full max-w-[680px] bg-white dark:bg-gray-900 rounded-[24px] shadow-[0_8px_32px_rgba(20,30,26,0.06)] p-10 flex flex-col items-center text-center relative overflow-hidden border border-slate-200/80 dark:border-gray-800">
@@ -72,14 +83,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
         {/* Heading Block */}
         <h2 className="text-2xl md:text-3xl text-[#141e1a] dark:text-white mb-2 font-bold tracking-tight max-w-md">
-          {title}
+          {activeTitle}
         </h2>
         <p className="text-base md:text-lg text-[#3e4a3f] dark:text-gray-400 mb-8 max-w-sm leading-relaxed">
-          {subtitle}
+          {activeSubtitle}
         </p>
 
         {/* Primary Action Button (>= 56px, 16px radius, #1B8F4A) */}
-        {onAction && actionLabel && (
+        {onAction && (
           <button
             type="button"
             onClick={onAction}
@@ -90,24 +101,24 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
             </div>
-            <div className="flex flex-col items-start justify-center">
-              <span className="text-xl font-bold text-white leading-tight">{actionLabel}</span>
-              {actionSubLabel && (
-                <span className="text-xs font-medium text-[#D8F3E2] leading-tight mt-0.5">{actionSubLabel}</span>
-              )}
+            <div className="flex flex-col items-start justify-center leading-none">
+              <span className="text-xl font-bold text-white leading-tight">{activeMain}</span>
+              {activeSub ? (
+                <span className="text-xs font-medium text-[#D8F3E2] leading-tight mt-0.5">{activeSub}</span>
+              ) : null}
             </div>
           </button>
         )}
 
         {/* Reassuring Hint Bar */}
-        {hintText && (
+        {activeHint ? (
           <div className="mt-6 flex items-center gap-2 text-[#3e4a3f] dark:text-gray-400 text-sm font-medium">
             <svg className="w-5 h-5 text-[#006b33] shrink-0" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
             </svg>
-            <span>{hintText}</span>
+            <span>{activeHint}</span>
           </div>
-        )}
+        ) : null}
 
       </div>
     </div>

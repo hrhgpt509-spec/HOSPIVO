@@ -5,6 +5,7 @@ import { StatusChip } from '../components/StatusChip';
 import { EmptyState } from '../components/EmptyState';
 import { OwnerPinGate } from '../components/OwnerPinGate';
 import { ApprovalDialog } from '../components/ApprovalDialog';
+import { useTranslation, tButton } from '../i18n';
 
 interface HomeProps {
   currentUser?: {
@@ -112,8 +113,20 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  const shopName = shop?.name || 'Shree Medical Store';
-  const modeLabel = shop?.mode === 'cloud' ? 'Cloud mode' : 'Local mode';
+  const { t, language } = useTranslation();
+  const backupBtn = tButton('home.backup_lo');
+  const returnHomeBtn = tButton('home.return_home_btn');
+  const tileDawaiBecho = tButton('home.tile_dawai_becho');
+  const tileFastBill = tButton('home.tile_fast_bill');
+  const tileStockJodo = tButton('home.tile_stock_jodo');
+  const tileStockDekho = tButton('home.tile_stock_dekho');
+  const tileExpiry = tButton('home.tile_expiry');
+  const tileUdhaar = tButton('home.tile_udhaar');
+  const tileDinBand = tButton('home.tile_din_band');
+  const tileOwner = tButton('home.tile_owner');
+
+  const shopName = shop?.name || 'Maa Durga Medical Hall';
+  const modeLabel = shop?.mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
   const userName = currentUser?.name || 'Owner';
   const userInitial = userName ? userName.charAt(0).toUpperCase() : 'O';
 
@@ -140,6 +153,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
   // If a subpage is currently selected, render subview with 46b EmptyState & top bar
   if (activePage !== 'home') {
     const pageDetails = PAGE_DETAILS[activePage];
+    const subTitle = language === 'en' ? pageDetails.titleEnglish : pageDetails.titleHindi;
     return (
       <div className="w-full min-h-screen bg-canvas dark:bg-[#0f1713] text-[#101828] dark:text-gray-100 flex flex-col justify-between p-6 antialiased select-none transition-colors">
         <div className="w-full max-w-[1440px] mx-auto flex-1 flex flex-col justify-between">
@@ -156,8 +170,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                 </svg>
                 <div className="flex flex-col text-left">
-                  <span className="text-base font-bold leading-tight">Ghar</span>
-                  <span className="text-xs text-[#6e7a6e] dark:text-gray-400 leading-none">Home</span>
+                  <span className="text-base font-bold leading-tight">{returnHomeBtn.main}</span>
+                  {returnHomeBtn.sub ? <span className="text-xs text-[#6e7a6e] dark:text-gray-400 leading-none">{returnHomeBtn.sub}</span> : null}
                 </div>
               </button>
 
@@ -165,10 +179,10 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
 
               <div className="flex flex-col">
                 <h1 className="text-2xl font-bold text-[#141e1a] dark:text-white leading-tight">
-                  {pageDetails.titleHindi}
+                  {language === 'en' ? pageDetails.titleEnglish : pageDetails.titleHindi}
                 </h1>
                 <span className="text-sm font-medium text-[#6e7a6e] dark:text-gray-400 leading-tight">
-                  {pageDetails.titleEnglish}
+                  {language === 'en' ? '' : pageDetails.titleEnglish}
                 </span>
               </div>
             </div>
@@ -188,10 +202,10 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
           {/* Centered Empty State Card */}
           <main className="w-full flex-1 flex items-center justify-center py-8">
             <EmptyState
-              title={`${pageDetails.titleHindi}: Jald aa raha hai`}
-              subtitle={pageDetails.description || 'Ye feature agle phase mein tayyar ho raha hai.'}
-              actionLabel="Wapas Ghar Jao"
-              actionSubLabel="Return to Home"
+              title={`${subTitle}: ${t('home.coming_soon')}`}
+              subtitle={pageDetails.description || (language === 'en' ? 'This module will be fully activated in the next development phase.' : 'Ye feature agle phase mein tayyar ho raha hai.')}
+              actionLabel={returnHomeBtn.main}
+              actionSubLabel={returnHomeBtn.sub}
               onAction={handleReturnHome}
               hintText={`Hospivo Retail Cloud • ${shopName}`}
             />
@@ -199,8 +213,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
 
           {/* Simple footer */}
           <footer className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 px-6 py-4 flex items-center justify-between text-sm text-[#6e7a6e] dark:text-gray-400">
-            <span>Hospivo Retail Cloud • Dawai Ki Dukaan POS & Ledger OS</span>
-            <span>{shopName} • Local offline mode</span>
+            <span>Hospivo Retail Cloud • {t('home.footer_tag')}</span>
+            <span>{shopName} • {modeLabel}</span>
           </footer>
 
         </div>
@@ -244,7 +258,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
             <StatusChip variant="local" label={modeLabel} />
 
             {/* StatusChip: Backup lo (Honest backup state, none taken yet) */}
-            <StatusChip variant="backup_needed" label="Backup lo" />
+            <StatusChip variant="backup_needed" label={backupBtn.main} />
 
             {/* User name */}
             <div className="flex items-center space-x-2.5 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100">
@@ -288,9 +302,9 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
             <button
               type="button"
               onClick={() => setApprovalMessage('')}
-              className="text-xs font-semibold text-[#2E7D32] hover:underline"
+              className="text-xs font-semibold text-[#2E7D32] hover:underline cursor-pointer"
             >
-              Band karein
+              {t('home.close_btn')}
             </button>
           </div>
         )}
@@ -307,10 +321,10 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
             </div>
             <div className="flex flex-col">
               <div className="text-xl font-black text-[#B91C1C] dark:text-[#fca5a5] flex items-center gap-2">
-                <span>Backup nahi liya gaya hai</span>
+                <span>{t('home.backup_banner_title')}</span>
               </div>
               <span className="text-base font-semibold text-[#D92D20] dark:text-[#f87171]">
-                Dukaan ka data safe rakhne ke liye turant backup karein
+                {t('home.backup_banner_sub')}
               </span>
             </div>
           </div>
@@ -319,8 +333,12 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
               type="button"
               className="h-14 min-w-[200px] px-6 bg-[#D92D20] hover:brightness-105 active:scale-[0.99] text-white rounded-2xl font-bold flex flex-col items-center justify-center shadow-sm cursor-pointer transition-all border border-[#B91C1C]"
             >
-              <span className="text-lg font-bold leading-tight">Backup lo</span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-white/80 leading-none">Backup now</span>
+              <span className="text-lg font-bold leading-tight">{backupBtn.main}</span>
+              {backupBtn.sub ? (
+                <span className="text-xs font-semibold uppercase tracking-wider text-white/80 leading-none">
+                  {backupBtn.sub}
+                </span>
+              ) : null}
             </button>
           </div>
         </div>
@@ -342,8 +360,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 </div>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight">Dawai Becho</div>
-                <div className="text-base text-white/85 font-medium mt-0.5">Sell</div>
+                <div className="text-2xl font-bold leading-tight">{tileDawaiBecho.main}</div>
+                {tileDawaiBecho.sub ? <div className="text-base text-white/85 font-medium mt-0.5">{tileDawaiBecho.sub}</div> : null}
               </div>
             </div>
 
@@ -358,8 +376,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">Fast Bill</div>
-                <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">Rush</div>
+                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileFastBill.main}</div>
+                {tileFastBill.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileFastBill.sub}</div> : null}
               </div>
             </div>
 
@@ -374,8 +392,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">Stock Jodo</div>
-                <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">Add stock</div>
+                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileStockJodo.main}</div>
+                {tileStockJodo.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileStockJodo.sub}</div> : null}
               </div>
             </div>
 
@@ -391,8 +409,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">Stock Dekho</div>
-                <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">View stock</div>
+                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileStockDekho.main}</div>
+                {tileStockDekho.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileStockDekho.sub}</div> : null}
               </div>
             </div>
 
@@ -410,8 +428,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 <span className="w-3.5 h-3.5 rounded-full bg-semantic-orange"></span>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">Expiry</div>
-                <div className="text-base text-semantic-orange font-bold mt-0.5">Alerts</div>
+                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileExpiry.main}</div>
+                {tileExpiry.sub ? <div className="text-base text-semantic-orange font-bold mt-0.5">{tileExpiry.sub}</div> : null}
               </div>
             </div>
 
@@ -426,8 +444,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">Udhaar</div>
-                <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">Credit</div>
+                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileUdhaar.main}</div>
+                {tileUdhaar.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileUdhaar.sub}</div> : null}
               </div>
             </div>
 
@@ -442,8 +460,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">Din Band</div>
-                <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">Close day</div>
+                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileDinBand.main}</div>
+                {tileDinBand.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileDinBand.sub}</div> : null}
               </div>
             </div>
 
@@ -458,8 +476,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">Owner</div>
-                <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">Owner PIN</div>
+                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileOwner.main}</div>
+                {tileOwner.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileOwner.sub}</div> : null}
               </div>
             </div>
 
@@ -472,7 +490,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
             
             {/* Metric 1: Aaj ki bikri Rs. 0 */}
             <div className="px-6 flex flex-col justify-center">
-              <div className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-1">Aaj ki bikri</div>
+              <div className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-1">{t('home.stat_sales')}</div>
               <div className="text-[38px] font-black text-brand tracking-tight leading-none">
                 {formatRupees(0)}
               </div>
@@ -480,7 +498,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
 
             {/* Metric 2: Bills 0 */}
             <div className="px-6 flex flex-col justify-center">
-              <div className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-1">Bills</div>
+              <div className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-1">{t('home.stat_bills')}</div>
               <div className="text-[38px] font-black text-gray-900 dark:text-white tracking-tight leading-none">
                 0
               </div>
@@ -492,10 +510,10 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 <svg className="w-5 h-5 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                 </svg>
-                <span>Expiry 30 din</span>
+                <span>{t('home.stat_expiry')}</span>
               </div>
               <div className="text-[38px] font-black text-semantic-orange tracking-tight leading-none">
-                0 dawai
+                {t('home.dawai_count')}
               </div>
             </div>
 
@@ -505,10 +523,10 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 <svg className="w-5 h-5 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                 </svg>
-                <span>Kam stock</span>
+                <span>{t('home.stat_low_stock')}</span>
               </div>
               <div className="text-[38px] font-black text-semantic-red tracking-tight leading-none">
-                0 dawai
+                {t('home.dawai_count')}
               </div>
             </div>
 
@@ -521,7 +539,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
               onClick={() => setIsTestApprovalOpen(true)}
               className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-bold cursor-pointer transition shadow-sm"
             >
-              DEV: Test Ijazat PIN
+              {t('home.dev_test_approval_btn')}
             </button>
           </div>
         </footer>
@@ -538,11 +556,11 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
         <ApprovalDialog
           isOpen={isTestApprovalOpen}
           actionCategory="discount_above_limit"
-          recordDescription="Bill #101 par 15% chhoot (Limit 10%)"
+          recordDescription={language === 'en' ? 'Bill #101: 15% discount (Limit 10%)' : 'Bill #101 par 15% chhoot (Limit 10%)'}
           requesterName={userName}
           onApproved={() => {
             setIsTestApprovalOpen(false);
-            setApprovalMessage('Manzoor ho gaya (Approval granted for Bill #101)');
+            setApprovalMessage(t('home.dev_approval_success_banner'));
           }}
           onClose={() => setIsTestApprovalOpen(false)}
         />

@@ -4,6 +4,8 @@ import { attemptUserLogin, getLoginLock } from '../logic/auth';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { triggerFeedback } from '../logic/feedback';
+import { useTranslation, tButton } from '../i18n';
+import { LanguageSwitch } from '../components/LanguageSwitch';
 
 interface LoginProps {
   onLoginSuccess: (user: DBUser) => void;
@@ -27,6 +29,7 @@ export const Login: React.FC<LoginProps> = ({
   onUnlock,
   onResetToSetup,
 }) => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<DBUser[]>([]);
   const [shopName, setShopName] = useState<string>('Shree Medical Store');
   const [selectedUser, setSelectedUser] = useState<DBUser | null>(null);
@@ -106,46 +109,46 @@ export const Login: React.FC<LoginProps> = ({
       if (!activeLockUser) return;
       const res = await attemptUserLogin(activeLockUser, pinToTest);
       if (res.status === 'ok') {
-        triggerFeedback('success', 'Screen Khul Gayi', 'Welcome back');
+        triggerFeedback('success', t('login.screen_unlocked'), t('login.welcome_back'));
         setLockPin('');
         setLockError(false);
         if (onUnlock) {
           onUnlock();
         }
       } else if (res.status === 'locked') {
-        triggerFeedback('error', 'Screen Lock Hai', `${res.minutesLeft} minute baad try karein`);
+        triggerFeedback('error', t('login.lock_screen_title'), t('login.lockout_msg', { minutes: res.minutesLeft }));
         setLockError(true);
         setLockCountdownSeconds(res.secondsLeft);
         setLockPin('');
       } else {
-        triggerFeedback('error', 'PIN galat hai');
+        triggerFeedback('error', t('login.wrong_pin'));
         setLockError(true);
         setLockPin('');
       }
     },
-    [activeLockUser, onUnlock]
+    [activeLockUser, onUnlock, t]
   );
 
   const verifyPin = useCallback(
     async (pinToTest: string, user: DBUser) => {
       const res = await attemptUserLogin(user, pinToTest);
       if (res.status === 'ok') {
-        triggerFeedback('success', 'Login Kamyab', `${user.name} logged in`);
+        triggerFeedback('success', t('login.login_success'), t('login.login_welcome', { name: user.name }));
         onLoginSuccess(user);
       } else if (res.status === 'locked') {
-        triggerFeedback('error', 'PIN lock ho gaya', `${res.minutesLeft} minute baad try karein`);
+        triggerFeedback('error', t('login.lockout_msg', { minutes: res.minutesLeft }), '');
         setHasError(true);
-        setErrorMessage(`${res.minutesLeft} minute baad try karein`);
+        setErrorMessage(t('login.lockout_msg', { minutes: res.minutesLeft }));
         setLockCountdownSeconds(res.secondsLeft);
         setPin('');
       } else {
-        triggerFeedback('error', 'PIN galat hai');
+        triggerFeedback('error', t('login.wrong_pin'));
         setHasError(true);
-        setErrorMessage('PIN galat hai');
+        setErrorMessage(t('login.wrong_pin'));
         setPin('');
       }
     },
-    [onLoginSuccess]
+    [onLoginSuccess, t]
   );
 
   const handleAddDigit = useCallback(
@@ -213,6 +216,12 @@ export const Login: React.FC<LoginProps> = ({
   // -------------------------------------------------------------
   // STATE 3: Lock Screen (08c_Login_LockScreen.html)
   // -------------------------------------------------------------
+  const unlockBtn = tButton('common.btn_unlock');
+  const clearBtn = tButton('common.btn_clear');
+  const deleteBtn = tButton('common.btn_delete');
+  const haanBtn = tButton('dialogs.btn_haan');
+  const nahiBtn = tButton('dialogs.btn_nahi');
+
   if (isLocked) {
     const lockTargetLen = 4;
     return (
@@ -234,7 +243,7 @@ export const Login: React.FC<LoginProps> = ({
           <div className="w-full flex-1 flex gap-4 min-h-0">
             <div className="w-2/3 bg-white rounded-xl p-6 flex flex-col gap-4 shadow-sm">
               <div className="h-14 bg-[#ebf6f0] rounded-xl px-4 flex items-center justify-between">
-                <span className="text-[#3e4a3f]">Dawai ka naam ya barcode scan karein (Search medicine)...</span>
+                <span className="text-[#3e4a3f]">Search medicine...</span>
                 <svg className="w-6 h-6 text-[#6e7a6e]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                 </svg>
@@ -259,10 +268,10 @@ export const Login: React.FC<LoginProps> = ({
             </div>
 
             <h2 className="text-2xl font-extrabold text-[#141e1a] tracking-tight text-center">
-              Screen Lock Hai
+              {t('login.lock_screen_title')}
             </h2>
             <p className="text-sm font-medium text-[#6e7a6e] mt-0.5 text-center">
-              5 minute se koi action nahi hua (Auto-locked)
+              {t('login.lock_screen_sub')}
             </p>
 
             {/* Active User Pill in Modal */}
@@ -281,7 +290,7 @@ export const Login: React.FC<LoginProps> = ({
                   {activeLockUser?.name || 'Staff User'}
                 </span>
                 <span className="text-xs text-[#3e4a3f]">
-                  {activeLockUser?.role === 'owner' ? 'Admin & Shop Incharge' : 'Counter Staff'}
+                  {activeLockUser?.role === 'owner' ? t('login.admin_incharge') : t('login.counter_staff')}
                 </span>
               </div>
             </div>
@@ -306,7 +315,7 @@ export const Login: React.FC<LoginProps> = ({
                 <svg className="w-4 h-4 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <span className="text-sm font-bold tracking-wide">PIN galat hai</span>
+                <span className="text-sm font-bold tracking-wide">{t('login.wrong_pin')}</span>
               </div>
             )}
 
@@ -317,7 +326,7 @@ export const Login: React.FC<LoginProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span className="text-sm font-bold tracking-wide">
-                  {Math.ceil(lockCountdownSeconds / 60)} minute baad try karein ({lockCountdownSeconds}s)
+                  {t('login.lockout_msg', { minutes: Math.ceil(lockCountdownSeconds / 60) })} ({lockCountdownSeconds}s)
                 </span>
               </div>
             )}
@@ -339,12 +348,13 @@ export const Login: React.FC<LoginProps> = ({
               <button
                 type="button"
                 onClick={handleBackspace}
+                aria-label="Backspace"
                 className="w-[88px] h-[88px] rounded-xl bg-[#ffdad6] hover:bg-[#ffdad6]/80 active:scale-95 text-[#93000a] flex flex-col items-center justify-center shadow-sm cursor-pointer transition-all duration-100"
               >
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414A2 2 0 0110.828 5H20a2 2 0 012 2v10a2 2 0 01-2 2h-9.172a2 2 0 01-1.414-.586L3 12z" />
                 </svg>
-                <span className="text-xs font-bold leading-tight mt-0.5">Mitao</span>
+                <span className="text-xs font-bold leading-tight mt-0.5">{deleteBtn.main}</span>
               </button>
 
               {/* 0 button */}
@@ -365,7 +375,7 @@ export const Login: React.FC<LoginProps> = ({
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
-                <span className="text-xs font-bold leading-tight mt-0.5">Kholein</span>
+                <span className="text-xs font-bold leading-tight mt-0.5">{unlockBtn.main}</span>
               </button>
             </div>
 
@@ -373,7 +383,7 @@ export const Login: React.FC<LoginProps> = ({
             <div className="w-full flex items-center justify-between pt-2 border-t border-slate-100">
               <div className="flex items-center gap-2 bg-[#ebf6f0] px-3 py-1.5 rounded-full">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#006b33] inline-block animate-pulse"></span>
-                <span className="text-xs text-[#3e4a3f] font-medium">Local mode</span>
+                <span className="text-xs text-[#3e4a3f] font-medium">{t('common.local_mode')}</span>
               </div>
               <span className="text-xs text-[#6e7a6e]">Terminal ID: HOS-402</span>
             </div>
@@ -404,17 +414,22 @@ export const Login: React.FC<LoginProps> = ({
               </svg>
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 leading-none">Hospivo</h1>
-              <p className="text-sm md:text-base text-slate-500 font-medium mt-1">{shopName} • दवा दुकान POS</p>
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 leading-none">{t('common.app_name')}</h1>
+              <p className="text-sm md:text-base text-slate-500 font-medium mt-1">{shopName} • {t('login.pos_title')}</p>
             </div>
           </div>
 
-          {/* Secure Login Badge */}
-          <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-sm md:text-base font-semibold">
-            <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-            </svg>
-            <span>Surakshit Login (Secure Access)</span>
+          {/* Secure Login Badge & Language Switch */}
+          <div className="flex items-center gap-3">
+            {/* DEV ONLY: becomes a Settings option in Phase 5 */}
+            <LanguageSwitch />
+
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-sm md:text-base font-semibold">
+              <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+              </svg>
+              <span>{t('login.secure_access')}</span>
+            </div>
           </div>
         </header>
 
@@ -426,8 +441,8 @@ export const Login: React.FC<LoginProps> = ({
             
             {/* Heading */}
             <div className="mb-6">
-              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">Kaun hai?</h2>
-              <p className="text-base md:text-lg font-medium text-slate-500 mt-1">Who is using?</p>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">{t('login.who_is_using')}</h2>
+              <p className="text-base md:text-lg font-medium text-slate-500 mt-1">{t('login.who_is_using_sub')}</p>
             </div>
 
             {/* Stacked Big Name Buttons (64px tall each) */}
@@ -440,13 +455,12 @@ export const Login: React.FC<LoginProps> = ({
                   : AVATAR_PALETTES[(idx % (AVATAR_PALETTES.length - 1)) + 1];
                 const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
                 const roleDesc = isOwner
-                  ? 'Admin & Shop Incharge'
+                  ? t('login.admin_incharge')
                   : user.role === 'cashier'
-                  ? 'Counter Staff'
-                  : 'Runner';
+                  ? t('login.counter_staff')
+                  : t('login.runner');
 
                 if (isSelected) {
-                  // Active Green State (Matches 08b line 100)
                   return (
                     <button
                       key={user.id}
@@ -471,7 +485,7 @@ export const Login: React.FC<LoginProps> = ({
                       </div>
                       <div className="flex items-center gap-2 text-white">
                         <span className="px-2.5 py-0.5 rounded-md bg-white/20 text-white text-xs font-bold uppercase tracking-wider">
-                          Chuna gaya
+                          {t('login.selected_tag')}
                         </span>
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -481,7 +495,7 @@ export const Login: React.FC<LoginProps> = ({
                   );
                 }
 
-                // Normal Inactive State (Matches 08a lines 92-165)
+                // Normal Inactive State
                 return (
                   <button
                     key={user.id}
@@ -513,7 +527,7 @@ export const Login: React.FC<LoginProps> = ({
                     <div className="flex items-center gap-2">
                       {isOwner && (
                         <span className="text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-800 px-3 py-1 rounded-lg border border-amber-200">
-                          Malik
+                          {t('login.admin_badge')}
                         </span>
                       )}
                       <svg className="w-6 h-6 text-slate-400 group-hover:text-[#1B8F4A] group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -530,7 +544,7 @@ export const Login: React.FC<LoginProps> = ({
               <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Har staff ka alag PIN hai. Kisi se PIN share na karein.</span>
+              <span>{t('login.staff_note')}</span>
             </div>
 
           </div>
@@ -548,16 +562,16 @@ export const Login: React.FC<LoginProps> = ({
                   </svg>
                 </div>
                 <div className="text-3xl font-extrabold text-slate-800 tracking-tight leading-none mb-2">
-                  Naam chuniye
+                  {t('login.select_name_first')}
                 </div>
                 <div className="text-lg text-slate-500 font-medium max-w-[360px] leading-relaxed">
-                  Apna naam chunein aur PIN daal kar billing shuru karein.
+                  {t('login.select_name_desc')}
                 </div>
                 <div className="mt-6 flex items-center gap-2 text-base font-semibold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200">
                   <svg className="w-5 h-5 text-emerald-600 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                   </svg>
-                  <span>Baayein taraf se apna naam select karein</span>
+                  <span>{t('login.select_name_callout')}</span>
                 </div>
               </div>
             ) : (
@@ -579,15 +593,15 @@ export const Login: React.FC<LoginProps> = ({
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-2xl font-black text-slate-900 leading-tight">{selectedUser.name}</h3>
-                        <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">Selected</span>
+                        <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">{t('login.selected_tag')}</span>
                       </div>
-                      <p className="text-sm font-medium text-slate-500">Apna {selectedUserPinLength}-digit PIN daal kar billing shuru karein</p>
+                      <p className="text-sm font-medium text-slate-500">{t('login.enter_pin_prompt', { digits: selectedUserPinLength })}</p>
                     </div>
                   </div>
 
                   <div className="text-right">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider">
-                      Step 2: Enter PIN
+                      {t('login.step_enter_pin')}
                     </span>
                   </div>
                 </div>
@@ -607,15 +621,15 @@ export const Login: React.FC<LoginProps> = ({
                     ))}
                   </div>
 
-                  {/* Red semantic danger message: "PIN galat hai" (08b) */}
+                  {/* Red semantic danger message: "PIN galat hai" */}
                   {hasError && lockCountdownSeconds <= 0 && (
                     <div className="mt-3 px-4 py-1.5 rounded-full bg-red-100 border border-red-300 text-red-700 flex items-center gap-2 animate-bounce">
                       <svg className="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
-                      <span className="text-base font-bold tracking-wide">{errorMessage || 'PIN galat hai'}</span>
-                      {errorMessage === 'PIN galat hai' && (
-                        <span className="text-xs font-medium text-red-600/80">(Incorrect PIN, dobara try karein)</span>
+                      <span className="text-base font-bold tracking-wide">{errorMessage || t('login.wrong_pin')}</span>
+                      {errorMessage === t('login.wrong_pin') && (
+                        <span className="text-xs font-medium text-red-600/80">{t('login.wrong_pin_hint')}</span>
                       )}
                     </div>
                   )}
@@ -627,7 +641,7 @@ export const Login: React.FC<LoginProps> = ({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span className="text-base font-bold tracking-wide">
-                        {Math.ceil(lockCountdownSeconds / 60)} minute baad try karein ({lockCountdownSeconds}s)
+                        {t('login.lockout_msg', { minutes: Math.ceil(lockCountdownSeconds / 60) })} ({lockCountdownSeconds}s)
                       </span>
                     </div>
                   )}
@@ -653,8 +667,10 @@ export const Login: React.FC<LoginProps> = ({
                     onClick={handleClear}
                     className="w-[88px] h-[88px] rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border-2 border-slate-200 text-slate-600 flex flex-col items-center justify-center transition-all cursor-pointer"
                   >
-                    <span className="text-lg font-bold">Saaf</span>
-                    <span className="text-xs font-semibold text-slate-500">Clear</span>
+                    <span className="text-lg font-bold">{clearBtn.main}</span>
+                    {clearBtn.sub ? (
+                      <span className="text-xs font-semibold text-slate-500">{clearBtn.sub}</span>
+                    ) : null}
                   </button>
 
                   <button
@@ -668,12 +684,15 @@ export const Login: React.FC<LoginProps> = ({
                   <button
                     type="button"
                     onClick={handleBackspace}
+                    aria-label="Backspace"
                     className="w-[88px] h-[88px] rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border-2 border-slate-200 text-slate-700 flex flex-col items-center justify-center transition-all cursor-pointer"
                   >
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414A2 2 0 0110.828 5H20a2 2 0 012 2v10a2 2 0 01-2 2h-9.172a2 2 0 01-1.414-.586L3 12z" />
                     </svg>
-                    <span className="text-xs font-semibold text-slate-500 mt-0.5">Mitao</span>
+                    {deleteBtn.main ? (
+                      <span className="text-xs font-semibold text-slate-500 mt-0.5">{deleteBtn.main}</span>
+                    ) : null}
                   </button>
                 </div>
 
@@ -691,7 +710,7 @@ export const Login: React.FC<LoginProps> = ({
               <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>PIN bhool gaye? Owner se naya PIN generate karne ko kahein.</span>
+              <span>{t('login.forgot_pin_note')}</span>
             </div>
 
             {/* DEV ONLY: remove before release */}
@@ -700,15 +719,15 @@ export const Login: React.FC<LoginProps> = ({
               onClick={() => setShowResetConfirm(true)}
               className="text-xs font-semibold text-red-600/80 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
             >
-              DEV: Reset test data
+              {t('login.dev_reset_btn')}
             </button>
           </div>
 
           <div className="flex items-center gap-2.5 px-4 py-2 bg-slate-100 border border-slate-300 rounded-xl text-slate-700">
             <span className="w-3 h-3 rounded-full bg-[#1B8F4A] animate-pulse"></span>
             <div className="flex flex-col">
-              <span className="text-base font-bold text-slate-800 leading-none">Local mode</span>
-              <span className="text-xs text-slate-500 font-medium leading-tight mt-0.5">Offline active • Fast billing</span>
+              <span className="text-base font-bold text-slate-800 leading-none">{t('common.local_mode')}</span>
+              <span className="text-xs text-slate-500 font-medium leading-tight mt-0.5">{t('common.offline_active')}</span>
             </div>
           </div>
         </footer>
@@ -716,12 +735,12 @@ export const Login: React.FC<LoginProps> = ({
         {/* DEV ONLY: remove before release */}
         <ConfirmDialog
           isOpen={showResetConfirm}
-          title="Pakka sab hatana hai?"
-          subtitle="Ye wapas nahi aayega."
-          confirmLabel="Haan"
-          confirmSubLabel="Delete"
-          cancelLabel="Nahi"
-          cancelSubLabel="Cancel"
+          title={t('dialogs.delete_title')}
+          subtitle={t('dialogs.delete_subtitle')}
+          confirmLabel={haanBtn.main}
+          confirmSubLabel={haanBtn.sub}
+          cancelLabel={nahiBtn.main}
+          cancelSubLabel={nahiBtn.sub}
           isDanger={true}
           onCancel={() => setShowResetConfirm(false)}
           onConfirm={async () => {

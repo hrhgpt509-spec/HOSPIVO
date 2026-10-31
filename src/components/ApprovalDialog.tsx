@@ -8,6 +8,7 @@ import {
 } from '../logic/approvals';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { triggerFeedback } from '../logic/feedback';
+import { useTranslation, tButton } from '../i18n';
 
 export interface ApprovalDialogProps {
   isOpen: boolean;
@@ -26,11 +27,15 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
   onApproved,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [pin, setPin] = useState<string>('');
   const [shopName, setShopName] = useState<string>('Shree Medical Store');
   const [hasError, setHasError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [lockMinutes, setLockMinutes] = useState<number>(0);
+
+  const clearBtn = tButton('common.btn_clear');
+  const wapasBtn = tButton('dialogs.btn_wapas');
 
   useEffect(() => {
     if (!isOpen) {
@@ -57,40 +62,40 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
       const res = await verifyApprovalPin(pinToVerify);
 
       if (res.ok) {
-        // Success: write audit log entry, trigger sound/flash, and notify parent
+        // Success: write audit log entry with fixed English code, trigger sound/flash, and notify parent
         try {
           await addAudit(
             requesterName,
             'approval_granted',
             actionCategory,
-            `Ijazat di gayi: ${recordDescription}`
+            `Approved action: ${recordDescription}`
           );
         } catch (err) {
           console.error('Failed to log approval audit:', err);
         }
 
-        triggerFeedback('success', 'Manzoor ho gaya', 'Ijazat mil gayi');
+        triggerFeedback('success', t('dialogs.ijazat_pin_success'), 'Approved');
         setPin('');
         setHasError(false);
         setErrorMessage('');
         onApproved();
       } else {
-        triggerFeedback('error', 'Ijazat PIN galat hai');
+        triggerFeedback('error', t('dialogs.ijazat_pin_wrong'));
         setPin('');
         setHasError(true);
         if (res.status === 'locked') {
           setLockMinutes(res.minutesLeft);
-          setErrorMessage(`3 galat try: ${res.minutesLeft} minute baad try karein`);
+          setErrorMessage(t('dialogs.ijazat_pin_locked', { minutes: res.minutesLeft }));
         } else {
           setErrorMessage(
             res.triesLeft > 0
-              ? `Ijazat PIN galat hai (${res.triesLeft} bache)`
-              : 'Ijazat PIN galat hai'
+              ? `${t('dialogs.ijazat_pin_wrong')} (${res.triesLeft})`
+              : t('dialogs.ijazat_pin_wrong')
           );
         }
       }
     },
-    [actionCategory, recordDescription, requesterName, onApproved]
+    [actionCategory, recordDescription, requesterName, onApproved, t]
   );
 
   const handleAddDigit = useCallback(
@@ -140,7 +145,7 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
     >
       <div className="relative z-10 m-auto w-full max-w-[540px] bg-white dark:bg-gray-900 rounded-[24px] shadow-2xl p-6 sm:p-8 flex flex-col gap-4 border border-slate-200 dark:border-gray-800">
         
-        {/* 1. Dialog Header (18c_Approval_AskOwner_LocalPIN.html) */}
+        {/* 1. Dialog Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-[#006b33] flex items-center justify-center text-white shadow-md">
@@ -154,16 +159,18 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
             </div>
             <div className="flex flex-col">
               <h2 className="text-2xl sm:text-3xl font-extrabold text-[#141e1a] dark:text-white tracking-tight leading-tight">
-                Ijazat PIN daalein
+                {t('dialogs.ijazat_pin_title')}
               </h2>
-              <span className="text-sm font-medium text-[#6e7a6e] dark:text-gray-400">Approval PIN</span>
+              <span className="text-sm font-medium text-[#6e7a6e] dark:text-gray-400">
+                {t('dialogs.ijazat_pin_sub')}
+              </span>
             </div>
           </div>
 
           {/* Top-right Local mode chip */}
           <div className="flex items-center gap-1.5 bg-[#ebf6f0] dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm border border-slate-200 dark:border-gray-700">
             <span className="w-2.5 h-2.5 rounded-full bg-[#006b33] inline-block animate-pulse" />
-            <span className="text-xs font-bold text-[#141e1a] dark:text-gray-200">Local mode</span>
+            <span className="text-xs font-bold text-[#141e1a] dark:text-gray-200">{t('common.local_mode')}</span>
           </div>
         </div>
 
@@ -184,7 +191,7 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
           </div>
           <div className="text-right">
             <div className="text-sm font-bold text-[#141e1a] dark:text-gray-200">{shopName}</div>
-            <div className="text-xs text-[#6e7a6e] dark:text-gray-400">Ijazat Required</div>
+            <div className="text-xs text-[#6e7a6e] dark:text-gray-400">{t('dialogs.ijazat_pin_required')}</div>
           </div>
         </div>
 
@@ -208,7 +215,7 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
             <svg className="w-4 h-4 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <span className="text-sm font-bold tracking-wide">{errorMessage || 'Ijazat PIN galat hai'}</span>
+            <span className="text-sm font-bold tracking-wide">{errorMessage || t('dialogs.ijazat_pin_wrong')}</span>
           </div>
         )}
 
@@ -218,7 +225,7 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="text-sm font-bold tracking-wide">
-              3 galat try: {lockMinutes} minute baad try karein
+              {t('dialogs.ijazat_pin_locked', { minutes: lockMinutes })}
             </span>
           </div>
         )}
@@ -242,8 +249,10 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
             onClick={handleClear}
             className="h-[88px] rounded-2xl bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 active:scale-95 transition-all flex flex-col items-center justify-center shadow-sm cursor-pointer border border-slate-200/80 dark:border-gray-700"
           >
-            <span className="text-lg font-bold text-[#141e1a] dark:text-white">Saaf</span>
-            <span className="text-xs text-[#6e7a6e] dark:text-gray-400 font-semibold leading-none mt-0.5">Clear</span>
+            <span className="text-lg font-bold text-[#141e1a] dark:text-white">{clearBtn.main}</span>
+            {clearBtn.sub && (
+              <span className="text-xs text-[#6e7a6e] dark:text-gray-400 font-semibold leading-none mt-0.5">{clearBtn.sub}</span>
+            )}
           </button>
 
           {/* 0 */}
@@ -259,6 +268,7 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
           <button
             type="button"
             onClick={handleBackspace}
+            aria-label="Backspace"
             className="h-[88px] rounded-2xl bg-slate-100 dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 active:scale-95 transition-all flex items-center justify-center shadow-sm cursor-pointer border border-slate-200/80 dark:border-gray-700"
           >
             <svg className="w-8 h-8 text-[#141e1a] dark:text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -277,8 +287,10 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
           <div className="flex items-center gap-1.5">
-            <span className="text-xl font-bold leading-none">Wapas</span>
-            <span className="text-xs text-[#6e7a6e] dark:text-gray-400 font-medium leading-none">(Back)</span>
+            <span className="text-xl font-bold leading-none">{wapasBtn.main}</span>
+            {wapasBtn.sub && (
+              <span className="text-xs text-[#6e7a6e] dark:text-gray-400 font-medium leading-none">{wapasBtn.sub}</span>
+            )}
           </div>
         </button>
 

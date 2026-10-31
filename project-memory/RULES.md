@@ -94,3 +94,10 @@ Cash ginti -> Milan (expected vs counted; mismatch in red) -> Photo of counter -
 - A finished bill is never changed in place. Corrections = new records linked to the old one.
 - Stock changes are an append-only list of movements (sale, purchase, return, correction). Stock quantity comes from these.
 - Cloud sync (later) must never duplicate a bill or stock movement, and never silently overwrite sales or stock movements.
+
+## Languages and words
+- English is the DEFAULT for new shops; Hinglish (Hindi in English letters) is the second language.
+- Never type visible words directly inside a screen. Every label, hint, message and button comes from src/i18n through t("key").
+- Two-line buttons { main, sub }: In English, show main label and hide the small second line cleanly without gaps or layout shift.
+- Stored data and audit log records always use fixed English codes, never translated sentences.
+- Grey placeholder hints (shop name, owner name, phone, address) remain identical in both languages.
