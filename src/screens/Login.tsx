@@ -227,23 +227,23 @@ export const Login: React.FC<LoginProps> = ({
     return (
       <div className="w-full min-h-screen bg-[#f1fcf6] flex items-center justify-center p-0 m-0 select-none relative overflow-hidden">
         {/* Background blurred representation of the app (matches 08c) */}
-        <div className="absolute inset-0 w-full h-full flex flex-col bg-[#f1fcf6] p-4 filter blur-[6px] opacity-45 pointer-events-none scale-100">
+        <div aria-hidden="true" className="absolute inset-0 w-full h-full flex flex-col bg-[#f1fcf6] p-4 filter blur-[6px] opacity-45 pointer-events-none scale-100">
           <div className="w-full h-16 bg-[#e5f0eb] rounded-xl flex items-center justify-between px-6 mb-4">
             <div className="flex items-center gap-4">
-              <span className="text-2xl text-[#006b33] font-bold">HOSPIVO PHARMA POS</span>
+              <span className="text-2xl text-[#006b33] font-bold">{t('login.decorative_pos_title')}</span>
               <span className="bg-[#dae5df] px-3 py-1 rounded-full text-sm text-[#3e4a3f]">
-                Counter #01 • {shopName}
+                {t('login.decorative_counter', { counter: '01', shop: shopName })}
               </span>
             </div>
             <div className="flex items-center gap-6">
-              <span className="text-base text-[#141e1a] font-semibold">Bill No: #INV-88219</span>
-              <span className="text-base text-[#141e1a]">Time: 14:32</span>
+              <span className="text-base text-[#141e1a] font-semibold">{t('login.decorative_bill_no')}</span>
+              <span className="text-base text-[#141e1a]">{t('login.decorative_time')}</span>
             </div>
           </div>
           <div className="w-full flex-1 flex gap-4 min-h-0">
             <div className="w-2/3 bg-white rounded-xl p-6 flex flex-col gap-4 shadow-sm">
               <div className="h-14 bg-[#ebf6f0] rounded-xl px-4 flex items-center justify-between">
-                <span className="text-[#3e4a3f]">Search medicine...</span>
+                <span className="text-[#3e4a3f]">{t('login.decorative_search_medicine')}</span>
                 <svg className="w-6 h-6 text-[#6e7a6e]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                 </svg>
@@ -287,7 +287,7 @@ export const Login: React.FC<LoginProps> = ({
               </div>
               <div className="flex flex-col text-left">
                 <span className="text-sm font-bold text-[#141e1a] leading-tight">
-                  {activeLockUser?.name || 'Staff User'}
+                  {activeLockUser?.name || t('login.staff_user')}
                 </span>
                 <span className="text-xs text-[#3e4a3f]">
                   {activeLockUser?.role === 'owner' ? t('login.admin_incharge') : t('login.counter_staff')}
@@ -348,7 +348,7 @@ export const Login: React.FC<LoginProps> = ({
               <button
                 type="button"
                 onClick={handleBackspace}
-                aria-label="Backspace"
+                aria-label={t('common.backspace')}
                 className="w-[88px] h-[88px] rounded-xl bg-[#ffdad6] hover:bg-[#ffdad6]/80 active:scale-95 text-[#93000a] flex flex-col items-center justify-center shadow-sm cursor-pointer transition-all duration-100"
               >
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -385,7 +385,7 @@ export const Login: React.FC<LoginProps> = ({
                 <span className="w-2.5 h-2.5 rounded-full bg-[#006b33] inline-block animate-pulse"></span>
                 <span className="text-xs text-[#3e4a3f] font-medium">{t('common.local_mode')}</span>
               </div>
-              <span className="text-xs text-[#6e7a6e]">Terminal ID: HOS-402</span>
+              <span className="text-xs text-[#6e7a6e]">{t('login.decorative_terminal_id')}</span>
             </div>
 
           </div>
@@ -684,7 +684,7 @@ export const Login: React.FC<LoginProps> = ({
                   <button
                     type="button"
                     onClick={handleBackspace}
-                    aria-label="Backspace"
+                    aria-label={t('common.backspace')}
                     className="w-[88px] h-[88px] rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border-2 border-slate-200 text-slate-700 flex flex-col items-center justify-center transition-all cursor-pointer"
                   >
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">

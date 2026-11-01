@@ -30,54 +30,44 @@ type ActivePage =
 interface PageInfo {
   titleHindi: string;
   titleEnglish: string;
-  description: string;
 }
 
 const PAGE_DETAILS: Record<ActivePage, PageInfo> = {
   home: {
     titleHindi: 'Mukhya Prisht',
     titleEnglish: 'Home',
-    description: '',
   },
   dawai_becho: {
     titleHindi: 'Dawai Becho',
     titleEnglish: 'Sell Medicine / POS',
-    description: 'Counter billing aur barcode scanning jald shuru hoga.',
   },
   fast_bill: {
     titleHindi: 'Fast Bill',
     titleEnglish: 'Rush Billing Mode',
-    description: 'Bheed ke samay tez scanner billing jald shuru hoga.',
   },
   stock_jodo: {
     titleHindi: 'Stock Jodo',
     titleEnglish: 'Add Stock / Purchase',
-    description: 'Nayi dawaiyon ki kharid aur invoice photo entry jald shuru hoga.',
   },
   stock_dekho: {
     titleHindi: 'Stock Dekho',
     titleEnglish: 'Store Inventory View',
-    description: 'Aapka stock khali hai. Dawai scan karein ya naam daalkar stock shuru karein.',
   },
   expiry: {
     titleHindi: 'Expiry',
     titleEnglish: 'Expiry Management & Returns',
-    description: '30, 60 aur 90 din ki expiry alert aur wapsi list jald shuru hoga.',
   },
   udhaar: {
     titleHindi: 'Udhaar',
     titleEnglish: 'Customer Khata & Credit',
-    description: 'Grahak ka khata, baki rakam aur WhatsApp yaad dilana jald shuru hoga.',
   },
   din_band: {
     titleHindi: 'Din Band',
     titleEnglish: 'Daily Counter Closing',
-    description: 'Sham ka hisab milan, cash count aur report jald shuru hoga.',
   },
   owner: {
     titleHindi: 'Owner Dashboard',
     titleEnglish: 'Shop Management & Reports',
-    description: 'Dukaan ka munafe ka hisab, settings aur backup prabandh jald shuru hoga.',
   },
 };
 
@@ -203,17 +193,17 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
           <main className="w-full flex-1 flex items-center justify-center py-8">
             <EmptyState
               title={`${subTitle}: ${t('home.coming_soon')}`}
-              subtitle={pageDetails.description || (language === 'en' ? 'This module will be fully activated in the next development phase.' : 'Ye feature agle phase mein tayyar ho raha hai.')}
+              subtitle={t('home.subpage_ready_next_version')}
               actionLabel={returnHomeBtn.main}
               actionSubLabel={returnHomeBtn.sub}
               onAction={handleReturnHome}
-              hintText={`Hospivo Retail Cloud • ${shopName}`}
+              hintText={shop?.mode === 'cloud' ? `Hospivo Retail Cloud • ${shopName}` : `Hospivo • ${shopName}`}
             />
           </main>
 
           {/* Simple footer */}
           <footer className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 px-6 py-4 flex items-center justify-between text-sm text-[#6e7a6e] dark:text-gray-400">
-            <span>Hospivo Retail Cloud • {t('home.footer_tag')}</span>
+            <span>{shop?.mode === 'cloud' ? t('home.footer_cloud') : t('home.footer_local')}</span>
             <span>{shopName} • {modeLabel}</span>
           </footer>
 
@@ -271,7 +261,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
             {/* Moon / Sun light/dark switch */}
             <button
               type="button"
-              aria-label="Toggle light dark"
+              aria-label={t('common.toggle_theme')}
               onClick={toggleTheme}
               className="w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-yellow-400 transition cursor-pointer"
             >

@@ -24,6 +24,10 @@ export interface TranslationSchema {
     btn_clear: ButtonLabel;
     btn_unlock: ButtonLabel;
     btn_home: ButtonLabel;
+    backspace: string;
+    language_selection: string;
+    toggle_theme: string;
+    example: string;
   };
   login: {
     pos_title: string;
@@ -53,23 +57,48 @@ export interface TranslationSchema {
     welcome_back: string;
     dev_reset_btn: string;
     dev_lang_btn: string;
+    decorative_pos_title: string;
+    decorative_counter: string;
+    decorative_bill_no: string;
+    decorative_time: string;
+    decorative_search_medicine: string;
+    staff_user: string;
+    decorative_terminal_id: string;
   };
   setup: {
+    wizard_title: string;
+    step1_header: ButtonLabel;
+    step2_header: ButtonLabel;
+    step3_header: ButtonLabel;
+    step4_header: ButtonLabel;
+    step5_header: ButtonLabel;
+    step6_header: ButtonLabel;
+    step7_header: ButtonLabel;
+    step8_header: ButtonLabel;
+
     step1_badge: string;
     step1_title: string;
     step1_sub: string;
     shop_name_label: string;
+    shop_name_sub: string;
     shop_name_required: string;
     shop_name_hint: string;
+    shop_name_sub_desc: string;
     owner_name_label: string;
+    owner_name_sub: string;
     owner_name_required: string;
     owner_name_hint: string;
+    owner_name_sub_desc: string;
     phone_label: string;
+    phone_sub_label: string;
     phone_hint: string;
     phone_sub: string;
     address_label: string;
+    address_sub: string;
     address_hint: string;
+    address_sub_desc: string;
     gst_label: string;
+    gst_sub_label: string;
     gst_hint: string;
     gst_sub: string;
     dl1_label: string;
@@ -96,6 +125,7 @@ export interface TranslationSchema {
     cloud_card_bullet1: string;
     cloud_card_bullet2: string;
     cloud_card_bullet3: string;
+    cloud_card_banner: string;
     step2_note: string;
 
     step3_badge: string;
@@ -113,11 +143,20 @@ export interface TranslationSchema {
     step4_title: string;
     step4_sub: string;
     staff_name_label: string;
+    staff_name_sub: string;
     staff_name_hint: string;
     staff_pin_label: string;
+    staff_pin_sub: string;
+    staff_pin_hint_desc: string;
     staff_btn_add: ButtonLabel;
     staff_list_title: string;
+    staff_role_notice: string;
+    staff_count_badge: string;
     staff_no_one_yet: string;
+    staff_empty_sub: string;
+    staff_card_pin_masked: string;
+    staff_btn_remove_title: string;
+    staff_footer_note: string;
     staff_err_name: string;
     staff_err_pin: string;
     staff_err_owner_pin: string;
@@ -130,22 +169,38 @@ export interface TranslationSchema {
     step5_empty_title: string;
     step5_empty_sub: string;
     step5_empty_tag: string;
+    step5_empty_subtag: string;
+    step5_empty_point1: string;
+    step5_empty_point2: string;
     step5_import_title: string;
     step5_import_sub: string;
     step5_import_locked: string;
+    step5_import_box_title: string;
+    step5_import_box_desc: string;
+    step5_btn_choose_file: ButtonLabel;
     step5_note: string;
 
     step6_badge: string;
     step6_title: string;
     step6_sub: string;
     step6_desc: string;
+    step6_daily_sub: string;
+    step6_info_local_title: string;
+    step6_info_local_sub: string;
+    step6_warning: string;
+    step6_warning_sub: string;
     step6_folder_label: string;
     step6_folder_desc: string;
+    step6_btn_change_folder: string;
+    step6_perm_title: string;
+    step6_perm_sub: string;
     step6_persist_btn: string;
+    step6_persist_btn_sub: string;
     step6_status_granted: string;
+    step6_status_granted_sub: string;
     step6_status_denied: string;
+    step6_status_denied_sub: string;
     step6_status_idle: string;
-    step6_warning: string;
 
     step7_badge: string;
     step7_title: string;
@@ -168,6 +223,7 @@ export interface TranslationSchema {
     step8_opt_pin: string;
     step8_opt_remote_title: string;
     step8_opt_remote_sub: string;
+    step8_opt_remote_tooltip: string;
     step8_opt_blocked: string;
     step8_finish_btn: ButtonLabel;
     step8_rule_delete_bill: string;
@@ -195,10 +251,22 @@ export interface TranslationSchema {
     dawai_count: string;
     coming_soon: string;
     footer_tag: string;
+    footer_local: string;
+    footer_cloud: string;
+    subpage_ready_next_version: string;
     dev_test_approval_btn: string;
     dev_approval_success_banner: string;
     close_btn: string;
     return_home_btn: ButtonLabel;
+  };
+  status: {
+    local: string;
+    synced: string;
+    offline: string;
+    pending_sync: string;
+    sync_failed: string;
+    backup_today: string;
+    backup_needed: string;
   };
   dialogs: {
     delete_title: string;
@@ -220,6 +288,7 @@ export interface TranslationSchema {
     ijazat_pin_wrong: string;
     ijazat_pin_locked: string;
     ijazat_pin_success: string;
+    safe_action: string;
     btn_wapas: ButtonLabel;
   };
   errors: {

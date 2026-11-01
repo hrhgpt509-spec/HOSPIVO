@@ -13,9 +13,10 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt T: Dual-language support (English default, Hinglish second)
+Prompt T2-B: Fix leftover text in Setup.tsx (part 2 of 2) - COMPLETE
 
 ## Known problems
+- Login decorative panel shows sample bill/terminal ID; remove or make real before other shops use the app.
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 - DEV ONLY: ?reset=1 query parameter in App.tsx clears the database and must be removed before release.
 - DEV ONLY: "DEV: Reset test data" button on Login screen clears database and must be removed before release.
@@ -23,6 +24,11 @@ Prompt T: Dual-language support (English default, Hinglish second)
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Moved all remaining hardcoded strings in Setup.tsx (steps 1 through 8) into en.ts and hinglish.ts.
+- Refactored renderProgress to derive localized step headers and descriptions without repeating titles in English.
+- Replaced hardcoded example placeholders with t('common.example') prefix and removed forced uppercase styling on placeholders.
+- Localized all sub-labels, staff role notes, backup buttons, storage permissions, and tooltips.
+- Verified all 33 vitest tests and production applet build pass cleanly.
 - Built complete i18n system (src/i18n) supporting English as default and Hinglish as second language.
 - Replaced all visible screen text across Login, Setup (all 8 steps), Home, and dialogs with t("key").
 - Implemented two-line button helper {main, sub} with clean vertical centering in English mode.

@@ -16,8 +16,7 @@ export type ApprovalRuleType =
 
 export interface ActionApprovalRule {
   category: ApprovalActionCategory;
-  label: string;
-  labelHindi: string;
+  labelKey: string;
   rule: ApprovalRuleType;
 }
 
@@ -33,32 +32,27 @@ export const DEFAULT_APPROVAL_RULES: Record<ApprovalActionCategory, ApprovalRule
 export const DEFAULT_APPROVAL_RULES_LIST: ActionApprovalRule[] = [
   {
     category: 'delete_or_correct_bill',
-    label: 'Delete or correct finished bill',
-    labelHindi: 'Bill hatana ya badalna',
+    labelKey: 'setup.step8_rule_delete_bill',
     rule: 'local_pin',
   },
   {
     category: 'price_change',
-    label: 'Price change',
-    labelHindi: 'Daam badalna',
+    labelKey: 'setup.step8_rule_price_change',
     rule: 'local_pin',
   },
   {
     category: 'discount_above_limit',
-    label: 'Discount above limit',
-    labelHindi: 'Bada discount',
+    labelKey: 'setup.step8_rule_discount_limit',
     rule: 'local_pin',
   },
   {
     category: 'stock_correction',
-    label: 'Stock correction',
-    labelHindi: 'Stock sudhaar',
+    labelKey: 'setup.step8_rule_stock_correction',
     rule: 'blocked_offline',
   },
   {
     category: 'cash_mismatch',
-    label: 'Cash mismatch at Din Band',
-    labelHindi: 'Din Band mein fark',
+    labelKey: 'setup.step8_rule_cash_mismatch',
     rule: 'local_pin',
   },
 ];

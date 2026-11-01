@@ -6,7 +6,7 @@ export interface LanguageSwitchProps {
 }
 
 export const LanguageSwitch: React.FC<LanguageSwitchProps> = ({ className = '' }) => {
-  const { language, setLanguage } = useTranslation();
+  const { language, setLanguage, t } = useTranslation();
 
   const handleSelect = (lang: Language) => {
     if (lang !== language) {
@@ -17,7 +17,7 @@ export const LanguageSwitch: React.FC<LanguageSwitchProps> = ({ className = '' }
   return (
     <div
       role="radiogroup"
-      aria-label="Language selection"
+      aria-label={t('common.language_selection')}
       className={`inline-flex items-center p-1 rounded-xl bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 shadow-inner select-none ${className}`}
     >
       <button
