@@ -26,8 +26,8 @@
 - If a step fails twice, STOP and explain in simple words. Do not keep trying.
 
 ## Words and languages
-- Never type visible words directly inside a screen. Every label, message, hint and button text comes from src/i18n (en.ts = DEFAULT, hinglish.ts = Hindi in English letters) through t("key"). A Hindi-script file may be added later.
-- Every new text needs both versions at the same time. Stored data (audit log, records) uses fixed English codes, never translated sentences.
+- Never type visible words directly inside a screen. Every label, message, hint and button text comes from src/i18n (en.ts = DEFAULT, hi.ts = Hindi in Devanagari script, hinglish.ts = Hindi in English letters) through t("key").
+- Every new text needs all three versions at the same time. Stored data (audit log, records) uses fixed English codes, never translated sentences.
 
 ## Sample data
 - Stitch designs contain example data. Never copy it into the app as real data. Forms start empty; examples may only be grey placeholders.

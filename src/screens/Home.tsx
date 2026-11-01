@@ -27,50 +27,6 @@ type ActivePage =
   | 'din_band'
   | 'owner';
 
-interface PageInfo {
-  titleHindi: string;
-  titleEnglish: string;
-}
-
-const PAGE_DETAILS: Record<ActivePage, PageInfo> = {
-  home: {
-    titleHindi: 'Mukhya Prisht',
-    titleEnglish: 'Home',
-  },
-  dawai_becho: {
-    titleHindi: 'Dawai Becho',
-    titleEnglish: 'Sell Medicine / POS',
-  },
-  fast_bill: {
-    titleHindi: 'Fast Bill',
-    titleEnglish: 'Rush Billing Mode',
-  },
-  stock_jodo: {
-    titleHindi: 'Stock Jodo',
-    titleEnglish: 'Add Stock / Purchase',
-  },
-  stock_dekho: {
-    titleHindi: 'Stock Dekho',
-    titleEnglish: 'Store Inventory View',
-  },
-  expiry: {
-    titleHindi: 'Expiry',
-    titleEnglish: 'Expiry Management & Returns',
-  },
-  udhaar: {
-    titleHindi: 'Udhaar',
-    titleEnglish: 'Customer Khata & Credit',
-  },
-  din_band: {
-    titleHindi: 'Din Band',
-    titleEnglish: 'Daily Counter Closing',
-  },
-  owner: {
-    titleHindi: 'Owner Dashboard',
-    titleEnglish: 'Shop Management & Reports',
-  },
-};
-
 export const Home: React.FC<HomeProps> = ({ currentUser }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('hospivo_theme');
@@ -142,8 +98,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
 
   // If a subpage is currently selected, render subview with 46b EmptyState & top bar
   if (activePage !== 'home') {
-    const pageDetails = PAGE_DETAILS[activePage];
-    const subTitle = language === 'en' ? pageDetails.titleEnglish : pageDetails.titleHindi;
+    const pageLabel = tButton(`home.tile_${activePage}`);
+    const subTitle = pageLabel.main;
     return (
       <div className="w-full min-h-screen bg-canvas dark:bg-[#0f1713] text-[#101828] dark:text-gray-100 flex flex-col justify-between p-6 antialiased select-none transition-colors">
         <div className="w-full max-w-[1440px] mx-auto flex-1 flex flex-col justify-between">
@@ -169,11 +125,13 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
 
               <div className="flex flex-col">
                 <h1 className="text-2xl font-bold text-[#141e1a] dark:text-white leading-tight">
-                  {language === 'en' ? pageDetails.titleEnglish : pageDetails.titleHindi}
+                  {pageLabel.main}
                 </h1>
-                <span className="text-sm font-medium text-[#6e7a6e] dark:text-gray-400 leading-tight">
-                  {language === 'en' ? '' : pageDetails.titleEnglish}
-                </span>
+                {pageLabel.sub ? (
+                  <span className="text-sm font-medium text-[#6e7a6e] dark:text-gray-400 leading-tight">
+                    {pageLabel.sub}
+                  </span>
+                ) : null}
               </div>
             </div>
 

@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt T2-B: Fix leftover text in Setup.tsx (part 2 of 2) - COMPLETE
+Prompt T3: Hindi (Devanagari) script support - COMPLETE
 
 ## Known problems
 - Login decorative panel shows sample bill/terminal ID; remove or make real before other shops use the app.
@@ -24,7 +24,11 @@ Prompt T2-B: Fix leftover text in Setup.tsx (part 2 of 2) - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
-- Moved all remaining hardcoded strings in Setup.tsx (steps 1 through 8) into en.ts and hinglish.ts.
+- Added Hindi in Devanagari script ('hi') as third language in src/i18n/hi.ts with matching key catalog.
+- Installed @fontsource/noto-sans-devanagari (weights 400-800) for complete offline font support without CDN links.
+- Updated LanguageSwitch with three options: "English", "हिन्दी", "Hindi (English letters)" with clean wrapping.
+- Implemented two-line buttons for Hindi showing Devanagari as main label and small English word underneath.
+- Updated test suite for all 3 files and fallback; verified all 34 vitest tests and production build pass cleanly.
 - Refactored renderProgress to derive localized step headers and descriptions without repeating titles in English.
 - Replaced hardcoded example placeholders with t('common.example') prefix and removed forced uppercase styling on placeholders.
 - Localized all sub-labels, staff role notes, backup buttons, storage permissions, and tooltips.

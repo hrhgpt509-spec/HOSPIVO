@@ -6,6 +6,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { triggerFeedback } from '../logic/feedback';
 import { useTranslation, tButton } from '../i18n';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { enterFullscreen } from '../logic/fullscreen';
 
 interface LoginProps {
   onLoginSuccess: (user: DBUser) => void;
@@ -134,6 +135,7 @@ export const Login: React.FC<LoginProps> = ({
       const res = await attemptUserLogin(user, pinToTest);
       if (res.status === 'ok') {
         triggerFeedback('success', t('login.login_success'), t('login.login_welcome', { name: user.name }));
+        enterFullscreen();
         onLoginSuccess(user);
       } else if (res.status === 'locked') {
         triggerFeedback('error', t('login.lockout_msg', { minutes: res.minutesLeft }), '');
@@ -406,7 +408,7 @@ export const Login: React.FC<LoginProps> = ({
       <main className="w-full max-w-[1376px] bg-white rounded-3xl shadow-xl border border-slate-200/80 p-6 md:p-8 flex flex-col justify-between min-h-[820px] relative">
         
         {/* Top Branding / Header inside Card */}
-        <header className="flex items-center justify-between pb-4 border-b border-slate-100">
+        <header className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <div className="w-13 h-13 md:w-14 md:h-14 bg-[#1B8F4A] rounded-2xl flex items-center justify-center text-white shadow-sm shadow-[#1B8F4A]/30">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -420,7 +422,7 @@ export const Login: React.FC<LoginProps> = ({
           </div>
 
           {/* Secure Login Badge & Language Switch */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {/* DEV ONLY: becomes a Settings option in Phase 5 */}
             <LanguageSwitch />
 

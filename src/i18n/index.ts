@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { en } from './en';
+import { hi } from './hi';
 import { hinglish } from './hinglish';
 import type { Language, ButtonLabel, TranslationSchema } from './types';
 import { db } from '../db';
 
 export * from './types';
 export { en } from './en';
+export { hi } from './hi';
 export { hinglish } from './hinglish';
 
 const catalogs: Record<Language, TranslationSchema> = {
   en,
+  hi,
   hinglish,
 };
 
@@ -24,8 +27,11 @@ if (typeof window !== 'undefined' && typeof indexedDB !== 'undefined') {
   db.settings
     .get('language')
     .then((item) => {
-      if (item && (item.value === 'en' || item.value === 'hinglish')) {
+      if (item && (item.value === 'en' || item.value === 'hi' || item.value === 'hinglish')) {
         currentLanguage = item.value as Language;
+        if (typeof document !== 'undefined') {
+          document.documentElement.lang = currentLanguage;
+        }
         listeners.forEach((l) => l(currentLanguage));
       }
     })
@@ -38,6 +44,9 @@ export function getLanguage(): Language {
 
 export async function setLanguage(lang: Language): Promise<void> {
   currentLanguage = lang;
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = lang;
+  }
   listeners.forEach((l) => l(lang));
 
   if (typeof indexedDB !== 'undefined') {

@@ -6,6 +6,7 @@
       "name": "hospivo",
       "dependencies": {
         "@fontsource/noto-sans": "^5.3.0",
+        "@fontsource/noto-sans-devanagari": "^5.3.0",
         "dexie": "^4.4.7",
         "react": "^19.3.1",
         "react-dom": "^19.3.1",
@@ -212,6 +213,8 @@
     "@babel/types": ["@babel/types@7.29.11", "", { "dependencies": { "@babel/helper-string-parser": "^7.29.11", "@babel/helper-validator-identifier": "^7.29.7" } }, "sha512-WCsemW40Cpc6gouC1SrY6PBaZ+oLRlEVY9XBvZBI7il/HyUrb2nJ505wE1MHEFyDZNnrWDEuy4jL50WVHfTTSQ=="],
 
     "@fontsource/noto-sans": ["@fontsource/noto-sans@5.3.0", "", {}, "sha512-fBCog2PY7DiVVTEEqtI/Qdinx/knobHYfoGpjFXdfBX5RoJaBp1Prw2G75p0OIsdlMZg3cLo0c+YbIUYOxnQJw=="],
+
+    "@fontsource/noto-sans-devanagari": ["@fontsource/noto-sans-devanagari@5.3.0", "", {}, "sha512-7khYmipS/5KAUUmrO1DKir8yL8XI00d0+ZE9BqbS8XF1jzObv6CpPOk3UeYxF+Pvi8bx9bBvprBCOcbx/eQWTQ=="],
 
     "@isaacs/cliui": ["@isaacs/cliui@9.0.0", "", {}, "sha512-AokJm4tuBHillT+FpMtxQ60n8ObyXBatq7jD2/JA9dxbDDokKQm8KMht5ibGzLVU9IJDIKK4TPKgMHEYMn3lMg=="],
 

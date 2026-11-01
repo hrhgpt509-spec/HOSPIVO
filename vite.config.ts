@@ -17,6 +17,7 @@ export default defineConfig({
         theme_color: '#1b8f4a',
         background_color: '#f1fcf6',
         display: 'standalone',
+        display_override: ['fullscreen', 'standalone'],
       },
     }),
   ],

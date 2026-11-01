@@ -7,17 +7,27 @@
 @import "@fontsource/noto-sans/700.css";
 @import "@fontsource/noto-sans/800.css";
 
+@import "@fontsource/noto-sans-devanagari/400.css";
+@import "@fontsource/noto-sans-devanagari/500.css";
+@import "@fontsource/noto-sans-devanagari/600.css";
+@import "@fontsource/noto-sans-devanagari/700.css";
+@import "@fontsource/noto-sans-devanagari/800.css";
+
 * {
   box-sizing: border-box;
   user-select: none;
 }
 
 body {
-  font-family: 'Noto Sans', sans-serif;
+  font-family: 'Noto Sans', 'Noto Sans Devanagari', sans-serif;
   background-color: #F4F6F5;
   color: #101828;
   margin: 0;
   min-height: 100vh;
+}
+
+html[lang="hi"] body {
+  font-family: 'Noto Sans Devanagari', 'Noto Sans', sans-serif;
 }
 
 html.dark body {

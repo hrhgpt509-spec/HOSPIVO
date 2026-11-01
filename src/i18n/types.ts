@@ -1,4 +1,4 @@
-export type Language = 'en' | 'hinglish';
+export type Language = 'en' | 'hi' | 'hinglish';
 
 export interface ButtonLabel {
   main: string;

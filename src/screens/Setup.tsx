@@ -365,7 +365,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     const header = tButton(`setup.step${currentStep}_header` as any);
     return (
       <header className="flex flex-col gap-4">
-        <div className="flex items-center justify-between border-b border-[#E8EFEA] pb-4">
+        <div className="flex items-center justify-between border-b border-[#E8EFEA] pb-4 flex-wrap gap-4">
           {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-[#1B8F4A] flex items-center justify-center shadow-md text-white">
@@ -380,7 +380,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
           </div>
 
           {/* Step Indicator & Language Switch on Step 1 */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap justify-end">
             {currentStep === 1 && <LanguageSwitch />}
             <div className="text-right">
               <div className="text-[22px] font-bold text-[#1A1F1C] leading-tight">

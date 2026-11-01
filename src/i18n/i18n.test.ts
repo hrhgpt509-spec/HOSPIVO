@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { en } from './en';
+import { hi } from './hi';
 import { hinglish } from './hinglish';
 import { t, tButton, setLanguage, getLanguage } from './index';
 
@@ -22,11 +23,13 @@ describe('i18n language catalogs and fallback tests', () => {
     await setLanguage('en');
   });
 
-  it('en.ts and hinglish.ts have exactly the same keys across all sections', () => {
+  it('en.ts, hi.ts, and hinglish.ts have exactly the same keys across all sections', () => {
     const enKeys = getAllKeys(en as unknown as Record<string, unknown>);
+    const hiKeys = getAllKeys(hi as unknown as Record<string, unknown>);
     const hinglishKeys = getAllKeys(hinglish as unknown as Record<string, unknown>);
 
-    expect(enKeys).toEqual(hinglishKeys);
+    expect(hiKeys).toEqual(enKeys);
+    expect(hinglishKeys).toEqual(enKeys);
   });
 
   it('defaults to English and returns English translations', () => {
@@ -34,6 +37,14 @@ describe('i18n language catalogs and fallback tests', () => {
     expect(t('login.who_is_using')).toBe('Who is using?');
     expect(t('setup.step1_title')).toBe('Enter your shop details');
     expect(t('home.stat_sales')).toBe("Today's Sales");
+  });
+
+  it('switches to Hindi (Devanagari) and returns Hindi translations', async () => {
+    await setLanguage('hi');
+    expect(getLanguage()).toBe('hi');
+    expect(t('login.who_is_using')).toBe('कौन हैं?');
+    expect(t('setup.step1_title')).toBe('अपनी दुकान की जानकारी भरें');
+    expect(t('home.stat_sales')).toBe('आज की बिक्री');
   });
 
   it('switches to Hinglish and returns Hinglish translations', async () => {
@@ -44,12 +55,18 @@ describe('i18n language catalogs and fallback tests', () => {
     expect(t('home.stat_sales')).toBe('Aaj ki bikri');
   });
 
-  it('two-line buttons provide main and sub in Hinglish, and hide sub in English', async () => {
+  it('two-line buttons provide main in Hindi/Hinglish with English sub, and hide sub in English', async () => {
     // English mode
     await setLanguage('en');
     const enBtn = tButton('home.tile_dawai_becho');
     expect(enBtn.main).toBe('Sell Medicine');
     expect(enBtn.sub).toBe('');
+
+    // Hindi (Devanagari) mode
+    await setLanguage('hi');
+    const hiBtn = tButton('home.tile_dawai_becho');
+    expect(hiBtn.main).toBe('दवाई बेचो');
+    expect(hiBtn.sub).toBe('Sell');
 
     // Hinglish mode
     await setLanguage('hinglish');
@@ -59,23 +76,32 @@ describe('i18n language catalogs and fallback tests', () => {
   });
 
   it('falls back to English when a key is missing in another language', async () => {
-    await setLanguage('hinglish');
-    // If a non-existent or deleted key is tested, falls back to English or returns key
-    // Let's test with a simulated key path present only in en
-    (hinglish.errors as any).test_only_key = undefined;
+    // Test fallback from Hindi
+    await setLanguage('hi');
+    (hi.errors as any).test_only_key = undefined;
     (en.errors as any).test_only_key = 'English fallback text';
+    expect(t('errors.test_only_key')).toBe('English fallback text');
 
+    // Test fallback from Hinglish
+    await setLanguage('hinglish');
+    (hinglish.errors as any).test_only_key = undefined;
     expect(t('errors.test_only_key')).toBe('English fallback text');
 
     // Clean up simulated test key
     delete (en.errors as any).test_only_key;
+    delete (hi.errors as any).test_only_key;
     delete (hinglish.errors as any).test_only_key;
   });
 
-  it('interpolates parameters correctly in both languages', async () => {
+  it('interpolates parameters correctly across all languages', async () => {
     await setLanguage('en');
     expect(t('login.lockout_msg', { minutes: 2, seconds: 120 })).toBe(
       'Try again in 2 min (120s)'
+    );
+
+    await setLanguage('hi');
+    expect(t('login.lockout_msg', { minutes: 2, seconds: 120 })).toBe(
+      '2 मिनट बाद कोशिश करें (120s)'
     );
 
     await setLanguage('hinglish');

@@ -96,8 +96,12 @@ Cash ginti -> Milan (expected vs counted; mismatch in red) -> Photo of counter -
 - Cloud sync (later) must never duplicate a bill or stock movement, and never silently overwrite sales or stock movements.
 
 ## Languages and words
-- English is the DEFAULT for new shops; Hinglish (Hindi in English letters) is the second language.
+- Hospivo supports three languages: English (DEFAULT for new shops), Hindi in Devanagari script ('hi'), and Hinglish (Hindi in English letters).
+- Language switch shows three options in exact order: "English", "हिन्दी", "Hindi (English letters)".
 - Never type visible words directly inside a screen. Every label, hint, message and button comes from src/i18n through t("key").
-- Two-line buttons { main, sub }: In English, show main label and hide the small second line cleanly without gaps or layout shift.
+- If a key is ever missing in Hindi or Hinglish, t() automatically falls back to English.
+- Two-line buttons { main, sub }: In Hindi and Hinglish, show the localized word as the main label and keep the small English word underneath. In English mode, show the main label and hide the second line cleanly without gaps or layout shift. Buttons must stay at least 56px tall and allow text wrapping.
+- Numbers stay 0-9 across all languages. Money format stays whole paise.
 - Stored data and audit log records always use fixed English codes, never translated sentences.
-- Grey placeholder hints (shop name, owner name, phone, address) remain identical in both languages.
+- Grey placeholder hints (shop name, owner name, phone, address) remain identical in all languages.
+- Hindi font is loaded offline via @fontsource/noto-sans-devanagari (no CDN links).

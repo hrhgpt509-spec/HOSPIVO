@@ -22,7 +22,7 @@
 - All stock is stored in the SMALLEST unit (loose tablets). Packs = units / unitsPerPack. Money is whole paise.
 - Batch expiry date is valid through the LAST day of the entered month (e.g. 08/2027 means valid through 31 Aug 2027; expired starting 1 Sep 2027).
 - stockMovements table is strictly append-only. Corrections and returns append new signed movements, never editing or deleting existing records.
-- Languages: English is the DEFAULT language for new shops. Hinglish (Hindi in English letters) is the second language. All screens use src/i18n. Two-line buttons show main label in English mode without subline gap. Stored records and audit logs always use fixed English codes.
+- Languages: Hospivo supports three languages: English ('en', DEFAULT for new shops), Hindi in Devanagari script ('hi'), and Hinglish ('hinglish', Hindi in English letters). Language switch options order: "English", "हिन्दी", "Hindi (English letters)". Two-line buttons in Hindi/Hinglish show Hindi/Hinglish as main label and small English word underneath, while English mode hides the second line without gaps. If any key is missing in Hindi or Hinglish, t() automatically falls back to English. Noto Sans Devanagari font is installed via npm (@fontsource/noto-sans-devanagari) for full offline support without CDN links. Numbers always stay 0-9. Stored records and audit logs always use fixed English codes.
 
 ## Open questions (ask the owner when the phase starts)
 - Default discount limit.
