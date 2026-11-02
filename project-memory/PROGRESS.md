@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt U2: Full screen after login - COMPLETE
+Prompt M1B: Naya Dawai (Add / Edit Medicine) - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,16 @@ Prompt U2: Full screen after login - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Built OwnerMedicineForm (38b_Owner_MedicineForm.html) for adding and editing medicines with zero missing fields from RULES.md.
+- Connected Naya Dawai, EmptyState button, and list row tapping to the form with autofocus, auto-capitalization, and pack photo compression to ~100 KB.
+- Enforced required fields (name, MRP > 0, units >= 1), unique short code, unique barcode, duplicate warning modal ("Phir bhi save karo" / "Wapas"), and dirty confirm dialog.
+- Added audit logging with fixed English codes ("medicine_created", "medicine_edited") and changed field values.
+- Added comprehensive unit test suite in medicineForm.test.ts; all 54 vitest tests and production build pass cleanly.
+- Built OwnerMenu (32b_Owner_Menu.html) replacing placeholder after Owner PIN; Dawai List opens real page, other 8 tiles show coming soon.
+- Built OwnerMedicineList (38a_Owner_MedicineList.html) with Dexie inventory, packs and loose stock calculation, and no purchase rate or profit exposure.
+- Implemented searchMedicines and formatMedicineStock in medicineSearch.ts with autofocus search by name, short code, barcode, company, shelf, and salt.
+- Added full translation keys across en.ts, hinglish.ts, and hi.ts for Owner Menu and Medicine List.
+- Verified 47 vitest unit tests across 5 test suites and production build pass cleanly.
 - Implemented enterFullscreen in src/logic/fullscreen.ts with navigationUI hide, silent error suppression, and DB setting check.
 - Triggered enterFullscreen immediately upon successful user login in Login.tsx (no delay, bypassed on wrong PIN/lock/dialogs).
 - Configured PWA manifest display 'standalone' and display_override ['fullscreen', 'standalone'] in vite.config.ts.

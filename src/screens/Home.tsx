@@ -6,6 +6,8 @@ import { EmptyState } from '../components/EmptyState';
 import { OwnerPinGate } from '../components/OwnerPinGate';
 import { ApprovalDialog } from '../components/ApprovalDialog';
 import { useTranslation, tButton } from '../i18n';
+import { OwnerMenu } from './OwnerMenu';
+import { OwnerMedicineList } from './OwnerMedicineList';
 
 interface HomeProps {
   currentUser?: {
@@ -25,7 +27,8 @@ type ActivePage =
   | 'expiry'
   | 'udhaar'
   | 'din_band'
-  | 'owner';
+  | 'owner'
+  | 'medicine_list';
 
 export const Home: React.FC<HomeProps> = ({ currentUser }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -96,7 +99,33 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     setActivePage('owner');
   };
 
-  // If a subpage is currently selected, render subview with 46b EmptyState & top bar
+  // 32b Owner Menu
+  if (activePage === 'owner') {
+    return (
+      <OwnerMenu
+        onReturnHome={handleReturnHome}
+        onOpenMedicineList={() => setActivePage('medicine_list')}
+        currentUser={currentUser}
+        shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 38a Medicine List
+  if (activePage === 'medicine_list') {
+    return (
+      <OwnerMedicineList
+        onBackToOwnerMenu={() => setActivePage('owner')}
+        onReturnHome={handleReturnHome}
+        currentUser={currentUser as any}
+        shop={shop}
+      />
+    );
+  }
+
+  // If another subpage is currently selected, render subview with 46b EmptyState & top bar
   if (activePage !== 'home') {
     const pageLabel = tButton(`home.tile_${activePage}`);
     const subTitle = pageLabel.main;
