@@ -13,9 +13,10 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt T3: Hindi (Devanagari) script support - COMPLETE
+Prompt U2: Full screen after login - COMPLETE
 
 ## Known problems
+- App icons (192/512) needed before the app can be installed.
 - Login decorative panel shows sample bill/terminal ID; remove or make real before other shops use the app.
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 - DEV ONLY: ?reset=1 query parameter in App.tsx clears the database and must be removed before release.
@@ -24,6 +25,11 @@ Prompt T3: Hindi (Devanagari) script support - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Implemented enterFullscreen in src/logic/fullscreen.ts with navigationUI hide, silent error suppression, and DB setting check.
+- Triggered enterFullscreen immediately upon successful user login in Login.tsx (no delay, bypassed on wrong PIN/lock/dialogs).
+- Configured PWA manifest display 'standalone' and display_override ['fullscreen', 'standalone'] in vite.config.ts.
+- Recorded fullscreen rules in DECISIONS.md and RULES.md, and noted missing install icons in Known problems.
+- Verified all 40 vitest unit tests and production build pass cleanly.
 - Added Hindi in Devanagari script ('hi') as third language in src/i18n/hi.ts with matching key catalog.
 - Installed @fontsource/noto-sans-devanagari (weights 400-800) for complete offline font support without CDN links.
 - Updated LanguageSwitch with three options: "English", "हिन्दी", "Hindi (English letters)" with clean wrapping.

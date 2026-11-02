@@ -6,6 +6,7 @@
 - Login: tap a name, type PIN on a big number pad. Wrong PIN -> red "PIN galat hai", pad clears.
 - PINs are 4 digits by default. A 6-digit option is an Owner setting, to be built in Phase 5 (Settings). Changing the length later means every user must set a new PIN. Store PINs only as a salted hash, never as plain text.
 - Auto-lock after inactivity (default 5 min, owner can change).
+- Full screen after every successful login (default ON); becomes an Owner setting in Phase 5; Esc or F11 leaves it; the next login enters it again.
 
 ## Protected actions and approvals
 - Risky actions: delete/correct a finished bill, change a price, discount above limit, stock correction, cash mismatch at Din Band.
