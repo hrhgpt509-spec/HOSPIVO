@@ -434,6 +434,9 @@ export const hi: TranslationSchema = {
     err_supplier_required: 'सप्लायर चुनना ज़रूरी है',
     err_invoice_no_required: 'इनवॉइस नंबर दर्ज करें',
     err_invoice_date_required: 'इनवॉइस की तारीख दर्ज करें',
+    duplicate_invoice_title: 'पुराना इनवॉइस चेतावनी',
+    duplicate_invoice_sub: 'यह इनवॉइस नंबर इस सप्लायर के लिए पहले से दर्ज है। क्या आप फिर भी आगे बढ़ना चाहते हैं?',
+    duplicate_invoice_proceed: 'हाँ, आगे बढ़ें',
 
     // Step 2
     step2_title: 'कदम 2/4: इनवॉइस की फोटो',

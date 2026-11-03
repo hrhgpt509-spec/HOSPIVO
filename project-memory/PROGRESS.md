@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt M1B: Naya Dawai (Add / Edit Medicine) - COMPLETE
+Prompt S2: Stock Jodo (Steps 1 to 4 and Saved Screen) - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,10 @@ Prompt M1B: Naya Dawai (Add / Edit Medicine) - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Built complete Stock Jodo flow (23a, 23b/23b2, 23c, 23d, 23e) with atomic Dexie transaction in savePurchase for purchases, lines, batches, movements, and audit log.
+- Enforced purchase rate privacy: staff type the rate from invoice, but rates, line amounts, and invoice totals are strictly omitted from staff screens and logs.
+- Added invoice photo compression to max 1600 px longest side in src/logic/image.ts and non-blocking duplicate-invoice detection via findDuplicatePurchase.
+- Added comprehensive translations across en.ts, hinglish.ts, and hi.ts; verified 62 vitest tests and production build pass with zero errors.
 - Built OwnerMedicineForm (38b_Owner_MedicineForm.html) for adding and editing medicines with zero missing fields from RULES.md.
 - Connected Naya Dawai, EmptyState button, and list row tapping to the form with autofocus, auto-capitalization, and pack photo compression to ~100 KB.
 - Enforced required fields (name, MRP > 0, units >= 1), unique short code, unique barcode, duplicate warning modal ("Phir bhi save karo" / "Wapas"), and dirty confirm dialog.

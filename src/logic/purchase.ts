@@ -1,4 +1,4 @@
-import { db, type DBUser, type UserRole } from '../db';
+import { db, type DBUser, type UserRole, type Purchase } from '../db';
 import { canSeePurchasePrice } from './roles';
 
 export interface PurchaseDraftLine {
@@ -318,3 +318,22 @@ export async function savePurchase(
     }
   );
 }
+
+/**
+ * Checks if a purchase with the same supplierId and invoiceNo already exists.
+ * Case-insensitive match on invoiceNo.
+ */
+export async function findDuplicatePurchase(
+  supplierId: number,
+  invoiceNo: string
+): Promise<Purchase | undefined> {
+  const cleanNo = invoiceNo.trim().toLowerCase();
+  if (!supplierId || !cleanNo) return undefined;
+
+  return await db.purchases
+    .where('supplierId')
+    .equals(supplierId)
+    .filter((p) => p.invoiceNo.trim().toLowerCase() === cleanNo)
+    .first();
+}
+

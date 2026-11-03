@@ -434,6 +434,9 @@ export const hinglish: TranslationSchema = {
     err_supplier_required: 'Supplier chunna zaroori hai',
     err_invoice_no_required: 'Invoice number darj karein',
     err_invoice_date_required: 'Invoice ki tareekh darj karein',
+    duplicate_invoice_title: 'Purana Invoice Warning',
+    duplicate_invoice_sub: 'Ye invoice number is supplier ke liye pehle se darj hai. Phir bhi aage badhna chahte hain?',
+    duplicate_invoice_proceed: 'Haan, Aage Badhein',
 
     // Step 2
     step2_title: 'Step 2 of 4: Invoice ki photo',

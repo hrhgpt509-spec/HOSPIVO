@@ -434,6 +434,9 @@ export const en: TranslationSchema = {
     err_supplier_required: 'Please select a supplier',
     err_invoice_no_required: 'Please enter invoice number',
     err_invoice_date_required: 'Please enter invoice date',
+    duplicate_invoice_title: 'Duplicate Invoice Warning',
+    duplicate_invoice_sub: 'This invoice number already exists for this supplier. Do you still want to continue?',
+    duplicate_invoice_proceed: 'Yes, Continue',
 
     // Step 2
     step2_title: 'Step 2 of 4: Invoice Photo',

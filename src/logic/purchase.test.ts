@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import 'fake-indexeddb/auto';
 import { db, type Medicine, type Supplier, type DBUser } from '../db';
-import { savePurchase, getReviewData, type PurchaseDraft } from './purchase';
+import { savePurchase, getReviewData, findDuplicatePurchase, type PurchaseDraft } from './purchase';
+import { scaledSize } from './image';
 
 const SAMPLE_SUPPLIER: Supplier = {
   id: 1,
@@ -354,4 +355,42 @@ describe('Purchase logic and atomic saving', () => {
     expect(staffView.lines[0].freePacks).toBe(1);
     expect(staffView.lines[0].mrpPaise).toBe(3200);
   });
+
+  it('findDuplicatePurchase detects existing purchases without blocking silently', async () => {
+    await db.purchases.add({
+      supplierId: 1,
+      invoiceNo: 'INV-2024-001',
+      date: '2024-10-24',
+      invoicePhoto: 'data:image/jpeg;base64,photo',
+      verified: false,
+    });
+
+    const found = await findDuplicatePurchase(1, 'inv-2024-001 ');
+    expect(found).toBeDefined();
+    expect(found?.invoiceNo).toBe('INV-2024-001');
+
+    const notFound = await findDuplicatePurchase(1, 'INV-DIFF');
+    expect(notFound).toBeUndefined();
+
+    const differentSupplier = await findDuplicatePurchase(2, 'INV-2024-001');
+    expect(differentSupplier).toBeUndefined();
+  });
+
+  it('scaledSize scales down images preserving aspect ratio with max 1600 px longest side', () => {
+    // Landscape > 1600
+    const landscape = scaledSize(3200, 2400, 1600);
+    expect(landscape.width).toBe(1600);
+    expect(landscape.height).toBe(1200);
+
+    // Portrait > 1600
+    const portrait = scaledSize(1200, 2400, 1600);
+    expect(portrait.width).toBe(800);
+    expect(portrait.height).toBe(1600);
+
+    // Smaller than 1600: unchanged
+    const small = scaledSize(800, 600, 1600);
+    expect(small.width).toBe(800);
+    expect(small.height).toBe(600);
+  });
 });
+

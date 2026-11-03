@@ -441,6 +441,9 @@ export interface TranslationSchema {
     err_supplier_required: string;
     err_invoice_no_required: string;
     err_invoice_date_required: string;
+    duplicate_invoice_title: string;
+    duplicate_invoice_sub: string;
+    duplicate_invoice_proceed: string;
 
     // Step 2
     step2_title: string;

@@ -9,6 +9,7 @@ import {
 import {
   savePurchase,
   getReviewData,
+  findDuplicatePurchase,
   type PurchaseDraft,
   type PurchaseDraftLine,
   type SavePurchaseResult,
@@ -17,7 +18,7 @@ import { canSeePurchasePrice } from '../logic/roles';
 import { searchMedicines } from '../logic/medicineSearch';
 import { formatExpiryToLastDay, isExpired } from '../logic/stock';
 import { paiseToRupees, rupeesToPaise, formatRupees } from '../logic/money';
-import { compressImageToDataUrl } from '../logic/medicineForm';
+import { compressInvoicePhoto } from '../logic/image';
 import { useTranslation, tButton } from '../i18n';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { triggerFeedback } from '../logic/feedback';
@@ -96,6 +97,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   const [newSupplierAddress, setNewSupplierAddress] = useState('');
   const [newSupplierGst, setNewSupplierGst] = useState('');
   const [supplierError, setSupplierError] = useState<string>('');
+  const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false);
 
   // Step 2: Photo upload ref
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -213,12 +215,23 @@ export const StockJodo: React.FC<StockJodoProps> = ({
     triggerFeedback('success', 'Supplier joda gaya');
   };
 
+  // Step 1: Proceed to step 2 with duplicate check
+  const handleProceedFromStep1 = async () => {
+    if (!selectedSupplierId || !invoiceNo.trim()) return;
+    const duplicate = await findDuplicatePurchase(selectedSupplierId, invoiceNo);
+    if (duplicate) {
+      setDuplicateWarningOpen(true);
+      return;
+    }
+    setCurrentStep(2);
+  };
+
   // Handle Photo selection/capture in Step 2
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const dataUrl = await compressImageToDataUrl(file, 800, 0.7);
+      const dataUrl = await compressInvoicePhoto(file, 1600, 0.7);
       setInvoicePhoto(dataUrl);
     } catch {
       // Fallback: direct reader
@@ -268,7 +281,6 @@ export const StockJodo: React.FC<StockJodoProps> = ({
 
       const simUrl = canvas.toDataURL('image/jpeg', 0.8);
       setInvoicePhoto(simUrl);
-      triggerFeedback('tap');
     }
   };
 
@@ -397,7 +409,6 @@ export const StockJodo: React.FC<StockJodoProps> = ({
     setPurchaseRateInput('');
     setMrpInput('');
     setLineError('');
-    triggerFeedback('tap');
 
     // Return focus to medicine search
     setTimeout(() => {
@@ -467,12 +478,14 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         setMrpInput('');
       }
       setLineToDeleteId(null);
-      triggerFeedback('delete');
+      triggerFeedback('success', 'Dawai hatayi gayi');
     }
   };
 
-  // Step 4: Final save transaction
+  // Step 4: Final save transaction (saves in ONE transaction, cannot save twice)
   const handleSavePurchase = async () => {
+    if (isSaving) return;
+
     if (!selectedSupplierId) {
       setSaveErrorMessage(t('stock_jodo.err_supplier_required'));
       return;
@@ -507,7 +520,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
       const result = await savePurchase(draft, currentUser);
       setSaveResult(result);
       setCurrentStep('saved');
-      triggerFeedback('save');
+      triggerFeedback('success', 'Stock jud gaya');
     } catch (err: any) {
       console.error('Purchase save failed:', err?.message || err);
       setSaveErrorMessage(t('stock_jodo.save_error'));
@@ -581,7 +594,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 className="px-space-md py-space-xs rounded-lg transition-colors flex items-center gap-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-title-hinglish text-title-hinglish"
               >
                 <span className="material-symbols-outlined text-[20px]">home</span>
-                <span>{t('home.tile_home', 'Home')}</span>
+                <span>{tButton('common.btn_home').main}</span>
               </button>
             </nav>
           </div>
@@ -675,7 +688,6 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                         key={s.id}
                         onClick={() => {
                           setSelectedSupplierId(s.id!);
-                          triggerFeedback('tap');
                         }}
                         className={`h-[72px] rounded-[16px] px-space-md flex items-center justify-between cursor-pointer shadow-sm transition-all ${
                           isSelected
@@ -827,10 +839,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
               <button
                 type="button"
                 disabled={!selectedSupplierId || !invoiceNo.trim()}
-                onClick={() => {
-                  triggerFeedback('tap');
-                  setCurrentStep(2);
-                }}
+                onClick={handleProceedFromStep1}
                 className={`h-[60px] min-h-[56px] min-w-[260px] rounded-[16px] flex items-center justify-center gap-space-md px-space-xl shadow-md transition-all active:translate-y-0.5 ${
                   selectedSupplierId && invoiceNo.trim()
                     ? 'bg-primary hover:bg-primary-container text-on-primary cursor-pointer'
@@ -1052,7 +1061,6 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 type="button"
                 disabled={!invoicePhoto}
                 onClick={() => {
-                  triggerFeedback('tap');
                   setCurrentStep(3);
                 }}
                 className={`min-h-[56px] px-space-xl rounded-2xl flex items-center gap-space-sm transition-transform active:translate-y-0.5 ${
@@ -1507,7 +1515,6 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 type="button"
                 disabled={lines.length === 0}
                 onClick={() => {
-                  triggerFeedback('tap');
                   setCurrentStep(4);
                 }}
                 className={`h-[60px] min-w-[220px] px-space-lg rounded-xl flex items-center justify-between gap-space-sm transition-transform active:translate-y-0.5 ${
@@ -2073,7 +2080,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 onClick={() => setIsNewSupplierOpen(false)}
                 className="h-12 px-space-md rounded-xl hover:bg-surface-container text-on-surface font-title-hinglish cursor-pointer"
               >
-                {t('common.btn_cancel.main', 'Cancel')}
+                {tButton('common.btn_cancel').main}
               </button>
               <button
                 type="button"
@@ -2126,6 +2133,25 @@ export const StockJodo: React.FC<StockJodoProps> = ({
       )}
 
       {/* ============================================================== */}
+      {/* CONFIRMATION: DUPLICATE INVOICE WARNING */}
+      {/* ============================================================== */}
+      <ConfirmDialog
+        isOpen={duplicateWarningOpen}
+        title={t('stock_jodo.duplicate_invoice_title')}
+        subtitle={t('stock_jodo.duplicate_invoice_sub')}
+        onConfirm={() => {
+          setDuplicateWarningOpen(false);
+          setCurrentStep(2);
+        }}
+        onCancel={() => setDuplicateWarningOpen(false)}
+        confirmLabel={t('stock_jodo.duplicate_invoice_proceed')}
+        confirmSubLabel="Proceed anyway"
+        cancelLabel={tButton('common.btn_cancel').main}
+        cancelSubLabel={tButton('common.btn_cancel').sub}
+        isDanger={false}
+      />
+
+      {/* ============================================================== */}
       {/* CONFIRMATION: DELETE MEDICINE LINE */}
       {/* ============================================================== */}
       <ConfirmDialog
@@ -2134,8 +2160,10 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         subtitle={t('stock_jodo.confirm_delete_line_sub')}
         onConfirm={handleConfirmDeleteLine}
         onCancel={() => setLineToDeleteId(null)}
-        confirmLabel={tButton('common.btn_delete')}
-        cancelLabel={tButton('common.btn_cancel')}
+        confirmLabel={tButton('common.btn_delete').main}
+        confirmSubLabel={tButton('common.btn_delete').sub}
+        cancelLabel={tButton('common.btn_cancel').main}
+        cancelSubLabel={tButton('common.btn_cancel').sub}
       />
 
       {/* ============================================================== */}
@@ -2154,8 +2182,10 @@ export const StockJodo: React.FC<StockJodoProps> = ({
           setPendingLineToAdd(null);
           setIsExpiryConfirmOpen(false);
         }}
-        confirmLabel={{ main: 'Haan, Jodo', sub: 'Confirm' }}
-        cancelLabel={tButton('common.btn_cancel')}
+        confirmLabel="Haan, Jodo"
+        confirmSubLabel="Confirm"
+        cancelLabel={tButton('common.btn_cancel').main}
+        cancelSubLabel={tButton('common.btn_cancel').sub}
       />
 
       {/* ============================================================== */}
@@ -2170,8 +2200,10 @@ export const StockJodo: React.FC<StockJodoProps> = ({
           onReturnHome();
         }}
         onCancel={() => setIsLeaveConfirmOpen(false)}
-        confirmLabel={{ main: 'Haan, Wapas Jao', sub: 'Leave' }}
-        cancelLabel={tButton('common.btn_cancel')}
+        confirmLabel="Haan, Wapas Jao"
+        confirmSubLabel="Leave"
+        cancelLabel={tButton('common.btn_cancel').main}
+        cancelSubLabel={tButton('common.btn_cancel').sub}
       />
     </div>
   );
