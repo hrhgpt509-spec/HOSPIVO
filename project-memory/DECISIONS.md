@@ -24,6 +24,7 @@
 - stockMovements table is strictly append-only. Corrections and returns append new signed movements, never editing or deleting existing records.
 - Languages: Hospivo supports three languages: English ('en', DEFAULT for new shops), Hindi in Devanagari script ('hi'), and Hinglish ('hinglish', Hindi in English letters). Language switch options order: "English", "हिन्दी", "Hindi (English letters)". Two-line buttons in Hindi/Hinglish show Hindi/Hinglish as main label and small English word underneath, while English mode hides the second line without gaps. If any key is missing in Hindi or Hinglish, t() automatically falls back to English. Noto Sans Devanagari font is installed via npm (@fontsource/noto-sans-devanagari) for full offline support without CDN links. Numbers always stay 0-9. Stored records and audit logs always use fixed English codes.
 - Full screen after every successful login (default ON); becomes an Owner setting in Phase 5; Esc or F11 leaves it; the next login enters it again.
+- Purchase rate visibility: counter staff TYPE the purchase rate from the invoice but can NEVER SEE it again. Only the owner sees purchase rates, line amounts and totals. Use canSeePurchasePrice(user). For staff do not render these values at all (no CSS hiding) and never put them in the console.
 
 ## Open questions (ask the owner when the phase starts)
 - Default discount limit.

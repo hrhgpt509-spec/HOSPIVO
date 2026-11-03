@@ -49,6 +49,7 @@
 - Stock is tracked batch by batch (batch no, expiry month/year, qty, shelf).
 - Stock Jodo = 4 steps: Supplier+invoice no/date -> Invoice photo (REQUIRED, shrink it) -> Medicine lines
   (name, batch, expiry, packs, free packs, purchase rate, MRP) -> Check and "Pakka Karo". NOTHING saved until last step.
+- Purchase rates: counter staff TYPE the purchase rate from the invoice but can NEVER SEE it again. Only the owner sees purchase rates, line amounts and totals. Use canSeePurchasePrice(user). For staff do not render these values at all (no CSS hiding) and never put them in the console.
 - Owner can open old purchase, see invoice photo, tick "Verified". Purchase return to supplier possible.
 - Stock Dekho filters: Kam stock, Khatam, Sab. Low-stock list grouped by supplier, shareable on WhatsApp.
 - Stock corrections (damaged/lost/count) need authorisation and are written in a log.

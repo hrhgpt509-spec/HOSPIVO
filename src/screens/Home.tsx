@@ -8,6 +8,7 @@ import { ApprovalDialog } from '../components/ApprovalDialog';
 import { useTranslation, tButton } from '../i18n';
 import { OwnerMenu } from './OwnerMenu';
 import { OwnerMedicineList } from './OwnerMedicineList';
+import { StockJodo } from './StockJodo';
 
 interface HomeProps {
   currentUser?: {
@@ -121,6 +122,19 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
         onReturnHome={handleReturnHome}
         currentUser={currentUser as any}
         shop={shop}
+      />
+    );
+  }
+
+  // 23a-e Stock Jodo
+  if (activePage === 'stock_jodo') {
+    return (
+      <StockJodo
+        onReturnHome={handleReturnHome}
+        currentUser={currentUser as any}
+        shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
     );
   }
