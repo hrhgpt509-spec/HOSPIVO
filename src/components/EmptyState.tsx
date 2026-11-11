@@ -32,10 +32,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
   return (
     <div className="w-full flex-1 flex items-center justify-center p-6 min-h-0 select-none">
-      <div className="w-full max-w-[680px] bg-white dark:bg-gray-900 rounded-[24px] shadow-[0_8px_32px_rgba(20,30,26,0.06)] p-10 flex flex-col items-center text-center relative overflow-hidden border border-slate-200/80 dark:border-gray-800">
+      <div className="w-full max-w-[680px] bg-surface-container-lowest rounded-[24px] shadow-[0_8px_32px_rgba(20,30,26,0.06)] p-10 flex flex-col items-center text-center relative overflow-hidden border border-outline-variant">
         
         {/* Subtle Decorative Aura */}
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#006b33]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Vector Illustration (Pharmacy Shelf from 46b) */}
         <div className="relative w-72 h-52 flex items-center justify-center mb-6">
@@ -82,10 +82,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         </div>
 
         {/* Heading Block */}
-        <h2 className="text-2xl md:text-3xl text-[#141e1a] dark:text-white mb-2 font-bold tracking-tight max-w-md">
+        <h2 className="text-2xl md:text-3xl text-on-surface mb-2 font-bold tracking-tight max-w-md">
           {activeTitle}
         </h2>
-        <p className="text-base md:text-lg text-[#3e4a3f] dark:text-gray-400 mb-8 max-w-sm leading-relaxed">
+        <p className="text-base md:text-lg text-outline mb-8 max-w-sm leading-relaxed">
           {activeSubtitle}
         </p>
 
@@ -94,17 +94,17 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
           <button
             type="button"
             onClick={onAction}
-            className="group w-full max-w-[420px] h-[64px] rounded-[16px] bg-[#1B8F4A] hover:bg-[#15733b] active:scale-[0.98] transition-all duration-150 shadow-[0_4px_16px_rgba(27,143,74,0.3)] flex items-center justify-center gap-4 px-6 cursor-pointer text-white"
+            className="group w-full max-w-[420px] h-[64px] rounded-[16px] bg-primary hover:bg-[#15733b] active:scale-[0.98] transition-all duration-150 shadow-[0_4px_16px_rgba(27,143,74,0.3)] flex items-center justify-center gap-4 px-6 cursor-pointer text-on-primary"
           >
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0 group-hover:bg-white/30 transition-colors">
-              <svg className="w-6 h-6 text-white stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-on-primary stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
             </div>
             <div className="flex flex-col items-start justify-center leading-none">
-              <span className="text-xl font-bold text-white leading-tight">{activeMain}</span>
+              <span className="text-xl font-bold text-on-primary leading-tight">{activeMain}</span>
               {activeSub ? (
-                <span className="text-xs font-medium text-[#D8F3E2] leading-tight mt-0.5">{activeSub}</span>
+                <span className="text-xs font-medium text-emerald-100 leading-tight mt-0.5">{activeSub}</span>
               ) : null}
             </div>
           </button>
@@ -112,8 +112,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 
         {/* Reassuring Hint Bar */}
         {activeHint ? (
-          <div className="mt-6 flex items-center gap-2 text-[#3e4a3f] dark:text-gray-400 text-sm font-medium">
-            <svg className="w-5 h-5 text-[#006b33] shrink-0" fill="currentColor" viewBox="0 0 24 24">
+          <div className="mt-6 flex items-center gap-2 text-outline text-sm font-medium">
+            <svg className="w-5 h-5 text-primary shrink-0" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
             </svg>
             <span>{activeHint}</span>

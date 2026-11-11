@@ -5,10 +5,12 @@ import { addAudit } from '../db/audit';
 import {
   DEFAULT_APPROVAL_RULES,
   setApprovalPin,
+  validateApprovalPin,
+  validateStaffPin,
   type ApprovalActionCategory,
   type ApprovalRuleType,
 } from '../logic/approvals';
-import { capitalizeWords, toUpperAlphanumeric, filterDigits } from '../logic/format';
+import { formatField, textFieldProps, filterDigits } from '../logic/format';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { useTranslation, tButton } from '../i18n';
 import { LanguageSwitch } from '../components/LanguageSwitch';
@@ -132,7 +134,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const handleStep3Next = () => {
     const val1 = validatePin(ownerPin1, true);
     if (!val1.valid) {
-      setOwnerPinError(val1.error || t('setup.step3_err_length'));
+      setOwnerPinError(t('setup.step3_err_length'));
       return;
     }
     if (ownerPin1 !== ownerPin2) {
@@ -160,21 +162,24 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
       setStaffError(t('setup.staff_err_name'));
       return;
     }
-    const val = validatePin(staffPin, false);
-    if (!val.valid) {
-      setStaffError(val.error || t('setup.staff_err_pin'));
-      return;
-    }
-
-    if (staffPin === ownerPin1) {
-      setStaffError(t('setup.staff_err_owner_pin'));
+    const val = await validateStaffPin(staffPin, ownerPin1, staffList.map((s) => s.plainPin));
+    if (!val.ok && val.error) {
+      if (val.error === 'staff_pin_same_as_owner') {
+        setStaffError(t('setup.staff_err_owner_pin'));
+      } else if (val.error === 'staff_pin_same_as_approval') {
+        setStaffError(t('setup.staff_err_approval_pin'));
+      } else if (val.error === 'staff_pin_duplicate') {
+        setStaffError(t('setup.staff_err_duplicate_pin'));
+      } else {
+        setStaffError(t('setup.staff_err_pin'));
+      }
       return;
     }
 
     const { hash, salt } = await hashPin(staffPin);
     const newStaff: AddedStaffMember = {
       id: `staff_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      name: staffName.trim(),
+      name: formatField('name', staffName.trim()),
       plainPin: staffPin,
       pinHash: hash,
       pinSalt: salt,
@@ -259,17 +264,19 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   };
 
   const handleStep7Next = () => {
-    const val = validatePin(approvalPin1, false);
-    if (!val.valid) {
-      setApprovalPinError(val.error || t('setup.step7_err_length'));
-      return;
-    }
-    if (approvalPin1 !== approvalPin2) {
-      setApprovalPinError(t('setup.step7_err_mismatch'));
-      return;
-    }
-    if (approvalPin1 === ownerPin1 || staffList.some((s) => s.plainPin === approvalPin1)) {
-      setApprovalPinError(t('setup.step7_err_same_as_owner'));
+    const val = validateApprovalPin(
+      approvalPin1,
+      approvalPin2,
+      [ownerPin1, ...staffList.map((s) => s.plainPin)]
+    );
+    if (!val.ok && val.error) {
+      if (val.error === 'approval_pin_mismatch') {
+        setApprovalPinError(t('setup.step7_err_mismatch'));
+      } else if (val.error === 'approval_pin_same_as_owner_or_staff') {
+        setApprovalPinError(t('setup.step7_err_same_as_owner_or_staff'));
+      } else {
+        setApprovalPinError(t('setup.step7_err_length'));
+      }
       return;
     }
 
@@ -300,24 +307,28 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // --------------------------------------------------------------------------
   const handleFinishSetup = async () => {
     // 1. Save Shop to Dexie
-    const drugLicences = [dl1.trim(), dl2.trim()].filter(Boolean).join(', ');
+    const cleanDl1 = formatField('code', dl1.trim());
+    const cleanDl2 = formatField('code', dl2.trim());
+    const drugLicences = [cleanDl1, cleanDl2].filter(Boolean).join(', ');
+    const formattedShopName = formatField('name', shopName.trim());
+    const formattedOwnerName = formatField('name', ownerName.trim());
     const shopRecord: Shop = {
-      name: shopName.trim(),
-      ownerName: ownerName.trim(),
-      address: address.trim(),
-      phone: phone.trim(),
-      gstNo: gstNo.trim(),
+      name: formattedShopName,
+      ownerName: formattedOwnerName,
+      address: formatField('name', address.trim()),
+      phone: formatField('phone', phone.trim()),
+      gstNo: formatField('code', gstNo.trim()),
       drugLicenceNos: drugLicences,
       mode,
     };
     await db.shop.add(shopRecord);
-    await addAudit('Setup', 'shop_saved', shopName.trim(), 'Shop details saved during initial setup');
+    await addAudit('Setup', 'shop_saved', formattedShopName, 'Shop details saved during initial setup');
 
     // 2. Save Owner user with hashed PIN (never plain text)
     const { hash: ownerHash, salt: ownerSalt } = await hashPin(ownerPin1);
     await db.users.add({
       id: 'owner',
-      name: ownerName.trim(),
+      name: formattedOwnerName,
       role: 'owner',
       pinHash: ownerHash,
       pinSalt: ownerSalt,
@@ -325,7 +336,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
       active: true,
       createdAt: new Date().toISOString(),
     });
-    await addAudit('Setup', 'owner_created', ownerName.trim(), 'Owner user registered with hashed PIN');
+    await addAudit('Setup', 'owner_created', formattedOwnerName, 'Owner user registered with hashed PIN');
 
     // 3. Save any added staff members
     for (const staff of staffList) {
@@ -450,9 +461,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </div>
                   <input
                     type="text"
-                    value={shopName}
-                    autoCapitalize="words"
-                    onChange={(e) => setShopName(capitalizeWords(e.target.value))}
+                    {...textFieldProps('name', shopName, setShopName)}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
                     placeholder={`${t('common.example')} ${t('setup.shop_name_hint')}`}
                   />
@@ -475,9 +484,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </div>
                   <input
                     type="text"
-                    value={ownerName}
-                    autoCapitalize="words"
-                    onChange={(e) => setOwnerName(capitalizeWords(e.target.value))}
+                    {...textFieldProps('name', ownerName, setOwnerName)}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
                     placeholder={`${t('common.example')} ${t('setup.owner_name_hint')}`}
                   />
@@ -501,9 +508,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </div>
                   <textarea
                     rows={2}
-                    value={address}
-                    autoCapitalize="words"
-                    onChange={(e) => setAddress(capitalizeWords(e.target.value))}
+                    {...textFieldProps('name', address, setAddress)}
                     className="w-full h-[90px] pl-14 pr-4 py-3 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none resize-none leading-snug"
                     placeholder={`${t('common.example')} ${t('setup.address_hint')}`}
                   />
@@ -528,9 +533,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </div>
                   <input
                     type="text"
-                    inputMode="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(filterDigits(e.target.value))}
+                    {...textFieldProps('phone', phone, setPhone)}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
                     placeholder={`${t('common.example')} ${t('setup.phone_hint')}`}
                   />
@@ -553,8 +556,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </div>
                   <input
                     type="text"
-                    value={gstNo}
-                    onChange={(e) => setGstNo(toUpperAlphanumeric(e.target.value))}
+                    {...textFieldProps('code', gstNo, setGstNo)}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
                     placeholder={`${t('common.example')} ${t('setup.gst_hint')}`}
                   />
@@ -569,8 +571,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </label>
                   <input
                     type="text"
-                    value={dl1}
-                    onChange={(e) => setDl1(toUpperAlphanumeric(e.target.value))}
+                    {...textFieldProps('code', dl1, setDl1)}
                     className="w-full h-[60px] px-4 text-[17px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
                     placeholder={`${t('common.example')} ${t('setup.dl1_hint')}`}
                   />
@@ -582,8 +583,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </label>
                   <input
                     type="text"
-                    value={dl2}
-                    onChange={(e) => setDl2(toUpperAlphanumeric(e.target.value))}
+                    {...textFieldProps('code', dl2, setDl2)}
                     className="w-full h-[60px] px-4 text-[17px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
                     placeholder={`${t('common.example')} ${t('setup.dl2_hint')}`}
                   />
@@ -1004,9 +1004,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </div>
                   <input
                     type="text"
-                    value={staffName}
-                    autoCapitalize="words"
-                    onChange={(e) => setStaffName(capitalizeWords(e.target.value))}
+                    {...textFieldProps('name', staffName, setStaffName)}
                     placeholder={`${t('common.example')} ${t('setup.staff_name_hint')}`}
                     className="w-full h-[62px] pl-14 pr-4 rounded-2xl bg-slate-50 text-[#1A1F1C] font-semibold text-lg border-2 border-slate-200 focus:border-[#1B8F4A] focus:outline-none"
                   />

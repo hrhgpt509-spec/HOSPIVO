@@ -27,7 +27,15 @@ export interface TranslationSchema {
     backspace: string;
     language_selection: string;
     toggle_theme: string;
+    fullscreen_enter: string;
+    fullscreen_exit: string;
     example: string;
+    role_owner: string;
+    role_cashier: string;
+    free: string;
+    gstin_prefix: string;
+    date_placeholder: string;
+    saved_on_device: string;
   };
   login: {
     pos_title: string;
@@ -58,12 +66,7 @@ export interface TranslationSchema {
     dev_reset_btn: string;
     dev_lang_btn: string;
     decorative_pos_title: string;
-    decorative_counter: string;
-    decorative_bill_no: string;
-    decorative_time: string;
     decorative_search_medicine: string;
-    staff_user: string;
-    decorative_terminal_id: string;
   };
   setup: {
     wizard_title: string;
@@ -212,6 +215,7 @@ export interface TranslationSchema {
     step7_err_mismatch: string;
     step7_err_length: string;
     step7_err_same_as_owner: string;
+    step7_err_same_as_owner_or_staff: string;
     step7_note: string;
     step7_footer_note: string;
 
@@ -290,6 +294,14 @@ export interface TranslationSchema {
     ijazat_pin_success: string;
     safe_action: string;
     btn_wapas: ButtonLabel;
+    btn_haan_jodo: ButtonLabel;
+    btn_haan_wapas: ButtonLabel;
+  };
+  feedback: {
+    success_title: string;
+    success_sub: string;
+    error_title: string;
+    error_sub: string;
   };
   errors: {
     pin_wrong: string;
@@ -302,7 +314,6 @@ export interface TranslationSchema {
     page_title: string;
     page_sub: string;
     status_title: string;
-    status_sub: string;
     tile_dashboard: ButtonLabel;
     tile_reports: ButtonLabel;
     tile_staff: ButtonLabel;
@@ -312,7 +323,6 @@ export interface TranslationSchema {
     tile_sticker: ButtonLabel;
     tile_settings: ButtonLabel;
     tile_backup: ButtonLabel;
-    footer_session: string;
     footer_db_synced: string;
     build_version: string;
   };
@@ -329,9 +339,10 @@ export interface TranslationSchema {
     loose_unit: string;
     total_stock: string;
     short_code_prefix: string;
+    sch_prefix: string;
+    mrp_label: string;
     no_results_title: string;
     no_results_sub: string;
-    terminal_info: string;
     sync_active: string;
   };
   medicine_form: {
@@ -362,6 +373,12 @@ export interface TranslationSchema {
     form_injection: string;
     form_ointment: string;
     form_drops: string;
+    add_new_type: string;
+    dialog_add_type_title: string;
+    type_name_label: string;
+    type_name_example: string;
+    type_already_exists: string;
+    type_length_error: string;
     label_salt: string;
     sub_salt: string;
     placeholder_salt: string;
@@ -414,6 +431,8 @@ export interface TranslationSchema {
     err_barcode_duplicate: string;
     confirm_discard_title: string;
     confirm_discard_sub: string;
+    alt_pack: string;
+    ctrl_s_hint: string;
   };
   stock_jodo: {
     // Step 1
@@ -422,13 +441,19 @@ export interface TranslationSchema {
     step1_tag: string;
     supplier_select_title: string;
     supplier_select_sub: string;
+    empty_suppliers_title: string;
+    empty_suppliers_sub: string;
     btn_add_supplier: ButtonLabel;
     new_supplier_modal_title: string;
     new_supplier_modal_sub: string;
     supplier_name_label: string;
+    supplier_name_placeholder: string;
     supplier_phone_label: string;
+    supplier_phone_placeholder: string;
     supplier_address_label: string;
+    supplier_address_placeholder: string;
     supplier_gst_label: string;
+    supplier_gst_placeholder: string;
     btn_save_supplier: ButtonLabel;
     bill_info_title: string;
     bill_info_sub: string;
@@ -439,6 +464,8 @@ export interface TranslationSchema {
     invoice_date_hint: string;
     step1_note: string;
     err_supplier_required: string;
+    err_supplier_name_required: string;
+    supplier_added_toast: string;
     err_invoice_no_required: string;
     err_invoice_date_required: string;
     duplicate_invoice_title: string;
@@ -459,6 +486,7 @@ export interface TranslationSchema {
     photo_taken_desc: string;
     btn_retake_photo: ButtonLabel;
     btn_remove_photo: string;
+    alt_invoice_scan: string;
 
     // Step 3
     step3_title: string;
@@ -489,12 +517,16 @@ export interface TranslationSchema {
     btn_cancel_edit: ButtonLabel;
     added_medicines_title: string;
     added_medicines_sub: string;
+    empty_lines_title: string;
+    empty_lines_sub: string;
     lines_count_tag: string;
+    items_count: string;
     rate_entered_badge: string;
     btn_edit_line: string;
     btn_delete_line: string;
     confirm_delete_line_title: string;
     confirm_delete_line_sub: string;
+    line_deleted_toast: string;
     total_packs_entered: string;
     total_amount_display: string;
     err_medicine_required: string;
@@ -517,6 +549,8 @@ export interface TranslationSchema {
     label_invoice_photo: string;
     photo_attached_badge: string;
     photo_inspect_hint: string;
+    alt_thumbnail: string;
+    alt_enlarged_invoice: string;
     modal_close: string;
     review_warning_note: string;
     review_medicines_title: string;
@@ -532,17 +566,22 @@ export interface TranslationSchema {
     badge_free: string;
     grand_total_title: string;
     grand_total_sub: string;
+    total_label: string;
+    total_packs_badge: string;
     btn_confirm_save: ButtonLabel;
     saving_in_progress: string;
     save_error: string;
+    stock_saved_toast: string;
 
     // Step 5 (Saved)
     saved_title: string;
     saved_sub: string;
     stat_medicines_count: string;
     stat_batches_count: string;
+    stat_batches_added: string;
     stat_total_packs: string;
     stat_total_amount: string;
+    packs_count: string;
     btn_add_more_stock: ButtonLabel;
     btn_done: ButtonLabel;
   };

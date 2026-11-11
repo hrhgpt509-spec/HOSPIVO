@@ -31,7 +31,17 @@
 
 ## Sample data
 - Stitch designs contain example data. Never copy it into the app as real data. Forms start empty; examples may only be grey placeholders.
+- Never insert sample rows into the database.
+- Shop information comes only from useShop(). Never type a shop name, person name, number or date in a screen. If data is missing, show nothing.
 
 ## Converting Stitch HTML to React
 - Use React names, not HTML names: className, strokeWidth, strokeLinecap, strokeLinejoin, fillRule, clipRule, viewBox.
+- Icons: never write an icon name as visible text. Use <Icon name=... /> (local font). No icon fonts or images from the internet.
 - The browser console must show no red errors after a screen is built.
+- Each Stitch HTML has its own tailwind.config. Before building a screen, copy any missing tokens into src/theme. Check the screen at 1920, 1366 and 390 px wide.
+- Never hard-code a light colour on a screen. Use the colour tokens so dark mode works. Check every new screen in dark mode.
+- Top bar: every later screen with a top bar must include <FullscreenButton /> next to the light/dark toggle.
+- Every text field uses textFieldProps(kind, ...) from src/logic/format. Kinds: name, code, phone, free.
+
+## Big files
+- Never read a large file in pieces. Use grep to find the lines you need. Screens over 600 lines must be split into smaller files before more features are added.

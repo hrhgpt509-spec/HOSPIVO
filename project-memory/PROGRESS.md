@@ -13,11 +13,11 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt S2: Stock Jodo (Steps 1 to 4 and Saved Screen) - COMPLETE
+Prompt TYPES: Add your own product types - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
-- Login decorative panel shows sample bill/terminal ID; remove or make real before other shops use the app.
+- Custom product types can be added but not renamed or hidden yet.
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 - DEV ONLY: ?reset=1 query parameter in App.tsx clears the database and must be removed before release.
 - DEV ONLY: "DEV: Reset test data" button on Login screen clears database and must be removed before release.
@@ -25,6 +25,43 @@ Prompt S2: Stock Jodo (Steps 1 to 4 and Saved Screen) - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Added productTypes table to Dexie (v3 schema) without copying built-in types or adding sample rows.
+- Implemented "+ Add new type" in Naya Dawai Form (Type) select opening modal with textFieldProps('name', ...) and grey hint e.g. Serum.
+- Added duplicate validation ignoring case and whitespace against built-in types (in EN, HI, HINGLISH) and custom types, enforcing 2-30 characters.
+- Logged audit entry "product_type_created" with name only on save; formatted built-in types via t() and custom types verbatim across form and list.
+- Added comprehensive unit tests in productTypes.test.ts; verified all 90 tests and production build pass with zero errors.
+- Created src/logic/useShop.ts hook as single source of truth for shop data (empty string fallback for missing values).
+- Removed sample data and keys (Counter #01, Bill No: #INV-88219, Time: 14:32, Terminal ID: HOS-402, Staff User, Administrative Terminal, Desktop POS Terminal #1).
+- Connected Login lock screen decorative background to live clock, real shop name, and selected user; changed footers to "Saved on this device".
+- Replaced hardcoded Operator role labels with real user role translation, and changed DEV test button references from Bill #101 to plain Test.
+- Updated AGENTS.md sample data rule; verified all 82 vitest tests and production build pass with zero errors.
+- Implemented formatField and textFieldProps in src/logic/format.ts with cursor preservation for name, code, phone, and free text inputs.
+- Applied textFieldProps and re-formatting on save across Setup, Stock Jodo, Owner Medicine Form, and Medicine List; left PIN and numeric inputs intact.
+- Enforced case-insensitive duplicate checks and searches; added comprehensive unit tests in src/logic/format.test.ts for capitalisation, apostrophes, double spaces, Devanagari preservation, and idempotency.
+- Added textFieldProps rule to AGENTS.md; verified all 79 tests, oxlint checks, and production build pass with zero errors.
+- Created src/components/FullscreenButton.tsx using <Icon> ("fullscreen" / "fullscreen_exit"), listening to fullscreenchange with safe error handling and auto-hiding when unsupported.
+- Added i18n keys for tooltips and aria-labels across en.ts ("Full screen" / "Exit full screen"), hinglish.ts ("Poori screen" / "Poori screen band karein"), and hi.ts ("पूरी स्क्रीन" / "पूरी स्क्रीन बंद करें").
+- Added FullscreenButton to top bar of Login, Home, Stock Jodo, Owner Menu, Medicine List, and Naya Dawai form next to light/dark toggle.
+- Added top bar rule to AGENTS.md and unit tests verifying component renders nothing when unsupported and never throws.
+- Replaced Hinglish strings in approvals.ts and auth.ts with fixed error codes (approval_pin_length, approval_pin_same_as_owner_or_staff, staff_pin_length, staff_pin_same_as_owner, staff_pin_same_as_approval, staff_pin_duplicate).
+- Converted all audit log action details in auth.ts and approvals.ts to concise standard English (Successful login, Locked after 5 failed attempts, Approval PIN verified successfully).
+- Updated Setup Step 7 (Approval PIN) and Step 4 (Staff PIN) to translate returned error codes via t() across en.ts, hi.ts, and hinglish.ts.
+- Updated foundation.test.ts to expect fixed error codes; verified all 65 unit tests, oxlint checks, and production build pass with zero errors.
+- Removed fake invoice simulator completely (deleted handleSimulatedPhoto canvas generator); "Choose from gallery" now opens native file picker without camera capture and "Take photo" uses environment camera.
+- Translated all hardcoded strings in Stock Jodo across en.ts, hinglish.ts, and hi.ts: toasts, placeholders, role labels, empty states, and dialog buttons.
+- Implemented shouldShowSub duplicate-line suppression helper with unit tests to cleanly hide repeated second-line subtitles in English mode.
+- Verified all 63 vitest unit tests, oxlint checks, and production compile pass cleanly with zero errors.
+- Defined plain @theme Stitch colour tokens with html.dark overrides for all 24 Material 3 variables in src/theme/theme.css.
+- Refactored Stock Jodo, Owner Menu, Medicine List, Medicine Form, ConfirmDialog, PIN dialogs, and EmptyState to use theme tokens instead of hardcoded light colors.
+- Enforced dark mode token discipline rule in AGENTS.md and verified dark mode contrast exceeds 4.5:1 with dark page backgrounds across screens.
+- Verified all 62 vitest tests, linting, and production build pass with zero errors.
+- Added Stitch border radius tokens (--radius: 0.25rem, --radius-lg, --radius-xl, --radius-full) to theme.css and tokens.ts; verified spacing, typography, and color tokens match design specs.
+- Aligned Stock Jodo (Steps 1-4, Saved), Owner Menu, Owner Medicine List, and Owner Medicine Form across 1920px, 1366px, and 390px with max width (1440px), margins, and card panels.
+- Neutralized 1,20,000+ ready catalog claims and cloud sync promises in en.ts, hinglish.ts, and hi.ts; moved supplier placeholder to grey i18n hint and removed startup test supplier deletion.
+- Added design token checking and big files rules to AGENTS.md; verified all 62 vitest tests, linting, and production build pass with zero errors.
+- Installed @fontsource/material-symbols-outlined locally with npm and created shared src/components/Icon.tsx; replaced all raw icon text spans across screens.
+- Removed DEFAULT_SUPPLIERS and database auto-seeding from StockJodo.tsx, added startup cleanup of contaminated test rows, and rendered EmptyState with "New Supplier" button when empty.
+- Updated AGENTS.md rules prohibiting visible icon text and database sample rows, added i18n keys across all 3 languages, and verified all 62 tests and build pass cleanly.
 - Built complete Stock Jodo flow (23a, 23b/23b2, 23c, 23d, 23e) with atomic Dexie transaction in savePurchase for purchases, lines, batches, movements, and audit log.
 - Enforced purchase rate privacy: staff type the rate from invoice, but rates, line amounts, and invoice totals are strictly omitted from staff screens and logs.
 - Added invoice photo compression to max 1600 px longest side in src/logic/image.ts and non-blocking duplicate-invoice detection via findDuplicatePurchase.

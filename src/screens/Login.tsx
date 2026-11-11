@@ -6,7 +6,9 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { triggerFeedback } from '../logic/feedback';
 import { useTranslation, tButton } from '../i18n';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { FullscreenButton } from '../components/FullscreenButton';
 import { enterFullscreen } from '../logic/fullscreen';
+import { useShop } from '../logic/useShop';
 
 interface LoginProps {
   onLoginSuccess: (user: DBUser) => void;
@@ -32,7 +34,7 @@ export const Login: React.FC<LoginProps> = ({
 }) => {
   const { t } = useTranslation();
   const [users, setUsers] = useState<DBUser[]>([]);
-  const [shopName, setShopName] = useState<string>('Shree Medical Store');
+  const { name: shopName } = useShop();
   const [selectedUser, setSelectedUser] = useState<DBUser | null>(null);
   const [pin, setPin] = useState<string>('');
   const [hasError, setHasError] = useState<boolean>(false);
@@ -41,19 +43,21 @@ export const Login: React.FC<LoginProps> = ({
   const [lockError, setLockError] = useState<boolean>(false);
   const [lockCountdownSeconds, setLockCountdownSeconds] = useState<number>(0);
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
+  const [currentLiveTime, setCurrentLiveTime] = useState<Date>(() => new Date());
 
-  // Load real users and shop from database
+  // Live timer for decorative panel clock
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentLiveTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Load real users from database
   useEffect(() => {
     async function loadData() {
       try {
         const allUsers = await db.users.filter((u) => u.active !== false).toArray();
         allUsers.sort((a, b) => (a.role === 'owner' ? -1 : b.role === 'owner' ? 1 : 0));
         setUsers(allUsers);
-
-        const shop = await db.shop.toCollection().first();
-        if (shop?.name) {
-          setShopName(shop.name);
-        }
       } catch (err) {
         console.error('Failed to load login users:', err);
       }
@@ -233,13 +237,19 @@ export const Login: React.FC<LoginProps> = ({
           <div className="w-full h-16 bg-[#e5f0eb] rounded-xl flex items-center justify-between px-6 mb-4">
             <div className="flex items-center gap-4">
               <span className="text-2xl text-[#006b33] font-bold">{t('login.decorative_pos_title')}</span>
-              <span className="bg-[#dae5df] px-3 py-1 rounded-full text-sm text-[#3e4a3f]">
-                {t('login.decorative_counter', { counter: '01', shop: shopName })}
-              </span>
+              {shopName ? (
+                <span className="bg-[#dae5df] px-3 py-1 rounded-full text-sm text-[#3e4a3f]">
+                  {shopName}
+                </span>
+              ) : null}
             </div>
             <div className="flex items-center gap-6">
-              <span className="text-base text-[#141e1a] font-semibold">{t('login.decorative_bill_no')}</span>
-              <span className="text-base text-[#141e1a]">{t('login.decorative_time')}</span>
+              {activeLockUser?.name ? (
+                <span className="text-base text-[#141e1a] font-semibold">{activeLockUser.name}</span>
+              ) : null}
+              <span className="text-base text-[#141e1a]">
+                {currentLiveTime.toLocaleDateString('en-GB')} • {currentLiveTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </div>
           </div>
           <div className="w-full flex-1 flex gap-4 min-h-0">
@@ -289,10 +299,10 @@ export const Login: React.FC<LoginProps> = ({
               </div>
               <div className="flex flex-col text-left">
                 <span className="text-sm font-bold text-[#141e1a] leading-tight">
-                  {activeLockUser?.name || t('login.staff_user')}
+                  {activeLockUser?.name || ''}
                 </span>
                 <span className="text-xs text-[#3e4a3f]">
-                  {activeLockUser?.role === 'owner' ? t('login.admin_incharge') : t('login.counter_staff')}
+                  {activeLockUser?.role === 'owner' ? t('common.role_owner') : t('common.role_cashier')}
                 </span>
               </div>
             </div>
@@ -387,7 +397,7 @@ export const Login: React.FC<LoginProps> = ({
                 <span className="w-2.5 h-2.5 rounded-full bg-[#006b33] inline-block animate-pulse"></span>
                 <span className="text-xs text-[#3e4a3f] font-medium">{t('common.local_mode')}</span>
               </div>
-              <span className="text-xs text-[#6e7a6e]">{t('login.decorative_terminal_id')}</span>
+              <span className="text-xs text-[#6e7a6e]">{t('common.saved_on_device')}</span>
             </div>
 
           </div>
@@ -417,14 +427,15 @@ export const Login: React.FC<LoginProps> = ({
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 leading-none">{t('common.app_name')}</h1>
-              <p className="text-sm md:text-base text-slate-500 font-medium mt-1">{shopName} • {t('login.pos_title')}</p>
+              <p className="text-sm md:text-base text-slate-500 font-medium mt-1">{shopName ? `${shopName} • ${t('login.pos_title')}` : t('login.pos_title')}</p>
             </div>
           </div>
 
-          {/* Secure Login Badge & Language Switch */}
+          {/* Secure Login Badge, Fullscreen & Language Switch */}
           <div className="flex items-center gap-3 flex-wrap">
             {/* DEV ONLY: becomes a Settings option in Phase 5 */}
             <LanguageSwitch />
+            <FullscreenButton className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 transition cursor-pointer" />
 
             <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 text-sm md:text-base font-semibold">
               <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

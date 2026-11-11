@@ -77,6 +77,8 @@ export function playTone(type: FeedbackType): void {
   }
 }
 
+import { t } from '../i18n';
+
 /**
  * Trigger both visual feedback (flash + toast) and audio tone
  */
@@ -89,10 +91,10 @@ export function triggerFeedback(
   playTone(type);
 
   // Set default messages if not specified
-  const eventTitle =
-    title || (type === 'success' ? 'Manzoor ho gaya' : 'PIN galat hai');
-  const eventSubtitle =
-    subtitle || (type === 'success' ? 'Success' : 'Galat hai, dobara try karein');
+  const eventTitle: string =
+    title || (type === 'success' ? t<string>('feedback.success_title') : t<string>('feedback.error_title')) || '';
+  const eventSubtitle: string | undefined =
+    subtitle || (type === 'success' ? t<string>('feedback.success_sub') : t<string>('feedback.error_sub'));
 
   const event: FeedbackEvent = {
     type,

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { db, type Shop } from '../db';
+import { useShop } from '../logic/useShop';
 import { formatRupees } from '../logic/money';
 import { StatusChip } from '../components/StatusChip';
 import { EmptyState } from '../components/EmptyState';
 import { OwnerPinGate } from '../components/OwnerPinGate';
 import { ApprovalDialog } from '../components/ApprovalDialog';
 import { useTranslation, tButton } from '../i18n';
+import { FullscreenButton } from '../components/FullscreenButton';
 import { OwnerMenu } from './OwnerMenu';
 import { OwnerMedicineList } from './OwnerMedicineList';
 import { StockJodo } from './StockJodo';
@@ -38,17 +39,11 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     return 'light';
   });
 
-  const [shop, setShop] = useState<Shop | null>(null);
+  const { shop, name: shopName, mode } = useShop();
   const [activePage, setActivePage] = useState<ActivePage>('home');
   const [isOwnerGateOpen, setIsOwnerGateOpen] = useState<boolean>(false);
   const [isTestApprovalOpen, setIsTestApprovalOpen] = useState<boolean>(false);
   const [approvalMessage, setApprovalMessage] = useState<string>('');
-
-  useEffect(() => {
-    db.shop.toCollection().first().then((s) => {
-      if (s) setShop(s);
-    });
-  }, []);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -75,8 +70,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
   const tileDinBand = tButton('home.tile_din_band');
   const tileOwner = tButton('home.tile_owner');
 
-  const shopName = shop?.name || 'Maa Durga Medical Hall';
-  const modeLabel = shop?.mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
+  const modeLabel = mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
   const userName = currentUser?.name || 'Owner';
   const userInitial = userName ? userName.charAt(0).toUpperCase() : 'O';
 
@@ -198,14 +192,14 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
               actionLabel={returnHomeBtn.main}
               actionSubLabel={returnHomeBtn.sub}
               onAction={handleReturnHome}
-              hintText={shop?.mode === 'cloud' ? `Hospivo Retail Cloud • ${shopName}` : `Hospivo • ${shopName}`}
+              hintText={shopName ? (mode === 'cloud' ? `Hospivo Retail Cloud • ${shopName}` : `Hospivo • ${shopName}`) : (mode === 'cloud' ? 'Hospivo Retail Cloud' : 'Hospivo')}
             />
           </main>
 
           {/* Simple footer */}
           <footer className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 px-6 py-4 flex items-center justify-between text-sm text-[#6e7a6e] dark:text-gray-400">
-            <span>{shop?.mode === 'cloud' ? t('home.footer_cloud') : t('home.footer_local')}</span>
-            <span>{shopName} • {modeLabel}</span>
+            <span>{mode === 'cloud' ? t('home.footer_cloud') : t('home.footer_local')}</span>
+            <span>{shopName ? `${shopName} • ${modeLabel}` : modeLabel}</span>
           </footer>
 
         </div>
@@ -276,6 +270,9 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 </svg>
               )}
             </button>
+
+            {/* Fullscreen button */}
+            <FullscreenButton className="w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 transition cursor-pointer" />
           </div>
         </header>
 
@@ -547,7 +544,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
         <ApprovalDialog
           isOpen={isTestApprovalOpen}
           actionCategory="discount_above_limit"
-          recordDescription={language === 'en' ? 'Bill #101: 15% discount (Limit 10%)' : 'Bill #101 par 15% chhoot (Limit 10%)'}
+          recordDescription={language === 'en' ? 'Test: 15% discount (Limit 10%)' : 'Test: 15% chhoot (Limit 10%)'}
           requesterName={userName}
           onApproved={() => {
             setIsTestApprovalOpen(false);

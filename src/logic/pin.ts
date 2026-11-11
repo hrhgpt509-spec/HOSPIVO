@@ -32,14 +32,12 @@ export function validatePin(
   requiredLength = DEFAULT_PIN_LENGTH
 ): { valid: boolean; error?: string } {
   if (!/^\d+$/.test(pin)) {
-    return { valid: false, error: 'PIN must contain only numbers (0-9)' };
+    return { valid: false, error: 'pin_only_numbers' };
   }
   if (pin.length !== requiredLength) {
     return {
       valid: false,
-      error: isOwner
-        ? `Owner PIN must be ${requiredLength} digits`
-        : `PIN must be ${requiredLength} digits`,
+      error: isOwner ? 'owner_pin_length' : 'pin_length',
     };
   }
   return { valid: true };

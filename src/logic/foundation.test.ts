@@ -4,6 +4,8 @@ import { validatePin, hashPin, verifyPin } from './pin';
 import {
   setApprovalPin,
   verifyApprovalPin,
+  validateApprovalPin,
+  validateStaffPin,
   _resetApprovalStoreForTesting,
   _seedUserForTesting,
 } from './approvals';
@@ -67,7 +69,7 @@ describe('approvals.ts Approval PIN tests', () => {
     // 1. Rejected when checked against passed-in plain PINs
     const res = await setApprovalPin('1234', [ownerPin]);
     expect(res.ok).toBe(false);
-    expect(res.error).toBe('Ijazat PIN Malik ya Staff PIN se alag hona chahiye');
+    expect(res.error).toBe('approval_pin_same_as_owner_or_staff');
 
     // 2. Rejected when Owner user exists in database
     const { hash, salt } = await hashPin(ownerPin);
@@ -82,7 +84,42 @@ describe('approvals.ts Approval PIN tests', () => {
 
     const resDb = await setApprovalPin('1234');
     expect(resDb.ok).toBe(false);
-    expect(resDb.error).toBe('Ijazat PIN Malik ya Staff PIN se alag hona chahiye');
+    expect(resDb.error).toBe('approval_pin_same_as_owner_or_staff');
+  });
+
+  it('rejects Approval PIN of invalid length', async () => {
+    const res = await setApprovalPin('123');
+    expect(res.ok).toBe(false);
+    expect(res.error).toBe('approval_pin_length');
+  });
+
+  it('validates candidate approval PIN and staff PIN', async () => {
+    // Approval PIN candidate validation
+    expect(validateApprovalPin('12').error).toBe('approval_pin_length');
+    expect(validateApprovalPin('1234', '4321').error).toBe('approval_pin_mismatch');
+    expect(validateApprovalPin('1234', '1234', ['1234']).error).toBe('approval_pin_same_as_owner_or_staff');
+    expect(validateApprovalPin('1234', '1234', ['9999']).ok).toBe(true);
+
+    // Staff PIN validation
+    const resLength = await validateStaffPin('12');
+    expect(resLength.ok).toBe(false);
+    expect(resLength.error).toBe('staff_pin_length');
+
+    const resOwner = await validateStaffPin('1234', '1234');
+    expect(resOwner.ok).toBe(false);
+    expect(resOwner.error).toBe('staff_pin_same_as_owner');
+
+    const resDup = await validateStaffPin('2222', '1234', ['2222']);
+    expect(resDup.ok).toBe(false);
+    expect(resDup.error).toBe('staff_pin_duplicate');
+
+    await setApprovalPin('9876', ['1234']);
+    const resApproval = await validateStaffPin('9876', '1234');
+    expect(resApproval.ok).toBe(false);
+    expect(resApproval.error).toBe('staff_pin_same_as_approval');
+
+    const resOk = await validateStaffPin('3456', '1234', ['2222']);
+    expect(resOk.ok).toBe(true);
   });
 
   it('correct PIN verifies', async () => {

@@ -88,6 +88,54 @@ function interpolate(text: string, params?: Record<string, string | number>): st
 }
 
 /**
+ * In English mode, hides the second line (sub label) if it duplicates the main title/label.
+ * Hinglish and Hindi keep both lines.
+ */
+export function shouldShowSub(
+  main?: string,
+  sub?: string,
+  lang: Language = currentLanguage
+): boolean {
+  if (!sub || !sub.trim()) return false;
+  if (lang !== 'en') return true;
+  if (!main || !main.trim()) return true;
+
+  const normalize = (str: string) =>
+    str
+      .toLowerCase()
+      .replace(/^step\s+\d+(\s+of\s+\d+)?[:\s-]*/i, '')
+      .replace(/^[0-9]+[a-z]?[.:)]\s*/, '')
+      .replace(/[()[\]{}.,:;'"!?-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const normMain = normalize(main);
+  const normSub = normalize(sub);
+
+  if (!normSub) return false;
+  if (normMain === normSub) return false;
+
+  const cleanWords = (s: string) =>
+    s
+      .split(' ')
+      .filter(Boolean)
+      .map((w) => w.replace(/s$/, '')) // strip trailing 's' for basic plural
+      .filter((w) => !['list', 'detail', 'details', 'info', 'information'].includes(w));
+
+  const wordsMain = cleanWords(normMain);
+  const wordsSub = cleanWords(normSub);
+
+  if (wordsMain.length > 0 && wordsSub.length > 0) {
+    const nonGenericSubWords = wordsSub.filter((w) => !wordsMain.includes(w));
+    if (nonGenericSubWords.length === 0) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
  * Returns translated string or ButtonLabel.
  * Falls back to English ('en') if missing in current language.
  */
@@ -108,9 +156,12 @@ export function t<T = any>(key: string, params?: Record<string, string | number>
   // Handle two-line ButtonLabel { main, sub }
   if (typeof val === 'object' && val !== null && 'main' in val) {
     const btn = val as ButtonLabel;
+    const mainText = interpolate(btn.main, params);
+    const rawSub = btn.sub ? interpolate(btn.sub, params) : '';
+    const subText = shouldShowSub(mainText, rawSub, currentLanguage) ? rawSub : '';
     return {
-      main: interpolate(btn.main, params),
-      sub: btn.sub ? interpolate(btn.sub, params) : '',
+      main: mainText,
+      sub: subText,
     } as unknown as T;
   }
 
@@ -152,6 +203,7 @@ export function useTranslation() {
   return {
     t,
     tButton,
+    shouldShowSub: (main?: string, sub?: string) => shouldShowSub(main, sub, lang),
     language: lang,
     setLanguage,
   };

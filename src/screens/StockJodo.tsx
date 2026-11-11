@@ -22,6 +22,11 @@ import { compressInvoicePhoto } from '../logic/image';
 import { useTranslation, tButton } from '../i18n';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { triggerFeedback } from '../logic/feedback';
+import { Icon } from '../components/Icon';
+import { EmptyState } from '../components/EmptyState';
+import { FullscreenButton } from '../components/FullscreenButton';
+import { formatField, textFieldProps } from '../logic/format';
+import { useShop } from '../logic/useShop';
 
 interface StockJodoProps {
   onReturnHome: () => void;
@@ -33,33 +38,6 @@ interface StockJodoProps {
 
 type WizardStep = 1 | 2 | 3 | 4 | 'saved';
 
-const DEFAULT_SUPPLIERS: Array<Omit<Supplier, 'id'>> = [
-  {
-    name: 'Sharma Agencies',
-    phone: '+91 98260 12345',
-    gstNo: '08AAECS1290K1ZU',
-    address: '14, Dawa Bazaar, Agra Road, Jaipur',
-  },
-  {
-    name: 'Gupta Pharma',
-    phone: '+91 94251 67890',
-    gstNo: '08BBECS2291L2ZV',
-    address: '22, Medicine Market, Station Road, Patna',
-  },
-  {
-    name: 'Om Distributors',
-    phone: '+91 98932 45678',
-    gstNo: '08CCECS3392M3ZW',
-    address: '5, Wholesale Complex, MG Marg, Gaya',
-  },
-  {
-    name: 'Jain Medico',
-    phone: '+91 97543 21098',
-    gstNo: '08DDECS4493N4ZX',
-    address: '18, Pharma Lane, Bari Bazaar, Muzaffarpur',
-  },
-];
-
 export const StockJodo: React.FC<StockJodoProps> = ({
   onReturnHome,
   currentUser,
@@ -67,7 +45,9 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   theme = 'light',
   onToggleTheme,
 }) => {
-  const { t } = useTranslation();
+  const { t, shouldShowSub } = useTranslation();
+  const { name: hookShopName } = useShop();
+  const shopName = shop?.name || hookShopName || '';
   const isOwner = canSeePurchasePrice(currentUser);
 
   // Stepper state
@@ -99,8 +79,9 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   const [supplierError, setSupplierError] = useState<string>('');
   const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false);
 
-  // Step 2: Photo upload ref
+  // Step 2: Photo upload refs
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
 
   // Step 3: Medicine search & line form state
   const [searchQuery, setSearchQuery] = useState('');
@@ -144,17 +125,11 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   useEffect(() => {
     async function initData() {
       const existingSuppliers = await db.suppliers.toArray();
-      if (existingSuppliers.length === 0) {
-        // Seed initial sample suppliers
-        for (const s of DEFAULT_SUPPLIERS) {
-          await db.suppliers.add(s as Supplier);
-        }
-        const seeded = await db.suppliers.toArray();
-        setSuppliers(seeded);
-        if (seeded.length > 0) setSelectedSupplierId(seeded[0].id!);
+      setSuppliers(existingSuppliers);
+      if (existingSuppliers.length > 0) {
+        setSelectedSupplierId(existingSuppliers[0].id!);
       } else {
-        setSuppliers(existingSuppliers);
-        if (existingSuppliers.length > 0) setSelectedSupplierId(existingSuppliers[0].id!);
+        setSelectedSupplierId(null);
       }
 
       const allMedicines = await db.medicines.where('active').equals(1 as any).toArray();
@@ -191,15 +166,15 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   // Add new supplier
   const handleCreateSupplier = async () => {
     if (!newSupplierName.trim()) {
-      setSupplierError('Supplier ka naam zaroori hai');
+      setSupplierError(t('stock_jodo.err_supplier_name_required'));
       return;
     }
     const newId = Number(
       await db.suppliers.add({
-        name: newSupplierName.trim(),
-        phone: newSupplierPhone.trim(),
-        address: newSupplierAddress.trim(),
-        gstNo: newSupplierGst.trim(),
+        name: formatField('name', newSupplierName.trim()),
+        phone: formatField('phone', newSupplierPhone.trim()),
+        address: formatField('name', newSupplierAddress.trim()),
+        gstNo: formatField('code', newSupplierGst.trim()),
         createdAt: new Date().toISOString(),
       })
     );
@@ -212,7 +187,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
     setNewSupplierGst('');
     setSupplierError('');
     setIsNewSupplierOpen(false);
-    triggerFeedback('success', 'Supplier joda gaya');
+    triggerFeedback('success', t('stock_jodo.supplier_added_toast'));
   };
 
   // Step 1: Proceed to step 2 with duplicate check
@@ -245,44 +220,6 @@ export const StockJodo: React.FC<StockJodoProps> = ({
     }
   };
 
-  // Simulated capture for devices without camera prompt
-  const handleSimulatedPhoto = () => {
-    // Generate a clean representative invoice paper canvas as data URL
-    const canvas = document.createElement('canvas');
-    canvas.width = 600;
-    canvas.height = 800;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, 600, 800);
-      ctx.fillStyle = '#006b33';
-      ctx.fillRect(0, 0, 600, 60);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 24px sans-serif';
-      ctx.fillText('TAX INVOICE - ' + (selectedSupplier?.name || 'DISTRIBUTOR'), 24, 40);
-
-      ctx.fillStyle = '#141e1a';
-      ctx.font = '16px sans-serif';
-      ctx.fillText(`Invoice No: ${invoiceNo || 'INV-2024-8841'}`, 24, 100);
-      ctx.fillText(`Date: ${invoiceDate || '24/10/2024'}`, 24, 130);
-      ctx.fillText(`Buyer: ${shop?.name || 'Shree Medical Store'}`, 24, 160);
-
-      ctx.strokeStyle = '#dae5df';
-      ctx.beginPath();
-      ctx.moveTo(24, 190);
-      ctx.lineTo(576, 190);
-      ctx.stroke();
-
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillText('Items & Batches Verified', 24, 230);
-      ctx.font = '14px sans-serif';
-      ctx.fillStyle = '#3e4a3f';
-      ctx.fillText('Batch, expiry and rates captured from original physical slip.', 24, 260);
-
-      const simUrl = canvas.toDataURL('image/jpeg', 0.8);
-      setInvoicePhoto(simUrl);
-    }
-  };
 
   // Step 3: Pick a medicine from search
   const handleSelectMedicine = (med: Medicine) => {
@@ -372,7 +309,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
       form: selectedMedicine.form,
       unitsPerPack: selectedMedicine.unitsPerPack || 1,
       shelf: selectedMedicine.shelf,
-      batchNo: batchNo.trim().toUpperCase(),
+      batchNo: formatField('code', batchNo.trim()),
       expiryMonthYear: expiryInput.trim(),
       expiryDate: isoExpiry,
       packs,
@@ -478,7 +415,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         setMrpInput('');
       }
       setLineToDeleteId(null);
-      triggerFeedback('success', 'Dawai hatayi gayi');
+      triggerFeedback('success', t('stock_jodo.line_deleted_toast'));
     }
   };
 
@@ -510,7 +447,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
       supplierId: selectedSupplierId,
       supplierName: selectedSupplier?.name,
       supplierPhone: selectedSupplier?.phone,
-      invoiceNo: invoiceNo.trim(),
+      invoiceNo: formatField('code', invoiceNo.trim()),
       invoiceDate: invoiceDate.trim(),
       invoicePhoto,
       lines,
@@ -520,7 +457,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
       const result = await savePurchase(draft, currentUser);
       setSaveResult(result);
       setCurrentStep('saved');
-      triggerFeedback('success', 'Stock jud gaya');
+      triggerFeedback('success', t('stock_jodo.stock_saved_toast'));
     } catch (err: any) {
       console.error('Purchase save failed:', err?.message || err);
       setSaveErrorMessage(t('stock_jodo.save_error'));
@@ -567,24 +504,24 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   const doneLabel = tButton('stock_jodo.btn_done');
 
   return (
-    <div className="w-full h-screen bg-[#F4F6F5] dark:bg-canvas font-body-md text-body-md text-on-surface antialiased select-none flex flex-col overflow-hidden">
+    <div className="w-full h-screen bg-canvas font-body-md text-body-md text-on-surface antialiased select-none flex flex-col overflow-hidden">
       {/* GLOBAL APP HEADER */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest dark:bg-gray-900 shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
-        <div className="h-16 w-full px-gutter flex items-center justify-between">
-          <div className="flex items-center gap-space-lg">
+      <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
+        <div className="h-16 w-full max-w-[1440px] mx-auto px-4 sm:px-gutter flex items-center justify-between">
+          <div className="flex items-center gap-space-sm sm:gap-space-lg">
             <div className="flex items-center gap-space-xs">
               <div className="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm">
-                <span className="material-symbols-outlined text-[24px]">local_pharmacy</span>
+                <Icon name="local_pharmacy" className="text-[24px]" />
               </div>
               <span className="font-headline-md text-headline-md text-primary tracking-tight font-bold">
                 {t('common.app_name')}
               </span>
             </div>
-            <div className="h-6 w-px bg-outline-variant"></div>
-            <div className="flex items-center gap-space-xs">
-              <span className="material-symbols-outlined text-outline text-[20px]">store</span>
+            <div className="hidden sm:block h-6 w-px bg-outline-variant"></div>
+            <div className="hidden sm:flex items-center gap-space-xs">
+              <Icon name="store" className="text-outline text-[20px]" />
               <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
-                {shop?.name || 'Shree Medical Store'}
+                {shopName}
               </span>
             </div>
             <nav className="flex items-center ml-space-xs">
@@ -593,40 +530,39 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 onClick={handleAttemptReturnHome}
                 className="px-space-md py-space-xs rounded-lg transition-colors flex items-center gap-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-title-hinglish text-title-hinglish"
               >
-                <span className="material-symbols-outlined text-[20px]">home</span>
+                <Icon name="home" className="text-[20px]" />
                 <span>{tButton('common.btn_home').main}</span>
               </button>
             </nav>
           </div>
 
           <div className="flex items-center gap-space-md">
-            <div className="flex items-center gap-space-xs px-space-sm py-1 bg-surface-container dark:bg-gray-800 rounded-full">
+            <div className="hidden md:flex items-center gap-space-xs px-space-sm py-1 bg-surface-container dark:bg-gray-800 rounded-full">
               <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span>
               <span className="font-label-sub-english text-label-sub-english text-on-surface-variant uppercase tracking-wider text-[12px]">
                 {t('common.local_mode')}
               </span>
             </div>
             <button
-              aria-label="Toggle Light/Dark Theme"
+              aria-label={t('common.toggle_theme')}
               onClick={onToggleTheme}
               className="w-10 h-10 rounded-lg bg-surface-container dark:bg-gray-800 hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors"
               type="button"
             >
-              <span className="material-symbols-outlined text-[20px]">
-                {theme === 'dark' ? 'dark_mode' : 'light_mode'}
-              </span>
+              <Icon name={theme === 'dark' ? 'dark_mode' : 'light_mode'} className="text-[20px]" />
             </button>
+            <FullscreenButton className="w-10 h-10 rounded-lg bg-surface-container dark:bg-gray-800 hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" />
             <div className="flex items-center gap-space-sm pl-space-xs">
-              <div className="text-right">
+              <div className="hidden sm:block text-right">
                 <div className="font-title-hinglish text-title-hinglish text-on-surface leading-tight font-bold">
-                  {currentUser?.name || (isOwner ? 'Owner' : 'Counter Admin')}
+                  {currentUser?.name || (isOwner ? t('common.role_owner') : t('common.role_cashier'))}
                 </div>
                 <div className="font-label-sub-english text-label-sub-english text-outline text-[12px] leading-tight">
-                  {isOwner ? 'Owner' : 'Counter Admin'}
+                  {isOwner ? t('common.role_owner') : t('common.role_cashier')}
                 </div>
               </div>
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                <span className="material-symbols-outlined text-on-primary text-[18px]">person</span>
+                <Icon name="person" className="text-on-primary text-[18px]" />
               </div>
             </div>
           </div>
@@ -634,12 +570,12 @@ export const StockJodo: React.FC<StockJodoProps> = ({
       </header>
 
       {/* MAIN VIEWPORT CONTAINER */}
-      <main className="w-full h-screen pt-16 bg-[#F4F6F5] dark:bg-canvas overflow-hidden flex flex-col">
+      <main className="w-full h-screen pt-16 bg-canvas overflow-hidden flex flex-col">
         {/* ============================================================== */}
         {/* STEP 1: CHOOSE SUPPLIER & INVOICE DETAILS (23a) */}
         {/* ============================================================== */}
         {currentStep === 1 && (
-          <div className="flex flex-col w-full h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] overflow-hidden select-none p-space-md justify-between box-border">
+          <div className="flex flex-col w-full max-w-[1440px] mx-auto h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] overflow-y-auto lg:overflow-hidden select-none px-4 sm:px-gutter py-space-sm sm:py-space-md justify-between box-border">
             {/* Step Tracker & Header */}
             <div className="flex flex-col w-full gap-space-xs shrink-0">
               <div className="grid grid-cols-4 gap-space-xs w-full">
@@ -648,17 +584,19 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 <div className="h-2.5 rounded-full bg-surface-container-highest"></div>
                 <div className="h-2.5 rounded-full bg-surface-container-highest"></div>
               </div>
-              <div className="flex items-baseline justify-between mt-space-xs">
-                <div className="flex items-baseline gap-space-sm">
+              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between mt-space-xs gap-1 sm:gap-0">
+                <div className="flex items-baseline gap-space-sm flex-wrap">
                   <h1 className="font-headline-md text-headline-md text-on-surface font-bold">
                     {t('stock_jodo.step1_title')}
                   </h1>
-                  <span className="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">
-                    {t('stock_jodo.step1_sub')}
-                  </span>
+                  {shouldShowSub(t('stock_jodo.step1_title'), t('stock_jodo.step1_sub')) && (
+                    <span className="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">
+                      {t('stock_jodo.step1_sub')}
+                    </span>
+                  )}
                 </div>
-                <div className="flex items-center gap-space-xs text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[20px]">inventory_2</span>
+                <div className="hidden sm:flex items-center gap-space-xs text-on-surface-variant">
+                  <Icon name="inventory_2" className="text-[20px]" />
                   <span className="font-label-sub-english text-label-sub-english">
                     {t('stock_jodo.step1_tag')}
                   </span>
@@ -667,113 +605,130 @@ export const StockJodo: React.FC<StockJodoProps> = ({
             </div>
 
             {/* Main Content Dual-Panel Grid */}
-            <div className="grid grid-cols-12 gap-space-md flex-1 min-h-0 my-space-xs">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md lg:gap-gutter flex-1 min-h-0 my-space-xs overflow-y-auto lg:overflow-visible">
               {/* Left Card: Supplier Selection (7 Cols) */}
-              <div className="col-span-7 bg-surface-container-lowest dark:bg-gray-900 rounded-[16px] shadow-sm p-space-md flex flex-col justify-between overflow-hidden">
+              <div className="lg:col-span-7 bg-surface-container-lowest dark:bg-gray-900 rounded-[16px] shadow-sm p-space-md flex flex-col justify-between overflow-hidden border border-outline-variant/30">
                 <div className="flex flex-col gap-space-xs">
                   <h2 className="font-headline-md text-headline-md text-on-surface font-bold">
                     {t('stock_jodo.supplier_select_title')}
                   </h2>
-                  <p className="font-label-sub-english text-label-sub-english text-on-surface-variant">
-                    {t('stock_jodo.supplier_select_sub')}
-                  </p>
+                  {shouldShowSub(t('stock_jodo.supplier_select_title'), t('stock_jodo.supplier_select_sub')) && (
+                    <p className="font-label-sub-english text-label-sub-english text-on-surface-variant">
+                      {t('stock_jodo.supplier_select_sub')}
+                    </p>
+                  )}
                 </div>
 
-                {/* Interactive Supplier Rows */}
-                <div className="flex flex-col gap-space-xs my-auto overflow-y-auto max-h-[340px] pr-1">
-                  {suppliers.map((s) => {
-                    const isSelected = selectedSupplierId === s.id;
-                    return (
-                      <div
-                        key={s.id}
-                        onClick={() => {
-                          setSelectedSupplierId(s.id!);
-                        }}
-                        className={`h-[72px] rounded-[16px] px-space-md flex items-center justify-between cursor-pointer shadow-sm transition-all ${
-                          isSelected
-                            ? 'bg-surface-container-low dark:bg-gray-800 shadow-[0_0_0_2px_#006b33]'
-                            : 'bg-surface-container-lowest dark:bg-gray-900 hover:bg-surface-container-low shadow-[0_0_0_1px_#E0E6E3]'
-                        }`}
-                      >
-                        <div className="flex items-center gap-space-md">
+                {/* Interactive Supplier Rows or EmptyState */}
+                {suppliers.length === 0 ? (
+                  <div className="flex-1 flex flex-col justify-center items-center my-auto py-2">
+                    <EmptyState
+                      title={t('stock_jodo.empty_suppliers_title')}
+                      subtitle={t('stock_jodo.empty_suppliers_sub')}
+                      actionLabel={tButton('stock_jodo.btn_add_supplier').main}
+                      actionSubLabel={tButton('stock_jodo.btn_add_supplier').sub}
+                      onAction={() => setIsNewSupplierOpen(true)}
+                      hintText=""
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-col gap-space-xs my-auto overflow-y-auto max-h-[340px] pr-1">
+                      {suppliers.map((s) => {
+                        const isSelected = selectedSupplierId === s.id;
+                        return (
                           <div
-                            className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                              isSelected ? 'bg-primary text-on-primary' : 'bg-surface-container-high'
+                            key={s.id}
+                            onClick={() => {
+                              setSelectedSupplierId(s.id!);
+                            }}
+                            className={`h-[72px] rounded-[16px] px-space-md flex items-center justify-between cursor-pointer shadow-sm transition-all ${
+                              isSelected
+                                ? 'bg-surface-container-low dark:bg-gray-800 shadow-[0_0_0_2px_#006b33]'
+                                : 'bg-surface-container-lowest dark:bg-gray-900 hover:bg-surface-container-low shadow-[0_0_0_1px_#E0E6E3]'
                             }`}
                           >
-                            <span
-                              className={`material-symbols-outlined text-[18px] ${
-                                isSelected ? 'text-on-primary' : 'text-transparent'
+                            <div className="flex items-center gap-space-md">
+                              <div
+                                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                                  isSelected ? 'bg-primary text-on-primary' : 'bg-surface-container-high'
+                                }`}
+                              >
+                                <Icon
+                                  name="check"
+                                  className={`text-[18px] ${
+                                    isSelected ? 'text-on-primary' : 'text-transparent'
+                                  }`}
+                                />
+                              </div>
+                              <div className="flex flex-col justify-center">
+                                <span className="font-title-hinglish text-title-hinglish text-on-surface leading-tight font-bold">
+                                  {s.name}
+                                </span>
+                                <span className="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">
+                                  {s.phone}
+                                </span>
+                              </div>
+                            </div>
+                            <Icon
+                              name="local_shipping"
+                              className={`text-[28px] ${
+                                isSelected ? 'text-primary' : 'text-on-surface-variant'
                               }`}
-                            >
-                              check
-                            </span>
+                            />
                           </div>
-                          <div className="flex flex-col justify-center">
-                            <span className="font-title-hinglish text-title-hinglish text-on-surface leading-tight font-bold">
-                              {s.name}
-                            </span>
-                            <span className="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">
-                              {s.phone}
-                            </span>
-                          </div>
-                        </div>
-                        <span
-                          className={`material-symbols-outlined text-[28px] ${
-                            isSelected ? 'text-primary' : 'text-on-surface-variant'
-                          }`}
-                        >
-                          local_shipping
+                        );
+                      })}
+                    </div>
+
+                    {/* Add New Supplier Button */}
+                    <button
+                      type="button"
+                      onClick={() => setIsNewSupplierOpen(true)}
+                      className="h-[60px] min-h-[56px] w-full rounded-[16px] bg-surface-container-low dark:bg-gray-800 hover:bg-surface-container text-primary flex items-center justify-center gap-space-sm px-space-md shadow-sm transition-all active:translate-y-0.5 cursor-pointer"
+                    >
+                      <Icon name="add_circle" className="text-[30px] font-bold" />
+                      <div className="flex flex-col items-start leading-none">
+                        <span className="font-title-hinglish text-title-hinglish font-bold text-primary leading-tight">
+                          {tButton('stock_jodo.btn_add_supplier').main}
+                        </span>
+                        <span className="font-label-sub-english text-label-sub-english text-on-surface-variant leading-none font-medium">
+                          {tButton('stock_jodo.btn_add_supplier').sub}
                         </span>
                       </div>
-                    );
-                  })}
-                </div>
-
-                {/* Add New Supplier Button */}
-                <button
-                  type="button"
-                  onClick={() => setIsNewSupplierOpen(true)}
-                  className="h-[60px] min-h-[56px] w-full rounded-[16px] bg-surface-container-low dark:bg-gray-800 hover:bg-surface-container text-primary flex items-center justify-center gap-space-sm px-space-md shadow-sm transition-all active:translate-y-0.5 cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[30px] font-bold">add_circle</span>
-                  <div className="flex flex-col items-start leading-none">
-                    <span className="font-title-hinglish text-title-hinglish font-bold text-primary leading-tight">
-                      {tButton('stock_jodo.btn_add_supplier').main}
-                    </span>
-                    <span className="font-label-sub-english text-label-sub-english text-on-surface-variant leading-none font-medium">
-                      {tButton('stock_jodo.btn_add_supplier').sub}
-                    </span>
-                  </div>
-                </button>
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Right Card: Invoice Details (5 Cols) */}
-              <div className="col-span-5 bg-surface-container-lowest dark:bg-gray-900 rounded-[16px] shadow-sm p-space-md flex flex-col justify-between overflow-hidden">
+              <div className="lg:col-span-5 bg-surface-container-lowest dark:bg-gray-900 rounded-[16px] shadow-sm p-space-md flex flex-col justify-between overflow-hidden border border-outline-variant/30">
                 <div className="flex flex-col gap-space-xs">
                   <h2 className="font-headline-md text-headline-md text-on-surface font-bold">
                     {t('stock_jodo.bill_info_title')}
                   </h2>
-                  <span className="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">
-                    {t('stock_jodo.bill_info_sub')}
-                  </span>
+                  {shouldShowSub(t('stock_jodo.bill_info_title'), t('stock_jodo.bill_info_sub')) && (
+                    <span className="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium">
+                      {t('stock_jodo.bill_info_sub')}
+                    </span>
+                  )}
                 </div>
 
                 {/* Inputs Container */}
-                <div className="flex flex-col gap-space-md my-auto">
+                <div className="flex flex-col gap-space-md mt-space-md mb-auto">
                   {/* Field 1: Invoice Number */}
                   <div className="flex flex-col gap-space-xs">
                     <label className="font-body-md text-body-md font-bold text-on-surface">
                       {t('stock_jodo.invoice_no_label')}
                     </label>
                     <div className="relative flex items-center">
-                      <span className="material-symbols-outlined absolute left-space-md text-on-surface-variant text-[24px]">
-                        receipt_long
-                      </span>
+                      <Icon
+                        name="receipt_long"
+                        className="absolute left-space-md text-on-surface-variant text-[24px]"
+                      />
                       <input
                         type="text"
-                        value={invoiceNo}
-                        onChange={(e) => setInvoiceNo(e.target.value)}
+                        {...textFieldProps('code', invoiceNo, setInvoiceNo)}
                         placeholder={t('stock_jodo.invoice_no_placeholder')}
                         className="w-full h-[58px] min-h-[56px] rounded-[16px] bg-surface-container-lowest dark:bg-gray-900 pl-14 pr-space-md font-body-lg text-body-lg text-on-surface font-bold shadow-[0_0_0_2px_#bdcabc] focus:shadow-[0_0_0_3px_#006b33] outline-none transition-shadow"
                       />
@@ -789,14 +744,15 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                       {t('stock_jodo.invoice_date_label')}
                     </label>
                     <div className="relative flex items-center">
-                      <span className="material-symbols-outlined absolute left-space-md text-on-surface-variant text-[24px]">
-                        calendar_today
-                      </span>
+                      <Icon
+                        name="calendar_today"
+                        className="absolute left-space-md text-on-surface-variant text-[24px]"
+                      />
                       <input
                         type="text"
                         value={invoiceDate}
                         onChange={(e) => setInvoiceDate(e.target.value)}
-                        placeholder="DD/MM/YYYY"
+                        placeholder={t('common.date_placeholder')}
                         className="w-full h-[58px] min-h-[56px] rounded-[16px] bg-surface-container-lowest dark:bg-gray-900 pl-14 pr-14 font-body-lg text-body-lg text-on-surface font-bold shadow-[0_0_0_2px_#bdcabc] focus:shadow-[0_0_0_3px_#006b33] outline-none transition-shadow"
                       />
                     </div>
@@ -807,10 +763,8 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 </div>
 
                 {/* Informational Callout */}
-                <div className="rounded-[16px] bg-surface-container-low dark:bg-gray-800 p-space-md flex items-center gap-space-sm">
-                  <span className="material-symbols-outlined text-secondary text-[28px] shrink-0">
-                    info
-                  </span>
+                <div className="rounded-[16px] bg-surface-container-low dark:bg-gray-800 p-space-md flex items-center gap-space-sm mt-space-md">
+                  <Icon name="info" className="text-secondary text-[28px] shrink-0" />
                   <span className="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium leading-relaxed">
                     {t('stock_jodo.step1_note')}
                   </span>
@@ -819,13 +773,13 @@ export const StockJodo: React.FC<StockJodoProps> = ({
             </div>
 
             {/* Bottom Navigation */}
-            <div className="w-full h-[72px] shrink-0 flex items-center justify-between px-space-xs">
+            <div className="w-full h-[72px] shrink-0 flex items-center justify-between px-space-xs pt-space-xs">
               <button
                 type="button"
                 onClick={handleAttemptReturnHome}
-                className="h-[60px] min-h-[56px] min-w-[200px] rounded-[16px] bg-surface-container-highest hover:bg-surface-dim text-on-surface flex items-center justify-center gap-space-md px-space-lg shadow-sm transition-all active:translate-y-0.5 cursor-pointer"
+                className="h-[60px] min-h-[56px] min-w-[140px] sm:min-w-[200px] rounded-[16px] bg-surface-container-highest hover:bg-surface-dim text-on-surface flex items-center justify-center gap-space-sm sm:gap-space-md px-space-md sm:px-space-lg shadow-sm transition-all active:translate-y-0.5 cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[30px] font-bold">arrow_back</span>
+                <Icon name="arrow_back" className="text-[28px] sm:text-[30px] font-bold" />
                 <div className="flex flex-col items-start leading-none">
                   <span className="font-button-text text-button-text font-bold leading-tight">
                     {backButtonLabel.main}
@@ -840,7 +794,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 type="button"
                 disabled={!selectedSupplierId || !invoiceNo.trim()}
                 onClick={handleProceedFromStep1}
-                className={`h-[60px] min-h-[56px] min-w-[260px] rounded-[16px] flex items-center justify-center gap-space-md px-space-xl shadow-md transition-all active:translate-y-0.5 ${
+                className={`h-[60px] min-h-[56px] min-w-[150px] sm:min-w-[260px] rounded-[16px] flex items-center justify-center gap-space-sm sm:gap-space-md px-space-md sm:px-space-xl shadow-md transition-all active:translate-y-0.5 ${
                   selectedSupplierId && invoiceNo.trim()
                     ? 'bg-primary hover:bg-primary-container text-on-primary cursor-pointer'
                     : 'bg-surface-container-highest text-outline opacity-60 cursor-not-allowed'
@@ -854,7 +808,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                     {nextButtonLabel.sub}
                   </span>
                 </div>
-                <span className="material-symbols-outlined text-[30px] font-bold">arrow_forward</span>
+                <Icon name="arrow_forward" className="text-[28px] sm:text-[30px] font-bold" />
               </button>
             </div>
           </div>
@@ -864,7 +818,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         {/* STEP 2: INVOICE PHOTO (23b / 23b2) */}
         {/* ============================================================== */}
         {currentStep === 2 && (
-          <div className="flex flex-col w-full h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] overflow-hidden select-none px-margin py-space-sm justify-between">
+          <div className="flex flex-col w-full max-w-[1440px] mx-auto h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] overflow-y-auto lg:overflow-hidden select-none px-4 sm:px-gutter lg:px-margin py-space-sm justify-between">
             {/* Step Tracker & Header Block */}
             <div className="flex flex-col gap-space-xs w-full max-w-5xl mx-auto flex-shrink-0">
               <div className="flex items-baseline justify-between">
@@ -872,9 +826,11 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   <h1 className="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">
                     {t('stock_jodo.step2_title')}
                   </h1>
-                  <span className="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium mt-0.5">
-                    {t('stock_jodo.step2_sub')}
-                  </span>
+                  {shouldShowSub(t('stock_jodo.step2_title'), t('stock_jodo.step2_sub')) && (
+                    <span className="font-label-sub-english text-label-sub-english text-on-surface-variant font-medium mt-0.5">
+                      {t('stock_jodo.step2_sub')}
+                    </span>
+                  )}
                 </div>
                 <div className="text-right">
                   <span className="font-label-sub-english text-label-sub-english text-primary font-bold uppercase tracking-wider">
@@ -893,12 +849,20 @@ export const StockJodo: React.FC<StockJodoProps> = ({
             {/* Central Photo Capture / Preview Area */}
             <div className="w-full max-w-5xl mx-auto my-auto flex-grow flex items-center justify-center py-space-xs min-h-0">
               <div className="w-full h-full max-h-[540px] bg-surface-container-lowest dark:bg-gray-900 rounded-2xl shadow-md p-space-md flex flex-col justify-between relative overflow-hidden">
-                {/* Hidden File Input for Camera or Gallery */}
+                {/* Hidden File Input for Camera */}
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   capture="environment"
+                  className="hidden"
+                  onChange={handlePhotoUpload}
+                />
+                {/* Hidden File Input for Gallery (no capture attribute) */}
+                <input
+                  ref={galleryInputRef}
+                  type="file"
+                  accept="image/*"
                   className="hidden"
                   onChange={handlePhotoUpload}
                 />
@@ -916,7 +880,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
 
                       <div className="flex flex-col items-center text-center p-space-md max-w-md">
                         <div className="w-20 h-20 rounded-2xl bg-surface-container dark:bg-gray-700 flex items-center justify-center text-primary shadow-sm mb-space-sm">
-                          <span className="material-symbols-outlined text-[44px]">photo_camera</span>
+                          <Icon name="photo_camera" className="text-[44px]" />
                         </div>
                         <p className="font-body-lg text-body-lg text-on-surface font-bold">
                           {t('stock_jodo.photo_framing_title')}
@@ -928,7 +892,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                     </div>
 
                     <div className="mt-space-xs flex items-center gap-space-xs px-space-md py-space-xs rounded-xl bg-error-container text-on-error-container shadow-sm">
-                      <span className="material-symbols-outlined text-error text-[24px]">error</span>
+                      <Icon name="error" className="text-error text-[24px]" />
                       <span className="font-label-sub-english text-label-sub-english text-error font-bold">
                         {t('stock_jodo.photo_required_pill')}
                       </span>
@@ -936,11 +900,11 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   </div>
                 ) : (
                   /* Photo Captured Preview state (23b2) */
-                  <div className="w-full flex-1 my-space-xs bg-surface-container-lowest dark:bg-gray-900 rounded-xl p-space-md flex gap-space-lg items-center justify-center overflow-hidden">
-                    <div className="relative h-full aspect-[3/4] max-h-[380px] bg-white rounded-lg shadow-md p-2 flex flex-col justify-between overflow-hidden">
+                  <div className="w-full flex-1 my-space-xs bg-surface-container-lowest rounded-xl p-space-md flex gap-space-lg items-center justify-center overflow-hidden">
+                    <div className="relative h-full aspect-[3/4] max-h-[380px] bg-surface-container-lowest border border-outline-variant/30 rounded-lg shadow-md p-2 flex flex-col justify-between overflow-hidden">
                       <img
                         src={invoicePhoto}
-                        alt="Invoice scan"
+                        alt={t('stock_jodo.alt_invoice_scan')}
                         className="w-full h-full object-contain rounded"
                       />
                       <div className="absolute inset-2 pointer-events-none z-10 flex flex-col justify-between">
@@ -957,9 +921,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
 
                     <div className="flex flex-col items-start justify-center gap-space-md max-w-sm">
                       <div className="inline-flex items-center gap-space-sm bg-primary-container text-on-primary-container px-space-lg py-space-sm rounded-full shadow-sm">
-                        <span className="material-symbols-outlined text-[28px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                          check_circle
-                        </span>
+                        <Icon name="check_circle" className="text-[28px]" filled={true} />
                         <div className="flex flex-col">
                           <span className="font-title-hinglish text-title-hinglish leading-tight">
                             {t('stock_jodo.photo_taken_badge')}
@@ -981,16 +943,14 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      if (fileInputRef.current) {
-                        fileInputRef.current.removeAttribute('capture');
-                        fileInputRef.current.click();
-                      }
+                      fileInputRef.current?.click();
                     }}
                     className="min-h-[64px] rounded-2xl bg-primary hover:bg-primary-container text-on-primary shadow-md flex items-center justify-center gap-space-sm px-space-lg transition-transform active:translate-y-0.5 cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-on-primary text-[32px]">
-                      {invoicePhoto ? 'replay' : 'photo_camera'}
-                    </span>
+                    <Icon
+                      name={invoicePhoto ? 'replay' : 'photo_camera'}
+                      className="text-on-primary text-[32px]"
+                    />
                     <div className="flex flex-col text-left leading-tight">
                       <span className="font-title-hinglish text-title-hinglish text-on-primary font-bold">
                         {invoicePhoto
@@ -1008,12 +968,13 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   {!invoicePhoto ? (
                     <button
                       type="button"
-                      onClick={handleSimulatedPhoto}
+                      onClick={() => galleryInputRef.current?.click()}
                       className="min-h-[64px] rounded-2xl bg-surface-container-high dark:bg-gray-800 hover:bg-surface-variant text-on-surface shadow-sm flex items-center justify-center gap-space-sm px-space-lg transition-transform active:translate-y-0.5 cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-on-surface text-[32px]">
-                        document_scanner
-                      </span>
+                      <Icon
+                        name="document_scanner"
+                        className="text-on-surface text-[32px]"
+                      />
                       <div className="flex flex-col text-left leading-tight">
                         <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
                           {tButton('stock_jodo.btn_choose_gallery').main}
@@ -1029,7 +990,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                       onClick={() => setInvoicePhoto('')}
                       className="min-h-[64px] rounded-2xl bg-surface-container-high dark:bg-gray-800 hover:bg-error-container hover:text-error text-on-surface shadow-sm flex items-center justify-center gap-space-sm px-space-lg transition-transform active:translate-y-0.5 cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[28px]">delete</span>
+                      <Icon name="delete" className="text-[28px]" />
                       <span className="font-title-hinglish text-title-hinglish font-bold">
                         {t('stock_jodo.btn_remove_photo')}
                       </span>
@@ -1046,7 +1007,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 onClick={() => setCurrentStep(1)}
                 className="min-h-[56px] px-space-lg rounded-2xl bg-surface-container-high dark:bg-gray-800 hover:bg-surface-variant text-on-surface flex items-center gap-space-sm transition-transform active:translate-y-0.5 cursor-pointer shadow-sm"
               >
-                <span className="material-symbols-outlined text-on-surface text-[26px]">arrow_back</span>
+                <Icon name="arrow_back" className="text-on-surface text-[26px]" />
                 <div className="flex flex-col text-left leading-tight">
                   <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
                     {backButtonLabel.main}
@@ -1077,7 +1038,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                     {nextButtonLabel.sub}
                   </span>
                 </div>
-                <span className="material-symbols-outlined text-[26px]">arrow_forward</span>
+                <Icon name="arrow_forward" className="text-[26px]" />
               </button>
             </div>
           </div>
@@ -1087,7 +1048,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         {/* STEP 3: ADD MEDICINES (23c) */}
         {/* ============================================================== */}
         {currentStep === 3 && (
-          <div className="flex flex-col w-full h-[calc(100vh-64px)] px-gutter py-space-sm justify-between select-none">
+          <div className="flex flex-col w-full max-w-[1440px] mx-auto h-[calc(100vh-64px)] px-4 sm:px-gutter py-space-sm justify-between select-none overflow-y-auto lg:overflow-hidden">
             {/* Top Section: Step Header & Progress Bar */}
             <div className="flex flex-col gap-space-xs shrink-0">
               <div className="flex items-center justify-between">
@@ -1095,12 +1056,14 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   <h1 className="font-headline-md text-headline-md text-on-surface font-bold">
                     {t('stock_jodo.step3_title')}
                   </h1>
-                  <p className="font-label-sub-english text-label-sub-english text-on-surface-variant">
-                    {t('stock_jodo.step3_sub')}
-                  </p>
+                  {shouldShowSub(t('stock_jodo.step3_title'), t('stock_jodo.step3_sub')) && (
+                    <p className="font-label-sub-english text-label-sub-english text-on-surface-variant">
+                      {t('stock_jodo.step3_sub')}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-space-xs text-secondary font-bold">
-                  <span className="material-symbols-outlined text-[28px]">inventory_2</span>
+                  <Icon name="inventory_2" className="text-[28px]" />
                   <span className="font-label-sub-english text-label-sub-english text-on-surface-variant font-bold">
                     {t('stock_jodo.step3_tag')}
                   </span>
@@ -1116,19 +1079,21 @@ export const StockJodo: React.FC<StockJodoProps> = ({
             </div>
 
             {/* Main Body Split: 45% Form / 55% Medicine Rows */}
-            <div className="flex flex-row gap-gutter w-full flex-1 my-space-sm min-h-0">
+            <div className="flex flex-col lg:flex-row gap-space-md lg:gap-gutter w-full flex-1 my-space-sm min-h-0 overflow-y-auto lg:overflow-visible">
               {/* Left Card (45% Width): Dawai ki jaankari Form */}
-              <div className="w-[45%] bg-surface-container-lowest dark:bg-gray-900 rounded-xl shadow-md p-space-md flex flex-col justify-between overflow-y-auto">
+              <div className="w-full lg:w-[45%] bg-surface-container-lowest dark:bg-gray-900 rounded-xl shadow-md p-space-md flex flex-col justify-between overflow-y-auto border border-outline-variant/30">
                 <div>
                   <div className="flex items-center gap-space-xs mb-space-sm">
-                    <span className="material-symbols-outlined text-primary text-[28px]">medication</span>
+                    <Icon name="medication" className="text-primary text-[28px]" />
                     <div>
                       <h2 className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
                         {t('stock_jodo.medicine_info_title')}
                       </h2>
-                      <p className="font-label-sub-english text-label-sub-english text-on-surface-variant">
-                        {t('stock_jodo.medicine_info_sub')}
-                      </p>
+                      {shouldShowSub(t('stock_jodo.medicine_info_title'), t('stock_jodo.medicine_info_sub')) && (
+                        <p className="font-label-sub-english text-label-sub-english text-on-surface-variant">
+                          {t('stock_jodo.medicine_info_sub')}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1141,12 +1106,11 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                       <input
                         ref={searchInputRef}
                         type="text"
-                        value={searchQuery}
-                        onChange={(e) => {
-                          setSearchQuery(e.target.value);
+                        {...textFieldProps('free', searchQuery, (val) => {
+                          setSearchQuery(val);
                           setIsSearchOpen(true);
                           if (selectedMedicine) setSelectedMedicine(null);
-                        }}
+                        })}
                         onFocus={() => setIsSearchOpen(true)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -1177,11 +1141,11 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                                     {m.name} {m.strength}
                                   </span>
                                   <span className="font-label-sub-english text-on-surface-variant text-[13px]">
-                                    {m.company || m.salt || ''} · MRP Rs. {paiseToRupees(m.mrpPaise)}
+                                    {m.company || m.salt || ''} · {t('medicine.mrp_label')} {formatRupees(m.mrpPaise)}
                                   </span>
                                 </div>
-                                <span className="text-[12px] font-bold px-2 py-0.5 rounded bg-surface-container-high text-primary">
-                                  {m.shortCode || 'MED'}
+                                <span className="text-[12px] font-bold px-2 py-0.5 rounded bg-surface-container-high text-primary flex items-center justify-center">
+                                  {m.shortCode || <Icon name="medication" className="text-base" />}
                                 </span>
                               </div>
                             ))
@@ -1203,8 +1167,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                         <input
                           ref={batchInputRef}
                           type="text"
-                          value={batchNo}
-                          onChange={(e) => setBatchNo(e.target.value.toUpperCase())}
+                          {...textFieldProps('code', batchNo, setBatchNo)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
@@ -1365,9 +1328,10 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                     onClick={handleCommitLine}
                     className="flex-1 h-[60px] rounded-xl bg-primary-container hover:bg-primary active:translate-y-0.5 text-on-primary shadow-md flex items-center justify-center gap-space-sm transition-transform cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[32px]">
-                      {editingLineId ? 'check_circle' : 'add_circle'}
-                    </span>
+                    <Icon
+                      name={editingLineId ? 'check_circle' : 'add_circle'}
+                      className="text-[32px]"
+                    />
                     <div className="flex flex-col items-start leading-none">
                       <span className="font-button-text text-button-text font-bold">
                         {editingLineId ? updateLineLabel.main : addLineLabel.main}
@@ -1381,16 +1345,18 @@ export const StockJodo: React.FC<StockJodoProps> = ({
               </div>
 
               {/* Right Card (55% Width): Jodi gayi dawaiyan list */}
-              <div className="w-[55%] bg-surface-container-lowest dark:bg-gray-900 rounded-xl shadow-md p-space-md flex flex-col justify-between overflow-hidden">
+              <div className="w-full lg:w-[55%] bg-surface-container-lowest dark:bg-gray-900 rounded-xl shadow-md p-space-md flex flex-col justify-between overflow-hidden border border-outline-variant/30">
                 <div className="flex flex-col h-full overflow-hidden">
                   <div className="flex items-center justify-between mb-space-sm shrink-0">
                     <div>
                       <h2 className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
                         {t('stock_jodo.added_medicines_title')}
                       </h2>
-                      <p className="font-label-sub-english text-label-sub-english text-on-surface-variant">
-                        {t('stock_jodo.added_medicines_sub')}
-                      </p>
+                      {shouldShowSub(t('stock_jodo.added_medicines_title'), t('stock_jodo.added_medicines_sub')) && (
+                        <p className="font-label-sub-english text-label-sub-english text-on-surface-variant">
+                          {t('stock_jodo.added_medicines_sub')}
+                        </p>
+                      )}
                     </div>
                     <div className="px-space-sm py-1 bg-surface-container dark:bg-gray-800 rounded-lg">
                       <span className="font-title-hinglish text-title-hinglish text-primary font-bold">
@@ -1403,12 +1369,10 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   <div className="flex flex-col gap-space-xs flex-1 overflow-y-auto pr-1">
                     {lines.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center text-center p-space-lg text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[48px] opacity-40 mb-2">
-                          receipt_long
-                        </span>
-                        <p className="font-body-lg font-bold">Abhi tak koi dawai nahi jodi gayi</p>
+                        <Icon name="receipt_long" className="text-[48px] opacity-40 mb-2" />
+                        <p className="font-body-lg font-bold">{t('stock_jodo.empty_lines_title')}</p>
                         <p className="font-label-sub-english text-outline">
-                          Baayein taraf se dawai chun kar 'Line Jodo' dabayein
+                          {t('stock_jodo.empty_lines_sub')}
                         </p>
                       </div>
                     ) : (
@@ -1421,23 +1385,21 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                             onClick={() => handleEditLine(l)}
                             className="flex items-center gap-space-sm min-w-0 cursor-pointer flex-1"
                           >
-                            <span className="material-symbols-outlined text-primary text-[24px] shrink-0">
-                              check_circle
-                            </span>
+                            <Icon name="check_circle" className="text-primary text-[24px] shrink-0" />
                             <div className="flex flex-col min-w-0">
                               <span className="font-body-md font-bold text-on-surface truncate">
                                 {l.medicineName} {l.strength || ''} · {l.batchNo} · {l.expiryMonthYear}
                               </span>
                               <span className="font-label-sub-english text-on-surface-variant text-[13px]">
-                                {l.packs} packs {l.freePacks > 0 ? `(+${l.freePacks} free)` : ''} · MRP Rs. {paiseToRupees(l.mrpPaise)}
+                                {t('stock_jodo.packs_count', { count: l.packs })}{l.freePacks > 0 ? ` (+${l.freePacks} ${t('common.free')})` : ''} · {t('medicine.mrp_label')} {formatRupees(l.mrpPaise)}
                                 {/* ROLE ACCESS CONTROL: Only owner sees purchase rate */}
                                 {isOwner ? (
                                   <span className="ml-2 font-bold text-primary">
-                                    · Rs. {paiseToRupees(l.purchaseRatePaise)} (Rs. {paiseToRupees(l.packs * l.purchaseRatePaise)})
+                                    · {formatRupees(l.purchaseRatePaise)} ({formatRupees(l.packs * l.purchaseRatePaise)})
                                   </span>
                                 ) : (
                                   <span className="ml-2 inline-flex items-center gap-0.5 text-primary text-[12px] font-bold">
-                                    <span className="material-symbols-outlined text-[14px]">done</span>
+                                    <Icon name="done" className="text-[14px]" />
                                     {t('stock_jodo.rate_entered_badge')}
                                   </span>
                                 )}
@@ -1451,14 +1413,14 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                               onClick={() => handleEditLine(l)}
                               className="text-on-surface-variant hover:bg-surface-container px-2 py-1.5 rounded-lg transition-colors cursor-pointer"
                             >
-                              <span className="material-symbols-outlined text-[20px]">edit</span>
+                              <Icon name="edit" className="text-[20px]" />
                             </button>
                             <button
                               type="button"
                               onClick={() => setLineToDeleteId(l.id)}
                               className="flex items-center gap-1 text-error hover:bg-error-container px-space-sm py-1.5 rounded-lg transition-colors cursor-pointer"
                             >
-                              <span className="material-symbols-outlined text-[22px]">delete</span>
+                              <Icon name="delete" className="text-[22px]" />
                               <span className="font-title-hinglish text-title-hinglish">
                                 {t('stock_jodo.btn_delete_line')}
                               </span>
@@ -1472,7 +1434,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   {/* Context Info Deck */}
                   <div className="mt-space-xs p-space-sm rounded-xl bg-surface-container-low dark:bg-gray-800 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-space-xs text-on-surface-variant">
-                      <span className="material-symbols-outlined text-[24px]">receipt_long</span>
+                      <Icon name="receipt_long" className="text-[24px]" />
                       <span className="font-label-sub-english text-label-sub-english font-bold">
                         {t('stock_jodo.total_packs_entered', { count: totalPacksSum + totalFreePacksSum })}
                       </span>
@@ -1485,7 +1447,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                       </span>
                     ) : (
                       <span className="font-label-sub-english text-label-sub-english text-primary font-bold">
-                        {lines.length} items verified
+                        {t('stock_jodo.items_count', { count: lines.length })}
                       </span>
                     )}
                   </div>
@@ -1498,9 +1460,9 @@ export const StockJodo: React.FC<StockJodoProps> = ({
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="h-[60px] min-w-[200px] px-space-lg rounded-xl bg-surface-container-highest hover:bg-surface-dim active:translate-y-0.5 text-on-surface shadow-sm flex items-center gap-space-sm transition-transform cursor-pointer"
+                className="h-[60px] min-w-[140px] sm:min-w-[200px] px-space-md sm:px-space-lg rounded-xl bg-surface-container-highest hover:bg-surface-dim active:translate-y-0.5 text-on-surface shadow-sm flex items-center gap-space-sm transition-transform cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[32px]">arrow_back</span>
+                <Icon name="arrow_back" className="text-[32px]" />
                 <div className="flex flex-col items-start leading-none">
                   <span className="font-button-text text-button-text font-bold">
                     {backButtonLabel.main}
@@ -1517,7 +1479,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 onClick={() => {
                   setCurrentStep(4);
                 }}
-                className={`h-[60px] min-w-[220px] px-space-lg rounded-xl flex items-center justify-between gap-space-sm transition-transform active:translate-y-0.5 ${
+                className={`h-[60px] min-w-[150px] sm:min-w-[220px] px-space-md sm:px-space-lg rounded-xl flex items-center justify-between gap-space-sm transition-transform active:translate-y-0.5 ${
                   lines.length > 0
                     ? 'bg-primary hover:bg-primary-container text-on-primary shadow-md cursor-pointer'
                     : 'bg-surface-container-highest text-outline opacity-60 cursor-not-allowed shadow-none'
@@ -1531,7 +1493,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                     {nextButtonLabel.sub}
                   </span>
                 </div>
-                <span className="material-symbols-outlined text-[32px]">arrow_forward</span>
+                <Icon name="arrow_forward" className="text-[32px]" />
               </button>
             </div>
           </div>
@@ -1541,7 +1503,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         {/* STEP 4: REVIEW & SAVE (23d) */}
         {/* ============================================================== */}
         {currentStep === 4 && (
-          <div className="flex flex-col w-full h-[calc(100vh-4rem)] p-space-md select-none overflow-hidden justify-between">
+          <div className="flex flex-col w-full max-w-[1440px] mx-auto h-[calc(100vh-4rem)] px-4 sm:px-gutter py-space-sm sm:py-space-md select-none overflow-y-auto lg:overflow-hidden justify-between">
             {/* Top Progress & Header */}
             <div className="flex flex-col gap-space-xs shrink-0 mb-space-xs">
               <div className="flex items-center justify-between">
@@ -1549,14 +1511,14 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   <h1 className="font-headline-md text-headline-md text-on-surface flex items-center gap-space-xs font-bold">
                     <span>{t('stock_jodo.step4_title')}</span>
                   </h1>
-                  <span className="font-label-sub-english text-label-sub-english text-on-surface-variant">
-                    {t('stock_jodo.step4_sub')}
-                  </span>
+                  {shouldShowSub(t('stock_jodo.step4_title'), t('stock_jodo.step4_sub')) && (
+                    <span className="font-label-sub-english text-label-sub-english text-on-surface-variant">
+                      {t('stock_jodo.step4_sub')}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-space-xs px-space-sm py-1 bg-surface-container dark:bg-gray-800 rounded-full">
-                  <span className="material-symbols-outlined text-primary text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    task_alt
-                  </span>
+                  <Icon name="task_alt" className="text-primary text-[20px]" filled={true} />
                   <span className="font-label-sub-english text-label-sub-english text-primary font-bold">
                     {t('stock_jodo.step4_tag')}
                   </span>
@@ -1573,14 +1535,14 @@ export const StockJodo: React.FC<StockJodoProps> = ({
             </div>
 
             {/* Main Split Content Area */}
-            <div className="grid grid-cols-12 gap-space-md flex-1 min-h-0 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md lg:gap-gutter flex-1 min-h-0 items-stretch overflow-y-auto lg:overflow-visible">
               {/* Left Section: 5 of 12 cols (Supplier & Bill info) */}
-              <div className="col-span-5 flex flex-col justify-between bg-surface-container-lowest dark:bg-gray-900 rounded-2xl shadow-sm p-space-md min-h-0 overflow-y-auto">
+              <div className="col-span-1 lg:col-span-5 flex flex-col justify-between bg-surface-container-lowest dark:bg-gray-900 rounded-2xl shadow-sm p-space-md min-h-0 overflow-y-auto border border-outline-variant/30">
                 <div className="flex flex-col gap-space-md">
                   <div className="flex items-center justify-between pb-space-xs">
                     <div className="flex items-center gap-space-xs">
                       <div className="w-10 h-10 rounded-xl bg-surface-container dark:bg-gray-800 flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined text-[24px]">receipt_long</span>
+                        <Icon name="receipt_long" className="text-[24px]" />
                       </div>
                       <div className="flex flex-col">
                         <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
@@ -1608,7 +1570,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                     </div>
                     {selectedSupplier?.phone && (
                       <div className="flex items-center gap-space-xs bg-surface-container-lowest dark:bg-gray-900 px-space-sm py-1.5 rounded-lg shadow-sm">
-                        <span className="material-symbols-outlined text-primary text-[18px]">call</span>
+                        <Icon name="call" className="text-primary text-[18px]" />
                         <span className="font-body-md text-body-md font-bold text-on-surface">
                           {selectedSupplier.phone}
                         </span>
@@ -1643,7 +1605,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                         {t('stock_jodo.label_invoice_photo')}
                       </span>
                       <div className="flex items-center gap-1 text-primary">
-                        <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                        <Icon name="check_circle" className="text-[18px]" />
                         <span className="font-label-sub-english text-label-sub-english font-bold">
                           {t('stock_jodo.photo_attached_badge')}
                         </span>
@@ -1658,7 +1620,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                         <div className="w-16 h-20 bg-surface-container-lowest dark:bg-gray-900 rounded-lg shadow-sm p-1 flex items-center justify-center shrink-0 overflow-hidden">
                           <img
                             src={invoicePhoto}
-                            alt="Thumbnail"
+                            alt={t('stock_jodo.alt_thumbnail')}
                             className="w-full h-full object-cover rounded"
                           />
                         </div>
@@ -1667,22 +1629,20 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                             {selectedSupplier?.name}
                           </span>
                           <span className="font-label-sub-english text-label-sub-english text-primary font-medium mt-1 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[16px]">visibility</span>
+                            <Icon name="visibility" className="text-[16px]" />
                             {t('stock_jodo.photo_inspect_hint')}
                           </span>
                         </div>
                       </div>
                       <div className="h-10 w-10 rounded-full bg-surface-container-lowest dark:bg-gray-900 shadow-sm flex items-center justify-center text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[20px]">zoom_in</span>
+                        <Icon name="zoom_in" className="text-[20px]" />
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-surface-container-high dark:bg-gray-800 rounded-xl p-space-sm flex items-start gap-space-xs mt-2">
-                  <span className="material-symbols-outlined text-primary text-[22px] shrink-0 mt-0.5">
-                    info
-                  </span>
+                  <Icon name="info" className="text-primary text-[22px] shrink-0 mt-0.5" />
                   <p className="font-label-sub-english text-label-sub-english text-on-surface-variant leading-snug">
                     {t('stock_jodo.review_warning_note')}
                   </p>
@@ -1690,12 +1650,12 @@ export const StockJodo: React.FC<StockJodoProps> = ({
               </div>
 
               {/* Right Section: 7 of 12 cols (Medicines Table & Grand Total Deck) */}
-              <div className="col-span-7 flex flex-col justify-between bg-surface-container-lowest dark:bg-gray-900 rounded-2xl shadow-sm p-space-md min-h-0">
+              <div className="col-span-1 lg:col-span-7 flex flex-col justify-between bg-surface-container-lowest dark:bg-gray-900 rounded-2xl shadow-sm p-space-md min-h-0 border border-outline-variant/30 overflow-hidden">
                 <div className="flex flex-col min-h-0 flex-1 overflow-hidden">
                   <div className="flex items-center justify-between pb-space-xs mb-space-xs shrink-0">
                     <div className="flex items-center gap-space-xs">
                       <div className="w-10 h-10 rounded-xl bg-surface-container dark:bg-gray-800 flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined text-[24px]">medication</span>
+                        <Icon name="medication" className="text-[24px]" />
                       </div>
                       <div className="flex flex-col">
                         <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
@@ -1764,7 +1724,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                             </span>
                             {l.freePacks > 0 && (
                               <span className="font-label-sub-english text-[14px] text-primary font-bold">
-                                +{l.freePacks} Free
+                                +{l.freePacks} {t('common.free')}
                               </span>
                             )}
                           </div>
@@ -1773,10 +1733,10 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                           {reviewData.canSeeRates && (
                             <>
                               <div className="col-span-1 text-right font-body-md text-body-md text-on-surface">
-                                Rs. {paiseToRupees(l.purchaseRatePaise)}
+                                {formatRupees(l.purchaseRatePaise)}
                               </div>
                               <div className="col-span-1 text-right font-body-lg text-body-lg font-bold text-on-surface">
-                                Rs. {paiseToRupees(l.lineAmountPaise)}
+                                {formatRupees(l.lineAmountPaise)}
                               </div>
                             </>
                           )}
@@ -1805,7 +1765,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   {reviewData.canSeeRates ? (
                     <div className="flex items-baseline gap-2">
                       <span className="font-title-hinglish text-title-hinglish text-primary font-bold">
-                        TOTAL
+                        {t('stock_jodo.total_label')}
                       </span>
                       <span className="font-display-total text-[36px] leading-tight font-extrabold text-primary">
                         {formatRupees(reviewData.totalPaise)}
@@ -1814,7 +1774,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   ) : (
                     <div className="px-space-md py-1.5 bg-primary/10 rounded-xl">
                       <span className="font-title-hinglish text-title-hinglish text-primary font-bold">
-                        {reviewData.totalPacks + reviewData.totalFreePacks} Total Packs
+                        {t('stock_jodo.total_packs_badge', { count: reviewData.totalPacks + reviewData.totalFreePacks })}
                       </span>
                     </div>
                   )}
@@ -1834,11 +1794,9 @@ export const StockJodo: React.FC<StockJodoProps> = ({
               <button
                 type="button"
                 onClick={() => setCurrentStep(3)}
-                className="h-16 px-space-lg bg-surface-container dark:bg-gray-800 hover:bg-surface-container-high active:translate-y-0.5 rounded-2xl flex items-center gap-space-sm text-on-surface transition-all shadow-sm cursor-pointer"
+                className="h-16 px-space-md sm:px-space-lg bg-surface-container dark:bg-gray-800 hover:bg-surface-container-high active:translate-y-0.5 rounded-2xl flex items-center gap-space-sm text-on-surface transition-all shadow-sm cursor-pointer min-w-[140px] sm:min-w-[180px]"
               >
-                <span className="material-symbols-outlined text-[28px] text-on-surface-variant">
-                  arrow_back
-                </span>
+                <Icon name="arrow_back" className="text-[28px] text-on-surface-variant" />
                 <div className="flex flex-col text-left">
                   <span className="font-title-hinglish text-title-hinglish leading-tight text-on-surface font-bold">
                     {backButtonLabel.main}
@@ -1853,16 +1811,15 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 type="button"
                 disabled={isSaving}
                 onClick={handleSavePurchase}
-                className={`h-16 px-space-xl bg-primary hover:bg-primary-container active:translate-y-0.5 rounded-2xl flex items-center gap-space-md text-on-primary transition-all shadow-md cursor-pointer ${
+                className={`h-16 px-space-md sm:px-space-xl bg-primary hover:bg-primary-container active:translate-y-0.5 rounded-2xl flex items-center gap-space-sm sm:gap-space-md text-on-primary transition-all shadow-md cursor-pointer min-w-[160px] sm:min-w-[240px] ${
                   isSaving ? 'opacity-70 cursor-not-allowed' : ''
                 }`}
               >
-                <span
-                  className="material-symbols-outlined text-[32px] text-on-primary"
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  {isSaving ? 'hourglass_empty' : 'check_circle'}
-                </span>
+                <Icon
+                  name={isSaving ? 'hourglass_empty' : 'check_circle'}
+                  className="text-[32px] text-on-primary"
+                  filled={true}
+                />
                 <div className="flex flex-col text-left">
                   <span className="font-button-text text-button-text font-bold leading-tight text-on-primary">
                     {isSaving ? t('stock_jodo.saving_in_progress') : confirmSaveLabel.main}
@@ -1880,16 +1837,15 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         {/* STEP 5: SAVED SUCCESS (23e) */}
         {/* ============================================================== */}
         {currentStep === 'saved' && (
-          <div className="flex flex-col w-full h-[calc(100vh-4rem)] p-space-lg items-center justify-center select-none overflow-hidden">
+          <div className="flex flex-col w-full max-w-[1440px] mx-auto h-[calc(100vh-4rem)] p-4 sm:p-space-lg items-center justify-center select-none overflow-y-auto">
             <div className="w-full max-w-2xl bg-surface-container-lowest dark:bg-gray-900 rounded-xl shadow-xl p-space-xl flex flex-col items-center text-center relative overflow-hidden">
               <div className="w-28 h-28 rounded-full bg-surface-container-low dark:bg-gray-800 flex items-center justify-center mb-space-lg shadow-sm">
                 <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-md">
-                  <span
-                    className="material-symbols-outlined text-[54px]"
-                    style={{ fontVariationSettings: "'FILL' 1, 'wght' 700" }}
-                  >
-                    check_circle
-                  </span>
+                  <Icon
+                    name="check_circle"
+                    className="text-[54px]"
+                    filled={true}
+                  />
                 </div>
               </div>
 
@@ -1912,7 +1868,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                     {t('stock_jodo.stat_medicines_count')}
                   </span>
                   <span className="font-headline-md text-headline-md text-on-surface font-bold">
-                    {saveResult?.itemsCount ?? lines.length} Items
+                    {t('stock_jodo.items_count', { count: saveResult?.itemsCount ?? lines.length })}
                   </span>
                 </div>
 
@@ -1923,7 +1879,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                     {t('stock_jodo.stat_batches_count')}
                   </span>
                   <span className="font-headline-md text-headline-md text-primary font-bold">
-                    {saveResult?.batchesCreatedOrUsed ?? lines.length} Added
+                    {t('stock_jodo.stat_batches_added', { count: saveResult?.batchesCreatedOrUsed ?? lines.length })}
                   </span>
                 </div>
 
@@ -1936,7 +1892,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   <span className="font-headline-md text-headline-md text-secondary font-bold">
                     {isOwner
                       ? formatRupees(saveResult?.totalPaise ?? totalPaiseSum)
-                      : `${saveResult?.totalPacksAdded ?? totalPacksSum + totalFreePacksSum} Packs`}
+                      : t('stock_jodo.packs_count', { count: saveResult?.totalPacksAdded ?? totalPacksSum + totalFreePacksSum })}
                   </span>
                 </div>
               </div>
@@ -1948,12 +1904,11 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   onClick={handleResetForMoreStock}
                   className="w-full sm:w-1/2 min-h-[64px] h-16 bg-surface-container dark:bg-gray-800 rounded-xl flex items-center justify-center gap-space-sm px-space-md text-on-surface hover:bg-surface-container-high active:translate-y-0.5 transition-all shadow-sm cursor-pointer"
                 >
-                  <span
-                    className="material-symbols-outlined text-[32px] text-primary"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    add_box
-                  </span>
+                  <Icon
+                    name="add_box"
+                    className="text-[32px] text-primary"
+                    filled={true}
+                  />
                   <div className="flex flex-col items-start leading-tight">
                     <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
                       {addMoreStockLabel.main}
@@ -1969,12 +1924,11 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   onClick={onReturnHome}
                   className="w-full sm:w-1/2 min-h-[64px] h-16 bg-primary text-on-primary rounded-xl flex items-center justify-center gap-space-sm px-space-md hover:bg-primary-container active:translate-y-0.5 transition-all shadow-md cursor-pointer"
                 >
-                  <span
-                    className="material-symbols-outlined text-[32px]"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    check
-                  </span>
+                  <Icon
+                    name="check"
+                    className="text-[32px]"
+                    filled={true}
+                  />
                   <div className="flex flex-col items-start leading-tight">
                     <span className="font-title-hinglish text-title-hinglish text-on-primary font-bold">
                       {doneLabel.main}
@@ -2010,7 +1964,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 onClick={() => setIsNewSupplierOpen(false)}
                 className="w-9 h-9 rounded-lg hover:bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
               >
-                <span className="material-symbols-outlined">close</span>
+                <Icon name="close" />
               </button>
             </div>
 
@@ -2021,10 +1975,9 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={newSupplierName}
-                  onChange={(e) => setNewSupplierName(e.target.value)}
-                  placeholder="Jaise: Gupta Pharma"
-                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary shadow-inner"
+                  {...textFieldProps('name', newSupplierName, setNewSupplierName)}
+                  placeholder={t('stock_jodo.supplier_name_placeholder')}
+                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface placeholder:text-outline/60 outline-none focus:ring-2 focus:ring-primary shadow-inner"
                 />
               </div>
 
@@ -2034,10 +1987,9 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={newSupplierPhone}
-                  onChange={(e) => setNewSupplierPhone(e.target.value)}
-                  placeholder="+91 98260 00000"
-                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary shadow-inner"
+                  {...textFieldProps('phone', newSupplierPhone, setNewSupplierPhone)}
+                  placeholder={t('stock_jodo.supplier_phone_placeholder')}
+                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface placeholder:text-outline/60 outline-none focus:ring-2 focus:ring-primary shadow-inner"
                 />
               </div>
 
@@ -2047,10 +1999,9 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={newSupplierAddress}
-                  onChange={(e) => setNewSupplierAddress(e.target.value)}
-                  placeholder="Dawa Bazaar, Patna"
-                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary shadow-inner"
+                  {...textFieldProps('name', newSupplierAddress, setNewSupplierAddress)}
+                  placeholder={t('stock_jodo.supplier_address_placeholder')}
+                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface placeholder:text-outline/60 outline-none focus:ring-2 focus:ring-primary shadow-inner"
                 />
               </div>
 
@@ -2060,9 +2011,8 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={newSupplierGst}
-                  onChange={(e) => setNewSupplierGst(e.target.value)}
-                  placeholder="08AAECS1290K1ZU"
+                  {...textFieldProps('code', newSupplierGst, setNewSupplierGst)}
+                  placeholder={t('stock_jodo.supplier_gst_placeholder')}
                   className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary shadow-inner"
                 />
               </div>
@@ -2109,14 +2059,14 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 onClick={() => setInspectPhotoOpen(false)}
                 className="w-9 h-9 rounded-lg hover:bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
               >
-                <span className="material-symbols-outlined">close</span>
+                <Icon name="close" />
               </button>
             </div>
 
             <div className="w-full flex-1 overflow-auto p-4 flex items-center justify-center">
               <img
                 src={invoicePhoto}
-                alt="Enlarged invoice"
+                alt={t('stock_jodo.alt_enlarged_invoice')}
                 className="max-h-[70vh] object-contain rounded-lg shadow-lg"
               />
             </div>
@@ -2145,7 +2095,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         }}
         onCancel={() => setDuplicateWarningOpen(false)}
         confirmLabel={t('stock_jodo.duplicate_invoice_proceed')}
-        confirmSubLabel="Proceed anyway"
+        confirmSubLabel=""
         cancelLabel={tButton('common.btn_cancel').main}
         cancelSubLabel={tButton('common.btn_cancel').sub}
         isDanger={false}
@@ -2182,8 +2132,8 @@ export const StockJodo: React.FC<StockJodoProps> = ({
           setPendingLineToAdd(null);
           setIsExpiryConfirmOpen(false);
         }}
-        confirmLabel="Haan, Jodo"
-        confirmSubLabel="Confirm"
+        confirmLabel={tButton('dialogs.btn_haan_jodo').main}
+        confirmSubLabel={tButton('dialogs.btn_haan_jodo').sub}
         cancelLabel={tButton('common.btn_cancel').main}
         cancelSubLabel={tButton('common.btn_cancel').sub}
       />
@@ -2200,8 +2150,8 @@ export const StockJodo: React.FC<StockJodoProps> = ({
           onReturnHome();
         }}
         onCancel={() => setIsLeaveConfirmOpen(false)}
-        confirmLabel="Haan, Wapas Jao"
-        confirmSubLabel="Leave"
+        confirmLabel={tButton('dialogs.btn_haan_wapas').main}
+        confirmSubLabel={tButton('dialogs.btn_haan_wapas').sub}
         cancelLabel={tButton('common.btn_cancel').main}
         cancelSubLabel={tButton('common.btn_cancel').sub}
       />

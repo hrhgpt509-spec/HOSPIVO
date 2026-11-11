@@ -50,10 +50,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       aria-modal="true"
       className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none animate-fadeIn"
     >
-      <div className="w-full max-w-[520px] bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8 flex flex-col items-center text-center relative z-10 border border-slate-200 dark:border-gray-800">
+      <div className="w-full max-w-[520px] bg-surface-container-lowest rounded-3xl shadow-2xl p-8 flex flex-col items-center text-center relative z-10 border border-outline-variant">
         
         {/* Warning Icon (46a_Shared_DeleteConfirm) */}
-        <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-950/50 flex items-center justify-center mb-4 text-[#ba1a1a] dark:text-red-400">
+        <div className="w-16 h-16 rounded-full bg-error-container/40 flex items-center justify-center mb-4 text-error">
           <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -64,12 +64,12 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </div>
 
         {/* Heading */}
-        <h2 className="text-3xl font-extrabold text-[#141e1a] dark:text-white mb-2 tracking-tight">
+        <h2 className="text-3xl font-extrabold text-on-surface mb-2 tracking-tight">
           {activeTitle}
         </h2>
 
         {/* Subtitle */}
-        <p className="text-lg text-[#6e7a6e] dark:text-gray-400 mb-8 max-w-[380px] leading-relaxed">
+        <p className="text-lg text-outline mb-8 max-w-[380px] leading-relaxed">
           {activeSubtitle}
         </p>
 
@@ -78,15 +78,15 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="h-16 px-6 rounded-2xl bg-[#e5f0eb] dark:bg-gray-800 hover:bg-[#dae5df] dark:hover:bg-gray-700 text-[#141e1a] dark:text-white font-bold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+            className="h-16 px-6 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] border border-outline-variant"
           >
-            <svg className="w-6 h-6 text-[#3e4a3f] dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
             <div className="flex flex-col text-left justify-center leading-none">
               <span className="text-xl font-bold">{activeCancelMain}</span>
               {activeCancelSub ? (
-                <span className="text-xs text-[#3e4a3f] dark:text-gray-400 font-medium mt-0.5">
+                <span className="text-xs text-outline font-medium mt-0.5">
                   {activeCancelSub}
                 </span>
               ) : null}
@@ -98,8 +98,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             onClick={onConfirm}
             className={`h-16 px-6 rounded-2xl ${
               isDanger
-                ? 'bg-[#ba1a1a] hover:bg-red-700 text-white shadow-md shadow-[#ba1a1a]/25'
-                : 'bg-[#1B8F4A] hover:bg-[#15733b] text-white shadow-md shadow-[#1B8F4A]/25'
+                ? 'bg-error hover:bg-red-700 text-on-error shadow-md shadow-error/25'
+                : 'bg-primary hover:bg-[#15733b] text-on-primary shadow-md shadow-primary/25'
             } font-bold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]`}
           >
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">

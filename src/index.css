@@ -13,6 +13,8 @@
 @import "@fontsource/noto-sans-devanagari/700.css";
 @import "@fontsource/noto-sans-devanagari/800.css";
 
+@import "@fontsource/material-symbols-outlined";
+
 * {
   box-sizing: border-box;
   user-select: none;

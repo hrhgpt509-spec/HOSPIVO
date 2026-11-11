@@ -136,7 +136,13 @@ export interface Purchase {
   verified: boolean;
   lines?: PurchaseLine[];
   createdAt?: string;
+}export interface ProductType {
+  id?: number;
+  name: string;
+  active: boolean;
+  createdAt?: string;
 }
+
 
 export class HospivoDatabase extends Dexie {
   shop!: EntityTable<Shop, 'id'>;
@@ -151,6 +157,7 @@ export class HospivoDatabase extends Dexie {
   suppliers!: EntityTable<Supplier, 'id'>;
   purchases!: EntityTable<Purchase, 'id'>;
   purchaseLines!: EntityTable<PurchaseLine, 'id'>;
+  productTypes!: EntityTable<ProductType, 'id'>;
 
   constructor() {
     super('HospivoDatabase');
@@ -173,6 +180,21 @@ export class HospivoDatabase extends Dexie {
       suppliers: '++id, name, phone',
       purchases: '++id, supplierId, invoiceNo, date, verified',
       purchaseLines: '++id, purchaseId, medicineId, batchNo',
+    });
+
+    // Version 3: Custom Product Types
+    this.version(3).stores({
+      shop: '++id, mode',
+      users: 'id, role, active',
+      settings: 'key',
+      auditLog: '++id, timestamp, who, action, record',
+      medicines: '++id, name, shortCode, barcode, company, active, shelf',
+      batches: '++id, medicineId, batchNo, expiry, [medicineId+batchNo]',
+      stockMovements: '++id, batchId, medicineId, type, at',
+      suppliers: '++id, name, phone',
+      purchases: '++id, supplierId, invoiceNo, date, verified',
+      purchaseLines: '++id, purchaseId, medicineId, batchNo',
+      productTypes: '++id, name, active',
     });
 
     // Make audit log strictly append-only at database level

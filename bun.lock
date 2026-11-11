@@ -5,6 +5,7 @@
     "": {
       "name": "hospivo",
       "dependencies": {
+        "@fontsource/material-symbols-outlined": "^5.3.9",
         "@fontsource/noto-sans": "^5.3.0",
         "@fontsource/noto-sans-devanagari": "^5.3.0",
         "dexie": "^4.4.7",
@@ -211,6 +212,8 @@
     "@babel/traverse": ["@babel/traverse@7.29.12", "", { "dependencies": { "@babel/code-frame": "^7.29.7", "@babel/generator": "^7.29.12", "@babel/helper-globals": "^7.29.7", "@babel/parser": "^7.29.12", "@babel/template": "^7.29.7", "@babel/types": "^7.29.11", "debug": "^4.3.1" } }, "sha512-MscXe/NAZcOkYEsRajHZFt3ynsb22PUi6CTrp5U7+RYycR9By84mn9mFN54YgfITiqK4hFx3Ju3tZSyzfpS5ew=="],
 
     "@babel/types": ["@babel/types@7.29.11", "", { "dependencies": { "@babel/helper-string-parser": "^7.29.11", "@babel/helper-validator-identifier": "^7.29.7" } }, "sha512-WCsemW40Cpc6gouC1SrY6PBaZ+oLRlEVY9XBvZBI7il/HyUrb2nJ505wE1MHEFyDZNnrWDEuy4jL50WVHfTTSQ=="],
+
+    "@fontsource/material-symbols-outlined": ["@fontsource/material-symbols-outlined@5.3.9", "", {}, "sha512-rPyajEu+UBQvAN78nnlvIReUtHAdaTMlNsrY5uFqf0eu+B9CYScof7AGy1hjF5jq3xARBGbdG9WVpuOi+nJhuQ=="],
 
     "@fontsource/noto-sans": ["@fontsource/noto-sans@5.3.0", "", {}, "sha512-fBCog2PY7DiVVTEEqtI/Qdinx/knobHYfoGpjFXdfBX5RoJaBp1Prw2G75p0OIsdlMZg3cLo0c+YbIUYOxnQJw=="],
 

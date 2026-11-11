@@ -194,7 +194,7 @@ export async function savePurchase(
     throw new Error('At least one medicine line is required');
   }
 
-  const userName = user?.name || (user?.role === 'owner' ? 'Owner' : 'Counter Admin');
+  const userName = user?.name || (user?.role === 'owner' ? 'Owner' : 'Counter staff');
 
   return await db.transaction(
     'rw',

@@ -71,13 +71,13 @@ export function validateMedicineForm(
   }
 
   // 5. Barcode, if typed, must be unique
-  const barcodeTrim = data.barcode.trim();
+  const barcodeTrim = data.barcode.trim().toLowerCase();
   if (barcodeTrim) {
     const isDuplicateBarcode = existingMedicines.some(
       (m) =>
         m.id !== currentMedicineId &&
         m.active !== false &&
-        m.barcode?.trim() === barcodeTrim
+        m.barcode?.trim().toLowerCase() === barcodeTrim
     );
     if (isDuplicateBarcode) {
       errors.barcode = 'err_barcode_duplicate';

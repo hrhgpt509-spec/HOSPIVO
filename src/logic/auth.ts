@@ -115,7 +115,7 @@ export async function attemptUserLogin(
   if (isMatch) {
     // Reset lockout state on success
     await setLoginLock(user.id, { userId: user.id, failedAttempts: 0, lockedUntil: null });
-    await recordAudit(user.name, 'login_success', 'user', 'Kamyab login');
+    await recordAudit(user.name, 'login_success', 'user', 'Successful login');
     return { ok: true, status: 'ok', user };
   }
 
@@ -129,7 +129,7 @@ export async function attemptUserLogin(
       user.name,
       'login_locked',
       'user',
-      '5 galat try ke baad 2 minute ke liye lock ho gaya'
+      'Locked for 2 minutes after 5 failed attempts'
     );
     return { ok: false, status: 'locked', minutesLeft: 2, secondsLeft: 120 };
   }
@@ -139,7 +139,7 @@ export async function attemptUserLogin(
     user.name,
     'login_wrong_pin',
     'user',
-    `Galat PIN try (${attempts}/5)`
+    `Wrong PIN attempt (${attempts}/5)`
   );
   return { ok: false, status: 'wrong', attempts, triesLeft: 5 - attempts };
 }

@@ -27,4 +27,160 @@
   --color-semantic-grey: #475467;
   --color-semantic-greyChipBg: #E9EEF2;
   --color-semantic-grey-chip-bg: #E9EEF2;
+
+  /* Stitch Material 3 Colors */
+  --color-primary: #006b33;
+  --color-primary-container: #088643;
+  --color-primary-fixed: #8ef9a7;
+  --color-primary-fixed-dim: #72dc8e;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #f6fff3;
+  --color-on-primary-fixed: #00210b;
+  --color-on-primary-fixed-variant: #005226;
+  --color-inverse-primary: #72dc8e;
+
+  --color-secondary: #005faf;
+  --color-secondary-container: #54a0fe;
+  --color-secondary-fixed: #d4e3ff;
+  --color-secondary-fixed-dim: #a5c8ff;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #003567;
+  --color-on-secondary-fixed: #001c3a;
+  --color-on-secondary-fixed-variant: #004786;
+
+  --color-tertiary: #924700;
+  --color-tertiary-container: #b75b00;
+  --color-tertiary-fixed: #ffdcc6;
+  --color-tertiary-fixed-dim: #ffb786;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #fffbff;
+  --color-on-tertiary-fixed: #311300;
+  --color-on-tertiary-fixed-variant: #723600;
+
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+
+  --color-surface: #f1fcf6;
+  --color-surface-dim: #d1ddd7;
+  --color-surface-bright: #f1fcf6;
+  --color-surface-tint: #006d34;
+  --color-surface-variant: #dae5df;
+  --color-surface-container: #e5f0eb;
+  --color-surface-container-low: #ebf6f0;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-high: #e0ebe5;
+  --color-surface-container-highest: #dae5df;
+
+  --color-on-surface: #141e1a;
+  --color-on-surface-variant: #3e4a3f;
+  --color-outline: #6e7a6e;
+  --color-outline-variant: #bdcabc;
+  --color-inverse-surface: #28332f;
+  --color-inverse-on-surface: #e8f3ee;
+  --color-background: #f1fcf6;
+  --color-on-background: #141e1a;
+
+  /* Stitch Custom Spacing */
+  --spacing-margin: 2rem;
+  --spacing-margin-mobile: 1rem;
+  --spacing-gutter: 1.5rem;
+  --spacing-gutter-compact: 1rem;
+  --spacing-space-xs: 0.5rem;
+  --spacing-space-sm: 0.75rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-xl: 2.5rem;
+
+  /* Stitch Custom Border Radius */
+  --radius: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+
+  /* Stitch Custom Font Families */
+  --font-headline-lg: 'Noto Sans', sans-serif;
+  --font-headline-md: 'Noto Sans', sans-serif;
+  --font-button-text: 'Noto Sans', sans-serif;
+  --font-title-hinglish: 'Noto Sans', sans-serif;
+  --font-body-lg: 'Noto Sans', sans-serif;
+  --font-body-md: 'Noto Sans', sans-serif;
+  --font-label-sub-english: 'Noto Sans', sans-serif;
+  --font-display-total: 'Noto Sans', sans-serif;
+  --font-display-total-mobile: 'Noto Sans', sans-serif;
+  --font-numpad-number: 'Noto Sans', sans-serif;
+
+  /* Stitch Custom Typography Sizes & Weights */
+  --text-headline-lg: 28px;
+  --text-headline-lg--line-height: 36px;
+  --text-headline-lg--font-weight: 700;
+
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 32px;
+  --text-headline-md--font-weight: 700;
+
+  --text-button-text: 22px;
+  --text-button-text--line-height: 28px;
+  --text-button-text--font-weight: 700;
+
+  --text-title-hinglish: 20px;
+  --text-title-hinglish--line-height: 26px;
+  --text-title-hinglish--font-weight: 700;
+
+  --text-body-lg: 20px;
+  --text-body-lg--line-height: 28px;
+  --text-body-lg--font-weight: 500;
+
+  --text-body-md: 18px;
+  --text-body-md--line-height: 26px;
+  --text-body-md--font-weight: 400;
+
+  --text-label-sub-english: 16px;
+  --text-label-sub-english--line-height: 20px;
+  --text-label-sub-english--letter-spacing: 0.01em;
+  --text-label-sub-english--font-weight: 500;
+
+  --text-display-total: 48px;
+  --text-display-total--line-height: 56px;
+  --text-display-total--letter-spacing: -0.02em;
+  --text-display-total--font-weight: 800;
+
+  --text-display-total-mobile: 36px;
+  --text-display-total-mobile--line-height: 44px;
+  --text-display-total-mobile--font-weight: 800;
+
+  --text-numpad-number: 32px;
+  --text-numpad-number--line-height: 38px;
+  --text-numpad-number--font-weight: 700;
 }
+
+html.dark {
+  --color-surface: #0e1512;
+  --color-background: #0e1512;
+  --color-surface-dim: #0e1512;
+  --color-surface-bright: #343b37;
+  --color-surface-container-lowest: #090f0d;
+  --color-surface-container-low: #161d1a;
+  --color-surface-container: #1a211e;
+  --color-surface-container-high: #252c29;
+  --color-surface-container-highest: #303733;
+  --color-surface-variant: #3e4a3f;
+  --color-on-surface: #dde5e0;
+  --color-on-background: #dde5e0;
+  --color-on-surface-variant: #bdcabc;
+  --color-outline: #889487;
+  --color-outline-variant: #3e4a3f;
+  --color-primary: #72dc8e;
+  --color-on-primary: #00391a;
+  --color-primary-container: #005226;
+  --color-on-primary-container: #8ef9a7;
+  --color-secondary: #a5c8ff;
+  --color-tertiary: #ffb786;
+  --color-error: #ffb4ab;
+  --color-inverse-surface: #dde5e0;
+  --color-inverse-on-surface: #2b322f;
+  --color-surface-tint: #72dc8e;
+  --color-canvas: #0f1713;
+}
+

@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { en } from './en';
 import { hi } from './hi';
 import { hinglish } from './hinglish';
-import { t, tButton, setLanguage, getLanguage } from './index';
+import { t, tButton, setLanguage, getLanguage, shouldShowSub } from './index';
 
 function getAllKeys(obj: Record<string, unknown>, prefix = ''): string[] {
   let keys: string[] = [];
@@ -108,5 +108,32 @@ describe('i18n language catalogs and fallback tests', () => {
     expect(t('login.lockout_msg', { minutes: 2, seconds: 120 })).toBe(
       '2 minute baad try karein (120s)'
     );
+  });
+
+  it('shouldShowSub suppresses duplicate sub-labels in English and preserves both in Hindi and Hinglish', async () => {
+    // English mode: duplicate sub-labels should be hidden (return false)
+    await setLanguage('en');
+    expect(shouldShowSub('Step 3 of 4: Add Medicines', 'Add medicines', 'en')).toBe(false);
+    expect(shouldShowSub('Medicine Details', 'Medicine details', 'en')).toBe(false);
+    expect(shouldShowSub('Added Medicines', 'Added medicine list', 'en')).toBe(false);
+    expect(shouldShowSub('Edit Medicine', '(Edit medicine)', 'en')).toBe(false);
+
+    // Non-duplicates in English should still be shown (return true)
+    expect(shouldShowSub('Step 1 of 4: Supplier', 'Choose supplier', 'en')).toBe(true);
+    expect(shouldShowSub('Step 4 of 4: Review and Save', 'Review stock before saving', 'en')).toBe(true);
+
+    // Hindi mode: always preserves both lines (return true)
+    await setLanguage('hi');
+    expect(shouldShowSub('कदम 3/4: दवाई जोड़ें', 'Add medicines', 'hi')).toBe(true);
+    expect(shouldShowSub('दवाई की जानकारी', 'Medicine details', 'hi')).toBe(true);
+    expect(shouldShowSub('जोड़ी गई दवाइयां', 'Added medicine list', 'hi')).toBe(true);
+    expect(shouldShowSub('दवाई बदलें', '(Edit medicine)', 'hi')).toBe(true);
+
+    // Hinglish mode: always preserves both lines (return true)
+    await setLanguage('hinglish');
+    expect(shouldShowSub('Step 3 of 4: Dawai jodo', 'Add medicines', 'hinglish')).toBe(true);
+    expect(shouldShowSub('Dawai ki jaankari', 'Medicine details', 'hinglish')).toBe(true);
+    expect(shouldShowSub('Jodi gayi dawaiyan', 'Added medicine list', 'hinglish')).toBe(true);
+    expect(shouldShowSub('Dawai Badlein', '(Edit medicine)', 'hinglish')).toBe(true);
   });
 });

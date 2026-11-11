@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, type Medicine, type Shop, type DBUser, type ScheduleType } from '../db';
 import { shortCodeFor } from '../logic/stock';
-import { capitalizeWords } from '../logic/format';
+import { formatField, textFieldProps } from '../logic/format';
 import {
   validateMedicineForm,
   checkDuplicateMedicine,
@@ -10,9 +10,21 @@ import {
   type MedicineFormData,
   type MedicineFormErrors,
 } from '../logic/medicineForm';
-import { useTranslation, tButton } from '../i18n';
+import { useTranslation, tButton, shouldShowSub } from '../i18n';
+import { formatRupees } from '../logic/money';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { triggerFeedback } from '../logic/feedback';
+import { FullscreenButton } from '../components/FullscreenButton';
+import { useShop } from '../logic/useShop';
+import {
+  BUILT_IN_PRODUCT_TYPES,
+  formatProductType,
+  getActiveProductTypes,
+  addProductType,
+  validateProductTypeName,
+  type ProductType,
+  type BuiltInProductType,
+} from '../logic/productTypes';
 
 interface OwnerMedicineFormProps {
   medicineId?: number; // if present, editing existing medicine
@@ -23,15 +35,6 @@ interface OwnerMedicineFormProps {
   theme?: 'light' | 'dark';
   onToggleTheme?: () => void;
 }
-
-const FORM_OPTIONS = [
-  'Tablet',
-  'Syrup',
-  'Capsule',
-  'Injection',
-  'Ointment / Cream',
-  'Drops',
-];
 
 const GST_OPTIONS = [0, 5, 12, 18];
 
@@ -83,9 +86,20 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
   const [duplicateMatches, setDuplicateMatches] = useState<Medicine[]>([]);
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
 
-  const shopName = shop?.name || 'Shree Medical Store';
-  const modeLabel = shop?.mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
-  const userName = currentUser?.name || 'Owner';
+  // Custom Product Types State
+  const [customProductTypes, setCustomProductTypes] = useState<ProductType[]>([]);
+  const [isAddTypeModalOpen, setIsAddTypeModalOpen] = useState(false);
+  const [newTypeName, setNewTypeName] = useState('');
+  const [newTypeError, setNewTypeError] = useState('');
+  const [previousSelectedForm, setPreviousSelectedForm] = useState(formData.form);
+
+  const { name: hookShopName, mode: hookMode, gstNo: hookGstNo } = useShop();
+  const shopName = shop?.name || hookShopName || '';
+  const currentMode = shop?.mode || hookMode;
+  const currentGst = shop?.gstNo || hookGstNo || '';
+  const modeLabel = currentMode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
+  const displayUserName = currentUser?.name || t<string>('common.role_owner');
+  const auditWho = currentUser?.name || 'Owner';
   const isEditMode = Boolean(medicineId && medicineId > 0);
 
   // Buttons
@@ -102,8 +116,10 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
     async function loadData() {
       try {
         const allMeds = await db.medicines.toArray();
+        const types = await getActiveProductTypes();
         if (!isMounted) return;
         setExistingMedicines(allMeds);
+        setCustomProductTypes(types);
 
         if (medicineId) {
           const med = await db.medicines.get(medicineId);
@@ -143,7 +159,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
 
   // Generate automatic short code when medicine name changes
   const handleNameChange = async (rawVal: string) => {
-    const val = capitalizeWords(rawVal);
+    const val = formatField('name', rawVal);
     setIsDirty(true);
 
     if (errors.name) {
@@ -264,21 +280,30 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
         : 0;
       const gstPercent = formData.gstPercent !== null ? formData.gstPercent : 0;
 
+      const formattedName = formatField('name', formData.name.trim());
+      const formattedStrength = formatField('free', formData.strength.trim());
+      const formattedSalt = formatField('name', formData.salt.trim());
+      const formattedCompany = formatField('name', formData.company.trim());
+      const formattedHsn = formatField('code', formData.hsn.trim());
+      const formattedShortCode = formatField('code', formData.shortCode.trim());
+      const formattedBarcode = formatField('code', formData.barcode.trim());
+      const formattedShelf = formatField('name', formData.shelf.trim());
+
       if (isEditMode && medicineId && originalMedicine) {
         // Update existing medicine
         const updatedFields: Partial<Medicine> = {
-          name: formData.name.trim(),
-          strength: formData.strength.trim(),
+          name: formattedName,
+          strength: formattedStrength,
           form: formData.form,
-          salt: formData.salt.trim(),
-          company: formData.company.trim(),
+          salt: formattedSalt,
+          company: formattedCompany,
           gstPercent,
-          hsn: formData.hsn.trim(),
+          hsn: formattedHsn,
           mrpPaise,
           unitsPerPack,
-          shortCode: formData.shortCode.trim(),
-          barcode: formData.barcode.trim(),
-          shelf: formData.shelf.trim(),
+          shortCode: formattedShortCode,
+          barcode: formattedBarcode,
+          shelf: formattedShelf,
           scheduleType: formData.scheduleType,
           minStockUnits,
           packPhoto: formData.packPhoto || undefined,
@@ -290,28 +315,28 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
         // Rule 9: Audit log entry for medicine_edited
         await db.auditLog.add({
           timestamp: new Date().toISOString(),
-          who: userName,
+          who: auditWho,
           action: 'medicine_edited',
-          record: `Medicine #${medicineId}: ${formData.name.trim()}`,
+          record: `Medicine #${medicineId}: ${formattedName}`,
           details: JSON.stringify(changes),
         });
 
-        triggerFeedback('success', t('common.saved_badge'), formData.name.trim());
+        triggerFeedback('success', t('common.saved_badge'), formattedName);
       } else {
         // Create new medicine
         const newMedicine: Medicine = {
-          name: formData.name.trim(),
-          strength: formData.strength.trim(),
+          name: formattedName,
+          strength: formattedStrength,
           form: formData.form,
-          salt: formData.salt.trim(),
-          company: formData.company.trim(),
+          salt: formattedSalt,
+          company: formattedCompany,
           gstPercent,
-          hsn: formData.hsn.trim(),
+          hsn: formattedHsn,
           mrpPaise,
           unitsPerPack,
-          shortCode: formData.shortCode.trim(),
-          barcode: formData.barcode.trim(),
-          shelf: formData.shelf.trim(),
+          shortCode: formattedShortCode,
+          barcode: formattedBarcode,
+          shelf: formattedShelf,
           scheduleType: formData.scheduleType,
           minStockUnits,
           packPhoto: formData.packPhoto || undefined,
@@ -324,7 +349,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
         // Rule 9: Audit log entry for medicine_created
         await db.auditLog.add({
           timestamp: new Date().toISOString(),
-          who: userName,
+          who: auditWho,
           action: 'medicine_created',
           record: `Medicine #${newId}: ${formData.name.trim()}`,
           details: JSON.stringify({
@@ -351,22 +376,22 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#F1FCF6] dark:bg-[#0f1713] text-[#141E1A] dark:text-gray-100 flex flex-col justify-between antialiased select-none transition-colors">
+    <div className="w-full min-h-screen bg-canvas text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
       
       {/* 1. Header (Matching 38b) */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-[#F1FCF6]/95 dark:bg-gray-900/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-slate-200/60 dark:border-gray-800">
-        <div className="h-16 w-full px-6 md:px-8 flex items-center justify-between">
+      <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
+        <div className="h-16 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
           {/* Brand + Shop + Mode */}
-          <div className="flex items-center gap-4">
-            <span className="text-xl md:text-2xl font-black tracking-tight text-[#006B33] dark:text-[#72dc8e] uppercase">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="text-xl md:text-2xl font-black tracking-tight text-primary uppercase">
               HOSPIVO
             </span>
-            <div className="h-6 w-[2px] bg-slate-300 dark:bg-gray-700" />
-            <span className="text-lg md:text-xl font-bold text-slate-800 dark:text-gray-100">
+            <div className="hidden sm:block h-6 w-[2px] bg-outline-variant" />
+            <span className="hidden sm:inline text-lg md:text-xl font-bold text-on-surface">
               {shopName}
             </span>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E0EBE5] dark:bg-gray-800 text-xs font-medium text-slate-700 dark:text-gray-300">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#006B33] dark:bg-[#72dc8e] animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-low text-xs font-medium text-on-surface-variant">
+              <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
               <span>{modeLabel}</span>
             </div>
           </div>
@@ -376,9 +401,9 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
             <button
               type="button"
               onClick={handleHomeClick}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-[#006B33] hover:bg-[#088643] text-white font-bold shadow-sm cursor-pointer transition-all active:translate-y-[1px]"
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-primary hover:bg-[#088643] text-on-primary font-bold shadow-sm cursor-pointer transition-all active:translate-y-[1px]"
             >
-              <svg className="w-5 h-5 text-white stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-on-primary stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
               </svg>
               <div className="flex flex-col text-left leading-tight">
@@ -396,7 +421,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                 type="button"
                 aria-label={t('common.toggle_theme')}
                 onClick={onToggleTheme}
-                className="w-10 h-10 rounded-xl bg-[#E0EBE5] dark:bg-gray-800 hover:bg-slate-200 dark:hover:bg-gray-700 flex items-center justify-center text-slate-700 dark:text-gray-300 transition-colors cursor-pointer"
+                className="w-10 h-10 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant"
               >
                 {theme === 'dark' ? (
                   <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,12 +435,14 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
               </button>
             )}
 
-            <div className="inline-flex items-center gap-2 pl-3 pr-2 py-1 rounded-full bg-[#E5F0EB] dark:bg-gray-800 border border-slate-200 dark:border-gray-700">
+            <FullscreenButton className="w-10 h-10 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant" />
+
+            <div className="inline-flex items-center gap-2 pl-3 pr-2 py-1 rounded-full bg-surface-container-low border border-outline-variant">
               <div className="flex flex-col text-right">
-                <span className="text-xs font-bold leading-tight text-slate-900 dark:text-gray-100">{userName}</span>
-                <span className="text-[10px] text-slate-500 dark:text-gray-400 font-medium leading-none">(Operator)</span>
+                <span className="text-xs font-bold leading-tight text-on-surface">{displayUserName}</span>
+                <span className="text-[10px] text-outline font-medium leading-none">({currentUser?.role === 'cashier' ? t('common.role_cashier') : t('common.role_owner')})</span>
               </div>
-              <div className="w-8 h-8 rounded-full bg-[#006B33] text-white flex items-center justify-center font-bold text-sm">
+              <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                 </svg>
@@ -432,17 +459,22 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
           {/* Top Title & GST Compliant Badge */}
           <div className="flex items-center justify-between gap-4 mb-2 shrink-0">
             <div className="flex items-baseline gap-2">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-on-surface tracking-tight">
                 {isEditMode ? t('medicine_form.title_edit') : t('medicine_form.title_add')}
               </h1>
-              <span className="text-sm font-medium text-slate-500 dark:text-gray-400">
-                {isEditMode ? t('medicine_form.sub_edit') : t('medicine_form.sub_add')}
-              </span>
+              {shouldShowSub(
+                isEditMode ? t('medicine_form.title_edit') : t('medicine_form.title_add'),
+                isEditMode ? t('medicine_form.sub_edit') : t('medicine_form.sub_add')
+              ) && (
+                <span className="text-sm font-medium text-outline">
+                  {isEditMode ? t('medicine_form.sub_edit') : t('medicine_form.sub_add')}
+                </span>
+              )}
             </div>
 
             {/* GST Compliant Tag */}
-            <div className="flex items-center gap-2 bg-[#E5F0EB] dark:bg-gray-800 px-3 py-1 rounded-full text-slate-700 dark:text-gray-300 text-xs font-semibold">
-              <svg className="w-4 h-4 text-[#006B33] dark:text-[#72dc8e]" fill="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1 rounded-full text-on-surface-variant text-xs font-semibold border border-outline-variant">
+              <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
               </svg>
               <span>{t('medicine_form.gst_compliant_tag')}</span>
@@ -451,7 +483,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
 
           {/* Main Split 2-Column Form Canvas (Matching 38b grid) */}
           <form
-            className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 min-h-0 bg-white dark:bg-gray-900 rounded-2xl p-4 md:p-6 shadow-sm border border-slate-200/80 dark:border-gray-800 overflow-y-auto"
+            className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 min-h-0 bg-surface-container-lowest rounded-2xl p-4 md:p-6 shadow-sm border border-outline-variant overflow-y-auto"
             onSubmit={(e) => {
               e.preventDefault();
               handleSaveAttempt();
@@ -476,8 +508,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                 <div className="relative flex items-center">
                   <input
                     type="text"
-                    value={formData.name}
-                    onChange={(e) => handleNameChange(e.target.value)}
+                    {...textFieldProps('name', formData.name, handleNameChange)}
                     placeholder={t('medicine_form.placeholder_name')}
                     autoFocus={!isEditMode}
                     className={`w-full h-12 px-3.5 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 ${
@@ -507,11 +538,10 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={formData.strength}
-                    onChange={(e) => {
-                      setFormData((prev) => ({ ...prev, strength: e.target.value }));
+                    {...textFieldProps('free', formData.strength, (val) => {
+                      setFormData((prev) => ({ ...prev, strength: val }));
                       setIsDirty(true);
-                    }}
+                    })}
                     placeholder={t('medicine_form.placeholder_strength')}
                     className="w-full h-12 px-3.5 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-[#006B33] outline-none transition-all border border-slate-200 dark:border-gray-700"
                   />
@@ -529,16 +559,39 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                     <select
                       value={formData.form}
                       onChange={(e) => {
-                        setFormData((prev) => ({ ...prev, form: e.target.value }));
-                        setIsDirty(true);
+                        const val = e.target.value;
+                        if (val === '__add_new__') {
+                          setPreviousSelectedForm(formData.form);
+                          setNewTypeName('');
+                          setNewTypeError('');
+                          setIsAddTypeModalOpen(true);
+                        } else {
+                          setFormData((prev) => ({ ...prev, form: val }));
+                          setIsDirty(true);
+                        }
                       }}
                       className="w-full h-12 px-3.5 pr-8 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-[#006B33] outline-none appearance-none transition-all cursor-pointer border border-slate-200 dark:border-gray-700"
                     >
-                      {FORM_OPTIONS.map((f) => (
+                      {BUILT_IN_PRODUCT_TYPES.map((f) => (
                         <option key={f} value={f}>
-                          {f}
+                          {formatProductType(f, t)}
                         </option>
                       ))}
+                      {customProductTypes.map((pt) => (
+                        <option key={pt.id || pt.name} value={pt.name}>
+                          {pt.name}
+                        </option>
+                      ))}
+                      {!BUILT_IN_PRODUCT_TYPES.includes(formData.form as BuiltInProductType) &&
+                        !customProductTypes.some((pt) => pt.name === formData.form) &&
+                        formData.form && (
+                          <option key={formData.form} value={formData.form}>
+                            {formData.form}
+                          </option>
+                        )}
+                      <option value="__add_new__">
+                        {t('medicine_form.add_new_type')}
+                      </option>
                     </select>
                     <svg className="w-5 h-5 absolute right-3 top-3.5 pointer-events-none text-slate-500 dark:text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
@@ -557,12 +610,10 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={formData.salt}
-                  onChange={(e) => {
-                    const capitalized = capitalizeWords(e.target.value);
-                    setFormData((prev) => ({ ...prev, salt: capitalized }));
+                  {...textFieldProps('name', formData.salt, (val) => {
+                    setFormData((prev) => ({ ...prev, salt: val }));
                     setIsDirty(true);
-                  }}
+                  })}
                   placeholder={t('medicine_form.placeholder_salt')}
                   className="w-full h-12 px-3.5 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-[#006B33] outline-none transition-all border border-slate-200 dark:border-gray-700"
                 />
@@ -578,12 +629,10 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={formData.company}
-                  onChange={(e) => {
-                    const capitalized = capitalizeWords(e.target.value);
-                    setFormData((prev) => ({ ...prev, company: capitalized }));
+                  {...textFieldProps('name', formData.company, (val) => {
+                    setFormData((prev) => ({ ...prev, company: val }));
                     setIsDirty(true);
-                  }}
+                  })}
                   placeholder={t('medicine_form.placeholder_company')}
                   className="w-full h-12 px-3.5 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-[#006B33] outline-none transition-all border border-slate-200 dark:border-gray-700"
                 />
@@ -632,11 +681,10 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={formData.hsn}
-                    onChange={(e) => {
-                      setFormData((prev) => ({ ...prev, hsn: e.target.value }));
+                    {...textFieldProps('code', formData.hsn, (val) => {
+                      setFormData((prev) => ({ ...prev, hsn: val }));
                       setIsDirty(true);
-                    }}
+                    })}
                     placeholder={t('medicine_form.placeholder_hsn')}
                     className="w-full h-12 px-3 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-[#006B33] outline-none transition-all border border-slate-200 dark:border-gray-700"
                   />
@@ -738,15 +786,14 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                       <span className="absolute left-3 text-[#006B33] font-black text-lg">#</span>
                       <input
                         type="text"
-                        value={formData.shortCode}
-                        onChange={(e) => {
-                          setFormData((prev) => ({ ...prev, shortCode: e.target.value.toUpperCase() }));
+                        {...textFieldProps('code', formData.shortCode, (val) => {
+                          setFormData((prev) => ({ ...prev, shortCode: val }));
                           setIsShortCodeCustomized(true);
                           setIsDirty(true);
                           if (errors.shortCode) {
                             setErrors((err) => ({ ...err, shortCode: undefined }));
                           }
-                        }}
+                        })}
                         className={`w-full h-12 pl-8 pr-3 rounded-xl bg-white dark:bg-gray-800 text-slate-900 dark:text-white font-bold text-lg focus:ring-2 ${
                           errors.shortCode ? 'ring-2 ring-red-500' : 'focus:ring-[#006B33]'
                         } outline-none border border-slate-200 dark:border-gray-700`}
@@ -784,14 +831,13 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                   <div className="relative flex items-center">
                     <input
                       type="text"
-                      value={formData.barcode}
-                      onChange={(e) => {
-                        setFormData((prev) => ({ ...prev, barcode: e.target.value }));
+                      {...textFieldProps('code', formData.barcode, (val) => {
+                        setFormData((prev) => ({ ...prev, barcode: val }));
                         setIsDirty(true);
                         if (errors.barcode) {
                           setErrors((err) => ({ ...err, barcode: undefined }));
                         }
-                      }}
+                      })}
                       placeholder={t('medicine_form.placeholder_barcode')}
                       className={`w-full h-12 px-3.5 pr-10 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 ${
                         errors.barcode ? 'ring-2 ring-red-500' : 'focus:ring-[#006B33]'
@@ -822,11 +868,10 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                     </svg>
                     <input
                       type="text"
-                      value={formData.shelf}
-                      onChange={(e) => {
-                        setFormData((prev) => ({ ...prev, shelf: e.target.value }));
+                      {...textFieldProps('name', formData.shelf, (val) => {
+                        setFormData((prev) => ({ ...prev, shelf: val }));
                         setIsDirty(true);
-                      }}
+                      })}
                       placeholder={t('medicine_form.placeholder_shelf')}
                       className="w-full h-12 pl-10 pr-3.5 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-[#006B33] outline-none transition-all border border-slate-200 dark:border-gray-700"
                     />
@@ -925,7 +970,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                     <div className="flex items-center gap-3">
                       <img
                         src={formData.packPhoto}
-                        alt="Pack"
+                        alt={t('medicine_form.alt_pack')}
                         className="w-16 h-16 rounded-lg object-cover border border-slate-300 dark:border-gray-600 shadow-sm"
                       />
                       <span className="text-sm font-bold text-slate-800 dark:text-gray-200">
@@ -983,15 +1028,15 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
             <button
               type="button"
               onClick={handleBackClick}
-              className="h-14 min-w-[180px] px-6 rounded-xl bg-[#E0EBE5] hover:bg-[#DAE5DF] dark:bg-gray-800 dark:hover:bg-gray-700 text-slate-800 dark:text-white flex items-center justify-center gap-2 transition-all active:translate-y-0.5 shadow-sm cursor-pointer"
+              className="h-14 min-w-[180px] px-6 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-2 transition-all active:translate-y-0.5 shadow-sm cursor-pointer border border-outline-variant"
             >
-              <svg className="w-6 h-6 text-slate-700 dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
               </svg>
               <div className="flex flex-col text-left leading-tight">
                 <span className="text-base font-bold leading-tight">{btnBack.main}</span>
                 {btnBack.sub ? (
-                  <span className="text-xs text-slate-500 dark:text-gray-400 font-normal leading-tight">
+                  <span className="text-xs text-outline font-normal leading-tight">
                     {btnBack.sub}
                   </span>
                 ) : null}
@@ -999,9 +1044,9 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
             </button>
 
             {/* Center Quick Keyboard Hint */}
-            <div className="hidden lg:flex items-center gap-2 text-slate-500 dark:text-gray-400 text-xs font-medium bg-[#EBF6F0] dark:bg-gray-800 px-4 py-2 rounded-full border border-slate-200 dark:border-gray-700">
-              <kbd className="px-2 py-0.5 rounded bg-[#DAE5DF] dark:bg-gray-700 text-slate-800 dark:text-gray-200 font-bold text-xs shadow-xs">
-                Ctrl + S
+            <div className="hidden lg:flex items-center gap-2 text-outline text-xs font-medium bg-surface-container-low px-4 py-2 rounded-full border border-outline-variant">
+              <kbd className="px-2 py-0.5 rounded bg-surface-container text-on-surface font-bold text-xs shadow-xs border border-outline-variant">
+                {t('medicine_form.ctrl_s_hint')}
               </kbd>
               <span>{t('medicine_form.shortcut_hint')}</span>
             </div>
@@ -1011,13 +1056,13 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
               type="button"
               disabled={isSubmitting}
               onClick={handleSaveAttempt}
-              className="h-14 min-w-[260px] px-8 rounded-xl bg-[#006B33] hover:bg-[#088643] text-white flex items-center justify-center gap-3 transition-all active:translate-y-0.5 shadow-md cursor-pointer disabled:opacity-50"
+              className="h-14 min-w-[260px] px-8 rounded-xl bg-primary hover:bg-[#088643] text-on-primary flex items-center justify-center gap-3 transition-all active:translate-y-0.5 shadow-md cursor-pointer disabled:opacity-50"
             >
-              <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-7 h-7 text-on-primary" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
               </svg>
               <div className="flex flex-col text-left leading-tight">
-                <span className="text-lg font-bold leading-tight text-white">{btnSave.main}</span>
+                <span className="text-lg font-bold leading-tight text-on-primary">{btnSave.main}</span>
                 {btnSave.sub ? (
                   <span className="text-xs text-emerald-100 font-normal leading-tight">
                     {btnSave.sub}
@@ -1031,20 +1076,16 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
       </main>
 
       {/* 3. Footer Ribbon (Matching 38b) */}
-      <footer className="fixed bottom-0 left-0 w-full h-11 px-6 md:px-8 bg-[#EBF6F0] dark:bg-gray-900 border-t border-slate-200/80 dark:border-gray-800 flex items-center justify-between text-xs md:text-sm text-slate-600 dark:text-gray-400 font-medium select-none z-40">
+      <footer className="fixed bottom-0 left-0 w-full h-11 px-6 md:px-8 bg-surface-container-low border-t border-outline-variant flex items-center justify-between text-xs md:text-sm text-on-surface-variant font-medium select-none z-40">
         <div className="flex items-center gap-2 truncate">
-          <span>{shopName}</span>
-          {shop?.gstNo ? (
-            <>
-              <span>•</span>
-              <span>GSTIN: {shop.gstNo}</span>
-            </>
-          ) : null}
-          <span>•</span>
-          <span>{t('medicine.terminal_info')}</span>
+          {shopName ? <span>{shopName}</span> : null}
+          {shopName && currentGst ? <span>•</span> : null}
+          {currentGst ? <span>{t('common.gstin_prefix')}: {currentGst}</span> : null}
+          {(shopName || currentGst) ? <span>•</span> : null}
+          <span>{t('common.saved_on_device')}</span>
         </div>
-        <div className="inline-flex items-center gap-2 text-[#006B33] dark:text-[#72dc8e] font-bold shrink-0">
-          <span className="w-2 h-2 rounded-full bg-[#006B33] dark:bg-[#72dc8e]" />
+        <div className="inline-flex items-center gap-2 text-primary font-bold shrink-0">
+          <span className="w-2 h-2 rounded-full bg-primary" />
           <span>{t('medicine.sync_active')}</span>
         </div>
       </footer>
@@ -1070,29 +1111,29 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
           aria-modal="true"
           className="fixed inset-0 bg-[#0f172a]/70 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none animate-fadeIn"
         >
-          <div className="w-full max-w-[560px] bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col border border-amber-300 dark:border-amber-700">
+          <div className="w-full max-w-[560px] bg-surface-container-lowest rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col border border-amber-300 dark:border-amber-700">
             <div className="flex items-center gap-3 text-amber-600 mb-3">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+              <h2 className="text-2xl font-extrabold text-on-surface">
                 {t('medicine_form.duplicate_dialog_title')}
               </h2>
             </div>
 
-            <p className="text-sm text-slate-600 dark:text-gray-300 mb-4">
+            <p className="text-sm text-outline mb-4">
               {t('medicine_form.duplicate_dialog_desc')}
             </p>
 
-            <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 dark:divide-gray-800 bg-[#EBF6F0] dark:bg-gray-800/60 rounded-xl p-3 mb-6 border border-slate-200 dark:border-gray-700">
+            <div className="max-h-48 overflow-y-auto divide-y divide-outline-variant/30 bg-surface-container-low rounded-xl p-3 mb-6 border border-outline-variant">
               {duplicateMatches.map((m) => (
                 <div key={m.id} className="py-2 flex items-center justify-between text-sm">
                   <div className="flex flex-col">
-                    <span className="font-bold text-slate-900 dark:text-white">
+                    <span className="font-bold text-on-surface">
                       {m.name} {m.strength}
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-gray-400">
-                      {m.company} · MRP Rs. {(m.mrpPaise / 100).toFixed(2)}
+                    <span className="text-xs text-outline">
+                      {m.company} · {t('medicine.mrp_label')} {formatRupees(m.mrpPaise)}
                     </span>
                   </div>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200">
@@ -1108,13 +1149,13 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
               <button
                 type="button"
                 onClick={() => setIsDuplicateModalOpen(false)}
-                className="h-16 px-4 rounded-2xl bg-[#E5F0EB] dark:bg-gray-800 hover:bg-[#DAE5DF] dark:hover:bg-gray-700 text-slate-800 dark:text-white font-bold flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98]"
+                className="h-16 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold flex flex-col items-center justify-center cursor-pointer transition-all active:scale-[0.98] border border-outline-variant"
               >
                 <span className="text-lg font-bold">
                   {tButton('medicine_form.btn_duplicate_cancel').main}
                 </span>
                 {tButton('medicine_form.btn_duplicate_cancel').sub ? (
-                  <span className="text-xs text-slate-500 dark:text-gray-400 font-normal">
+                  <span className="text-xs text-outline font-normal">
                     {tButton('medicine_form.btn_duplicate_cancel').sub}
                   </span>
                 ) : null}
@@ -1127,7 +1168,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                   setIsDuplicateModalOpen(false);
                   await executeSaveMedicine();
                 }}
-                className="h-16 px-4 rounded-2xl bg-[#006B33] hover:bg-[#088643] text-white font-bold flex flex-col items-center justify-center shadow-md cursor-pointer transition-all active:scale-[0.98]"
+                className="h-16 px-4 rounded-2xl bg-primary hover:bg-[#088643] text-on-primary font-bold flex flex-col items-center justify-center shadow-md cursor-pointer transition-all active:scale-[0.98]"
               >
                 <span className="text-lg font-bold">
                   {tButton('medicine_form.btn_duplicate_save_anyway').main}
@@ -1137,6 +1178,132 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                     {tButton('medicine_form.btn_duplicate_save_anyway').sub}
                   </span>
                 ) : null}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Product Type Dialog */}
+      {isAddTypeModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 bg-[#0f172a]/70 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none animate-fadeIn"
+          onClick={() => {
+            setIsAddTypeModalOpen(false);
+            setNewTypeName('');
+            setNewTypeError('');
+            setFormData((prev) => ({ ...prev, form: previousSelectedForm }));
+          }}
+        >
+          <div
+            className="w-full max-w-[480px] bg-surface-container-lowest rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col relative z-10 border border-outline-variant"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl md:text-2xl font-bold text-on-surface mb-4">
+              {t('medicine_form.dialog_add_type_title')}
+            </h3>
+
+            <div className="flex flex-col mb-5">
+              <label className="text-sm font-semibold text-on-surface mb-1.5">
+                {t('medicine_form.type_name_label')}
+                <span className="text-error ml-1">*</span>
+              </label>
+              <input
+                type="text"
+                {...textFieldProps('name', newTypeName, (val) => {
+                  setNewTypeName(val);
+                  if (newTypeError) setNewTypeError('');
+                })}
+                placeholder={t('common.example', { example: t('medicine_form.type_name_example') })}
+                className="w-full h-12 px-3.5 rounded-xl bg-surface-container-low text-on-surface text-base focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary outline-none transition-all border border-outline-variant"
+                autoFocus
+                onKeyDown={async (e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const validation = validateProductTypeName(newTypeName, customProductTypes);
+                    if (!validation.valid) {
+                      setNewTypeError(validation.errorKey ? t(validation.errorKey) : t('common.generic_error'));
+                      return;
+                    }
+                    try {
+                      const created = await addProductType(newTypeName, auditWho);
+                      setCustomProductTypes((prev) => [...prev, created]);
+                      setFormData((prev) => ({ ...prev, form: created.name }));
+                      setIsDirty(true);
+                      setIsAddTypeModalOpen(false);
+                      setNewTypeName('');
+                      setNewTypeError('');
+                    } catch (err: unknown) {
+                      const msg = err instanceof Error ? err.message : '';
+                      if (msg === 'type_already_exists') {
+                        setNewTypeError(t('medicine_form.type_already_exists'));
+                      } else if (msg === 'type_length_error') {
+                        setNewTypeError(t('medicine_form.type_length_error'));
+                      } else {
+                        setNewTypeError(t('common.generic_error'));
+                      }
+                    }
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setIsAddTypeModalOpen(false);
+                    setNewTypeName('');
+                    setNewTypeError('');
+                    setFormData((prev) => ({ ...prev, form: previousSelectedForm }));
+                  }
+                }}
+              />
+              {newTypeError && (
+                <p className="text-error text-xs md:text-sm font-medium mt-1.5 animate-fadeIn">
+                  {newTypeError}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-outline-variant/40">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddTypeModalOpen(false);
+                  setNewTypeName('');
+                  setNewTypeError('');
+                  setFormData((prev) => ({ ...prev, form: previousSelectedForm }));
+                }}
+                className="px-5 py-2.5 rounded-xl border border-outline-variant bg-surface-container-low hover:bg-surface-container text-on-surface font-semibold text-sm transition-colors cursor-pointer"
+              >
+                {tButton('common.btn_cancel').main}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const validation = validateProductTypeName(newTypeName, customProductTypes);
+                  if (!validation.valid) {
+                    setNewTypeError(validation.errorKey ? t(validation.errorKey) : t('common.generic_error'));
+                    return;
+                  }
+                  try {
+                    const created = await addProductType(newTypeName, auditWho);
+                    setCustomProductTypes((prev) => [...prev, created]);
+                    setFormData((prev) => ({ ...prev, form: created.name }));
+                    setIsDirty(true);
+                    setIsAddTypeModalOpen(false);
+                    setNewTypeName('');
+                    setNewTypeError('');
+                  } catch (err: unknown) {
+                    const msg = err instanceof Error ? err.message : '';
+                    if (msg === 'type_already_exists') {
+                      setNewTypeError(t('medicine_form.type_already_exists'));
+                    } else if (msg === 'type_length_error') {
+                      setNewTypeError(t('medicine_form.type_length_error'));
+                    } else {
+                      setNewTypeError(t('common.generic_error'));
+                    }
+                  }
+                }}
+                className="px-6 py-2.5 rounded-xl bg-primary text-on-primary hover:bg-primary/90 font-bold text-sm shadow-sm transition-colors cursor-pointer"
+              >
+                {tButton('common.btn_save_continue').main}
               </button>
             </div>
           </div>

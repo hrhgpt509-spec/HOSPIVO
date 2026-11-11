@@ -67,9 +67,25 @@ export interface ApprovalPinLockState {
   lockedUntil: number | null;
 }
 
+export type ApprovalPinErrorCode =
+  | 'approval_pin_length'
+  | 'approval_pin_mismatch'
+  | 'approval_pin_same_as_owner_or_staff';
+
 export interface SetApprovalPinResult {
   ok: boolean;
-  error?: string;
+  error?: ApprovalPinErrorCode | string;
+}
+
+export type StaffPinErrorCode =
+  | 'staff_pin_length'
+  | 'staff_pin_same_as_owner'
+  | 'staff_pin_same_as_approval'
+  | 'staff_pin_duplicate';
+
+export interface ValidateStaffPinResult {
+  ok: boolean;
+  error?: StaffPinErrorCode;
 }
 
 export type VerifyApprovalPinResult =
@@ -136,6 +152,52 @@ async function recordAudit(who: string, action: string, record: string, details:
 }
 
 /**
+ * Validates an Approval PIN candidate.
+ * Returns error codes instead of sentences.
+ */
+export function validateApprovalPin(
+  pin: string,
+  confirmPin?: string,
+  existingPinsToReject?: string[]
+): { ok: boolean; error?: ApprovalPinErrorCode } {
+  if (!/^\d+$/.test(pin) || pin.length !== 4) {
+    return { ok: false, error: 'approval_pin_length' };
+  }
+  if (confirmPin !== undefined && pin !== confirmPin) {
+    return { ok: false, error: 'approval_pin_mismatch' };
+  }
+  if (existingPinsToReject && existingPinsToReject.some((p) => p && p === pin)) {
+    return { ok: false, error: 'approval_pin_same_as_owner_or_staff' };
+  }
+  return { ok: true };
+}
+
+/**
+ * Validates a staff PIN candidate.
+ * Returns error codes instead of sentences.
+ */
+export async function validateStaffPin(
+  pin: string,
+  ownerPin?: string,
+  existingStaffPins?: string[]
+): Promise<ValidateStaffPinResult> {
+  if (!/^\d+$/.test(pin) || pin.length !== 4) {
+    return { ok: false, error: 'staff_pin_length' };
+  }
+  if (ownerPin && pin === ownerPin) {
+    return { ok: false, error: 'staff_pin_same_as_owner' };
+  }
+  if (existingStaffPins && existingStaffPins.includes(pin)) {
+    return { ok: false, error: 'staff_pin_duplicate' };
+  }
+  const isSameAsApproval = await isPinEqualToApprovalPin(pin);
+  if (isSameAsApproval) {
+    return { ok: false, error: 'staff_pin_same_as_approval' };
+  }
+  return { ok: true };
+}
+
+/**
  * Sets the Approval PIN ("Ijazat PIN").
  * - Validates length (4 digits by default, numbers only).
  * - Must differ from Owner PIN and every staff PIN.
@@ -147,14 +209,14 @@ export async function setApprovalPin(
 ): Promise<SetApprovalPinResult> {
   const validation = validatePin(pin);
   if (!validation.valid) {
-    return { ok: false, error: validation.error || 'Ijazat PIN 4 digits ka hona chahiye' };
+    return { ok: false, error: 'approval_pin_length' };
   }
 
   // 1. Reject if candidate equals any plain PIN passed in (e.g. from setup wizard)
   if (existingPinsToReject && existingPinsToReject.some((p) => p && p === pin)) {
     return {
       ok: false,
-      error: 'Ijazat PIN Malik ya Staff PIN se alag hona chahiye',
+      error: 'approval_pin_same_as_owner_or_staff',
     };
   }
 
@@ -166,7 +228,7 @@ export async function setApprovalPin(
       if (isMatch) {
         return {
           ok: false,
-          error: 'Ijazat PIN Malik ya Staff PIN se alag hona chahiye',
+          error: 'approval_pin_same_as_owner_or_staff',
         };
       }
     }
@@ -210,7 +272,7 @@ export async function verifyApprovalPin(pin: string): Promise<VerifyApprovalPinR
   if (isMatch) {
     // Reset attempts on success
     await setSetting('approval_pin_lock', { failedAttempts: 0, lockedUntil: null });
-    await recordAudit('system', 'approval_pin_success', 'approval', 'Ijazat PIN sahi daala gaya');
+    await recordAudit('system', 'approval_pin_success', 'approval', 'Approval PIN verified successfully');
     return { ok: true, status: 'ok' };
   }
 
@@ -226,7 +288,7 @@ export async function verifyApprovalPin(pin: string): Promise<VerifyApprovalPinR
       'system',
       'approval_pin_locked',
       'approval',
-      '3 galat try ke baad Ijazat PIN 5 minute ke liye lock ho gaya'
+      'Approval PIN locked for 5 minutes after 3 failed attempts'
     );
     return { ok: false, status: 'locked', minutesLeft: 5 };
   }
@@ -236,7 +298,7 @@ export async function verifyApprovalPin(pin: string): Promise<VerifyApprovalPinR
     'system',
     'approval_pin_wrong',
     'approval',
-    `Galat Ijazat PIN try (${newAttempts}/3)`
+    `Wrong Approval PIN attempt (${newAttempts}/3)`
   );
   return { ok: false, status: 'wrong', triesLeft: 3 - newAttempts };
 }

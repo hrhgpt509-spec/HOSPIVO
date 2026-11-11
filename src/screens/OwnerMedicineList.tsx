@@ -2,9 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db, type Medicine, type Shop, type DBUser } from '../db';
 import { medicineStock } from '../logic/stock';
 import { searchMedicines, formatMedicineStock } from '../logic/medicineSearch';
+import { formatRupees } from '../logic/money';
 import { useTranslation, tButton } from '../i18n';
 import { EmptyState } from '../components/EmptyState';
 import { StatusChip } from '../components/StatusChip';
+import { FullscreenButton } from '../components/FullscreenButton';
+import { textFieldProps } from '../logic/format';
+import { useShop } from '../logic/useShop';
+import { formatProductType } from '../logic/productTypes';
 import { OwnerMedicineForm } from './OwnerMedicineForm';
 
 interface OwnerMedicineListProps {
@@ -33,9 +38,12 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
   const btnAdd = tButton('medicine.btn_add');
   const btnBack = tButton('common.btn_back');
 
-  const shopName = shop?.name || 'Shree Medical Store';
-  const modeLabel = shop?.mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
-  const userName = currentUser?.name || 'Owner';
+  const { name: hookShopName, mode: hookMode, gstNo: hookGstNo } = useShop();
+  const shopName = shop?.name || hookShopName || '';
+  const currentMode = shop?.mode || hookMode;
+  const currentGst = shop?.gstNo || hookGstNo || '';
+  const modeLabel = currentMode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
+  const userName = currentUser?.name || t('common.role_owner');
   const userInitial = userName ? userName.charAt(0).toUpperCase() : 'O';
 
   const loadMedicines = async () => {
@@ -98,17 +106,17 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
   const filteredMedicines = searchMedicines(medicines, searchQuery);
 
   return (
-    <div className="w-full min-h-screen bg-[#F1FCF6] dark:bg-[#0f1713] text-[#141E1A] dark:text-gray-100 flex flex-col justify-between antialiased select-none transition-colors">
+    <div className="w-full min-h-screen bg-canvas text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
       {/* 1. Fixed Top Header (Matching 38a) */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-[#F1FCF6]/95 dark:bg-gray-900/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-slate-200/60 dark:border-gray-800">
-        <div className="h-16 w-full px-6 md:px-8 flex items-center justify-between">
+      <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
+        <div className="h-16 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
           {/* Left: Brand + Shop + Local mode */}
-          <div className="flex items-center gap-4">
-            <span className="text-xl md:text-2xl font-black tracking-tight text-[#006B33] dark:text-[#72dc8e] uppercase">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="text-xl md:text-2xl font-black tracking-tight text-primary uppercase">
               HOSPIVO
             </span>
-            <div className="h-6 w-[2px] bg-slate-300 dark:bg-gray-700" />
-            <span className="text-lg md:text-xl font-bold text-slate-800 dark:text-gray-100">
+            <div className="hidden sm:block h-6 w-[2px] bg-outline-variant" />
+            <span className="hidden sm:inline text-lg md:text-xl font-bold text-on-surface">
               {shopName}
             </span>
             <StatusChip variant="local" label={modeLabel} />
@@ -116,13 +124,15 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
 
           {/* Right: Home button + User avatar */}
           <div className="flex items-center gap-4">
+            <FullscreenButton className="w-10 h-10 rounded-xl bg-surface-container-lowest hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant" />
+
             {onBackToOwnerMenu && (
               <button
                 type="button"
                 onClick={onBackToOwnerMenu}
-                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-white dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 text-slate-700 dark:text-gray-200 font-bold border border-slate-200 dark:border-gray-700 shadow-sm cursor-pointer transition-all active:translate-y-[1px]"
+                className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-surface-container-lowest hover:bg-surface-container text-on-surface font-bold border border-outline-variant shadow-sm cursor-pointer transition-all active:translate-y-[1px]"
               >
-                <svg className="w-5 h-5 text-slate-600 dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                 </svg>
                 <span>{btnBack.main}</span>
@@ -132,9 +142,9 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
             <button
               type="button"
               onClick={onReturnHome}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-[#006B33] hover:bg-[#088643] text-white font-bold shadow-sm cursor-pointer transition-all active:translate-y-[1px]"
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-primary hover:bg-[#088643] text-on-primary font-bold shadow-sm cursor-pointer transition-all active:translate-y-[1px]"
             >
-              <svg className="w-5 h-5 text-white stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-on-primary stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
               </svg>
               <div className="flex flex-col text-left leading-tight">
@@ -143,13 +153,13 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
               </div>
             </button>
 
-            <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700">
-              <div className="w-8 h-8 rounded-full bg-[#006B33] text-white flex items-center justify-center font-bold text-sm">
+            <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-surface-container-lowest border border-outline-variant">
+              <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm">
                 {userInitial}
               </div>
               <div className="flex flex-col text-left">
-                <span className="text-sm font-bold leading-tight text-slate-800 dark:text-gray-100">{userName}</span>
-                <span className="text-[11px] text-slate-500 dark:text-gray-400 font-medium leading-none">Operator</span>
+                <span className="text-sm font-bold leading-tight text-on-surface">{userName}</span>
+                <span className="text-[11px] text-outline font-medium leading-none">{currentUser?.role === 'cashier' ? t('common.role_cashier') : t('common.role_owner')}</span>
               </div>
             </div>
           </div>
@@ -162,10 +172,10 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
           {/* Controls Row: Heading + Action Buttons */}
           <div className="flex flex-wrap items-center justify-between w-full min-h-[56px] gap-4 mb-4">
             <div className="flex flex-col justify-center">
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-on-surface leading-tight">
                 {t('medicine.list_title')}
               </h1>
-              <span className="text-sm md:text-base font-medium text-slate-500 dark:text-gray-400 leading-tight">
+              <span className="text-sm md:text-base font-medium text-outline leading-tight">
                 {t('medicine.list_sub')}
               </span>
             </div>
@@ -175,14 +185,14 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
               <button
                 type="button"
                 onClick={handleActionComingSoon}
-                className="h-14 min-h-[56px] px-5 rounded-[16px] bg-white dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 text-slate-800 dark:text-gray-100 border border-slate-200 dark:border-gray-700 shadow-sm flex items-center gap-3 font-bold transition-all active:translate-y-[1px] cursor-pointer"
+                className="h-14 min-h-[56px] px-5 rounded-[16px] bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant shadow-sm flex items-center gap-3 font-bold transition-all active:translate-y-[1px] cursor-pointer"
               >
-                <svg className="w-6 h-6 text-slate-700 dark:text-gray-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
                 </svg>
                 <div className="flex flex-col text-left leading-tight">
                   <span className="text-base font-bold leading-tight">{btnImport.main}</span>
-                  {btnImport.sub ? <span className="text-xs text-slate-500 dark:text-gray-400 font-medium leading-tight">{btnImport.sub}</span> : null}
+                  {btnImport.sub ? <span className="text-xs text-outline font-medium leading-tight">{btnImport.sub}</span> : null}
                 </div>
               </button>
 
@@ -190,13 +200,13 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
               <button
                 type="button"
                 onClick={() => setEditingMedicineId('new')}
-                className="h-14 min-h-[56px] px-6 rounded-[16px] bg-[#006B33] hover:bg-[#088643] text-white shadow-sm flex items-center gap-3 font-bold transition-all active:translate-y-[1px] cursor-pointer"
+                className="h-14 min-h-[56px] px-6 rounded-[16px] bg-primary hover:bg-[#088643] text-on-primary shadow-sm flex items-center gap-3 font-bold transition-all active:translate-y-[1px] cursor-pointer"
               >
-                <svg className="w-6 h-6 text-white stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-on-primary stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
                 <div className="flex flex-col text-left leading-tight">
-                  <span className="text-base font-bold text-white leading-tight">{btnAdd.main}</span>
+                  <span className="text-base font-bold text-on-primary leading-tight">{btnAdd.main}</span>
                   {btnAdd.sub ? <span className="text-xs text-emerald-100 font-medium leading-tight">{btnAdd.sub}</span> : null}
                 </div>
               </button>
@@ -232,23 +242,22 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
           {/* Search Box: Ready to type (AutoFocus) */}
           <div className="w-full shrink-0 mb-4">
             <div className="relative w-full flex items-center">
-              <svg className="w-6 h-6 absolute left-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <svg className="w-6 h-6 absolute left-4 text-outline pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
               </svg>
               <input
                 ref={searchInputRef}
                 type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                {...textFieldProps('free', searchQuery, setSearchQuery)}
                 placeholder={t('medicine.search_placeholder')}
-                className="w-full h-14 min-h-[56px] pl-12 pr-4 bg-white dark:bg-gray-800 rounded-[16px] text-lg text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#006B33] border border-slate-200 dark:border-gray-700 shadow-sm transition-all"
+                className="w-full h-14 min-h-[56px] pl-12 pr-4 bg-surface-container-lowest rounded-[16px] text-lg text-on-surface placeholder:text-outline focus:outline-none focus:ring-2 focus:ring-primary border border-outline-variant shadow-sm transition-all"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
                   aria-label={t('common.btn_clear').main}
-                  className="absolute right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-gray-700 text-slate-600 dark:text-gray-300 flex items-center justify-center cursor-pointer transition-colors"
+                  className="absolute right-4 w-8 h-8 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center cursor-pointer transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -260,8 +269,8 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
 
           {/* List Area */}
           {isLoading ? (
-            <div className="w-full bg-white dark:bg-gray-900 rounded-[16px] shadow-sm p-12 flex flex-col items-center justify-center">
-              <div className="w-10 h-10 border-4 border-[#006B33] border-t-transparent rounded-full animate-spin mb-3" />
+            <div className="w-full bg-surface-container-lowest rounded-[16px] shadow-sm p-12 flex flex-col items-center justify-center border border-outline-variant">
+              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-3" />
             </div>
           ) : medicines.length === 0 ? (
             /* Empty Database State */
@@ -277,29 +286,29 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
             </div>
           ) : filteredMedicines.length === 0 ? (
             /* Search Query Returned No Results */
-            <div className="w-full bg-white dark:bg-gray-900 rounded-[16px] shadow-sm border border-slate-200 dark:border-gray-800 p-12 flex flex-col items-center justify-center text-center">
+            <div className="w-full bg-surface-container-lowest rounded-[16px] shadow-sm border border-outline-variant p-12 flex flex-col items-center justify-center text-center">
               <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center mb-4">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
+              <h2 className="text-xl font-bold text-on-surface mb-1">
                 {t('medicine.no_results_title')}
               </h2>
-              <p className="text-slate-500 dark:text-gray-400 text-sm max-w-sm mb-6">
+              <p className="text-outline text-sm max-w-sm mb-6">
                 {t('medicine.no_results_sub')}
               </p>
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="h-11 px-5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-gray-800 text-slate-800 dark:text-gray-200 font-bold text-sm cursor-pointer transition-colors"
+                className="h-11 px-5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm cursor-pointer transition-colors border border-outline-variant"
               >
                 {t('common.btn_clear').main}
               </button>
             </div>
           ) : (
             /* Medicine Rows List (each row >= 60px) */
-            <div className="w-full bg-white dark:bg-gray-900 rounded-[16px] shadow-sm border border-slate-200 dark:border-gray-800 flex flex-col shrink-0 overflow-hidden divide-y divide-slate-100 dark:divide-gray-800">
+            <div className="w-full bg-surface-container-lowest rounded-[16px] shadow-sm border border-outline-variant flex flex-col shrink-0 overflow-hidden divide-y divide-outline-variant/30">
               {filteredMedicines.map((med) => {
                 const stockUnits = (med.id !== undefined && stockMap[med.id] !== undefined) ? stockMap[med.id] : 0;
                 const formattedStock = formatMedicineStock(
@@ -308,7 +317,6 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
                   t('medicine.pack_unit'),
                   t('medicine.loose_unit')
                 );
-                const mrpRupees = (med.mrpPaise / 100).toFixed(2);
 
                 return (
                   <div
@@ -316,24 +324,25 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
                     onClick={() => {
                       if (med.id) setEditingMedicineId(med.id);
                     }}
-                    className="min-h-[72px] px-6 py-3.5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-gray-800/60 transition-colors cursor-pointer active:bg-slate-100 dark:active:bg-gray-800"
+                    className="min-h-[72px] px-6 py-3.5 flex items-center justify-between hover:bg-surface-container-low transition-colors cursor-pointer active:bg-surface-container"
                   >
                     {/* Left Details */}
                     <div className="flex flex-col justify-center min-w-0 pr-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg md:text-xl font-bold text-slate-900 dark:text-white leading-tight truncate">
+                        <span className="text-lg md:text-xl font-bold text-on-surface leading-tight truncate">
                           {med.name} {med.strength}
                         </span>
                         {med.scheduleType && med.scheduleType !== 'none' && (
                           <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
-                            Sch {med.scheduleType}
+                            {t('medicine.sch_prefix')} {med.scheduleType}
                           </span>
                         )}
                       </div>
-                      <div className="text-sm md:text-base font-medium text-slate-500 dark:text-gray-400 leading-tight mt-1 truncate">
+                      <div className="text-sm md:text-base font-medium text-outline leading-tight mt-1 truncate">
+                        {med.form ? `${formatProductType(med.form, t)} · ` : ''}
                         {med.salt ? `${med.salt} · ` : ''}
                         {med.company ? `${med.company} · ` : ''}
-                        <span>MRP Rs. {mrpRupees}</span>
+                        <span>{t('medicine.mrp_label')} {formatRupees(med.mrpPaise)}</span>
                         {med.shortCode ? ` · ${t('medicine.short_code_prefix')} ${med.shortCode}` : ''}
                         {med.shelf ? ` · ${med.shelf}` : ''}
                       </div>
@@ -341,10 +350,10 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
 
                     {/* Right: Stock Count (packs & loose) */}
                     <div className="flex flex-col items-end text-right shrink-0">
-                      <span className={`text-base md:text-lg font-bold leading-tight ${stockUnits > 0 ? 'text-[#006B33] dark:text-[#72dc8e]' : 'text-rose-600 dark:text-rose-400'}`}>
+                      <span className={`text-base md:text-lg font-bold leading-tight ${stockUnits > 0 ? 'text-primary' : 'text-error'}`}>
                         {formattedStock}
                       </span>
-                      <span className="text-xs text-slate-400 dark:text-gray-500 font-medium mt-0.5 leading-none">
+                      <span className="text-xs text-outline font-medium mt-0.5 leading-none">
                         {t('medicine.total_stock')}
                       </span>
                     </div>
@@ -357,20 +366,16 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
       </main>
 
       {/* 3. Footer Ribbon (Matching 38a) */}
-      <footer className="fixed bottom-0 left-0 w-full h-11 px-6 md:px-8 bg-[#EBF6F0] dark:bg-gray-900 border-t border-slate-200/80 dark:border-gray-800 flex items-center justify-between text-xs md:text-sm text-slate-600 dark:text-gray-400 font-medium select-none z-40">
+      <footer className="fixed bottom-0 left-0 w-full h-11 px-6 md:px-8 bg-surface-container-low border-t border-outline-variant flex items-center justify-between text-xs md:text-sm text-on-surface-variant font-medium select-none z-40">
         <div className="flex items-center gap-2 truncate">
-          <span>{shopName}</span>
-          {shop?.gstNo ? (
-            <>
-              <span>•</span>
-              <span>GSTIN: {shop.gstNo}</span>
-            </>
-          ) : null}
-          <span>•</span>
-          <span>{t('medicine.terminal_info')}</span>
+          {shopName ? <span>{shopName}</span> : null}
+          {shopName && currentGst ? <span>•</span> : null}
+          {currentGst ? <span>{t('common.gstin_prefix')}: {currentGst}</span> : null}
+          {(shopName || currentGst) ? <span>•</span> : null}
+          <span>{t('common.saved_on_device')}</span>
         </div>
-        <div className="inline-flex items-center gap-2 text-[#006B33] dark:text-[#72dc8e] font-bold shrink-0">
-          <span className="w-2 h-2 rounded-full bg-[#006B33] dark:bg-[#72dc8e]" />
+        <div className="inline-flex items-center gap-2 text-primary font-bold shrink-0">
+          <span className="w-2 h-2 rounded-full bg-primary" />
           <span>{t('medicine.sync_active')}</span>
         </div>
       </footer>
