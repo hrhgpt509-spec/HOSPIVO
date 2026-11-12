@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt B1 - Phase 3 Billing Database & Core Logic Engine - COMPLETE
+Prompt B2 - Dawai Becho (Counter Billing, Schedule H & Hold Bill) - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,10 @@ Prompt B1 - Phase 3 Billing Database & Core Logic Engine - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Built Dawai Becho counter billing screen (src/screens/DawaiBecho.tsx) with desktop split layout (11) and phone sticky bar/drawer (12, 12b), wired to the "Dawai Becho" tile on Home.
+- Implemented auto-focused medicine search (name, short code, barcode, shelf, company) with Enter-key exact barcode/short-code add, non-expired stock badges, and Strip/Loose toggle + quantity steppers using FEFO pickBatchesForSale().
+- Added Schedule H/H1 prescription modal (13) requiring Patient Name, Doctor Name, and "Prescription dekhi?" (Yes), plus Out-of-Stock Substitutes modal (14) using findInStockSubstitutes().
+- Added Hold Bill (Rukao) saved to Dexie heldBills with HeldBillsModal resume/delete, Wapas (Undo last), Naya Bill (ConfirmDialog), >5% discount ApprovalDialog check, and full EN/HI/Hinglish keys; 115 tests and production build pass with 0 errors.
 - Upgraded Dexie schema to v4 in src/db/index.ts adding bills, billItems, heldBills, and billReturns tables with strict immutability hooks preventing delete or in-place bill edits (except status updates during returns).
 - Built Phase 3 core billing engine in src/logic/billing.ts: whole-paise pack/loose pricing, MRP-inclusive GST extraction, nearest-rupee round-off, 5% default discount limit check ('discount_above_limit'), Indian FY sequential bill numbering, and composition substitute lookup.
 - Implemented atomic finalizeBill (FEFO via pickBatchesForSale, expired/insufficient stock blocking, Schedule H/H1 prescription check, negative 'sale' movements, 'bill_created' audit) and processBillReturn (exact same batch restoration, over-return guard, 'bill_returned' audit).

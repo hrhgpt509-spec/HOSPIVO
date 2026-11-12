@@ -13,6 +13,7 @@ import { OwnerMedicineList } from './OwnerMedicineList';
 import { StockJodo } from './StockJodo';
 import { StockDekho } from './StockDekho';
 import { SuppliersList } from './suppliers/SuppliersList';
+import { DawaiBecho } from './DawaiBecho';
 
 interface HomeProps {
   currentUser?: {
@@ -157,6 +158,18 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
       <SuppliersList
         onReturnHome={handleReturnHome}
         onBackToOwnerMenu={() => setActivePage('owner')}
+        currentUser={currentUser as any}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 11, 12, 12b, 13, 14 Dawai Becho Counter Billing
+  if (activePage === 'dawai_becho') {
+    return (
+      <DawaiBecho
+        onReturnHome={handleReturnHome}
         currentUser={currentUser as any}
         theme={theme}
         onToggleTheme={toggleTheme}
