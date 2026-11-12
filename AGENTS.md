@@ -42,6 +42,7 @@
 - Never hard-code a light colour on a screen. Use the colour tokens so dark mode works. Check every new screen in dark mode.
 - Top bar: every later screen with a top bar must include <FullscreenButton /> next to the light/dark toggle.
 - Every text field uses textFieldProps(kind, ...) from src/logic/format. Kinds: name, code, phone, free.
+- Physical keyboard support: every screen or modal with an on-screen keypad or numeric entry (PINs, cash/split amounts, quantities) MUST also accept physical keyboard input (number row 0-9, Numpad 0-9, Backspace to delete last digit, Delete/C to clear, Enter to confirm when valid) whenever no text input or modal dialog is blocking it.
 
 ## Big files
 - Never read a large file in pieces. Use grep to find the lines you need. Screens over 600 lines must be split into smaller files before more features are added.

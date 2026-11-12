@@ -90,6 +90,7 @@ Cash ginti -> Milan (expected vs counted; mismatch in red) -> Photo of counter -
 - Dangerous action asks "Pakka hatana hai?" with big Haan / Nahi. Important actions can be undone with Wapas.
 - Success = short beep + green flash; error = different buzz + red flash + clear message. New bill rows briefly light up.
 - Empty pages: friendly message + one big button.
+- Physical keyboard support: every screen or modal with an on-screen keypad or numeric entry (PINs, cash/split amounts, quantities) MUST also accept physical keyboard input (number row 0-9, Numpad 0-9, Backspace to delete last digit, Delete/C to clear, Enter to confirm when valid) whenever no text input or modal dialog is blocking it.
 
 ## Engineering rules (developer's, to protect money and stock)
 - Store money as whole paise (integers), never decimals/floats.

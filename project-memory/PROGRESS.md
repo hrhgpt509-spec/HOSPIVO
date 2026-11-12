@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt B3 - Payment, Bill Done, Purane Bill & Wapsi (Sales Return) - COMPLETE
+Prompt B3-KEY - Physical Keyboard Support for Payment Keypad & Global Rule - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,10 @@ Prompt B3 - Payment, Bill Done, Purane Bill & Wapsi (Sales Return) - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Added permanent physical keyboard support rule for all on-screen keypads/numeric entries in AGENTS.md and project-memory/RULES.md.
+- Created reusable numeric keypad hook (src/logic/useNumpadKeyboard.ts) supporting 0-9 (top row & Numpad), Backspace, Delete/C, and Enter while ignoring focused text inputs and open modal dialogs.
+- Wired physical keyboard input to Cash Received in PaymentScreen.tsx (all other keypad screens already use usePinKeyboard.ts).
+- Added unit tests in src/logic/useNumpadKeyboard.test.ts; verified 124/124 tests across 18 files and production build pass.
 - Added Payment flow (`src/screens/dawai-becho/PaymentScreen.tsx`) with Cash numpad/change, UPI, Udhaar (customer lookup + new customer), and Cash+UPI Split modes wired to `finalizeBill`.
 - Added Bill Done screen (`src/screens/dawai-becho/BillDoneScreen.tsx`) and receipt print view (`src/screens/dawai-becho/BillReceiptPrintView.tsx`) supporting A4 & 80mm thermal print and offline-safe WhatsApp share.
 - Added Purane Bill & Sales Return screen (`src/screens/dawai-becho/OldBillsReturnScreen.tsx`) with search, reprint/WhatsApp, partial/full item return, refund mode, and `'delete_or_correct_bill'` PIN/rule check.

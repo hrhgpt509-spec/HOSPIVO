@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { DBUser, PaymentMode } from '../../db';
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
@@ -7,6 +7,7 @@ import { useShop } from '../../logic/useShop';
 import { formatRupees, rupeesToPaise } from '../../logic/money';
 import { textFieldProps } from '../../logic/format';
 import { triggerFeedback } from '../../logic/feedback';
+import { useNumpadKeyboard } from '../../logic/useNumpadKeyboard';
 import {
   finalizeBill,
   type BillDraft,
@@ -102,7 +103,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
       .slice(0, 6);
   }, [existingCustomers, udhaarSearch]);
 
-  const handleNumpadPress = (token: string) => {
+  const handleNumpadPress = useCallback((token: string) => {
     if (token === 'clear') {
       setCashStr('0');
       return;
@@ -118,7 +119,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
       if (prev.length >= 7) return prev;
       return prev + token;
     });
-  };
+  }, []);
 
   const handleSplitCashChange = (val: string) => {
     const clean = val.replace(/[^0-9.]/g, '');
@@ -133,7 +134,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
     setSplitUpiStr(clean);
   };
 
-  const handleConfirmBill = async () => {
+  const handleConfirmBill = useCallback(async () => {
     if (isSubmitting) return;
 
     if (paymentMode === 'cash' && !cashChange.valid) {
@@ -186,7 +187,51 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [
+    isSubmitting,
+    paymentMode,
+    cashChange.valid,
+    customerName,
+    customerPhone,
+    splitCheck.valid,
+    draft,
+    cashReceivedPaise,
+    splitCashPaise,
+    splitUpiPaise,
+    currentUser,
+    approvalVerified,
+    onBillFinalized,
+    t,
+  ]);
+
+  const handleKeyboardDigit = useCallback(
+    (digit: string) => {
+      handleNumpadPress(digit);
+    },
+    [handleNumpadPress]
+  );
+
+  const handleKeyboardBackspace = useCallback(() => {
+    handleNumpadPress('backspace');
+  }, [handleNumpadPress]);
+
+  const handleKeyboardClear = useCallback(() => {
+    handleNumpadPress('clear');
+  }, [handleNumpadPress]);
+
+  const handleKeyboardEnter = useCallback(() => {
+    if (cashChange.valid && !isSubmitting) {
+      void handleConfirmBill();
+    }
+  }, [cashChange.valid, isSubmitting, handleConfirmBill]);
+
+  useNumpadKeyboard({
+    onDigit: handleKeyboardDigit,
+    onBackspace: handleKeyboardBackspace,
+    onClear: handleKeyboardClear,
+    onEnter: handleKeyboardEnter,
+    disabled: paymentMode !== 'cash' || isSubmitting,
+  });
 
   const returnHomeBtn = tButton('home.return_home_btn');
   const modeCashBtn = tButton('billing_flow.mode_cash');
