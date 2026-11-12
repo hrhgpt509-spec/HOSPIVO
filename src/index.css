@@ -51,3 +51,24 @@ html.dark body {
   background-color: #0f1713;
   color: #f3f4f6;
 }
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #hospivo-print-area,
+  #hospivo-print-area * {
+    visibility: visible !important;
+  }
+  #hospivo-print-area {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}

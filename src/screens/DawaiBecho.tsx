@@ -21,6 +21,7 @@ import {
   holdBill,
   type BillDraft,
   type BillLineInput,
+  type FinalizeBillResult,
   DEFAULT_DISCOUNT_LIMIT_PERCENT,
 } from '../logic/billing';
 import { BillPanel } from './dawai-becho/BillPanel';
@@ -28,6 +29,9 @@ import { MedicineCatalogPanel } from './dawai-becho/MedicineCatalogPanel';
 import { ScheduleHModal } from './dawai-becho/ScheduleHModal';
 import { OutOfStockModal } from './dawai-becho/OutOfStockModal';
 import { HeldBillsModal } from './dawai-becho/HeldBillsModal';
+import { PaymentScreen } from './dawai-becho/PaymentScreen';
+import { BillDoneScreen } from './dawai-becho/BillDoneScreen';
+import { OldBillsReturnScreen } from './dawai-becho/OldBillsReturnScreen';
 import type { CartItem, SerializedHeldCartItem } from './dawai-becho/types';
 
 export interface DawaiBechoProps {
@@ -76,7 +80,14 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
   const [isNewBillConfirmOpen, setIsNewBillConfirmOpen] = useState<boolean>(false);
   const [isApprovalOpen, setIsApprovalOpen] = useState<boolean>(false);
   const [isMobileBillSheetOpen, setIsMobileBillSheetOpen] = useState<boolean>(false);
-  const [paymentReadyDraft, setPaymentReadyDraft] = useState<BillDraft | null>(null);
+  const [activeScreen, setActiveScreen] = useState<
+    'billing' | 'payment' | 'bill_done' | 'old_bills'
+  >('billing');
+  const [activePaymentDraft, setActivePaymentDraft] = useState<{
+    draft: BillDraft;
+    approvalVerified: boolean;
+  } | null>(null);
+  const [completedBillResult, setCompletedBillResult] = useState<FinalizeBillResult | null>(null);
 
   const modeLabel = mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
   const userName: string =
@@ -130,22 +141,22 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
   // Autofocus search box on mount and after modals close
   useEffect(() => {
     if (
+      activeScreen === 'billing' &&
       !scheduleHMedicine &&
       !outOfStockMedicine &&
       !isHeldModalOpen &&
       !isNewBillConfirmOpen &&
-      !isApprovalOpen &&
-      !paymentReadyDraft
+      !isApprovalOpen
     ) {
       searchInputRef.current?.focus();
     }
   }, [
+    activeScreen,
     scheduleHMedicine,
     outOfStockMedicine,
     isHeldModalOpen,
     isNewBillConfirmOpen,
     isApprovalOpen,
-    paymentReadyDraft,
   ]);
 
   // Live bill math from billing.ts
@@ -619,8 +630,9 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
     if (onProceedToPayment) {
       onProceedToPayment(draft, verified);
     } else {
-      setPaymentReadyDraft(draft);
-      triggerFeedback('success', t('dawai_becho.payment_ready_title'));
+      setActivePaymentDraft({ draft, approvalVerified: verified });
+      setIsMobileBillSheetOpen(false);
+      setActiveScreen('payment');
     }
   };
 
@@ -682,15 +694,68 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
     onUndoLastItem: handleUndoLastItem,
     onNewBill: handleNewBill,
     onOpenOldBills: () =>
-      onOpenOldBills
-        ? onOpenOldBills()
-        : triggerFeedback('success', t('dawai_becho.toast_coming_in_b4')),
+      onOpenOldBills ? onOpenOldBills() : setActiveScreen('old_bills'),
     onOpenReturns: () =>
-      onOpenReturns
-        ? onOpenReturns()
-        : triggerFeedback('success', t('dawai_becho.toast_coming_in_b4')),
+      onOpenReturns ? onOpenReturns() : setActiveScreen('old_bills'),
     onProceedToPayment: handleProceedToPayment,
   };
+
+  if (activeScreen === 'payment' && activePaymentDraft) {
+    return (
+      <PaymentScreen
+        draft={activePaymentDraft.draft}
+        cart={cart}
+        totals={totals}
+        approvalVerified={activePaymentDraft.approvalVerified}
+        currentUser={currentUser}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        onReturnHome={onReturnHome}
+        onBackToCart={() => setActiveScreen('billing')}
+        onBillFinalized={(result) => {
+          setCompletedBillResult(result);
+          setActivePaymentDraft(null);
+          resetCurrentBill();
+          setActiveScreen('bill_done');
+          loadCatalogAndSettings();
+        }}
+      />
+    );
+  }
+
+  if (activeScreen === 'bill_done' && completedBillResult) {
+    return (
+      <BillDoneScreen
+        bill={completedBillResult.bill}
+        items={completedBillResult.billItems}
+        currentUser={currentUser}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        onReturnHome={onReturnHome}
+        onDone={() => {
+          setCompletedBillResult(null);
+          resetCurrentBill();
+          setActiveScreen('billing');
+          loadCatalogAndSettings();
+        }}
+      />
+    );
+  }
+
+  if (activeScreen === 'old_bills') {
+    return (
+      <OldBillsReturnScreen
+        onBackToBilling={() => {
+          setActiveScreen('billing');
+          loadCatalogAndSettings();
+        }}
+        onReturnHome={onReturnHome}
+        currentUser={currentUser}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-surface text-on-surface flex flex-col antialiased select-none transition-colors">
@@ -912,38 +977,6 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
         }}
         onClose={() => setIsApprovalOpen(false)}
       />
-
-      {/* 9. Standalone Payment Preview Hook Modal (when parent does not pass onProceedToPayment yet in B2) */}
-      {paymentReadyDraft && (
-        <div className="fixed inset-0 z-50 bg-inverse-surface/65 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant p-6 flex flex-col gap-4 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-primary-fixed text-primary mx-auto flex items-center justify-center">
-              <Icon name="payments" className="text-[36px]" />
-            </div>
-            <h2 className="font-headline-md text-headline-md font-bold text-on-surface">
-              {t('dawai_becho.payment_ready_title')}
-            </h2>
-            <p className="font-body-md text-on-surface-variant">
-              {t('dawai_becho.payment_ready_sub')}
-            </p>
-            <div className="p-4 rounded-xl bg-surface-container-low flex items-center justify-between border border-outline-variant/50">
-              <span className="font-title-hinglish font-bold text-on-surface-variant">
-                {t('dawai_becho.summary_total')}
-              </span>
-              <span className="font-display-total text-3xl font-extrabold text-primary">
-                {formatRupees(totals.totalPaise)}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setPaymentReadyDraft(null)}
-              className="h-14 min-h-[56px] w-full rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-lg cursor-pointer"
-            >
-              {tButton('suppliers.btn_back').main}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

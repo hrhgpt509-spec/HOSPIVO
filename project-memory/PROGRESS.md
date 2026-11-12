@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt B2 - Dawai Becho (Counter Billing, Schedule H & Hold Bill) - COMPLETE
+Prompt B3 - Payment, Bill Done, Purane Bill & Wapsi (Sales Return) - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,10 @@ Prompt B2 - Dawai Becho (Counter Billing, Schedule H & Hold Bill) - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Added Payment flow (`src/screens/dawai-becho/PaymentScreen.tsx`) with Cash numpad/change, UPI, Udhaar (customer lookup + new customer), and Cash+UPI Split modes wired to `finalizeBill`.
+- Added Bill Done screen (`src/screens/dawai-becho/BillDoneScreen.tsx`) and receipt print view (`src/screens/dawai-becho/BillReceiptPrintView.tsx`) supporting A4 & 80mm thermal print and offline-safe WhatsApp share.
+- Added Purane Bill & Sales Return screen (`src/screens/dawai-becho/OldBillsReturnScreen.tsx`) with search, reprint/WhatsApp, partial/full item return, refund mode, and `'delete_or_correct_bill'` PIN/rule check.
+- Added billing flow helpers and tests (`src/logic/billingFlow.ts`, `src/logic/billingFlow.test.ts`); wired everything into `src/screens/DawaiBecho.tsx` with 119/119 tests and production build passing.
 - Built Dawai Becho counter billing screen (src/screens/DawaiBecho.tsx) with desktop split layout (11) and phone sticky bar/drawer (12, 12b), wired to the "Dawai Becho" tile on Home.
 - Implemented auto-focused medicine search (name, short code, barcode, shelf, company) with Enter-key exact barcode/short-code add, non-expired stock badges, and Strip/Loose toggle + quantity steppers using FEFO pickBatchesForSale().
 - Added Schedule H/H1 prescription modal (13) requiring Patient Name, Doctor Name, and "Prescription dekhi?" (Yes), plus Out-of-Stock Substitutes modal (14) using findInStockSubstitutes().
