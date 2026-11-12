@@ -10,6 +10,7 @@ import { FullscreenButton } from '../components/FullscreenButton';
 import { OwnerMenu } from './OwnerMenu';
 import { OwnerMedicineList } from './OwnerMedicineList';
 import { StockJodo } from './StockJodo';
+import { StockDekho } from './StockDekho';
 
 interface HomeProps {
   currentUser?: {
@@ -124,6 +125,19 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
   if (activePage === 'stock_jodo') {
     return (
       <StockJodo
+        onReturnHome={handleReturnHome}
+        currentUser={currentUser as any}
+        shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 24a-b, 25 Stock Dekho
+  if (activePage === 'stock_dekho') {
+    return (
+      <StockDekho
         onReturnHome={handleReturnHome}
         currentUser={currentUser as any}
         shop={shop}

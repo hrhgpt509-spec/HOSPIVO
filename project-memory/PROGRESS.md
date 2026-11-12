@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt TYPES: Add your own product types - COMPLETE
+Prompt D1 - Stock Dekho - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,14 @@ Prompt TYPES: Add your own product types - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Built Stock Dekho (24a List, 24b Batch Detail, 25 Low Stock Shopping List) accessible to both Owner and Counter Staff from Home without PIN lock.
+- Wired 24a search, >=60px medicine rows, and Sab/Kam stock/Khatam tabs using lowStock() and outOfStock()/isOutOfStock() from stock.ts plus EmptyState without hint text.
+- Implemented 24b batch view with expiryBucket colours (30 red, 60 orange, 90 yellow, expired black/unsellable), locked "Photo dekho", and owner-only purchase rate via canSeePurchasePrice().
+- Built 25 Low Stock List grouped by latest purchase supplier (never purchased under "Supplier pata nahi") with offline-safe WhatsApp share link, 5 new tests (95/95 passing), and green build.
+- Replaced full font imports in src/index.css with subset-only imports for Noto Sans, Noto Sans Devanagari, and Material Symbols Outlined (latin 400).
+- Configured VitePWA workbox to precache .woff2 files (excluding .woff) and raised maximumFileSizeToCacheInBytes to 3 MB.
+- Shipped font files in dist/assets reduced from 118 to 52 while service worker precache increased from 5 files (877.21 KiB) to 33 files (1890.15 KiB), including the icon font.
+- Verified all 90 vitest unit tests and production build pass with zero errors.
 - Added productTypes table to Dexie (v3 schema) without copying built-in types or adding sample rows.
 - Implemented "+ Add new type" in Naya Dawai Form (Type) select opening modal with textFieldProps('name', ...) and grey hint e.g. Serum.
 - Added duplicate validation ignoring case and whitespace against built-in types (in EN, HI, HINGLISH) and custom types, enforcing 2-30 characters.

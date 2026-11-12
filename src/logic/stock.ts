@@ -235,6 +235,41 @@ export interface LowStockItem {
 }
 
 /**
+ * Checks if a stock quantity is out of stock (zero or negative).
+ */
+export function isOutOfStock(stockUnits: number): boolean {
+  return stockUnits <= 0;
+}
+
+/**
+ * Checks if a stock quantity is low (> 0 and <= minStockUnits).
+ */
+export function isLowStock(stockUnits: number, minStockUnits: number): boolean {
+  return stockUnits > 0 && stockUnits <= minStockUnits;
+}
+
+/**
+ * Returns medicines currently with zero or negative stock.
+ */
+export async function outOfStock(): Promise<LowStockItem[]> {
+  const medicines = await db.medicines.toArray();
+  const result: LowStockItem[] = [];
+
+  for (const med of medicines) {
+    if (med.id === undefined || !med.active) continue;
+    const currentStock = await medicineStock(med.id);
+    if (isOutOfStock(currentStock)) {
+      result.push({
+        medicine: med,
+        currentStockUnits: currentStock,
+      });
+    }
+  }
+
+  return result;
+}
+
+/**
  * Returns medicines currently at or below their minStockUnits threshold.
  */
 export async function lowStock(): Promise<LowStockItem[]> {

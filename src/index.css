@@ -1,19 +1,34 @@
 @import "tailwindcss";
 @import "./theme/theme.css";
 
-@import "@fontsource/noto-sans/400.css";
-@import "@fontsource/noto-sans/500.css";
-@import "@fontsource/noto-sans/600.css";
-@import "@fontsource/noto-sans/700.css";
-@import "@fontsource/noto-sans/800.css";
+@import "@fontsource/noto-sans/latin-400.css";
+@import "@fontsource/noto-sans/latin-500.css";
+@import "@fontsource/noto-sans/latin-600.css";
+@import "@fontsource/noto-sans/latin-700.css";
+@import "@fontsource/noto-sans/latin-800.css";
+@import "@fontsource/noto-sans/latin-ext-400.css";
+@import "@fontsource/noto-sans/latin-ext-500.css";
+@import "@fontsource/noto-sans/latin-ext-600.css";
+@import "@fontsource/noto-sans/latin-ext-700.css";
+@import "@fontsource/noto-sans/latin-ext-800.css";
 
-@import "@fontsource/noto-sans-devanagari/400.css";
-@import "@fontsource/noto-sans-devanagari/500.css";
-@import "@fontsource/noto-sans-devanagari/600.css";
-@import "@fontsource/noto-sans-devanagari/700.css";
-@import "@fontsource/noto-sans-devanagari/800.css";
+@import "@fontsource/noto-sans-devanagari/devanagari-400.css";
+@import "@fontsource/noto-sans-devanagari/devanagari-500.css";
+@import "@fontsource/noto-sans-devanagari/devanagari-600.css";
+@import "@fontsource/noto-sans-devanagari/devanagari-700.css";
+@import "@fontsource/noto-sans-devanagari/devanagari-800.css";
+@import "@fontsource/noto-sans-devanagari/latin-400.css";
+@import "@fontsource/noto-sans-devanagari/latin-500.css";
+@import "@fontsource/noto-sans-devanagari/latin-600.css";
+@import "@fontsource/noto-sans-devanagari/latin-700.css";
+@import "@fontsource/noto-sans-devanagari/latin-800.css";
+@import "@fontsource/noto-sans-devanagari/latin-ext-400.css";
+@import "@fontsource/noto-sans-devanagari/latin-ext-500.css";
+@import "@fontsource/noto-sans-devanagari/latin-ext-600.css";
+@import "@fontsource/noto-sans-devanagari/latin-ext-700.css";
+@import "@fontsource/noto-sans-devanagari/latin-ext-800.css";
 
-@import "@fontsource/material-symbols-outlined";
+@import "@fontsource/material-symbols-outlined/latin-400.css";
 
 * {
   box-sizing: border-box;
