@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt F1 - Din Band (Daily Closing - 4 Steps) - COMPLETE
+Prompt F2 - Owner Dashboard, Reports & Audit Log - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,10 @@ Prompt F1 - Din Band (Daily Closing - 4 Steps) - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Built `src/logic/reports.ts` and `src/logic/reports.test.ts`: live Home counters (today's net sales, bill count, 30-day expiry + low-stock alerts), Owner-only Dashboard metrics (`computeOwnerDashboardMetrics`), GST CGST/SGST summary with return deductions, Sales report, Purchase Register, Schedule H/H1 Register, CSV export helpers, and Audit Log filters.
+- Built `OwnerDashboard.tsx`, `OwnerReports.tsx` (with print area + CSV downloads + Referral Sales Report shortcut), and read-only `AuditLogScreen.tsx` matching designs `33_*`, `34_*`, and `36_*`, strictly guarded for Owner role (`isOwner`).
+- Wired the three Owner screens into `OwnerMenu.tsx` and `Home.tsx`, connected live today sales/bill/expiry/low-stock counters on `Home.tsx`, and added `en`/`hi`/`hinglish` translations.
+- Verified with `npm run test` (22 files, 139 tests passed) and `npm run build` (TypeScript + Vite build passed cleanly).
 - Upgraded Dexie schema to v7 (`src/db/index.ts`) adding `dailyClosings`, and built whole-paise expected cash, denomination math, mismatch authorization rules, and profit-free WhatsApp report logic in `src/logic/dinBand.ts`.
 - Built 4-step Din Band flow (`src/screens/DinBand.tsx` + `src/screens/din-band/Step1CashCount.tsx`, `Step2CashMatch.tsx`, `Step3CounterPhoto.tsx`, `Step4Report.tsx`) matching 31a–31f with physical keyboard support, `ApprovalDialog` / `'pending_auth'` handling, and compressed counter photos (`compressInvoicePhoto`).
 - Wired Din Band to the Home tile (`src/screens/Home.tsx`) and added full EN/HI/Hinglish translations.

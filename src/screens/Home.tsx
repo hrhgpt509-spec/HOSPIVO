@@ -18,6 +18,10 @@ import { Expiry } from './Expiry';
 import { Udhaar } from './Udhaar';
 import { ReferralReport } from './ReferralReport';
 import { DinBand } from './DinBand';
+import { OwnerDashboard } from './OwnerDashboard';
+import { OwnerReports } from './OwnerReports';
+import { AuditLogScreen } from './AuditLogScreen';
+import { loadHomeLiveCounters, type HomeLiveCounters } from '../logic/reports';
 
 interface HomeProps {
   currentUser?: {
@@ -38,6 +42,9 @@ type ActivePage =
   | 'udhaar'
   | 'customers'
   | 'referral_report'
+  | 'owner_dashboard'
+  | 'owner_reports'
+  | 'audit_log'
   | 'din_band'
   | 'owner'
   | 'medicine_list'
@@ -55,6 +62,20 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
   const [isOwnerGateOpen, setIsOwnerGateOpen] = useState<boolean>(false);
   const [isTestApprovalOpen, setIsTestApprovalOpen] = useState<boolean>(false);
   const [approvalMessage, setApprovalMessage] = useState<string>('');
+  const [liveCounters, setLiveCounters] = useState<HomeLiveCounters>({
+    todaySalesPaise: 0,
+    todayBillsCount: 0,
+    expiring30Count: 0,
+    lowStockCount: 0,
+    combinedAlertsCount: 0,
+  });
+
+  useEffect(() => {
+    if (activePage !== 'home') return;
+    loadHomeLiveCounters()
+      .then((res) => setLiveCounters(res))
+      .catch(() => {});
+  }, [activePage]);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -113,6 +134,9 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
         onOpenMedicineList={() => setActivePage('medicine_list')}
         onOpenSuppliers={() => setActivePage('suppliers')}
         onOpenReferralReport={() => setActivePage('referral_report')}
+        onOpenDashboard={() => setActivePage('owner_dashboard')}
+        onOpenReports={() => setActivePage('owner_reports')}
+        onOpenAuditLog={() => setActivePage('audit_log')}
         currentUser={currentUser}
         shop={shop}
         theme={theme}
@@ -231,6 +255,51 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     return (
       <DinBand
         onReturnHome={handleReturnHome}
+        currentUser={currentUser as any}
+        shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 33 Owner Dashboard
+  if (activePage === 'owner_dashboard') {
+    return (
+      <OwnerDashboard
+        onReturnHome={handleReturnHome}
+        onBackToOwnerMenu={() => setActivePage('owner')}
+        onOpenReports={() => setActivePage('owner_reports')}
+        onOpenAuditLog={() => setActivePage('audit_log')}
+        currentUser={currentUser as any}
+        shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 34 Owner Reports Hub
+  if (activePage === 'owner_reports') {
+    return (
+      <OwnerReports
+        onReturnHome={handleReturnHome}
+        onBackToOwnerMenu={() => setActivePage('owner')}
+        onOpenReferralReport={() => setActivePage('referral_report')}
+        currentUser={currentUser as any}
+        shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 36 Read-Only Audit Log
+  if (activePage === 'audit_log') {
+    return (
+      <AuditLogScreen
+        onReturnHome={handleReturnHome}
+        onBackToOwnerMenu={() => setActivePage('owner')}
         currentUser={currentUser as any}
         shop={shop}
         theme={theme}
@@ -541,7 +610,13 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
                   </svg>
                 </div>
-                <span className="w-3.5 h-3.5 rounded-full bg-semantic-orange"></span>
+                {liveCounters.combinedAlertsCount > 0 ? (
+                  <span className="px-2.5 py-0.5 rounded-full bg-semantic-orange text-white text-sm font-extrabold">
+                    {liveCounters.combinedAlertsCount}
+                  </span>
+                ) : (
+                  <span className="w-3.5 h-3.5 rounded-full bg-semantic-orange"></span>
+                )}
               </div>
               <div>
                 <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileExpiry.main}</div>
@@ -604,23 +679,23 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
         <footer className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 p-5 relative">
           <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-800 gap-y-4 md:gap-y-0">
             
-            {/* Metric 1: Aaj ki bikri Rs. 0 */}
+            {/* Metric 1: Aaj ki bikri */}
             <div className="px-6 flex flex-col justify-center">
               <div className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-1">{t('home.stat_sales')}</div>
               <div className="text-[38px] font-black text-brand tracking-tight leading-none">
-                {formatRupees(0)}
+                {formatRupees(liveCounters.todaySalesPaise)}
               </div>
             </div>
 
-            {/* Metric 2: Bills 0 */}
+            {/* Metric 2: Bills */}
             <div className="px-6 flex flex-col justify-center">
               <div className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-1">{t('home.stat_bills')}</div>
               <div className="text-[38px] font-black text-gray-900 dark:text-white tracking-tight leading-none">
-                0
+                {liveCounters.todayBillsCount}
               </div>
             </div>
 
-            {/* Metric 3: Expiry 30 din: 0 dawai (orange) */}
+            {/* Metric 3: Expiry 30 din (orange) */}
             <div className="px-6 flex flex-col justify-center">
               <div className="flex items-center space-x-2 text-lg font-semibold text-semantic-orange mb-1">
                 <svg className="w-5 h-5 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -629,11 +704,11 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 <span>{t('home.stat_expiry')}</span>
               </div>
               <div className="text-[38px] font-black text-semantic-orange tracking-tight leading-none">
-                {t('home.dawai_count')}
+                {t('home.dawai_count').replace(/^0/, String(liveCounters.expiring30Count))}
               </div>
             </div>
 
-            {/* Metric 4: Kam stock: 0 dawai (red) */}
+            {/* Metric 4: Kam stock (red) */}
             <div className="px-6 flex flex-col justify-center">
               <div className="flex items-center space-x-2 text-lg font-semibold text-semantic-red mb-1">
                 <svg className="w-5 h-5 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -642,7 +717,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 <span>{t('home.stat_low_stock')}</span>
               </div>
               <div className="text-[38px] font-black text-semantic-red tracking-tight leading-none">
-                {t('home.dawai_count')}
+                {t('home.dawai_count').replace(/^0/, String(liveCounters.lowStockCount))}
               </div>
             </div>
 
