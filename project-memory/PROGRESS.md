@@ -5,7 +5,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 0: project folder, memory files, Git, scaffold, theme from Stitch
 - [x] Phase 1: database, login, PIN, roles, setup screens, Home (Local), approval check, shared dialogs
 - [~] Phase 2: medicine list, Stock Jodo, Stock Dekho, suppliers
-- [ ] Phase 3: Dawai Becho, payment, bill done, old bills, returns
+- [~] Phase 3: Dawai Becho, payment, bill done, old bills, returns
 - [ ] Phase 4: Expiry, Udhaar, customers, referral report
 - [ ] Phase 5: Din Band, Owner area, reports, audit log, settings, backup/restore
 - [ ] Phase 6: Fast Bill
@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt D4 - Medicine Bulk Import (CSV) - COMPLETE
+Prompt B1 - Phase 3 Billing Database & Core Logic Engine - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,10 @@ Prompt D4 - Medicine Bulk Import (CSV) - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Upgraded Dexie schema to v4 in src/db/index.ts adding bills, billItems, heldBills, and billReturns tables with strict immutability hooks preventing delete or in-place bill edits (except status updates during returns).
+- Built Phase 3 core billing engine in src/logic/billing.ts: whole-paise pack/loose pricing, MRP-inclusive GST extraction, nearest-rupee round-off, 5% default discount limit check ('discount_above_limit'), Indian FY sequential bill numbering, and composition substitute lookup.
+- Implemented atomic finalizeBill (FEFO via pickBatchesForSale, expired/insufficient stock blocking, Schedule H/H1 prescription check, negative 'sale' movements, 'bill_created' audit) and processBillReturn (exact same batch restoration, over-return guard, 'bill_returned' audit).
+- Added 6 thorough unit tests in src/logic/billing.test.ts; verified all 115 vitest tests across 16 files and production build pass with zero errors.
 - Built Medicine Bulk Import screen (38c_Owner_MedicineImport.html) with "Download Sample CSV" template and native file picker.
 - Implemented pure validation logic in src/logic/medicineImport.ts: auto-capitalization, MRP in paise, unitsPerPack >= 1, GST slab validation (0/5/12/18%), unique barcode check, and duplicate classification (valid / duplicate / error).
 - Added single-transaction atomic saving with automatic unique shortCode generation, auto-creation of custom product types, and 'medicines_imported' audit entry.

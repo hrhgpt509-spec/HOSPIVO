@@ -143,6 +143,88 @@ export interface Purchase {
   createdAt?: string;
 }
 
+// -------------------------------------------------------------
+// Phase 3: Billing, Hold Bills & Sales Returns
+// -------------------------------------------------------------
+
+export type PaymentMode = 'cash' | 'upi' | 'udhaar' | 'split';
+export type BillStatus = 'completed' | 'returned_partial' | 'returned_full';
+export type UnitMode = 'pack' | 'loose';
+export type RefundMode = 'cash' | 'udhaar_adjust';
+
+export interface Bill {
+  id?: number;
+  billNo: string; // e.g. "2026-27/0001"
+  financialYear: string; // e.g. "2026-27"
+  date: string; // YYYY-MM-DD
+  customerName: string;
+  customerPhone: string;
+  doctorName: string;
+  subtotalPaise: number;
+  discountPaise: number;
+  discountPercent: number;
+  roundOffPaise: number;
+  totalPaise: number;
+  taxablePaise: number;
+  gstPaise: number;
+  paymentMode: PaymentMode;
+  cashReceivedPaise: number;
+  changePaise: number;
+  splitDetails?: string;
+  status: BillStatus;
+  cashierId: string;
+  cashierName: string;
+  createdAt: string;
+}
+
+export interface BillItem {
+  id?: number;
+  billId: number;
+  medicineId: number;
+  batchId: number;
+  medicineName: string;
+  batchNo: string;
+  expiry: string;
+  unitMode: UnitMode;
+  qtyInput: number;
+  qtyUnits: number;
+  unitsPerPack: number;
+  mrpPaise: number;
+  unitPricePaise: number;
+  discountPaise: number;
+  gstPercent: number;
+  taxablePaise: number;
+  gstPaise: number;
+  lineTotalPaise: number;
+  isScheduleH: boolean;
+  patientName: string;
+  doctorName: string;
+  prescriptionChecked: boolean;
+}
+
+export interface HeldBill {
+  id?: number;
+  label: string;
+  itemsJson: string;
+  discountPercent: number;
+  customerName: string;
+  doctorName: string;
+  heldBy: string;
+  heldAt: string;
+}
+
+export interface BillReturn {
+  id?: number;
+  returnNo: string;
+  originalBillId: number;
+  originalBillNo: string;
+  refundMode: RefundMode;
+  totalRefundPaise: number;
+  itemsJson: string;
+  reason: string;
+  approvedBy: string;
+  createdAt: string;
+}
 
 export class HospivoDatabase extends Dexie {
   shop!: EntityTable<Shop, 'id'>;
@@ -158,6 +240,12 @@ export class HospivoDatabase extends Dexie {
   purchases!: EntityTable<Purchase, 'id'>;
   purchaseLines!: EntityTable<PurchaseLine, 'id'>;
   productTypes!: EntityTable<ProductType, 'id'>;
+
+  // Phase 3: Billing Tables
+  bills!: EntityTable<Bill, 'id'>;
+  billItems!: EntityTable<BillItem, 'id'>;
+  heldBills!: EntityTable<HeldBill, 'id'>;
+  billReturns!: EntityTable<BillReturn, 'id'>;
 
   constructor() {
     super('HospivoDatabase');
@@ -197,6 +285,25 @@ export class HospivoDatabase extends Dexie {
       productTypes: '++id, name, active',
     });
 
+    // Version 4: Phase 3 Billing, Hold Bills & Sales Returns
+    this.version(4).stores({
+      shop: '++id, mode',
+      users: 'id, role, active',
+      settings: 'key',
+      auditLog: '++id, timestamp, who, action, record',
+      medicines: '++id, name, shortCode, barcode, company, active, shelf',
+      batches: '++id, medicineId, batchNo, expiry, [medicineId+batchNo]',
+      stockMovements: '++id, batchId, medicineId, type, at',
+      suppliers: '++id, name, phone',
+      purchases: '++id, supplierId, invoiceNo, date, verified',
+      purchaseLines: '++id, purchaseId, medicineId, batchNo',
+      productTypes: '++id, name, active',
+      bills: '++id, &billNo, financialYear, date, status, paymentMode, cashierId, createdAt',
+      billItems: '++id, billId, medicineId, batchId',
+      heldBills: '++id, heldAt',
+      billReturns: '++id, &returnNo, originalBillId, originalBillNo, createdAt',
+    });
+
     // Make audit log strictly append-only at database level
     this.auditLog.hook('updating', () => {
       throw new Error('Audit log is append-only and cannot be updated.');
@@ -211,6 +318,30 @@ export class HospivoDatabase extends Dexie {
     });
     this.stockMovements.hook('deleting', () => {
       throw new Error('Stock movements are append-only and cannot be deleted.');
+    });
+
+    // Make bills immutable once completed (except updating status during return) and prevent deletion
+    this.bills.hook('updating', (modifications) => {
+      const mods = modifications as Partial<Bill>;
+      const keys = Object.keys(modifications);
+      const isStatusOnly =
+        keys.length === 1 &&
+        keys[0] === 'status' &&
+        (mods.status === 'returned_partial' || mods.status === 'returned_full');
+      if (!isStatusOnly) {
+        throw new Error('Finished bills cannot be edited in place.');
+      }
+    });
+    this.bills.hook('deleting', () => {
+      throw new Error('Finished bills cannot be deleted.');
+    });
+
+    // Make bill items strictly immutable and non-deletable
+    this.billItems.hook('updating', () => {
+      throw new Error('Bill items cannot be edited after finalization.');
+    });
+    this.billItems.hook('deleting', () => {
+      throw new Error('Bill items cannot be deleted.');
     });
   }
 }
