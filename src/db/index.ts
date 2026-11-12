@@ -226,6 +226,29 @@ export interface BillReturn {
   createdAt: string;
 }
 
+// -------------------------------------------------------------
+// Phase 4: Expiry & Supplier Returns
+// -------------------------------------------------------------
+
+export type SupplierReturnStatus = 'pending' | 'sent' | 'credit_received' | 'rejected';
+
+export interface SupplierReturn {
+  id?: number;
+  supplierId: number;
+  supplierName: string;
+  medicineId: number;
+  medicineName: string;
+  batchId: number;
+  batchNo: string;
+  expiry: string;
+  qtyUnits: number;
+  purchaseRatePaise: number;
+  status: SupplierReturnStatus;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export class HospivoDatabase extends Dexie {
   shop!: EntityTable<Shop, 'id'>;
   users!: EntityTable<DBUser, 'id'>;
@@ -246,6 +269,9 @@ export class HospivoDatabase extends Dexie {
   billItems!: EntityTable<BillItem, 'id'>;
   heldBills!: EntityTable<HeldBill, 'id'>;
   billReturns!: EntityTable<BillReturn, 'id'>;
+
+  // Phase 4: Expiry & Supplier Returns
+  supplierReturns!: EntityTable<SupplierReturn, 'id'>;
 
   constructor() {
     super('HospivoDatabase');
@@ -302,6 +328,26 @@ export class HospivoDatabase extends Dexie {
       billItems: '++id, billId, medicineId, batchId',
       heldBills: '++id, heldAt',
       billReturns: '++id, &returnNo, originalBillId, originalBillNo, createdAt',
+    });
+
+    // Version 5: Phase 4 Supplier Returns
+    this.version(5).stores({
+      shop: '++id, mode',
+      users: 'id, role, active',
+      settings: 'key',
+      auditLog: '++id, timestamp, who, action, record',
+      medicines: '++id, name, shortCode, barcode, company, active, shelf',
+      batches: '++id, medicineId, batchNo, expiry, [medicineId+batchNo]',
+      stockMovements: '++id, batchId, medicineId, type, at',
+      suppliers: '++id, name, phone',
+      purchases: '++id, supplierId, invoiceNo, date, verified',
+      purchaseLines: '++id, purchaseId, medicineId, batchNo',
+      productTypes: '++id, name, active',
+      bills: '++id, &billNo, financialYear, date, status, paymentMode, cashierId, createdAt',
+      billItems: '++id, billId, medicineId, batchId',
+      heldBills: '++id, heldAt',
+      billReturns: '++id, &returnNo, originalBillId, originalBillNo, createdAt',
+      supplierReturns: '++id, supplierId, medicineId, batchId, status, createdAt',
     });
 
     // Make audit log strictly append-only at database level

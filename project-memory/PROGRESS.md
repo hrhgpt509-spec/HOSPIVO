@@ -6,14 +6,14 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 1: database, login, PIN, roles, setup screens, Home (Local), approval check, shared dialogs
 - [~] Phase 2: medicine list, Stock Jodo, Stock Dekho, suppliers
 - [~] Phase 3: Dawai Becho, payment, bill done, old bills, returns
-- [ ] Phase 4: Expiry, Udhaar, customers, referral report
+- [~] Phase 4: Expiry, Udhaar, customers, referral report
 - [ ] Phase 5: Din Band, Owner area, reports, audit log, settings, backup/restore
 - [ ] Phase 6: Fast Bill
 - [ ] Phase 7: Shelf map, stickers
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt B3-KEY - Physical Keyboard Support for Payment Keypad & Global Rule - COMPLETE
+Prompt E1 - Expiry & Supplier Returns (+ Payment Cash Initial Zero) - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,10 @@ Prompt B3-KEY - Physical Keyboard Support for Payment Keypad & Global Rule - COM
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Updated `PaymentScreen.tsx` to initialize Cash Received to Rs. 0 while keeping the one-tap "Exact" button.
+- Upgraded Dexie schema to v5 (`src/db/index.ts`) adding `supplierReturns`, and implemented expiry bucketing, atomic supplier return creation, status updates, and owner-only 12-month loss calculation in `src/logic/expiry.ts`.
+- Built Expiry list (`src/screens/Expiry.tsx`), Supplier Return modal (`src/screens/expiry/SupplierReturnModal.tsx`), and Return Tracker (`src/screens/expiry/SupplierReturnsTracker.tsx`) matching designs 26a/26b/26c, wired to Home's Expiry tile with EN/HI/Hinglish translations.
+- Added unit tests in `src/logic/expiry.test.ts` verifying bucketing, negative `'supplier_return'` stock movements, status audit logs, and zero rate/loss exposure for staff; 128/128 tests and production build pass.
 - Added permanent physical keyboard support rule for all on-screen keypads/numeric entries in AGENTS.md and project-memory/RULES.md.
 - Created reusable numeric keypad hook (src/logic/useNumpadKeyboard.ts) supporting 0-9 (top row & Numpad), Backspace, Delete/C, and Enter while ignoring focused text inputs and open modal dialogs.
 - Wired physical keyboard input to Cash Received in PaymentScreen.tsx (all other keypad screens already use usePinKeyboard.ts).

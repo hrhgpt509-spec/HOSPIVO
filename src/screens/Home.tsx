@@ -14,6 +14,7 @@ import { StockJodo } from './StockJodo';
 import { StockDekho } from './StockDekho';
 import { SuppliersList } from './suppliers/SuppliersList';
 import { DawaiBecho } from './DawaiBecho';
+import { Expiry } from './Expiry';
 
 interface HomeProps {
   currentUser?: {
@@ -171,6 +172,19 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
       <DawaiBecho
         onReturnHome={handleReturnHome}
         currentUser={currentUser as any}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 26a, 26b, 26c Expiry & Supplier Returns
+  if (activePage === 'expiry') {
+    return (
+      <Expiry
+        onReturnHome={handleReturnHome}
+        currentUser={currentUser as any}
+        shop={shop}
         theme={theme}
         onToggleTheme={toggleTheme}
       />

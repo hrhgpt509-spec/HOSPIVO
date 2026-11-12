@@ -53,7 +53,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const [paymentMode, setPaymentMode] = useState<PaymentMode>(draft.paymentMode || 'cash');
   // Cash tendered input as rupee string (default to exact rupees of total)
   const totalRupeesInt = Math.round(totals.totalPaise / 100);
-  const [cashStr, setCashStr] = useState<string>(String(totalRupeesInt));
+  const [cashStr, setCashStr] = useState<string>('0');
 
   // Udhaar customer fields
   const [udhaarSearch, setUdhaarSearch] = useState<string>('');
