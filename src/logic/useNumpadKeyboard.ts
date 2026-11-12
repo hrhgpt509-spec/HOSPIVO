@@ -6,6 +6,7 @@ export interface UseNumpadKeyboardOptions {
   onClear?: () => void;
   onEnter?: () => void;
   disabled?: boolean;
+  allowInsideDialog?: boolean;
 }
 
 export interface NumpadKeyEventLike {
@@ -59,6 +60,7 @@ export function handleNumpadKeyDown(
 
   // Ignore if an overlay modal dialog (e.g. ApprovalDialog, ConfirmDialog) is open
   if (
+    !options.allowInsideDialog &&
     typeof targetDoc?.querySelector === 'function' &&
     targetDoc.querySelector('[role="dialog"], [aria-modal="true"]')
   ) {
@@ -106,6 +108,7 @@ export function useNumpadKeyboard({
   onClear,
   onEnter,
   disabled = false,
+  allowInsideDialog = false,
 }: UseNumpadKeyboardOptions) {
   useEffect(() => {
     if (disabled || typeof window === 'undefined') return;
@@ -117,11 +120,12 @@ export function useNumpadKeyboard({
         onClear,
         onEnter,
         disabled,
+        allowInsideDialog,
       });
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onDigit, onBackspace, onClear, onEnter, disabled]);
+  }, [onDigit, onBackspace, onClear, onEnter, disabled, allowInsideDialog]);
 }
 

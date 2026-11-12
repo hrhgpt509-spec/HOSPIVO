@@ -1,6 +1,7 @@
 import { db, type Bill, type BillItem, type BillReturn } from '../db';
 import { DEFAULT_APPROVAL_RULES, type ApprovalActionCategory, type ApprovalRuleType } from './approvals';
 import { formatRupees } from './money';
+import { computeUdhaarLedgers } from './udhaar';
 
 export interface CashChangeResult {
   valid: boolean;
@@ -200,45 +201,34 @@ export interface UdhaarCustomerSummary {
   customerName: string;
   customerPhone: string;
   pendingUdhaarPaise: number;
+  creditLimitPaise?: number;
 }
 
 /**
- * Aggregates existing Udhaar customers from past unpaid/credit bills for quick selection.
+ * Aggregates existing Udhaar customers with net credit balance (bills - udhaar_adjust returns - udhaarPayments).
  */
 export async function getExistingUdhaarCustomers(): Promise<UdhaarCustomerSummary[]> {
-  const bills = await db.bills.toArray();
-  const map = new Map<string, UdhaarCustomerSummary>();
+  const [customers, bills, billReturns, udhaarPayments] = await Promise.all([
+    db.customers.toArray(),
+    db.bills.toArray(),
+    db.billReturns.toArray(),
+    db.udhaarPayments.toArray(),
+  ]);
 
-  for (const bill of bills) {
-    if (!bill.customerName && !bill.customerPhone) continue;
+  const { allCustomers } = computeUdhaarLedgers({
+    customers,
+    bills,
+    billReturns,
+    udhaarPayments,
+  });
 
-    let udhaarAmount = 0;
-    if (bill.paymentMode === 'udhaar') {
-      udhaarAmount = bill.totalPaise;
-    } else if (bill.paymentMode === 'split' && bill.splitDetails) {
-      try {
-        const parsed = JSON.parse(bill.splitDetails) as { udhaarPaise?: number };
-        udhaarAmount = parsed.udhaarPaise || 0;
-      } catch {
-        udhaarAmount = 0;
-      }
-    }
-
-    const key = `${bill.customerPhone.trim()}|${bill.customerName.trim().toLowerCase()}`;
-    const existing = map.get(key);
-    if (existing) {
-      existing.pendingUdhaarPaise += udhaarAmount;
-    } else if (bill.customerName.trim() || bill.customerPhone.trim()) {
-      map.set(key, {
-        key,
-        customerName: bill.customerName.trim(),
-        customerPhone: bill.customerPhone.trim(),
-        pendingUdhaarPaise: udhaarAmount,
-      });
-    }
-  }
-
-  return Array.from(map.values()).sort((a, b) =>
-    a.customerName.localeCompare(b.customerName)
-  );
+  return allCustomers
+    .map((c) => ({
+      key: c.key,
+      customerName: c.customerName,
+      customerPhone: c.customerPhone,
+      pendingUdhaarPaise: c.pendingBalancePaise,
+      creditLimitPaise: c.creditLimitPaise,
+    }))
+    .sort((a, b) => a.customerName.localeCompare(b.customerName));
 }

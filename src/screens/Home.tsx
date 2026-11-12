@@ -15,6 +15,8 @@ import { StockDekho } from './StockDekho';
 import { SuppliersList } from './suppliers/SuppliersList';
 import { DawaiBecho } from './DawaiBecho';
 import { Expiry } from './Expiry';
+import { Udhaar } from './Udhaar';
+import { ReferralReport } from './ReferralReport';
 
 interface HomeProps {
   currentUser?: {
@@ -33,6 +35,8 @@ type ActivePage =
   | 'stock_dekho'
   | 'expiry'
   | 'udhaar'
+  | 'customers'
+  | 'referral_report'
   | 'din_band'
   | 'owner'
   | 'medicine_list'
@@ -107,6 +111,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
         onReturnHome={handleReturnHome}
         onOpenMedicineList={() => setActivePage('medicine_list')}
         onOpenSuppliers={() => setActivePage('suppliers')}
+        onOpenReferralReport={() => setActivePage('referral_report')}
         currentUser={currentUser}
         shop={shop}
         theme={theme}
@@ -183,6 +188,35 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     return (
       <Expiry
         onReturnHome={handleReturnHome}
+        currentUser={currentUser as any}
+        shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 28a-c, 29a-b Udhaar, Customers & Regular Reminders
+  if (activePage === 'udhaar' || activePage === 'customers') {
+    return (
+      <Udhaar
+        onReturnHome={handleReturnHome}
+        onOpenBilling={() => setActivePage('dawai_becho')}
+        initialView={activePage === 'customers' ? 'customers' : 'udhaar'}
+        currentUser={currentUser as any}
+        shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 30 Doctor Referral Sales Report
+  if (activePage === 'referral_report') {
+    return (
+      <ReferralReport
+        onReturnHome={handleReturnHome}
+        onBack={() => setActivePage('owner')}
         currentUser={currentUser as any}
         shop={shop}
         theme={theme}
@@ -312,6 +346,17 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
             >
               <Icon name="local_shipping" className="text-[18px] text-primary" />
               <span>{tButton('suppliers.nav_suppliers').main}</span>
+            </button>
+
+            {/* Quick Customers Button */}
+            <button
+              type="button"
+              onClick={() => setActivePage('customers')}
+              className="h-10 px-3.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant text-on-surface font-bold text-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+              title={t('customers.page_title')}
+            >
+              <Icon name="groups" className="text-[18px] text-primary" />
+              <span>{tButton('customers.nav_customers').main}</span>
             </button>
 
             {/* User name */}

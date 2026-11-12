@@ -8,6 +8,7 @@ interface OwnerMenuProps {
   onReturnHome: () => void;
   onOpenMedicineList: () => void;
   onOpenSuppliers?: () => void;
+  onOpenReferralReport?: () => void;
   currentUser?: {
     id?: string;
     name: string;
@@ -27,6 +28,7 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
   onReturnHome,
   onOpenMedicineList,
   onOpenSuppliers,
+  onOpenReferralReport,
   currentUser,
   shop,
   theme = 'light',
@@ -227,11 +229,11 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
                 ) : null}
               </button>
 
-              {/* 2. Reports (locked) */}
+              {/* 2. Reports -> Referral Sales Report (ACTIVE! Opens real page) */}
               <button
                 type="button"
-                onClick={() => handleLockedClick(tileReports.main)}
-                className="group relative flex flex-col items-center justify-center aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-4 text-center border border-outline-variant active:scale-[0.98]"
+                onClick={onOpenReferralReport}
+                className="group relative flex flex-col items-center justify-center aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
               >
                 <div className="w-16 h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
                   <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">

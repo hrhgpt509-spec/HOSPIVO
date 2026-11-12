@@ -3,11 +3,13 @@ import type { DBUser, PaymentMode } from '../../db';
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
 import { FullscreenButton } from '../../components/FullscreenButton';
+import { ApprovalDialog } from '../../components/ApprovalDialog';
 import { useShop } from '../../logic/useShop';
 import { formatRupees, rupeesToPaise } from '../../logic/money';
 import { textFieldProps } from '../../logic/format';
 import { triggerFeedback } from '../../logic/feedback';
 import { useNumpadKeyboard } from '../../logic/useNumpadKeyboard';
+import { ensureCustomerForUdhaarBill, normalizePhoneKey } from '../../logic/udhaar';
 import {
   finalizeBill,
   type BillDraft,
@@ -67,6 +69,8 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const [splitUpiStr, setSplitUpiStr] = useState<string>(String(totalRupeesInt - halfRupees));
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [creditLimitApproved, setCreditLimitApproved] = useState<boolean>(false);
+  const [isLimitApprovalOpen, setIsLimitApprovalOpen] = useState<boolean>(false);
 
   const modeLabel = mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
   const userName =
@@ -102,6 +106,33 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
       )
       .slice(0, 6);
   }, [existingCustomers, udhaarSearch]);
+
+  const matchedUdhaarCustomer = useMemo(() => {
+    const phoneKey = normalizePhoneKey(customerPhone);
+    if (phoneKey) {
+      const byPhone = existingCustomers.find(
+        (c) => normalizePhoneKey(c.customerPhone) === phoneKey
+      );
+      if (byPhone) return byPhone;
+    }
+    const nameKey = customerName.trim().toLowerCase();
+    if (!nameKey) return undefined;
+    return existingCustomers.find(
+      (c) => c.customerName.trim().toLowerCase() === nameKey
+    );
+  }, [existingCustomers, customerPhone, customerName]);
+
+  const customerCreditLimitPaise = matchedUdhaarCustomer?.creditLimitPaise || 0;
+  const customerPendingPaise = matchedUdhaarCustomer?.pendingUdhaarPaise || 0;
+  const projectedUdhaarPaise = customerPendingPaise + totals.totalPaise;
+  const creditLimitExceeded =
+    paymentMode === 'udhaar' &&
+    customerCreditLimitPaise > 0 &&
+    projectedUdhaarPaise > customerCreditLimitPaise;
+
+  useEffect(() => {
+    setCreditLimitApproved(false);
+  }, [customerPhone, customerName, paymentMode]);
 
   const handleNumpadPress = useCallback((token: string) => {
     if (token === 'clear') {
@@ -147,6 +178,17 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
         triggerFeedback('error', t('billing_flow.err_udhaar_customer_required'));
         return;
       }
+      if (creditLimitExceeded && !creditLimitApproved) {
+        triggerFeedback(
+          'error',
+          t('udhaar.credit_limit_warning', {
+            limit: formatRupees(customerCreditLimitPaise),
+            projected: formatRupees(projectedUdhaarPaise),
+          })
+        );
+        setIsLimitApprovalOpen(true);
+        return;
+      }
     }
 
     if (paymentMode === 'split' && !splitCheck.valid) {
@@ -178,8 +220,11 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
       };
 
       const result = await finalizeBill(finalDraft, currentUser, {
-        approvalVerified,
+        approvalVerified: approvalVerified || creditLimitApproved,
       });
+      if (paymentMode === 'udhaar') {
+        await ensureCustomerForUdhaarBill(customerName.trim(), customerPhone.trim());
+      }
       onBillFinalized(result);
     } catch (err: any) {
       console.error('Failed to finalize bill:', err);
@@ -194,6 +239,10 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
     customerName,
     customerPhone,
     splitCheck.valid,
+    creditLimitExceeded,
+    creditLimitApproved,
+    customerCreditLimitPaise,
+    projectedUdhaarPaise,
     draft,
     cashReceivedPaise,
     splitCashPaise,
@@ -659,6 +708,28 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                     </div>
                   </div>
 
+                  {/* Credit limit warning banner */}
+                  {creditLimitExceeded && !creditLimitApproved && (
+                    <div className="p-3 rounded-xl bg-error-container text-on-error-container border border-error/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
+                      <div className="flex items-center gap-2 text-sm font-bold">
+                        <Icon name="warning" className="text-xl text-error shrink-0" />
+                        <span>
+                          {t('udhaar.credit_limit_warning', {
+                            limit: formatRupees(customerCreditLimitPaise),
+                            projected: formatRupees(projectedUdhaarPaise),
+                          })}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsLimitApprovalOpen(true)}
+                        className="px-3 py-1.5 rounded-lg bg-error text-on-error text-xs font-bold shrink-0 cursor-pointer"
+                      >
+                        {t('udhaar.credit_limit_approval_btn')}
+                      </button>
+                    </div>
+                  )}
+
                   {/* Matching existing customers list */}
                   {filteredUdhaarCustomers.length > 0 && (
                     <div className="flex flex-col gap-1.5 flex-1 overflow-y-auto min-h-0">
@@ -711,6 +782,12 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                                 {t('billing_flow.udhaar_pending_prefix')}{' '}
                                 {formatRupees(cust.pendingUdhaarPaise)}
                               </span>
+                              {cust.creditLimitPaise && cust.creditLimitPaise > 0 ? (
+                                <div className="text-xs text-on-surface-variant font-medium">
+                                  {t('udhaar.credit_limit_label')}{' '}
+                                  {formatRupees(cust.creditLimitPaise)}
+                                </div>
+                              ) : null}
                               {isSelected && (
                                 <div className="text-xs text-primary font-semibold">
                                   {t('billing_flow.udhaar_selected')}
@@ -821,6 +898,18 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
           </div>
         </div>
       </main>
+      {/* Credit Limit Exceeded Approval Dialog */}
+      <ApprovalDialog
+        isOpen={isLimitApprovalOpen}
+        actionCategory="discount_above_limit"
+        recordDescription={`${customerName} (${formatRupees(projectedUdhaarPaise)} > ${formatRupees(customerCreditLimitPaise)})`}
+        requesterName={userName}
+        onApproved={() => {
+          setIsLimitApprovalOpen(false);
+          setCreditLimitApproved(true);
+        }}
+        onClose={() => setIsLimitApprovalOpen(false)}
+      />
     </div>
   );
 };

@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt E1 - Expiry & Supplier Returns (+ Payment Cash Initial Zero) - COMPLETE
+Prompt E2 - Udhaar, Customers, Regular Reminders & Referral Sales Report - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,10 @@ Prompt E1 - Expiry & Supplier Returns (+ Payment Cash Initial Zero) - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Upgraded Dexie schema to v6 (`src/db/index.ts`) adding `customers`, append-only `udhaarPayments`, and `regularReminders`; built net credit ledger, FIFO aging, credit-limit checks, refill due math, and doctor sales aggregation in `src/logic/udhaar.ts`.
+- Built Udhaar list (`src/screens/Udhaar.tsx`), Paisa Mila payment keypad modal (`src/screens/udhaar/PaisaMilaModal.tsx` with `useNumpadKeyboard`), and >7-days Yaad Dilao WhatsApp modal (`src/screens/udhaar/YaadDilaoModal.tsx`) matching 28a/28b/28c.
+- Built Customer directory & detail (`src/screens/udhaar/CustomerDetailScreen.tsx`, `CustomerFormModal.tsx`, `RegularReminderModal.tsx`) with Owner-only credit limits, regular BP/Sugar refill alerts, and PaymentScreen credit-limit Approval PIN enforcement.
+- Built Doctor Referral Sales Report (`src/screens/ReferralReport.tsx`) with Print/CSV export and zero commission references, wired to Home and Owner Menu Reports; added 5 tests in `src/logic/udhaar.test.ts` (133/133 tests and build green).
 - Updated `PaymentScreen.tsx` to initialize Cash Received to Rs. 0 while keeping the one-tap "Exact" button.
 - Upgraded Dexie schema to v5 (`src/db/index.ts`) adding `supplierReturns`, and implemented expiry bucketing, atomic supplier return creation, status updates, and owner-only 12-month loss calculation in `src/logic/expiry.ts`.
 - Built Expiry list (`src/screens/Expiry.tsx`), Supplier Return modal (`src/screens/expiry/SupplierReturnModal.tsx`), and Return Tracker (`src/screens/expiry/SupplierReturnsTracker.tsx`) matching designs 26a/26b/26c, wired to Home's Expiry tile with EN/HI/Hinglish translations.

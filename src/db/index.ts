@@ -249,6 +249,47 @@ export interface SupplierReturn {
   updatedAt: string;
 }
 
+// -------------------------------------------------------------
+// Phase 4: Customers, Udhaar Ledger & Regular Reminders
+// -------------------------------------------------------------
+
+export interface Customer {
+  id?: number;
+  name: string;
+  phone: string;
+  address: string;
+  creditLimitPaise?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type UdhaarPaymentMode = 'cash' | 'upi';
+
+export interface UdhaarPayment {
+  id?: number;
+  customerId?: number;
+  customerName: string;
+  customerPhone: string;
+  amountPaise: number;
+  mode: UdhaarPaymentMode;
+  note: string;
+  receivedBy: string;
+  createdAt: string;
+}
+
+export interface RegularReminder {
+  id?: number;
+  customerId?: number;
+  customerName: string;
+  customerPhone: string;
+  medicineId: number;
+  medicineName: string;
+  packDays: number;
+  lastDispensedDate: string; // YYYY-MM-DD
+  nextDueDate: string; // YYYY-MM-DD
+  active: boolean;
+}
+
 export class HospivoDatabase extends Dexie {
   shop!: EntityTable<Shop, 'id'>;
   users!: EntityTable<DBUser, 'id'>;
@@ -272,6 +313,11 @@ export class HospivoDatabase extends Dexie {
 
   // Phase 4: Expiry & Supplier Returns
   supplierReturns!: EntityTable<SupplierReturn, 'id'>;
+
+  // Phase 4: Customers, Udhaar & Regular Reminders
+  customers!: EntityTable<Customer, 'id'>;
+  udhaarPayments!: EntityTable<UdhaarPayment, 'id'>;
+  regularReminders!: EntityTable<RegularReminder, 'id'>;
 
   constructor() {
     super('HospivoDatabase');
@@ -350,6 +396,29 @@ export class HospivoDatabase extends Dexie {
       supplierReturns: '++id, supplierId, medicineId, batchId, status, createdAt',
     });
 
+    // Version 6: Phase 4 Customers, Udhaar Payments & Regular Reminders
+    this.version(6).stores({
+      shop: '++id, mode',
+      users: 'id, role, active',
+      settings: 'key',
+      auditLog: '++id, timestamp, who, action, record',
+      medicines: '++id, name, shortCode, barcode, company, active, shelf',
+      batches: '++id, medicineId, batchNo, expiry, [medicineId+batchNo]',
+      stockMovements: '++id, batchId, medicineId, type, at',
+      suppliers: '++id, name, phone',
+      purchases: '++id, supplierId, invoiceNo, date, verified',
+      purchaseLines: '++id, purchaseId, medicineId, batchNo',
+      productTypes: '++id, name, active',
+      bills: '++id, &billNo, financialYear, date, status, paymentMode, cashierId, createdAt',
+      billItems: '++id, billId, medicineId, batchId',
+      heldBills: '++id, heldAt',
+      billReturns: '++id, &returnNo, originalBillId, originalBillNo, createdAt',
+      supplierReturns: '++id, supplierId, medicineId, batchId, status, createdAt',
+      customers: '++id, &phone, name, createdAt',
+      udhaarPayments: '++id, customerId, customerPhone, createdAt',
+      regularReminders: '++id, customerId, customerPhone, medicineId, nextDueDate, active',
+    });
+
     // Make audit log strictly append-only at database level
     this.auditLog.hook('updating', () => {
       throw new Error('Audit log is append-only and cannot be updated.');
@@ -388,6 +457,14 @@ export class HospivoDatabase extends Dexie {
     });
     this.billItems.hook('deleting', () => {
       throw new Error('Bill items cannot be deleted.');
+    });
+
+    // Make Udhaar payments strictly append-only at database level
+    this.udhaarPayments.hook('updating', () => {
+      throw new Error('Udhaar payments are append-only and cannot be updated.');
+    });
+    this.udhaarPayments.hook('deleting', () => {
+      throw new Error('Udhaar payments are append-only and cannot be deleted.');
     });
   }
 }
