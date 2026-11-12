@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt D1 - Stock Dekho - COMPLETE
+Prompt D2 - Stock Correction (Stock Sudhaar) - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,10 @@ Prompt D1 - Stock Dekho - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Added per-batch "Stock Sudhaar" (Adjust Stock) button on Batch Detail checking the saved stock_correction offline approval rule (blocked_offline shows red error feedback without opening edit; local_pin opens adjustment form then ApprovalDialog even for Owner).
+- Built StockCorrectionModal supporting Add (+)/Reduce (-) in packs and loose units, preventing negative batch stock, requiring Damaged/Lost/Count mismatch reason chip or note (textFieldProps free), and showing zero purchase prices or profit.
+- Created src/logic/stockCorrection.ts to atomically append signed 'correction' stockMovements without modifying old rows and record English 'stock_correction' audit entries without PINs or prices.
+- Added English/Hindi/Hinglish keys across i18n and 4 unit tests in src/logic/stockCorrection.test.ts; verified all 99 vitest tests and production build pass with zero errors.
 - Built Stock Dekho (24a List, 24b Batch Detail, 25 Low Stock Shopping List) accessible to both Owner and Counter Staff from Home without PIN lock.
 - Wired 24a search, >=60px medicine rows, and Sab/Kam stock/Khatam tabs using lowStock() and outOfStock()/isOutOfStock() from stock.ts plus EmptyState without hint text.
 - Implemented 24b batch view with expiryBucket colours (30 red, 60 orange, 90 yellow, expired black/unsellable), locked "Photo dekho", and owner-only purchase rate via canSeePurchasePrice().

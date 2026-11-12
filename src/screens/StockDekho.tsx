@@ -177,6 +177,7 @@ export const StockDekho: React.FC<StockDekhoProps> = ({
         batches={selectedMedicineBatchDetails}
         totalStockUnits={selectedMedicineTotalUnits}
         onBack={() => setCurrentView('list')}
+        onRefreshStock={loadData}
         currentUser={currentUser}
         shop={shop}
         theme={theme}

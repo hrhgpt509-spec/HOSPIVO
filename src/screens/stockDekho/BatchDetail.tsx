@@ -8,12 +8,19 @@ import { canSeePurchasePrice } from '../../logic/roles';
 import { formatRupees } from '../../logic/money';
 import { formatMedicineStock } from '../../logic/medicineSearch';
 import type { BatchStockDetail } from '../../logic/stockDekho';
+import { triggerFeedback } from '../../logic/feedback';
+import {
+  getStockCorrectionApprovalRule,
+  evaluateStockCorrectionRule,
+} from '../../logic/stockCorrection';
+import { StockCorrectionModal } from './StockCorrectionModal';
 
 interface BatchDetailProps {
   medicine: Medicine;
   batches: BatchStockDetail[];
   totalStockUnits: number;
   onBack: () => void;
+  onRefreshStock: () => Promise<void> | void;
   currentUser: DBUser | null;
   shop: Shop | null;
   theme: 'light' | 'dark';
@@ -25,6 +32,7 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
   batches,
   totalStockUnits,
   onBack,
+  onRefreshStock,
   currentUser,
   shop,
   theme,
@@ -33,12 +41,30 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
   const { t, shouldShowSub } = useTranslation();
   const { name: hookShopName } = useShop();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [blockedErrorMsg, setBlockedErrorMsg] = useState<string | null>(null);
+  const [correctingBatch, setCorrectingBatch] = useState<BatchStockDetail | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage(null);
     }, 2400);
+  };
+
+  const handleOpenStockCorrection = async (batch: BatchStockDetail) => {
+    setBlockedErrorMsg(null);
+    const rule = await getStockCorrectionApprovalRule();
+    const evaluation = evaluateStockCorrectionRule(rule);
+
+    if (evaluation.blocked) {
+      const title = t('stock_dekho.correction_blocked_title');
+      const sub = t('stock_dekho.correction_blocked_sub');
+      setBlockedErrorMsg(title);
+      triggerFeedback('error', title, sub);
+      return;
+    }
+
+    setCorrectingBatch(batch);
   };
 
   const showPurchasePrice = canSeePurchasePrice(currentUser);
@@ -66,9 +92,9 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
     main: t('stock_dekho.btn_view_photo.main'),
     sub: t('stock_dekho.btn_view_photo.sub'),
   };
-  const stockSudhaarBtn = {
-    main: t('stock_dekho.btn_stock_correction.main'),
-    sub: t('stock_dekho.btn_stock_correction.sub'),
+  const adjustBtn = {
+    main: t('stock_dekho.btn_adjust_stock.main'),
+    sub: t('stock_dekho.btn_adjust_stock.sub'),
   };
 
   return (
@@ -197,23 +223,44 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
           </div>
 
           {/* Center Split: Batch Table & Shelf Location Card */}
+          {blockedErrorMsg && (
+            <div className="w-full bg-error-container border border-error text-error rounded-xl px-space-md py-space-sm font-bold flex items-center justify-between gap-3">
+              <div className="flex items-center gap-space-xs">
+                <Icon name="block" className="text-[22px] shrink-0" />
+                <span>{blockedErrorMsg}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBlockedErrorMsg(null)}
+                aria-label={t('common.btn_clear.main')}
+                className="p-1 rounded-lg hover:bg-error/10 cursor-pointer"
+              >
+                <Icon name="close" className="text-[20px]" />
+              </button>
+            </div>
+          )}
+
           <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
             {/* Batch Table Container (Left 8 Cols) */}
             <div className="lg:col-span-8 bg-surface-container-lowest rounded-xl p-space-lg shadow-sm border border-outline-variant/30 flex flex-col justify-between">
               <div className="flex flex-col w-full">
                 {/* Table Column Headers */}
-                <div className="grid grid-cols-12 px-2.5 sm:px-space-md py-space-sm bg-surface-container-low rounded-lg text-on-surface-variant font-title-hinglish text-sm sm:text-title-hinglish">
-                  <div className="col-span-4 flex items-center gap-space-xs">
-                    <Icon name="tag" className="text-[18px] sm:text-[20px]" />
+                <div className="hidden md:grid grid-cols-12 px-space-md py-space-sm bg-surface-container-low rounded-lg text-on-surface-variant font-title-hinglish text-title-hinglish">
+                  <div className="col-span-3 flex items-center gap-space-xs">
+                    <Icon name="tag" className="text-[20px]" />
                     <span>{t('stock_dekho.table_head_batch')}</span>
                   </div>
-                  <div className="col-span-4 flex items-center gap-space-xs">
-                    <Icon name="calendar_today" className="text-[18px] sm:text-[20px]" />
+                  <div className="col-span-3 flex items-center gap-space-xs">
+                    <Icon name="calendar_today" className="text-[20px]" />
                     <span>{t('stock_dekho.table_head_expiry')}</span>
                   </div>
-                  <div className="col-span-4 text-right flex items-center justify-end gap-space-xs">
-                    <Icon name="format_list_numbered" className="text-[18px] sm:text-[20px]" />
+                  <div className="col-span-3 text-right flex items-center justify-end gap-space-xs">
+                    <Icon name="format_list_numbered" className="text-[20px]" />
                     <span>{t('stock_dekho.table_head_qty')}</span>
+                  </div>
+                  <div className="col-span-3 text-right flex items-center justify-end gap-space-xs">
+                    <Icon name="tune" className="text-[20px]" />
+                    <span>{adjustBtn.main}</span>
                   </div>
                   {showPurchasePrice && (
                     <div className="col-span-12 mt-1 text-right text-xs text-on-surface-variant">
@@ -279,10 +326,10 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
                       return (
                         <div
                           key={batch.id || batch.batchNo}
-                          className={`min-h-[64px] py-2 grid grid-cols-12 items-center gap-1 px-2.5 sm:px-space-md rounded-lg shadow-sm transition-colors ${rowBg}`}
+                          className={`min-h-[64px] p-space-sm sm:px-space-md rounded-lg shadow-sm transition-colors flex flex-col md:grid md:grid-cols-12 md:items-center gap-2 sm:gap-space-sm ${rowBg}`}
                         >
-                          <div className="col-span-4 flex items-center gap-space-xs sm:gap-space-sm flex-wrap min-w-0">
-                            <span className="font-title-hinglish text-sm sm:text-title-hinglish font-bold truncate">
+                          <div className="md:col-span-3 flex items-center gap-space-xs flex-wrap min-w-0">
+                            <span className="font-title-hinglish text-base sm:text-title-hinglish font-bold truncate">
                               {batch.batchNo}
                             </span>
                             {expiryBadge}
@@ -297,36 +344,58 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
                             )}
                           </div>
 
-                          <div className={`col-span-4 flex items-center gap-space-xs min-w-0 ${expiryTextClass}`}>
-                            <Icon
-                              name={
-                                batch.isExpired
-                                  ? 'cancel'
-                                  : batch.expiryBucket !== 'none'
-                                  ? 'warning'
-                                  : 'check_circle'
-                              }
-                              className="text-[18px] sm:text-[20px] shrink-0"
-                            />
-                            <span className="font-body-lg text-sm sm:text-body-lg truncate">
-                              {batch.expiry}
-                            </span>
+                          <div className="flex items-center justify-between md:contents gap-2">
+                            <div className={`md:col-span-3 flex items-center gap-space-xs min-w-0 ${expiryTextClass}`}>
+                              <Icon
+                                name={
+                                  batch.isExpired
+                                    ? 'cancel'
+                                    : batch.expiryBucket !== 'none'
+                                    ? 'warning'
+                                    : 'check_circle'
+                                }
+                                className="text-[18px] sm:text-[20px] shrink-0"
+                              />
+                              <span className="font-body-lg text-sm sm:text-body-lg truncate">
+                                {batch.expiry}
+                              </span>
+                            </div>
+
+                            <div className="md:col-span-3 text-right flex flex-col justify-center min-w-0">
+                              <span className="font-headline-md text-base sm:text-headline-md font-extrabold truncate">
+                                {formattedBatchStock}
+                              </span>
+                              {/* Strictly render purchase rate only if showPurchasePrice is true */}
+                              {showPurchasePrice && batch.purchaseRatePaise != null && (
+                                <span
+                                  className={`text-xs font-bold ${
+                                    batch.isExpired ? 'text-green-300' : 'text-primary'
+                                  }`}
+                                >
+                                  {formatRupees(batch.purchaseRatePaise)} {t('stock_dekho.per_pack_suffix')}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
-                          <div className="col-span-4 text-right flex flex-col justify-center min-w-0">
-                            <span className="font-headline-md text-base sm:text-headline-md font-extrabold truncate">
-                              {formattedBatchStock}
-                            </span>
-                            {/* Strictly render purchase rate only if showPurchasePrice is true */}
-                            {showPurchasePrice && batch.purchaseRatePaise != null && (
-                              <span
-                                className={`text-xs font-bold ${
-                                  batch.isExpired ? 'text-green-300' : 'text-primary'
-                                }`}
-                              >
-                                {formatRupees(batch.purchaseRatePaise)} {t('stock_dekho.per_pack_suffix')}
-                              </span>
-                            )}
+                          <div className="md:col-span-3 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenStockCorrection(batch)}
+                              className="w-full md:w-auto min-h-[56px] px-space-md py-1.5 rounded-xl bg-tertiary-fixed hover:bg-tertiary-fixed-dim text-on-tertiary-fixed border border-tertiary/30 shadow-xs active:translate-y-0.5 transition-all flex items-center justify-center gap-space-xs cursor-pointer"
+                            >
+                              <Icon name="tune" className="text-[20px] text-tertiary shrink-0" />
+                              <div className="flex flex-col text-left leading-tight">
+                                <span className="font-title-hinglish text-sm sm:text-base font-bold leading-tight">
+                                  {adjustBtn.main}
+                                </span>
+                                {shouldShowSub(adjustBtn.main, adjustBtn.sub) && (
+                                  <span className="font-label-sub-english text-[11px] text-on-tertiary-fixed-variant font-bold leading-tight">
+                                    {adjustBtn.sub}
+                                  </span>
+                                )}
+                              </div>
+                            </button>
                           </div>
                         </div>
                       );
@@ -428,30 +497,19 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
               <Icon name="verified" className="text-[20px] text-primary" />
               <span>{t('stock_dekho.audit_verified_info')}</span>
             </div>
-
-            {/* Right: Stock sudhaar (Protected Action, not built in this prompt per rule 5) */}
-            <button
-              onClick={() => showToast(t('stock_dekho.toast_coming_soon'))}
-              className="min-h-[56px] min-w-[240px] px-space-lg py-space-sm rounded-[16px] bg-tertiary-fixed text-on-tertiary-fixed hover:bg-tertiary-fixed-dim shadow-sm active:translate-y-0.5 transition-all flex items-center gap-space-md cursor-pointer opacity-80"
-              type="button"
-            >
-              <div className="w-10 h-10 rounded-full bg-tertiary text-on-tertiary flex items-center justify-center">
-                <Icon name="lock" className="text-[24px]" />
-              </div>
-              <div className="flex flex-col text-left leading-none">
-                <span className="font-title-hinglish text-title-hinglish font-bold leading-tight">
-                  {stockSudhaarBtn.main}
-                </span>
-                {shouldShowSub(stockSudhaarBtn.main, stockSudhaarBtn.sub) && (
-                  <span className="font-label-sub-english text-label-sub-english text-on-tertiary-fixed-variant font-bold leading-tight">
-                    {stockSudhaarBtn.sub}
-                  </span>
-                )}
-              </div>
-            </button>
           </div>
         </div>
       </main>
+
+      {correctingBatch && (
+        <StockCorrectionModal
+          medicine={medicine}
+          batch={correctingBatch}
+          currentUser={currentUser}
+          onClose={() => setCorrectingBatch(null)}
+          onCompleted={onRefreshStock}
+        />
+      )}
     </div>
   );
 };
