@@ -11,6 +11,7 @@ import { textFieldProps } from '../logic/format';
 import { useShop } from '../logic/useShop';
 import { formatProductType } from '../logic/productTypes';
 import { OwnerMedicineForm } from './OwnerMedicineForm';
+import { OwnerMedicineImport } from './OwnerMedicineImport';
 
 interface OwnerMedicineListProps {
   onBackToOwnerMenu?: () => void;
@@ -27,6 +28,7 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
 }) => {
   const { t } = useTranslation();
   const [editingMedicineId, setEditingMedicineId] = useState<number | 'new' | null>(null);
+  const [isImportOpen, setIsImportOpen] = useState<boolean>(false);
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [stockMap, setStockMap] = useState<Record<number, number>>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -81,12 +83,22 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
     }
   }, []);
 
-  const handleActionComingSoon = () => {
-    setBannerNotice({
-      title: t('home.coming_soon'),
-      subtitle: t('home.subpage_ready_next_version'),
-    });
-  };
+  if (isImportOpen) {
+    return (
+      <OwnerMedicineImport
+        onBack={() => {
+          setIsImportOpen(false);
+          loadMedicines();
+        }}
+        onReturnHome={onReturnHome}
+        onImportSuccess={() => {
+          setIsImportOpen(false);
+          loadMedicines();
+        }}
+        currentUser={currentUser}
+      />
+    );
+  }
 
   if (editingMedicineId !== null) {
     return (
@@ -184,7 +196,7 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
               {/* Import File Button */}
               <button
                 type="button"
-                onClick={handleActionComingSoon}
+                onClick={() => setIsImportOpen(true)}
                 className="h-14 min-h-[56px] px-5 rounded-[16px] bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant shadow-sm flex items-center gap-3 font-bold transition-all active:translate-y-[1px] cursor-pointer"
               >
                 <svg className="w-6 h-6 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

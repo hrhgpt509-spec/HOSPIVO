@@ -14,6 +14,7 @@ import { formatField, textFieldProps, filterDigits } from '../logic/format';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { useTranslation, tButton } from '../i18n';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { OwnerMedicineImport } from './OwnerMedicineImport';
 
 interface SetupProps {
   onComplete: () => void;
@@ -30,6 +31,7 @@ interface AddedStaffMember {
 export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const { t } = useTranslation();
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1);
+  const [isImportingInSetup, setIsImportingInSetup] = useState<boolean>(false);
 
   const btnBack = tButton('common.btn_back');
   const btnNext = tButton('common.btn_next');
@@ -428,6 +430,23 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
       </header>
     );
   };
+
+  // ==========================================================================
+  // VIEW: IMPORT PREVIEW (05b_Setup_ImportPreview.html / 38c)
+  // ==========================================================================
+  if (isImportingInSetup) {
+    return (
+      <OwnerMedicineImport
+        onBack={() => setIsImportingInSetup(false)}
+        onReturnHome={() => setIsImportingInSetup(false)}
+        onImportSuccess={() => {
+          setIsImportingInSetup(false);
+          setStep(6);
+        }}
+        currentUser={{ name: ownerName || 'Owner', role: 'owner' }}
+      />
+    );
+  }
 
   // ==========================================================================
   // VIEW: STEP 1 (01_Setup_ShopDetails.html)
@@ -1201,20 +1220,20 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
           {renderProgress(5)}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-auto py-4">
-            {/* Option 1: File se Jodo (LOCKED with "Jald aa raha hai") */}
-            <div className="bg-slate-50 border-2 border-slate-200 h-[360px] p-7 rounded-2xl flex flex-col justify-between items-center text-center opacity-75 cursor-not-allowed">
+            {/* Option 1: File se Jodo (Active - opens OwnerMedicineImport) */}
+            <div
+              onClick={() => setIsImportingInSetup(true)}
+              className="bg-white border-2 border-slate-200 hover:border-[#1B8F4A] h-[360px] p-7 rounded-2xl flex flex-col justify-between items-center text-center cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+            >
               <div className="flex flex-col items-center">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-[24px] font-bold text-slate-700">{t('setup.step5_import_title')}</h2>
-                  <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-bold uppercase tracking-wider">
-                    {t('setup.step5_import_locked')}
-                  </span>
+                  <h2 className="text-[24px] font-bold text-slate-800">{t('setup.step5_import_title')}</h2>
                 </div>
                 <span className="text-[16px] text-slate-500 font-medium">{t('setup.step5_import_sub')}</span>
               </div>
 
-              <div className="w-full max-w-[380px] bg-white border border-slate-200 rounded-xl p-5 flex flex-col items-center justify-center">
-                <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-2.5 text-slate-500">
+              <div className="w-full max-w-[380px] bg-slate-50 border border-slate-200 rounded-xl p-5 flex flex-col items-center justify-center">
+                <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mb-2.5 text-[#1B8F4A]">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
                   </svg>
@@ -1227,7 +1246,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 </span>
               </div>
 
-              <div className="w-full max-w-[320px] h-[58px] rounded-2xl bg-slate-200 text-slate-500 flex items-center justify-center gap-3 px-6">
+              <div className="w-full max-w-[320px] h-[58px] rounded-2xl bg-primary text-white flex items-center justify-center gap-3 px-6 shadow-sm hover:bg-primary-container transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
                 </svg>
