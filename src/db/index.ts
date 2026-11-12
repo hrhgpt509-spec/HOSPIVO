@@ -290,6 +290,28 @@ export interface RegularReminder {
   active: boolean;
 }
 
+// -------------------------------------------------------------
+// Phase 5: Din Band (Daily Closing)
+// -------------------------------------------------------------
+
+export type DailyClosingStatus = 'completed' | 'pending_auth';
+
+export interface DailyClosing {
+  id?: number;
+  date: string; // YYYY-MM-DD
+  openingCashPaise: number;
+  expectedCashPaise: number;
+  countedCashPaise: number;
+  differencePaise: number;
+  denominationJson: string;
+  counterPhoto: string;
+  status: DailyClosingStatus;
+  authorizedBy: string;
+  closedBy: string;
+  notes: string;
+  createdAt: string;
+}
+
 export class HospivoDatabase extends Dexie {
   shop!: EntityTable<Shop, 'id'>;
   users!: EntityTable<DBUser, 'id'>;
@@ -318,6 +340,9 @@ export class HospivoDatabase extends Dexie {
   customers!: EntityTable<Customer, 'id'>;
   udhaarPayments!: EntityTable<UdhaarPayment, 'id'>;
   regularReminders!: EntityTable<RegularReminder, 'id'>;
+
+  // Phase 5: Din Band (Daily Closing)
+  dailyClosings!: EntityTable<DailyClosing, 'id'>;
 
   constructor() {
     super('HospivoDatabase');
@@ -417,6 +442,30 @@ export class HospivoDatabase extends Dexie {
       customers: '++id, &phone, name, createdAt',
       udhaarPayments: '++id, customerId, customerPhone, createdAt',
       regularReminders: '++id, customerId, customerPhone, medicineId, nextDueDate, active',
+    });
+
+    // Version 7: Phase 5 Din Band (Daily Closing)
+    this.version(7).stores({
+      shop: '++id, mode',
+      users: 'id, role, active',
+      settings: 'key',
+      auditLog: '++id, timestamp, who, action, record',
+      medicines: '++id, name, shortCode, barcode, company, active, shelf',
+      batches: '++id, medicineId, batchNo, expiry, [medicineId+batchNo]',
+      stockMovements: '++id, batchId, medicineId, type, at',
+      suppliers: '++id, name, phone',
+      purchases: '++id, supplierId, invoiceNo, date, verified',
+      purchaseLines: '++id, purchaseId, medicineId, batchNo',
+      productTypes: '++id, name, active',
+      bills: '++id, &billNo, financialYear, date, status, paymentMode, cashierId, createdAt',
+      billItems: '++id, billId, medicineId, batchId',
+      heldBills: '++id, heldAt',
+      billReturns: '++id, &returnNo, originalBillId, originalBillNo, createdAt',
+      supplierReturns: '++id, supplierId, medicineId, batchId, status, createdAt',
+      customers: '++id, &phone, name, createdAt',
+      udhaarPayments: '++id, customerId, customerPhone, createdAt',
+      regularReminders: '++id, customerId, customerPhone, medicineId, nextDueDate, active',
+      dailyClosings: '++id, date, status, createdAt',
     });
 
     // Make audit log strictly append-only at database level

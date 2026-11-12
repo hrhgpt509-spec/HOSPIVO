@@ -7,13 +7,13 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [~] Phase 2: medicine list, Stock Jodo, Stock Dekho, suppliers
 - [~] Phase 3: Dawai Becho, payment, bill done, old bills, returns
 - [~] Phase 4: Expiry, Udhaar, customers, referral report
-- [ ] Phase 5: Din Band, Owner area, reports, audit log, settings, backup/restore
+- [~] Phase 5: Din Band, Owner area, reports, audit log, settings, backup/restore
 - [ ] Phase 6: Fast Bill
 - [ ] Phase 7: Shelf map, stickers
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt E2 - Udhaar, Customers, Regular Reminders & Referral Sales Report - COMPLETE
+Prompt F1 - Din Band (Daily Closing - 4 Steps) - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,10 @@ Prompt E2 - Udhaar, Customers, Regular Reminders & Referral Sales Report - COMPL
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Upgraded Dexie schema to v7 (`src/db/index.ts`) adding `dailyClosings`, and built whole-paise expected cash, denomination math, mismatch authorization rules, and profit-free WhatsApp report logic in `src/logic/dinBand.ts`.
+- Built 4-step Din Band flow (`src/screens/DinBand.tsx` + `src/screens/din-band/Step1CashCount.tsx`, `Step2CashMatch.tsx`, `Step3CounterPhoto.tsx`, `Step4Report.tsx`) matching 31a–31f with physical keyboard support, `ApprovalDialog` / `'pending_auth'` handling, and compressed counter photos (`compressInvoicePhoto`).
+- Wired Din Band to the Home tile (`src/screens/Home.tsx`) and added full EN/HI/Hinglish translations.
+- Added unit tests in `src/logic/dinBand.test.ts` verifying expected cash, mismatch completion blocking, and profit-free WhatsApp output; 136/136 tests and production build pass.
 - Upgraded Dexie schema to v6 (`src/db/index.ts`) adding `customers`, append-only `udhaarPayments`, and `regularReminders`; built net credit ledger, FIFO aging, credit-limit checks, refill due math, and doctor sales aggregation in `src/logic/udhaar.ts`.
 - Built Udhaar list (`src/screens/Udhaar.tsx`), Paisa Mila payment keypad modal (`src/screens/udhaar/PaisaMilaModal.tsx` with `useNumpadKeyboard`), and >7-days Yaad Dilao WhatsApp modal (`src/screens/udhaar/YaadDilaoModal.tsx`) matching 28a/28b/28c.
 - Built Customer directory & detail (`src/screens/udhaar/CustomerDetailScreen.tsx`, `CustomerFormModal.tsx`, `RegularReminderModal.tsx`) with Owner-only credit limits, regular BP/Sugar refill alerts, and PaymentScreen credit-limit Approval PIN enforcement.

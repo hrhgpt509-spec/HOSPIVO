@@ -17,6 +17,7 @@ import { DawaiBecho } from './DawaiBecho';
 import { Expiry } from './Expiry';
 import { Udhaar } from './Udhaar';
 import { ReferralReport } from './ReferralReport';
+import { DinBand } from './DinBand';
 
 interface HomeProps {
   currentUser?: {
@@ -217,6 +218,19 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
       <ReferralReport
         onReturnHome={handleReturnHome}
         onBack={() => setActivePage('owner')}
+        currentUser={currentUser as any}
+        shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 31a-f Din Band (4-Step Daily Closing)
+  if (activePage === 'din_band') {
+    return (
+      <DinBand
+        onReturnHome={handleReturnHome}
         currentUser={currentUser as any}
         shop={shop}
         theme={theme}
