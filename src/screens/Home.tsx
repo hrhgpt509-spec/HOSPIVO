@@ -7,10 +7,12 @@ import { OwnerPinGate } from '../components/OwnerPinGate';
 import { ApprovalDialog } from '../components/ApprovalDialog';
 import { useTranslation, tButton } from '../i18n';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { Icon } from '../components/Icon';
 import { OwnerMenu } from './OwnerMenu';
 import { OwnerMedicineList } from './OwnerMedicineList';
 import { StockJodo } from './StockJodo';
 import { StockDekho } from './StockDekho';
+import { SuppliersList } from './suppliers/SuppliersList';
 
 interface HomeProps {
   currentUser?: {
@@ -31,7 +33,8 @@ type ActivePage =
   | 'udhaar'
   | 'din_band'
   | 'owner'
-  | 'medicine_list';
+  | 'medicine_list'
+  | 'suppliers';
 
 export const Home: React.FC<HomeProps> = ({ currentUser }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -101,6 +104,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
       <OwnerMenu
         onReturnHome={handleReturnHome}
         onOpenMedicineList={() => setActivePage('medicine_list')}
+        onOpenSuppliers={() => setActivePage('suppliers')}
         currentUser={currentUser}
         shop={shop}
         theme={theme}
@@ -141,6 +145,19 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
         onReturnHome={handleReturnHome}
         currentUser={currentUser as any}
         shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 27a-b Suppliers List & Detail
+  if (activePage === 'suppliers') {
+    return (
+      <SuppliersList
+        onReturnHome={handleReturnHome}
+        onBackToOwnerMenu={() => setActivePage('owner')}
+        currentUser={currentUser as any}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
@@ -258,6 +275,17 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
 
             {/* StatusChip: Backup lo (Honest backup state, none taken yet) */}
             <StatusChip variant="backup_needed" label={backupBtn.main} />
+
+            {/* Quick Suppliers Button */}
+            <button
+              type="button"
+              onClick={() => setActivePage('suppliers')}
+              className="h-10 px-3.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant text-on-surface font-bold text-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+              title={t('suppliers.page_title')}
+            >
+              <Icon name="local_shipping" className="text-[18px] text-primary" />
+              <span>{tButton('suppliers.nav_suppliers').main}</span>
+            </button>
 
             {/* User name */}
             <div className="flex items-center space-x-2.5 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100">

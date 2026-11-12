@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt D2 - Stock Correction (Stock Sudhaar) - COMPLETE
+Prompt D3 - Suppliers List & Detail - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -25,6 +25,10 @@ Prompt D2 - Stock Correction (Stock Sudhaar) - COMPLETE
 - DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Built Suppliers List (27a) and Supplier Detail (27b) with search box (name/phone/GST), purchase counts, and New/Edit Supplier modal (textFieldProps name/phone/code/free with supplier_created/supplier_updated audit entries).
+- Enforced purchase privacy via canSeePurchasePrice(user): counter staff see zero purchase rates, line amounts, or invoice totals across lists and modals; owner sees invoice totals and line rates.
+- Implemented invoice detail modal with photo zoom and owner-only "Verified" toggle updating purchases.verified and recording purchase_verified audit log without prices or rates.
+- Wired Suppliers navigation to top bar quick button on Home and dedicated active tile in Owner Menu; added 5 unit tests in suppliers.test.ts (104/104 passing) and green build.
 - Added per-batch "Stock Sudhaar" (Adjust Stock) button on Batch Detail checking the saved stock_correction offline approval rule (blocked_offline shows red error feedback without opening edit; local_pin opens adjustment form then ApprovalDialog even for Owner).
 - Built StockCorrectionModal supporting Add (+)/Reduce (-) in packs and loose units, preventing negative batch stock, requiring Damaged/Lost/Count mismatch reason chip or note (textFieldProps free), and showing zero purchase prices or profit.
 - Created src/logic/stockCorrection.ts to atomically append signed 'correction' stockMovements without modifying old rows and record English 'stock_correction' audit entries without PINs or prices.

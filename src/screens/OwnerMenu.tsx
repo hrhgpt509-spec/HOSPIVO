@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useTranslation, tButton } from '../i18n';
+import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
 import { useShop } from '../logic/useShop';
 
 interface OwnerMenuProps {
   onReturnHome: () => void;
   onOpenMedicineList: () => void;
+  onOpenSuppliers?: () => void;
   currentUser?: {
     id?: string;
     name: string;
@@ -24,6 +26,7 @@ interface OwnerMenuProps {
 export const OwnerMenu: React.FC<OwnerMenuProps> = ({
   onReturnHome,
   onOpenMedicineList,
+  onOpenSuppliers,
   currentUser,
   shop,
   theme = 'light',
@@ -45,6 +48,7 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
   const tileAudit = tButton('owner_menu.tile_audit_log');
   const tileShelf = tButton('owner_menu.tile_shelf');
   const tileDawaiList = tButton('owner_menu.tile_dawai_list');
+  const tileSuppliers = tButton('owner_menu.tile_suppliers');
   const tileSticker = tButton('owner_menu.tile_sticker');
   const tileSettings = tButton('owner_menu.tile_settings');
   const tileBackup = tButton('owner_menu.tile_backup');
@@ -327,6 +331,25 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
                   {tileDawaiList.sub ? (
                     <span className="text-xs md:text-sm font-medium text-outline mt-1">
                       {tileDawaiList.sub}
+                    </span>
+                  ) : null}
+                </button>
+
+                {/* Suppliers (ACTIVE! Opens real page) */}
+                <button
+                  type="button"
+                  onClick={onOpenSuppliers}
+                  className="group relative flex flex-col items-center justify-center w-[calc((100%-0.75rem)/2)] sm:w-[calc((100%-2*1rem)/3)] md:w-[calc((100%-4*1.5rem)/5)] aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-3 sm:p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
+                >
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                    <Icon name="local_shipping" className="text-[32px] sm:text-[36px]" />
+                  </div>
+                  <span className="text-base sm:text-lg md:text-xl font-bold text-on-surface group-hover:text-primary transition-colors leading-tight">
+                    {tileSuppliers.main}
+                  </span>
+                  {tileSuppliers.sub ? (
+                    <span className="text-xs md:text-sm font-medium text-outline mt-1">
+                      {tileSuppliers.sub}
                     </span>
                   ) : null}
                 </button>
