@@ -80,6 +80,26 @@ describe('cloudSync & remote approvals engine', () => {
       const shops = await db.shop.toArray();
       expect(shops[0].mode).toBe('cloud');
     });
+
+    it('enables remote approval rules when cloud is enabled in setup', async () => {
+      // 1. In cloud mode, settings can store remote_approval rule
+      await db.settings.put({ key: 'cloud_enabled', value: true });
+      await db.settings.put({
+        key: 'approval_rules',
+        value: {
+          delete_or_correct_bill: 'remote_approval',
+          price_change: 'local_pin',
+          discount_above_limit: 'remote_approval',
+          stock_correction: 'blocked_offline',
+          cash_mismatch: 'local_pin',
+        },
+      });
+
+      const rulesItem = await db.settings.get('approval_rules');
+      const rules = rulesItem?.value as Record<string, string>;
+      expect(rules.delete_or_correct_bill).toBe('remote_approval');
+      expect(rules.discount_above_limit).toBe('remote_approval');
+    });
   });
 
   describe('Sync Outbox Queue & FIFO Sync Cycle', () => {

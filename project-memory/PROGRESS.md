@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt Z1 - Low Stock Pack-to-Units Fix & Launch Cleanup - COMPLETE
+Prompt Z2 - Unlock Cloud Mode in Setup Wizard & Fix Mobile Step 2 Layout - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,9 @@ Prompt Z1 - Low Stock Pack-to-Units Fix & Launch Cleanup - COMPLETE
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Unlocked Cloud-enabled Mode in Setup Step 2 (`Setup.tsx`): removed "coming soon" badge and notices, added inline Supabase URL, Anon Key, and Shop Sync ID inputs with Copy ID button.
+- Wired Step 8 (Approval Rules) to dynamically unlock "Remote approval" whenever Cloud mode is selected in Step 2, storing `cloud_enabled` and `shop.mode` in database settings.
+- Fixed mobile squeeze at 390px width in Setup Step 2: stacked icon and title vertically on `< sm`, reduced padding to `p-4 sm:p-6`, and moved footer helper note full-width above Back/Next button row.
 - Fixed Low Stock Alert in `OwnerMedicineForm.tsx` & `medicineForm.ts` to convert between user-entered packs and stored loose units (`minStockUnits = alertPacks * unitsPerPack`), prefilling packs on edit.
 - Added localized pack helper labels across `en.ts`, `hi.ts`, and `hinglish.ts` confirming threshold is in packs.
 - Aligned reorder alerts across `stock.ts`, `reports.ts`, and `stockDekho.ts`: Home's counter now includes all medicines needing reorder (out-of-stock + low-stock), while StockDekho's tabs accurately separate Low Stock (`> 0`) and Out of Stock (`= 0`).

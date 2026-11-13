@@ -129,6 +129,14 @@ export interface TranslationSchema {
     cloud_card_bullet2: string;
     cloud_card_bullet3: string;
     cloud_card_banner: string;
+    cloud_setup_title: string;
+    cloud_setup_sub: string;
+    cloud_shop_sync_id: string;
+    cloud_copy_id: string;
+    cloud_copied: string;
+    cloud_sync_id_hint: string;
+    cloud_supabase_url: string;
+    cloud_supabase_anon_key: string;
     step2_note: string;
 
     step3_badge: string;
@@ -224,6 +232,7 @@ export interface TranslationSchema {
     step8_sub: string;
     step8_desc: string;
     step8_banner: string;
+    step8_banner_cloud: string;
     step8_opt_pin: string;
     step8_opt_remote_title: string;
     step8_opt_remote_sub: string;

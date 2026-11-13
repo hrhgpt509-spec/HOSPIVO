@@ -15,6 +15,7 @@ import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { useTranslation, tButton } from '../i18n';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { OwnerMedicineImport } from './OwnerMedicineImport';
+import { generateShopSyncId } from '../logic/cloudSync';
 
 interface SetupProps {
   onComplete: () => void;
@@ -49,8 +50,20 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const [dl2, setDl2] = useState('');
   const [step1Error, setStep1Error] = useState('');
 
-  // Step 2: Mode choice
-  const [mode] = useState<'local'>('local');
+  // Step 2: Mode choice & Cloud config
+  const [mode, setMode] = useState<'local' | 'cloud'>('local');
+  const [cloudUrl, setCloudUrl] = useState('');
+  const [cloudAnonKey, setCloudAnonKey] = useState('');
+  const [shopSyncId] = useState(() => generateShopSyncId());
+  const [copiedSyncId, setCopiedSyncId] = useState(false);
+
+  const handleCopySyncId = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shopSyncId);
+      setCopiedSyncId(true);
+      setTimeout(() => setCopiedSyncId(false), 2000);
+    }
+  };
 
   // Step 3: Owner PIN
   const [ownerPin1, setOwnerPin1] = useState('');
@@ -297,7 +310,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // --------------------------------------------------------------------------
   // STEP 8 (APPROVAL RULES) TOGGLE
   // --------------------------------------------------------------------------
-  const handleRuleToggle = (category: ApprovalActionCategory, ruleChoice: 'local_pin' | 'blocked_offline') => {
+  const handleRuleToggle = (category: ApprovalActionCategory, ruleChoice: ApprovalRuleType) => {
     setApprovalRules((prev) => ({
       ...prev,
       [category]: ruleChoice,
@@ -358,11 +371,16 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     // 4. Save Approval PIN (salted hash only)
     await setApprovalPin(approvalPin1, [ownerPin1, ...staffList.map((s) => s.plainPin)]);
 
-    // 5. Save settings (approval rules, auto-lock minutes, backup folder, pinLength)
+    // 5. Save settings (approval rules, auto-lock minutes, backup folder, pinLength, cloud settings)
     await db.settings.put({ key: 'approval_rules', value: approvalRules });
     await db.settings.put({ key: 'auto_lock_minutes', value: 5 });
     await db.settings.put({ key: 'backup_folder', value: backupFolder });
     await db.settings.put({ key: 'pinLength', value: 4 });
+    await db.settings.put({ key: 'cloud_enabled', value: mode === 'cloud' });
+    await db.settings.put({ key: 'shop_sync_id', value: shopSyncId.trim().toUpperCase() });
+    await db.settings.put({ key: 'cloud_url', value: cloudUrl.trim() });
+    await db.settings.put({ key: 'cloud_anon_key', value: cloudAnonKey.trim() });
+    await db.settings.put({ key: 'device_name', value: 'Counter PC 1 (Billing Desk)' });
 
     // 6. Audit entry for setup completion
     await addAudit('Setup', 'setup_complete', shopName.trim(), 'Initial setup completed successfully');
@@ -655,156 +673,310 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // ==========================================================================
   if (step === 2) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
-        <main className="w-full max-w-[1280px] min-h-[820px] bg-white rounded-3xl shadow-[0_16px_48px_rgba(27,143,74,0.08)] border border-[#E1E8E4] flex flex-col justify-between p-8 md:p-10">
+      <div className="w-full min-h-screen flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#F4F6F5] select-none">
+        <main className="w-full max-w-[1280px] min-h-[820px] bg-white rounded-3xl shadow-[0_16px_48px_rgba(27,143,74,0.08)] border border-[#E1E8E4] flex flex-col justify-between p-4 sm:p-8 md:p-10">
           {renderProgress(2)}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-auto pt-4 pb-4">
-            {/* Card 1: Local-only */}
-            <div className="relative bg-[#F4FAF6] border-2 border-[#1B8F4A] rounded-2xl p-7 flex flex-col justify-between shadow-[0_8px_24px_rgba(27,143,74,0.12)] cursor-pointer">
-              <div>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-[#E7F7EC] text-[#1B8F4A] flex items-center justify-center border border-[#BDE7CC]">
-                      <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                        <path d="M9 22V12h6v10" />
-                        <rect x="8" y="5" width="8" height="5" rx="1" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h2 className="text-[26px] font-bold text-[#1A1F1C] leading-snug">{t('setup.local_card_title')}</h2>
-                      <span className="text-[16px] font-semibold text-[#1B8F4A] tracking-wide uppercase">{t('setup.local_card_sub')}</span>
-                    </div>
-                  </div>
-
-                  <div className="w-9 h-9 rounded-full bg-[#1B8F4A] flex items-center justify-center text-white shadow-md shadow-[#1B8F4A]/30">
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                </div>
-
-                <ul className="mt-6 space-y-3.5">
-                  <li className="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-2 shrink-0"></span>
-                    <span className="font-medium">{t('setup.local_card_bullet1')}</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-2 shrink-0"></span>
-                    <span className="font-medium">{t('setup.local_card_bullet2')}</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-[18px] text-[#1A1F1C]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#9AA5A0] mt-2 shrink-0"></span>
-                    <span className="font-normal text-[#4A5550]">{t('setup.local_card_bullet3')}</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mt-6 bg-[#EBF3FB] border border-[#B8D8F8] rounded-xl p-4 flex items-center gap-3.5">
-                <div className="w-8 h-8 rounded-full bg-[#1976D2] text-white flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="16" x2="12" y2="12" />
-                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                  </svg>
-                </div>
-                <p className="text-[16px] font-medium text-[#104D8C] leading-snug">
-                  {t('setup.local_card_tag')}
-                </p>
-              </div>
-            </div>
-
-            {/* Card 2: Cloud-enabled (LOCKED with message "Jald aa raha hai") */}
-            <div className="relative bg-slate-50/80 border-2 border-slate-200 rounded-2xl p-7 flex flex-col justify-between opacity-80 cursor-not-allowed">
-              <div>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center border border-slate-200">
-                      <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2.5">
-                        <h2 className="text-[26px] font-bold text-slate-700 leading-snug">{t('setup.cloud_card_title')}</h2>
-                        <span className="px-2.5 py-1 bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-bold uppercase tracking-wider">
-                          {t('setup.cloud_card_locked')}
+          <div className="my-auto pt-4 pb-4 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full">
+              {/* Card 1: Local-only */}
+              <div
+                onClick={() => setMode('local')}
+                className={`relative rounded-2xl p-4 sm:p-6 md:p-7 flex flex-col justify-between transition-all cursor-pointer w-full ${
+                  mode === 'local'
+                    ? 'bg-[#F4FAF6] border-2 border-[#1B8F4A] shadow-[0_8px_24px_rgba(27,143,74,0.12)]'
+                    : 'bg-white border-2 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                      <div
+                        className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shrink-0 border ${
+                          mode === 'local'
+                            ? 'bg-[#E7F7EC] text-[#1B8F4A] border-[#BDE7CC]'
+                            : 'bg-slate-100 text-slate-500 border-slate-200'
+                        }`}
+                      >
+                        <svg className="w-7 h-7 sm:w-9 sm:h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                          <path d="M9 22V12h6v10" />
+                          <rect x="8" y="5" width="8" height="5" rx="1" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h2 className="text-xl sm:text-[24px] md:text-[26px] font-bold text-[#1A1F1C] leading-snug">
+                          {t('setup.local_card_title')}
+                        </h2>
+                        <span className="text-xs sm:text-[14px] md:text-[16px] font-semibold text-[#1B8F4A] tracking-wide uppercase">
+                          {t('setup.local_card_sub')}
                         </span>
                       </div>
-                      <span className="text-[16px] font-semibold text-slate-500 tracking-wide uppercase">{t('setup.cloud_card_sub')}</span>
+                    </div>
+
+                    <div
+                      className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                        mode === 'local'
+                          ? 'bg-[#1B8F4A] text-white shadow-md shadow-[#1B8F4A]/30'
+                          : 'border-2 border-slate-300 bg-white'
+                      }`}
+                    >
+                      {mode === 'local' && (
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
                     </div>
                   </div>
 
-                  <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-600">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <rect x="5" y="11" width="14" height="10" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M8 11V7a4 4 0 0 1 8 0v4" strokeLinecap="round" strokeLinejoin="round" />
+                  <ul className="mt-4 sm:mt-6 space-y-2.5 sm:space-y-3.5">
+                    <li className="flex items-start gap-2.5 sm:gap-3 text-sm sm:text-base md:text-[18px] text-[#1A1F1C]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-1.5 sm:mt-2 shrink-0"></span>
+                      <span className="font-medium">{t('setup.local_card_bullet1')}</span>
+                    </li>
+                    <li className="flex items-start gap-2.5 sm:gap-3 text-sm sm:text-base md:text-[18px] text-[#1A1F1C]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-1.5 sm:mt-2 shrink-0"></span>
+                      <span className="font-medium">{t('setup.local_card_bullet2')}</span>
+                    </li>
+                    <li className="flex items-start gap-2.5 sm:gap-3 text-sm sm:text-base md:text-[18px] text-[#1A1F1C]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#9AA5A0] mt-1.5 sm:mt-2 shrink-0"></span>
+                      <span className="font-normal text-[#4A5550]">{t('setup.local_card_bullet3')}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-4 sm:mt-6 bg-[#EBF3FB] border border-[#B8D8F8] rounded-xl p-3 sm:p-4 flex items-center gap-3">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#1976D2] text-white flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="16" x2="12" y2="12" />
+                      <line x1="12" y1="8" x2="12.01" y2="8" />
                     </svg>
+                  </div>
+                  <p className="text-xs sm:text-sm md:text-[16px] font-medium text-[#104D8C] leading-snug">
+                    {t('setup.local_card_tag')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Card 2: Cloud-enabled Mode */}
+              <div
+                onClick={() => setMode('cloud')}
+                className={`relative rounded-2xl p-4 sm:p-6 md:p-7 flex flex-col justify-between transition-all cursor-pointer w-full ${
+                  mode === 'cloud'
+                    ? 'bg-[#F4FAF6] border-2 border-[#1B8F4A] shadow-[0_8px_24px_rgba(27,143,74,0.12)]'
+                    : 'bg-white border-2 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                      <div
+                        className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shrink-0 border ${
+                          mode === 'cloud'
+                            ? 'bg-[#E7F7EC] text-[#1B8F4A] border-[#BDE7CC]'
+                            : 'bg-blue-50 text-blue-600 border-blue-200'
+                        }`}
+                      >
+                        <svg className="w-7 h-7 sm:w-9 sm:h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="text-xl sm:text-[24px] md:text-[26px] font-bold text-[#1A1F1C] leading-snug">
+                            {t('setup.cloud_card_title')}
+                          </h2>
+                          <span className="px-2 py-0.5 bg-[#E7F7EC] text-[#1B8F4A] border border-[#BDE7CC] rounded-lg text-xs font-bold uppercase tracking-wider">
+                            {t('setup.cloud_card_locked')}
+                          </span>
+                        </div>
+                        <span className="text-xs sm:text-[14px] md:text-[16px] font-semibold text-[#1B8F4A] tracking-wide uppercase">
+                          {t('setup.cloud_card_sub')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                        mode === 'cloud'
+                          ? 'bg-[#1B8F4A] text-white shadow-md shadow-[#1B8F4A]/30'
+                          : 'border-2 border-slate-300 bg-white'
+                      }`}
+                    >
+                      {mode === 'cloud' && (
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+
+                  <ul className="mt-4 sm:mt-6 space-y-2.5 sm:space-y-3.5">
+                    <li className="flex items-start gap-2.5 sm:gap-3 text-sm sm:text-base md:text-[18px] text-[#1A1F1C]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-1.5 sm:mt-2 shrink-0"></span>
+                      <span className="font-medium">{t('setup.cloud_card_bullet1')}</span>
+                    </li>
+                    <li className="flex items-start gap-2.5 sm:gap-3 text-sm sm:text-base md:text-[18px] text-[#1A1F1C]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-1.5 sm:mt-2 shrink-0"></span>
+                      <span className="font-medium">{t('setup.cloud_card_bullet2')}</span>
+                    </li>
+                    <li className="flex items-start gap-2.5 sm:gap-3 text-sm sm:text-base md:text-[18px] text-[#1A1F1C]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] mt-1.5 sm:mt-2 shrink-0"></span>
+                      <span className="font-medium">{t('setup.cloud_card_bullet3')}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-4 sm:mt-6 bg-[#E7F7EC] border border-[#BDE7CC] rounded-xl p-3 sm:p-4 flex items-center gap-3">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#1B8F4A] text-white flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                    </svg>
+                  </div>
+                  <p className="text-xs sm:text-sm md:text-[15px] font-medium text-[#0f542b] leading-snug">
+                    {t('setup.cloud_card_banner')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Inline Cloud Setup Box when Cloud mode is selected */}
+            {mode === 'cloud' && (
+              <div className="w-full bg-[#F4FAF6] border-2 border-[#BDE7CC] rounded-2xl p-4 sm:p-6 mt-4 sm:mt-6 shadow-sm animate-fadeIn">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#D4F3DF]">
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-[#1A1F1C]">
+                      {t('setup.cloud_setup_title')}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-[#4A5550] mt-0.5">
+                      {t('setup.cloud_setup_sub')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 self-start sm:self-auto px-3 py-1 bg-[#E7F7EC] text-[#1B8F4A] rounded-xl text-xs font-bold border border-[#BDE7CC]">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{t('setup.cloud_card_locked')}</span>
                   </div>
                 </div>
 
-                <ul className="mt-6 space-y-3.5">
-                  <li className="flex items-start gap-3 text-[18px] text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-400 mt-2 shrink-0"></span>
-                    <span className="font-medium">{t('setup.cloud_card_bullet1')}</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-[18px] text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-400 mt-2 shrink-0"></span>
-                    <span className="font-medium">{t('setup.cloud_card_bullet2')}</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-[18px] text-slate-600">
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-400 mt-2 shrink-0"></span>
-                    <span className="font-medium">{t('setup.cloud_card_bullet3')}</span>
-                  </li>
-                </ul>
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-4">
+                  {/* Shop Sync ID (4 cols) */}
+                  <div className="md:col-span-4 flex flex-col">
+                    <label className="text-sm font-bold text-slate-800 mb-1">
+                      {t('setup.cloud_shop_sync_id')}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={shopSyncId}
+                        className="w-full h-12 px-3.5 rounded-xl bg-white border border-slate-300 font-mono text-base font-bold text-[#1B8F4A] select-all outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCopySyncId}
+                        className="h-12 px-3.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold text-xs shrink-0 flex items-center gap-1.5 transition cursor-pointer"
+                        title={t('setup.cloud_copy_id')}
+                      >
+                        {copiedSyncId ? (
+                          <>
+                            <svg className="w-4 h-4 text-[#1B8F4A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            <span className="text-[#1B8F4A]">{t('setup.cloud_copied')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                            </svg>
+                            <span>{t('setup.cloud_copy_id')}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <span className="text-xs text-slate-500 mt-1">
+                      {t('setup.cloud_sync_id_hint')}
+                    </span>
+                  </div>
 
-              <div className="mt-6 bg-slate-100 border border-slate-200 rounded-xl p-4 flex items-center gap-3">
-                <svg className="w-6 h-6 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <p className="text-[15px] font-medium text-slate-600 leading-snug">
-                  {t('setup.cloud_card_banner')}
-                </p>
+                  {/* Supabase URL (4 cols) */}
+                  <div className="md:col-span-4 flex flex-col">
+                    <label className="text-sm font-bold text-slate-800 mb-1">
+                      {t('setup.cloud_supabase_url')}
+                    </label>
+                    <input
+                      type="url"
+                      value={cloudUrl}
+                      onChange={(e) => setCloudUrl(e.target.value)}
+                      placeholder="https://xyz.supabase.co"
+                      className="w-full h-12 px-3.5 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm focus:ring-2 focus:ring-[#1B8F4A] outline-none font-mono"
+                    />
+                    <span className="text-xs text-slate-500 mt-1">
+                      Supabase Project URL
+                    </span>
+                  </div>
+
+                  {/* Supabase Anon Key (4 cols) */}
+                  <div className="md:col-span-4 flex flex-col">
+                    <label className="text-sm font-bold text-slate-800 mb-1">
+                      {t('setup.cloud_supabase_anon_key')}
+                    </label>
+                    <input
+                      type="password"
+                      value={cloudAnonKey}
+                      onChange={(e) => setCloudAnonKey(e.target.value)}
+                      placeholder="eyJhbGciOi..."
+                      className="w-full h-12 px-3.5 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm focus:ring-2 focus:ring-[#1B8F4A] outline-none font-mono"
+                    />
+                    <span className="text-xs text-slate-500 mt-1">
+                      Supabase public anon API key
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
-          <footer className="w-full pt-6 border-t border-[#EBEFEA] flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="h-16 px-8 rounded-2xl bg-[#EBEFEA] hover:bg-[#DEE5E0] text-[#1A1F1C] font-bold flex items-center gap-3 cursor-pointer"
-            >
-              <svg className="w-6 h-6 text-[#4A5550]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12" />
-                <polyline points="12 19 5 12 12 5" />
-              </svg>
-              <div className="text-left flex flex-col justify-center">
-                <span className="text-[20px] font-bold leading-tight text-[#1A1F1C]">{btnBack.main}</span>
-                {btnBack.sub ? <span className="text-[16px] font-normal leading-tight text-[#66766F]">{btnBack.sub}</span> : null}
-              </div>
-            </button>
-
-            <p className="text-[16px] font-medium text-[#66766F] text-center">
+          <footer className="w-full pt-4 sm:pt-6 border-t border-[#EBEFEA] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm sm:text-[16px] font-medium text-[#66766F] text-center order-1 sm:order-2 w-full sm:w-auto">
               {t('setup.step2_note')}
             </p>
 
-            <button
-              type="button"
-              onClick={() => setStep(3)}
-              className="h-16 px-10 rounded-2xl bg-[#1B8F4A] hover:bg-[#16783E] text-white font-bold flex items-center gap-4 shadow-lg shadow-[#1B8F4A]/30 cursor-pointer"
-            >
-              <div className="text-right flex flex-col justify-center">
-                <span className="text-[22px] font-extrabold leading-tight">{btnNext.main}</span>
-                {btnNext.sub ? <span className="text-[16px] font-normal leading-tight text-[#D4F3DF]">{btnNext.sub}</span> : null}
-              </div>
-              <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-            </button>
+            <div className="flex items-center justify-between gap-3 w-full sm:w-auto sm:contents order-2">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="h-14 sm:h-16 px-4 sm:px-8 rounded-2xl bg-[#EBEFEA] hover:bg-[#DEE5E0] text-[#1A1F1C] font-bold flex items-center justify-center gap-2 sm:gap-3 cursor-pointer sm:order-1 flex-1 sm:flex-initial"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#4A5550]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12" />
+                  <polyline points="12 19 5 12 12 5" />
+                </svg>
+                <div className="text-left flex flex-col justify-center">
+                  <span className="text-base sm:text-[20px] font-bold leading-tight text-[#1A1F1C]">{btnBack.main}</span>
+                  {btnBack.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-[#66766F]">{btnBack.sub}</span> : null}
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStep(3)}
+                className="h-14 sm:h-16 px-5 sm:px-10 rounded-2xl bg-[#1B8F4A] hover:bg-[#16783E] text-white font-bold flex items-center justify-center gap-2 sm:gap-4 shadow-lg shadow-[#1B8F4A]/30 cursor-pointer sm:order-3 flex-1 sm:flex-initial"
+              >
+                <div className="text-right flex flex-col justify-center">
+                  <span className="text-base sm:text-[22px] font-extrabold leading-tight">{btnNext.main}</span>
+                  {btnNext.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-[#D4F3DF]">{btnNext.sub}</span> : null}
+                </div>
+                <svg className="w-5 h-5 sm:w-7 sm:h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </button>
+            </div>
           </footer>
         </main>
       </div>
@@ -1744,7 +1916,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
             <span className="text-[16px] font-semibold">
-              {t('setup.step8_banner')}
+              {mode === 'cloud' ? t('setup.step8_banner_cloud') : t('setup.step8_banner')}
             </span>
           </div>
 
@@ -1756,14 +1928,14 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               return (
                 <div
                   key={item.category}
-                  className="bg-white rounded-2xl px-5 h-[70px] flex items-center justify-between shadow-sm border border-gray-200"
+                  className="bg-white rounded-2xl p-4 md:px-5 min-h-[70px] flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-sm border border-gray-200"
                 >
-                  <div className="w-[300px]">
-                    <span className="text-[18px] font-bold text-gray-900">{item.title}</span>
+                  <div className="w-full md:w-[300px]">
+                    <span className="text-base md:text-[18px] font-bold text-gray-900">{item.title}</span>
                   </div>
 
                   {/* 3-option Segmented Selector */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
                     {/* Option 1: Ijazat PIN (yahin) */}
                     <button
                       type="button"
@@ -1782,14 +1954,36 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                       <span>{t('setup.step8_opt_pin')}</span>
                     </button>
 
-                    {/* Option 2: Door se approval (Disabled in Local-only) */}
-                    <div
-                      className="h-[54px] px-4 rounded-xl bg-[#F3F4F6] border border-gray-200 text-gray-400 flex flex-col justify-center items-center opacity-60 cursor-not-allowed min-w-[210px]"
-                      title={t('setup.step8_opt_remote_tooltip')}
-                    >
-                      <span className="text-[15px] font-semibold text-gray-400 leading-tight">{t('setup.step8_opt_remote_title')}</span>
-                      <span className="text-[13px] text-gray-400 leading-tight">{t('setup.step8_opt_remote_sub')}</span>
-                    </div>
+                    {/* Option 2: Door se approval (Enabled in Cloud mode, Disabled in Local-only) */}
+                    {mode === 'cloud' ? (
+                      <button
+                        type="button"
+                        onClick={() => handleRuleToggle(item.category, 'remote_approval')}
+                        className={`h-[54px] px-4 rounded-xl flex items-center gap-2 font-bold text-[16px] cursor-pointer transition-all min-w-[200px] ${
+                          currentChoice === 'remote_approval'
+                            ? 'bg-[#E8F5E9] border-2 border-[#1B8F4A] text-[#1B8F4A]'
+                            : 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {currentChoice === 'remote_approval' && (
+                          <svg className="w-5 h-5 text-[#1B8F4A]" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        <div className="flex flex-col text-left">
+                          <span className="text-[15px] leading-tight">{t('setup.step8_opt_remote_title')}</span>
+                          <span className="text-[12px] font-normal leading-tight opacity-75">{t('setup.step8_opt_remote_sub')}</span>
+                        </div>
+                      </button>
+                    ) : (
+                      <div
+                        className="h-[54px] px-4 rounded-xl bg-[#F3F4F6] border border-gray-200 text-gray-400 flex flex-col justify-center items-center opacity-60 cursor-not-allowed min-w-[210px]"
+                        title={t('setup.step8_opt_remote_tooltip')}
+                      >
+                        <span className="text-[15px] font-semibold text-gray-400 leading-tight">{t('setup.step8_opt_remote_title')}</span>
+                        <span className="text-[13px] text-gray-400 leading-tight">{t('setup.step8_opt_remote_sub')}</span>
+                      </div>
+                    )}
 
                     {/* Option 3: Offline mein roko */}
                     <button
