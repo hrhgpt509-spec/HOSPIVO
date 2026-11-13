@@ -25,8 +25,13 @@ import { AuditLogScreen } from './AuditLogScreen';
 import { OwnerStaff } from './OwnerStaff';
 import { OwnerSettings } from './OwnerSettings';
 import { OwnerBackup } from './OwnerBackup';
+import { OwnerShelfMap } from './OwnerShelfMap';
+import { OwnerStickers } from './OwnerStickers';
 import { loadHomeLiveCounters, type HomeLiveCounters } from '../logic/reports';
 import { getBackupStatus, type BackupStatus } from '../logic/backup';
+import { getHomeSyncState, runSyncCycle, type HomeSyncState } from '../logic/cloudSync';
+import { OwnerCloudSync } from './OwnerCloudSync';
+import { RemoteApprovalInbox } from './RemoteApprovalInbox';
 
 interface HomeProps {
   currentUser?: {
@@ -53,6 +58,10 @@ type ActivePage =
   | 'owner_staff'
   | 'owner_settings'
   | 'owner_backup'
+  | 'owner_shelf_map'
+  | 'owner_stickers'
+  | 'owner_cloud_sync'
+  | 'owner_approvals'
   | 'din_band'
   | 'owner'
   | 'medicine_list'
@@ -67,6 +76,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
 
   const { shop, name: shopName, mode } = useShop();
   const [activePage, setActivePage] = useState<ActivePage>('home');
+  const [targetShelfForStickers, setTargetShelfForStickers] = useState<string | undefined>(undefined);
   const [isOwnerGateOpen, setIsOwnerGateOpen] = useState<boolean>(false);
   const [isTestApprovalOpen, setIsTestApprovalOpen] = useState<boolean>(false);
   const [approvalMessage, setApprovalMessage] = useState<string>('');
@@ -84,6 +94,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     daysAgo: null,
     statusText: 'loading',
   });
+  const [syncState, setSyncState] = useState<HomeSyncState | null>(null);
 
   useEffect(() => {
     if (activePage !== 'home') return;
@@ -93,6 +104,15 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     getBackupStatus()
       .then((st) => setBackupStatus(st))
       .catch(() => {});
+    getHomeSyncState()
+      .then((st) => setSyncState(st))
+      .catch(() => {});
+
+    const interval = setInterval(() => {
+      getHomeSyncState().then(setSyncState).catch(() => {});
+    }, 10000);
+
+    return () => clearInterval(interval);
   }, [activePage]);
 
   useEffect(() => {
@@ -152,6 +172,22 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     }
   };
 
+  const handleOpenCloudSync = () => {
+    if (currentUser?.role === 'owner') {
+      setActivePage('owner_cloud_sync');
+    } else {
+      setIsOwnerGateOpen(true);
+    }
+  };
+
+  const handleOpenApprovals = () => {
+    if (currentUser?.role === 'owner') {
+      setActivePage('owner_approvals');
+    } else {
+      setIsOwnerGateOpen(true);
+    }
+  };
+
   // 32b Owner Menu
   if (activePage === 'owner') {
     return (
@@ -164,8 +200,15 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
         onOpenReports={() => setActivePage('owner_reports')}
         onOpenAuditLog={() => setActivePage('audit_log')}
         onOpenStaff={() => setActivePage('owner_staff')}
+        onOpenShelfMap={() => setActivePage('owner_shelf_map')}
+        onOpenStickers={() => {
+          setTargetShelfForStickers(undefined);
+          setActivePage('owner_stickers');
+        }}
         onOpenSettings={() => setActivePage('owner_settings')}
         onOpenBackup={() => setActivePage('owner_backup')}
+        onOpenCloudSync={() => setActivePage('owner_cloud_sync')}
+        onOpenApprovals={() => setActivePage('owner_approvals')}
         currentUser={currentUser}
         shop={shop}
         theme={theme}
@@ -180,6 +223,11 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
       <OwnerMedicineList
         onBackToOwnerMenu={() => setActivePage('owner')}
         onReturnHome={handleReturnHome}
+        onOpenShelfMap={() => setActivePage('owner_shelf_map')}
+        onOpenStickers={() => {
+          setTargetShelfForStickers(undefined);
+          setActivePage('owner_stickers');
+        }}
         currentUser={currentUser as any}
         shop={shop}
       />
@@ -204,6 +252,11 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     return (
       <StockDekho
         onReturnHome={handleReturnHome}
+        onOpenShelfMap={() => setActivePage('owner_shelf_map')}
+        onOpenStickers={(shelfCode) => {
+          setTargetShelfForStickers(shelfCode);
+          setActivePage('owner_stickers');
+        }}
         currentUser={currentUser as any}
         shop={shop}
         theme={theme}
@@ -385,6 +438,58 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     );
   }
 
+  // 37a-b Shelf Map & Shelf Move
+  if (activePage === 'owner_shelf_map') {
+    return (
+      <OwnerShelfMap
+        onReturnHome={handleReturnHome}
+        onOpenStickers={(shelfCode) => {
+          setTargetShelfForStickers(shelfCode);
+          setActivePage('owner_stickers');
+        }}
+        currentUser={currentUser as any}
+        shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 39a-b Stickers & Control Card
+  if (activePage === 'owner_stickers') {
+    return (
+      <OwnerStickers
+        onReturnHome={handleReturnHome}
+        initialTab={targetShelfForStickers ? 'shelf' : 'medicine'}
+        initialShelf={targetShelfForStickers}
+        currentUser={currentUser as any}
+        shop={shop}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 02b Cloud Sync & Pairing
+  if (activePage === 'owner_cloud_sync') {
+    return (
+      <OwnerCloudSync
+        currentUser={currentUser as any}
+        onBack={handleReturnHome}
+      />
+    );
+  }
+
+  // 43a Approvals Inbox
+  if (activePage === 'owner_approvals') {
+    return (
+      <RemoteApprovalInbox
+        currentUser={currentUser as any}
+        onBack={handleReturnHome}
+      />
+    );
+  }
+
   // If another subpage is currently selected, render subview with 46b EmptyState & top bar
   if (activePage !== 'home') {
     const pageLabel = tButton(`home.tile_${activePage}`);
@@ -491,8 +596,38 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
 
           {/* Right: Reusable Status Chips + User + Light/Dark Switch */}
           <div className="flex items-center space-x-4">
-            {/* StatusChip: Local mode (46d_Shared_StatusChips) */}
-            <StatusChip variant="local" label={modeLabel} />
+            {/* StatusChip: Truthful Cloud / Local Mode */}
+            {syncState?.cloudEnabled ? (
+              syncState.status === 'offline' ? (
+                <StatusChip
+                  variant="offline"
+                  label={syncState.chipLabel}
+                  className="cursor-pointer"
+                  onClick={handleOpenCloudSync}
+                />
+              ) : syncState.status === 'failed' ? (
+                <StatusChip
+                  variant="sync_failed"
+                  label={syncState.chipLabel}
+                  className="cursor-pointer"
+                  onClick={handleOpenCloudSync}
+                />
+              ) : (
+                <StatusChip
+                  variant="synced"
+                  label={syncState.chipLabel}
+                  className="cursor-pointer"
+                  onClick={handleOpenCloudSync}
+                />
+              )
+            ) : (
+              <StatusChip
+                variant="local"
+                label={syncState?.chipLabel || modeLabel}
+                className="cursor-pointer"
+                onClick={handleOpenCloudSync}
+              />
+            )}
 
             {/* StatusChip: Backup status truthfully (RULES.md / DECISIONS.md) */}
             {backupStatus.isToday ? (
@@ -533,6 +668,19 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
               <span>{tButton('customers.nav_customers').main}</span>
             </button>
 
+            {/* Approvals Inbox shortcut */}
+            {currentUser?.role === 'owner' && (
+              <button
+                type="button"
+                onClick={handleOpenApprovals}
+                className="h-10 px-3.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant text-on-surface font-bold text-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+                title={t('remote_approval.inbox_title')}
+              >
+                <Icon name="verified_user" className="text-[18px] text-primary" />
+                <span>{t('remote_approval.inbox_title')}</span>
+              </button>
+            )}
+
             {/* User name */}
             <div className="flex items-center space-x-2.5 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100">
               <div className="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm">
@@ -563,6 +711,62 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
             <FullscreenButton className="w-12 h-12 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 transition cursor-pointer" />
           </div>
         </header>
+
+        {/* Sync Failed Banner (10c_Home_Cloud_SyncFailed.html) */}
+        {syncState?.bannerVisible && syncState.bannerType === 'failed' && (
+          <div className="w-full bg-[#FEF3F2] dark:bg-[#2c1514] border-2 border-[#FCA5A5] dark:border-[#7f1d1d] rounded-2xl px-6 py-3.5 flex items-center justify-between mt-4 animate-fadeIn">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#FEE4E2] dark:bg-[#3f1917] border border-[#FCA5A5] dark:border-[#7f1d1d] flex items-center justify-center text-[#D92D20] dark:text-[#f87171] shrink-0">
+                <Icon name="warning" className="text-[28px]" />
+              </div>
+              <div className="flex flex-col">
+                <div className="text-xl font-black text-[#B91C1C] dark:text-[#fca5a5] flex items-center gap-2">
+                  <span>{t('cloud_sync.status_failed')}</span>
+                  <span>·</span>
+                  <span>{t('cloud_sync.pending_outbox', { count: syncState.pendingCount })}</span>
+                </div>
+                <span className="text-base font-semibold text-[#D92D20] dark:text-[#f87171]">
+                  {syncState.lastError || 'Network error aayi — kripya dobara try karein'}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  runSyncCycle({ force: true }).then(() => getHomeSyncState().then(setSyncState));
+                }}
+                className="h-14 min-w-[200px] px-6 bg-[#D92D20] hover:brightness-105 active:scale-[0.99] text-white rounded-2xl font-bold flex flex-col items-center justify-center shadow-sm cursor-pointer transition-all border border-[#B91C1C]"
+              >
+                <span className="text-lg font-bold leading-tight">{t('cloud_sync.btn_retry').main}</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-white/80 leading-none">
+                  {t('cloud_sync.btn_retry').sub}
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Offline Banner (10b_Home_Cloud_Offline.html) */}
+        {syncState?.bannerVisible && syncState.bannerType === 'offline' && (
+          <div className="w-full bg-[#FFFAEB] dark:bg-[#2b1f0c] border-2 border-[#FEDF89] dark:border-[#78350f] rounded-2xl px-6 py-3.5 flex items-center justify-between mt-4 animate-fadeIn">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#FEF0C7] dark:bg-[#451a03] border border-[#FEDF89] dark:border-[#78350f] flex items-center justify-center text-[#B54708] dark:text-[#fde68a] shrink-0">
+                <Icon name="wifi_off" className="text-[28px]" />
+              </div>
+              <div className="flex flex-col">
+                <div className="text-xl font-black text-[#B54708] dark:text-[#fde68a] flex items-center gap-2">
+                  <span>Offline mode</span>
+                  <span>·</span>
+                  <span>{t('cloud_sync.pending_outbox', { count: syncState.pendingCount })}</span>
+                </div>
+                <span className="text-base font-semibold text-[#B54708] dark:text-[#fde68a]">
+                  Internet wapas aane par automatically sync ho jayega
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Success Banner when DEV approval granted */}
         {approvalMessage && (

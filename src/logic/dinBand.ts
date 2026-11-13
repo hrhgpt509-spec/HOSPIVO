@@ -9,6 +9,7 @@ import {
   type UdhaarPayment,
 } from '../db';
 import { addAudit } from '../db/audit';
+import { enqueueSyncItem } from './cloudSync';
 import {
   DEFAULT_APPROVAL_RULES,
   type ApprovalActionCategory,
@@ -304,7 +305,7 @@ export async function saveDailyClosing(input: SaveDailyClosingInput): Promise<Da
     createdAt: now,
   };
 
-  return await db.transaction('rw', [db.dailyClosings, db.auditLog], async () => {
+  const saved = await db.transaction('rw', [db.dailyClosings, db.auditLog], async () => {
     const id = (await db.dailyClosings.add(record)) as number;
 
     const auditAction =
@@ -318,6 +319,10 @@ export async function saveDailyClosing(input: SaveDailyClosingInput): Promise<Da
 
     return { ...record, id };
   });
+
+  enqueueSyncItem('daily_closing', saved.id!, saved).catch(() => {});
+
+  return saved;
 }
 
 export async function loadDinBandData(openingCashPaise = 0, date?: Date | string) {

@@ -9,11 +9,11 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [~] Phase 4: Expiry, Udhaar, customers, referral report
 - [x] Phase 5: Din Band, Owner area, reports, audit log, settings, backup/restore
 - [~] Phase 6: Fast Bill
-- [ ] Phase 7: Shelf map, stickers
-- [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
+- [x] Phase 7: Shelf map, stickers
+- [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt G1 - Phase 6: Fast Bill (Rush Mode, Scanner Queue & Top-100 Wall) - COMPLETE
+Prompt I1 - Phase 8: Cloud-Enabled Mode, Sync Outbox & Remote Approvals - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -24,6 +24,14 @@ Prompt G1 - Phase 6: Fast Bill (Rush Mode, Scanner Queue & Top-100 Wall) - COMPL
 - DEV ONLY: "DEV: Test Ijazat PIN" test button on Home screen must be removed before release.
 
 ## Log (newest first)
+- Upgraded Dexie schema to v8 with `syncOutbox` and `approvalRequests` tables; built `src/logic/cloudSync.ts` with FIFO queuing for bills, returns, purchases, stock movements, supplier returns, udhaar payments, and daily closing.
+- Built Cloud Sync & Pairing screen (`src/screens/OwnerCloudSync.tsx`, 02b) with unique Shop Sync ID, device pairing, Supabase sync engine, live outbox status, and manual sync trigger.
+- Built Remote Approval system (`src/components/ApprovalDialog.tsx`, 18/18b) supporting online/offline states with auto-polling, and Remote Approvals Inbox (`src/screens/RemoteApprovalInbox.tsx`, 43a-c) with owner PIN re-auth and immutable audit logging.
+- Connected truthful Home top-bar sync chips (Local mode, Synced, Offline, Sync failed) with retry banners (10a-c), unlocked remote approvals in `OwnerSettings.tsx`, and passed all 176 unit tests and clean production build.
+- Built `src/logic/stickers.ts`: 100% offline pure TypeScript Code-128 barcode & 2D QR SVG generators, natural alphanumeric shelf grouping with live stock calculations, shelf updates with immutable audit logging (`medicine_shelf_updated`), and sticker sheet expansion.
+- Built Shelf Map & Shelf Move dialog (`OwnerShelfMap.tsx`, `ShelfMoveModal.tsx`) matching designs 37a/37b with 65%/35% dual-pane layout, shelf search/filter, and instant move dialog.
+- Built Barcode & Shelf Sticker Printing (`OwnerStickers.tsx`, `LinkBarcodeModal.tsx`) matching designs 39a/39b with A4 sheet layout (24/40/65/100) + 50x25mm thermal roll, shelf rack tags, laminated scanner control card, and clean `@media print` styling.
+- Wired Shelf Map & Stickers to `OwnerMenu.tsx`, `OwnerMedicineList.tsx`, and `StockDekho.tsx`, added 9 unit tests in `src/logic/stickers.test.ts` (163/163 vitest tests green across 25 files), and verified production build cleanly.
 - Built `src/logic/fastBill.ts`: scan code resolver (`resolveScanCode`) for barcodes, short codes, and runner command cards (NEXT, UNDO, CANCEL), top-100 sales ranking with valid FEFO stock (`getTopSellingMedicines`), and draft creation.
 - Built `FastBill.tsx` and subcomponents matching designs 19, 19b, 20a-d, 21, and 22: PendingQueueList, ConfirmCardView, FinalReviewView, TileWallView, ScheduleHModal, OutOfStockModal, UnknownScanModal, and BatchSelectModal.
 - Added persistent auto-focused scanner input, POS keyboard shortcuts (Enter, Left Arrow, S, L, Delete, B), 1-tap Cash/UPI checkout, and full PaymentScreen integration.

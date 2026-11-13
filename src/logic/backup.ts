@@ -54,6 +54,8 @@ export const BACKUP_TABLE_NAMES = [
   'udhaarPayments',
   'regularReminders',
   'dailyClosings',
+  'syncOutbox',
+  'approvalRequests',
 ] as const;
 
 /**

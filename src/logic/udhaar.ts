@@ -8,6 +8,7 @@ import {
   type UdhaarPaymentMode,
 } from '../db';
 import { addAudit } from '../db/audit';
+import { enqueueSyncItem } from './cloudSync';
 import { filterDigits, formatField } from './format';
 import { formatRupees } from './money';
 import { parseDateOnly } from './stock';
@@ -615,6 +616,8 @@ export async function recordUdhaarPayment(
       `UdhaarPayment #${paymentId}`,
       `Received ${formatRupees(amountPaise)} via ${input.mode} from ${paymentRecord.customerName}`
     );
+
+    enqueueSyncItem('udhaar_payment', paymentId, paymentRecord).catch(() => {});
 
     return { ...paymentRecord, id: paymentId };
   });

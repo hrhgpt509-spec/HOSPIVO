@@ -7,6 +7,7 @@ import { useTranslation, tButton } from '../i18n';
 import { EmptyState } from '../components/EmptyState';
 import { StatusChip } from '../components/StatusChip';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { Icon } from '../components/Icon';
 import { textFieldProps } from '../logic/format';
 import { useShop } from '../logic/useShop';
 import { formatProductType } from '../logic/productTypes';
@@ -16,6 +17,8 @@ import { OwnerMedicineImport } from './OwnerMedicineImport';
 interface OwnerMedicineListProps {
   onBackToOwnerMenu?: () => void;
   onReturnHome: () => void;
+  onOpenShelfMap?: () => void;
+  onOpenStickers?: () => void;
   currentUser: DBUser | null;
   shop: Shop | null;
 }
@@ -23,6 +26,8 @@ interface OwnerMedicineListProps {
 export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
   onBackToOwnerMenu,
   onReturnHome,
+  onOpenShelfMap,
+  onOpenStickers,
   currentUser,
   shop,
 }) => {
@@ -193,6 +198,30 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Shelf Map Shortcut */}
+              {onOpenShelfMap && (
+                <button
+                  type="button"
+                  onClick={onOpenShelfMap}
+                  className="h-14 min-h-[56px] px-4 rounded-[16px] bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant shadow-sm flex items-center gap-2 font-bold transition-all active:translate-y-[1px] cursor-pointer"
+                >
+                  <Icon name="shelves" className="text-primary text-[22px]" />
+                  <span className="text-sm font-bold">{t('shelf_map.title')}</span>
+                </button>
+              )}
+
+              {/* Stickers Shortcut */}
+              {onOpenStickers && (
+                <button
+                  type="button"
+                  onClick={onOpenStickers}
+                  className="h-14 min-h-[56px] px-4 rounded-[16px] bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant shadow-sm flex items-center gap-2 font-bold transition-all active:translate-y-[1px] cursor-pointer"
+                >
+                  <Icon name="print" className="text-primary text-[22px]" />
+                  <span className="text-sm font-bold">{t('stickers.title')}</span>
+                </button>
+              )}
+
               {/* Import File Button */}
               <button
                 type="button"

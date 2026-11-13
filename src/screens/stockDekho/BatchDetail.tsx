@@ -21,6 +21,8 @@ interface BatchDetailProps {
   totalStockUnits: number;
   onBack: () => void;
   onRefreshStock: () => Promise<void> | void;
+  onOpenShelfMap?: () => void;
+  onOpenStickers?: (shelfCode?: string) => void;
   currentUser: DBUser | null;
   shop: Shop | null;
   theme: 'light' | 'dark';
@@ -33,6 +35,8 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
   totalStockUnits,
   onBack,
   onRefreshStock,
+  onOpenShelfMap,
+  onOpenStickers,
   currentUser,
   shop,
   theme,
@@ -447,6 +451,28 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
                   <span className="font-body-md text-body-md text-on-surface-variant mt-1">
                     {t('stock_dekho.shelf_details_note')}
                   </span>
+                  <div className="flex items-center gap-2 mt-3">
+                    {onOpenShelfMap && (
+                      <button
+                        type="button"
+                        onClick={onOpenShelfMap}
+                        className="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant text-primary font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <Icon name="shelves" className="text-[16px]" />
+                        <span>{t('shelf_map.title')}</span>
+                      </button>
+                    )}
+                    {onOpenStickers && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenStickers(medicine.shelf)}
+                        className="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant text-primary font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <Icon name="print" className="text-[16px]" />
+                        <span>{t('stickers.title')}</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 

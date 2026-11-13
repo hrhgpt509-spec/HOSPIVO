@@ -18,6 +18,8 @@ import { getDiscountLimit, DEFAULT_DISCOUNT_LIMIT_PERCENT } from '../logic/billi
 import { addAudit } from '../db/audit';
 import { triggerFeedback } from '../logic/feedback';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
+import { OwnerCloudSync } from './OwnerCloudSync';
+import { getCloudConfig, type CloudConfig } from '../logic/cloudSync';
 
 interface OwnerSettingsProps {
   currentUser?: DBUser | null;
@@ -26,7 +28,7 @@ interface OwnerSettingsProps {
   onToggleTheme?: () => void;
 }
 
-type SettingsView = 'main' | 'approval_rules';
+type SettingsView = 'main' | 'approval_rules' | 'cloud_sync';
 
 export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
   currentUser,
@@ -48,6 +50,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
   const [approvalRules, setApprovalRules] = useState<Record<ApprovalActionCategory, ApprovalRuleType>>(
     DEFAULT_APPROVAL_RULES
   );
+  const [cloudConfig, setCloudConfig] = useState<CloudConfig | null>(null);
 
   // Modals
   const [isShopModalOpen, setIsShopModalOpen] = useState(false);
@@ -123,6 +126,9 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
           ...(rulesItem.value as Record<ApprovalActionCategory, ApprovalRuleType>),
         });
       }
+
+      const cfg = await getCloudConfig();
+      setCloudConfig(cfg);
     } catch (err) {
       console.error('Failed to load settings:', err);
     }
@@ -178,6 +184,18 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
           {btnBack.main}
         </button>
       </div>
+    );
+  }
+
+  if (currentView === 'cloud_sync') {
+    return (
+      <OwnerCloudSync
+        currentUser={currentUser as any}
+        onBack={() => {
+          loadSettings();
+          setCurrentView('main');
+        }}
+      />
     );
   }
 
@@ -736,6 +754,34 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
                   <Icon name="chevron_right" className="text-outline text-[24px]" />
                 </div>
               </div>
+
+              <div className="h-[1px] w-full bg-surface-container-high" />
+
+              {/* Row 11: Cloud Sync aur Pairing */}
+              <div
+                onClick={() => setCurrentView('cloud_sync')}
+                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
+                    <Icon name="cloud_sync" className="text-[28px]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-title-hinglish font-bold text-on-surface leading-tight">
+                      {t('cloud_sync.title')}
+                    </span>
+                    <span className="font-label-sub-english text-xs text-outline leading-tight">
+                      {t('cloud_sync.sub')}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-body-md text-on-surface-variant font-medium">
+                    {cloudConfig?.cloudEnabled ? t('cloud_sync.cloud_mode_title') : t('cloud_sync.local_mode_title')}
+                  </span>
+                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                </div>
+              </div>
             </div>
           </div>
         ) : (
@@ -815,15 +861,31 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
                           <span>{t('owner_settings.rule_option_local')}</span>
                         </button>
 
-                        {/* Option 2: Remote approval (Cloud mode locked) */}
+                        {/* Option 2: Remote approval */}
                         <button
                           type="button"
-                          disabled={true}
-                          className="h-11 px-4 rounded-xl text-outline-variant flex items-center gap-1 font-label-sub-english text-sm font-medium opacity-50 cursor-not-allowed"
-                          title="Cloud mode only"
+                          disabled={!cloudConfig?.cloudEnabled}
+                          onClick={() => {
+                            if (cloudConfig?.cloudEnabled) {
+                              setApprovalRules((r) => ({ ...r, [item.key]: 'remote_approval' }));
+                            }
+                          }}
+                          className={`h-11 px-4 rounded-xl flex items-center gap-2 font-label-sub-english text-sm font-bold transition-all ${
+                            !cloudConfig?.cloudEnabled
+                              ? 'text-outline-variant opacity-50 cursor-not-allowed'
+                              : currentRule === 'remote_approval'
+                              ? 'bg-primary text-on-primary shadow-sm cursor-pointer'
+                              : 'text-on-surface-variant hover:bg-surface-container cursor-pointer'
+                          }`}
+                          title={!cloudConfig?.cloudEnabled ? 'Cloud mode only' : undefined}
                         >
+                          {currentRule === 'remote_approval' && (
+                            <Icon name="check_circle" className="text-[18px] text-on-primary" />
+                          )}
                           <span>{t('owner_settings.rule_option_remote')}</span>
-                          <span className="text-[10px] bg-surface-container-high px-1.5 py-0.5 rounded">Cloud</span>
+                          {!cloudConfig?.cloudEnabled && (
+                            <span className="text-[10px] bg-surface-container-high px-1.5 py-0.5 rounded">Cloud</span>
+                          )}
                         </button>
 
                         {/* Option 3: Blocked offline */}

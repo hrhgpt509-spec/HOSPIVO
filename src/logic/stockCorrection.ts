@@ -1,5 +1,6 @@
 import { db, type DBUser, type StockMovement } from '../db';
 import { addAudit } from '../db/audit';
+import { enqueueSyncItem } from './cloudSync';
 import {
   DEFAULT_APPROVAL_RULES,
   type ApprovalActionCategory,
@@ -189,6 +190,8 @@ export async function applyStockCorrection(
     const details = `${input.medicineName} (Batch ${input.batchNo}): ${sign}${signedDelta} units | Reason: ${englishReason}`;
 
     await addAudit(who, 'stock_correction', record, details);
+
+    enqueueSyncItem('stock_movement', movementId, movement).catch(() => {});
 
     return {
       ok: true,

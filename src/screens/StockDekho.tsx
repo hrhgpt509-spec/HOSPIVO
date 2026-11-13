@@ -15,6 +15,8 @@ import { lowStock, outOfStock, isOutOfStock } from '../logic/stock';
 
 interface StockDekhoProps {
   onReturnHome: () => void;
+  onOpenShelfMap?: () => void;
+  onOpenStickers?: (shelfCode?: string) => void;
   currentUser: DBUser | null;
   shop: Shop | null;
   theme: 'light' | 'dark';
@@ -25,6 +27,8 @@ type StockDekhoView = 'list' | 'batch_detail' | 'shopping_list';
 
 export const StockDekho: React.FC<StockDekhoProps> = ({
   onReturnHome,
+  onOpenShelfMap,
+  onOpenStickers,
   currentUser,
   shop,
   theme,
@@ -178,6 +182,8 @@ export const StockDekho: React.FC<StockDekhoProps> = ({
         totalStockUnits={selectedMedicineTotalUnits}
         onBack={() => setCurrentView('list')}
         onRefreshStock={loadData}
+        onOpenShelfMap={onOpenShelfMap}
+        onOpenStickers={onOpenStickers}
         currentUser={currentUser}
         shop={shop}
         theme={theme}

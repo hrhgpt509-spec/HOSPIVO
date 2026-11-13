@@ -12,6 +12,7 @@ import {
   type UnitMode,
 } from '../db';
 import { addAudit } from '../db/audit';
+import { enqueueSyncItem } from './cloudSync';
 import type { ApprovalActionCategory } from './approvals';
 import { batchStock, isExpired, parseDateOnly, pickBatchesForSale } from './stock';
 
@@ -764,6 +765,8 @@ export async function finalizeBill(
         `Bill ${billNo} finalized (${savedBillItems.length} items, mode: ${draft.paymentMode})`
       );
 
+      enqueueSyncItem('bill', billId, { bill: billToSave, items: savedBillItems }).catch(() => {});
+
       return {
         billId,
         billNo,
@@ -969,6 +972,13 @@ export async function processBillReturn(
         originalBill.billNo,
         `Return ${returnNo} for Bill ${originalBill.billNo}: ${totalCurrentReturnUnits} units (${draft.refundMode})`
       );
+
+      enqueueSyncItem('bill_return', billReturnId, {
+        returnNo,
+        originalBillId: originalBill.id,
+        refundMode: draft.refundMode,
+        totalRefundPaise,
+      }).catch(() => {});
 
       return {
         billReturnId,

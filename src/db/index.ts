@@ -312,6 +312,49 @@ export interface DailyClosing {
   createdAt: string;
 }
 
+// -------------------------------------------------------------
+// Phase 8: Cloud Sync & Remote Approvals
+// -------------------------------------------------------------
+
+export type SyncEntityType =
+  | 'bill'
+  | 'bill_return'
+  | 'purchase'
+  | 'stock_movement'
+  | 'udhaar_payment'
+  | 'daily_closing'
+  | 'audit'
+  | 'approval_request';
+
+export type SyncStatus = 'pending' | 'synced' | 'failed';
+
+export interface SyncOutboxItem {
+  id?: number;
+  entityType: SyncEntityType;
+  entityId: string;
+  payloadJson: string;
+  status: SyncStatus;
+  retryCount: number;
+  lastError?: string;
+  createdAt: string;
+  syncedAt?: string;
+}
+
+export type ApprovalRequestStatus = 'pending' | 'approved' | 'rejected';
+
+export interface ApprovalRequest {
+  id?: number;
+  shopSyncId: string;
+  actionCategory: string;
+  summary: string;
+  detailsJson?: string;
+  requestedBy: string;
+  status: ApprovalRequestStatus;
+  resolvedBy?: string;
+  createdAt: string;
+  resolvedAt?: string;
+}
+
 export class HospivoDatabase extends Dexie {
   shop!: EntityTable<Shop, 'id'>;
   users!: EntityTable<DBUser, 'id'>;
@@ -343,6 +386,10 @@ export class HospivoDatabase extends Dexie {
 
   // Phase 5: Din Band (Daily Closing)
   dailyClosings!: EntityTable<DailyClosing, 'id'>;
+
+  // Phase 8: Cloud Sync & Remote Approvals
+  syncOutbox!: EntityTable<SyncOutboxItem, 'id'>;
+  approvalRequests!: EntityTable<ApprovalRequest, 'id'>;
 
   constructor() {
     super('HospivoDatabase');
@@ -466,6 +513,32 @@ export class HospivoDatabase extends Dexie {
       udhaarPayments: '++id, customerId, customerPhone, createdAt',
       regularReminders: '++id, customerId, customerPhone, medicineId, nextDueDate, active',
       dailyClosings: '++id, date, status, createdAt',
+    });
+
+    // Version 8: Phase 8 Cloud Sync & Remote Approvals
+    this.version(8).stores({
+      shop: '++id, mode',
+      users: 'id, role, active',
+      settings: 'key',
+      auditLog: '++id, timestamp, who, action, record',
+      medicines: '++id, name, shortCode, barcode, company, active, shelf',
+      batches: '++id, medicineId, batchNo, expiry, [medicineId+batchNo]',
+      stockMovements: '++id, batchId, medicineId, type, at',
+      suppliers: '++id, name, phone',
+      purchases: '++id, supplierId, invoiceNo, date, verified',
+      purchaseLines: '++id, purchaseId, medicineId, batchNo',
+      productTypes: '++id, name, active',
+      bills: '++id, &billNo, financialYear, date, status, paymentMode, cashierId, createdAt',
+      billItems: '++id, billId, medicineId, batchId',
+      heldBills: '++id, heldAt',
+      billReturns: '++id, &returnNo, originalBillId, originalBillNo, createdAt',
+      supplierReturns: '++id, supplierId, medicineId, batchId, status, createdAt',
+      customers: '++id, &phone, name, createdAt',
+      udhaarPayments: '++id, customerId, customerPhone, createdAt',
+      regularReminders: '++id, customerId, customerPhone, medicineId, nextDueDate, active',
+      dailyClosings: '++id, date, status, createdAt',
+      syncOutbox: '++id, entityType, entityId, status, createdAt, syncedAt',
+      approvalRequests: '++id, shopSyncId, actionCategory, status, requestedBy, createdAt, resolvedAt',
     });
 
     // Make audit log strictly append-only at database level

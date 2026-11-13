@@ -13,8 +13,12 @@ interface OwnerMenuProps {
   onOpenReports?: () => void;
   onOpenAuditLog?: () => void;
   onOpenStaff?: () => void;
+  onOpenShelfMap?: () => void;
+  onOpenStickers?: () => void;
   onOpenSettings?: () => void;
   onOpenBackup?: () => void;
+  onOpenCloudSync?: () => void;
+  onOpenApprovals?: () => void;
   currentUser?: {
     id?: string;
     name: string;
@@ -39,8 +43,12 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
   onOpenReports,
   onOpenAuditLog,
   onOpenStaff,
+  onOpenShelfMap,
+  onOpenStickers,
   onOpenSettings,
   onOpenBackup,
+  onOpenCloudSync,
+  onOpenApprovals,
   currentUser,
   shop,
   theme = 'light',
@@ -90,14 +98,29 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
                 {shopName}
               </span>
             </div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-low text-xs font-medium text-on-surface-variant">
+            <button
+              type="button"
+              onClick={onOpenCloudSync}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-low hover:bg-surface-container text-xs font-medium text-on-surface-variant cursor-pointer transition-colors"
+            >
               <span className="w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-primary/20" />
               <span>{modeLabel}</span>
-            </div>
+            </button>
           </div>
 
           {/* Right: User Pill + Theme Toggle + Home Button */}
           <div className="flex items-center gap-3 md:gap-4">
+            {onOpenApprovals && (
+              <button
+                type="button"
+                onClick={onOpenApprovals}
+                className="h-10 px-3.5 rounded-xl bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant text-on-surface font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                title={t('remote_approval.inbox_title')}
+              >
+                <Icon name="verified_user" className="text-[18px] text-primary" />
+                <span>{t('remote_approval.inbox_title')}</span>
+              </button>
+            )}
             {/* User pill */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-low border border-outline-variant">
               <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm">
@@ -302,11 +325,11 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
                 ) : null}
               </button>
 
-              {/* 5. Self / Shelf Map (locked) */}
+              {/* 5. Self / Shelf Map (ACTIVE! Opens real page) */}
               <button
                 type="button"
-                onClick={() => handleLockedClick(tileShelf.main)}
-                className="group relative flex flex-col items-center justify-center aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-4 text-center border border-outline-variant active:scale-[0.98]"
+                onClick={onOpenShelfMap || (() => handleLockedClick(tileShelf.main))}
+                className="group relative flex flex-col items-center justify-center aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
               >
                 <div className="w-16 h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
                   <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
@@ -366,11 +389,11 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
                   ) : null}
                 </button>
 
-                {/* 7. Sticker (locked) */}
+                {/* 7. Sticker (ACTIVE! Opens real page) */}
                 <button
                   type="button"
-                  onClick={() => handleLockedClick(tileSticker.main)}
-                  className="group relative flex flex-col items-center justify-center w-[calc((100%-0.75rem)/2)] sm:w-[calc((100%-2*1rem)/3)] md:w-[calc((100%-4*1.5rem)/5)] aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-3 sm:p-4 text-center border border-outline-variant active:scale-[0.98]"
+                  onClick={onOpenStickers || (() => handleLockedClick(tileSticker.main))}
+                  className="group relative flex flex-col items-center justify-center w-[calc((100%-0.75rem)/2)] sm:w-[calc((100%-2*1rem)/3)] md:w-[calc((100%-4*1.5rem)/5)] aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-3 sm:p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
                 >
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
                     <svg className="w-8 h-8 sm:w-9 sm:h-9" fill="currentColor" viewBox="0 0 24 24">

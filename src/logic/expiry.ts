@@ -13,6 +13,7 @@ import {
 } from '../db';
 import { addAudit } from '../db/audit';
 import { canSeePurchasePrice } from './roles';
+import { enqueueSyncItem } from './cloudSync';
 import { expiryBucket, parseDateOnly } from './stock';
 
 export type ExpiryTabBucket = '30' | '60' | '90' | 'expired';
@@ -503,6 +504,8 @@ export async function createSupplierReturn(
         `SupplierReturn #${returnId}`,
         `Created supplier return of ${qtyUnits} units for ${medicine.name} batch ${batch.batchNo} to ${supplier.name}`
       );
+
+      enqueueSyncItem('stock_movement', returnId, newReturn).catch(() => {});
 
       return { ...newReturn, id: returnId };
     }

@@ -1,5 +1,6 @@
 import { db, type DBUser, type UserRole, type Purchase } from '../db';
 import { canSeePurchasePrice } from './roles';
+import { enqueueSyncItem } from './cloudSync';
 
 export interface PurchaseDraftLine {
   id: string; // temporary client UUID/id
@@ -307,6 +308,13 @@ export async function savePurchase(
           linesCount: draft.lines.length,
         }),
       });
+
+      enqueueSyncItem('purchase', purchaseId, {
+        purchaseId,
+        supplierId: draft.supplierId,
+        invoiceNo: draft.invoiceNo,
+        linesCount: draft.lines.length,
+      }).catch(() => {});
 
       return {
         purchaseId,
