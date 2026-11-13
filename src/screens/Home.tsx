@@ -21,7 +21,11 @@ import { DinBand } from './DinBand';
 import { OwnerDashboard } from './OwnerDashboard';
 import { OwnerReports } from './OwnerReports';
 import { AuditLogScreen } from './AuditLogScreen';
+import { OwnerStaff } from './OwnerStaff';
+import { OwnerSettings } from './OwnerSettings';
+import { OwnerBackup } from './OwnerBackup';
 import { loadHomeLiveCounters, type HomeLiveCounters } from '../logic/reports';
+import { getBackupStatus, type BackupStatus } from '../logic/backup';
 
 interface HomeProps {
   currentUser?: {
@@ -45,6 +49,9 @@ type ActivePage =
   | 'owner_dashboard'
   | 'owner_reports'
   | 'audit_log'
+  | 'owner_staff'
+  | 'owner_settings'
+  | 'owner_backup'
   | 'din_band'
   | 'owner'
   | 'medicine_list'
@@ -69,11 +76,21 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     lowStockCount: 0,
     combinedAlertsCount: 0,
   });
+  const [backupStatus, setBackupStatus] = useState<BackupStatus>({
+    lastVerifiedBackupAt: null,
+    isToday: false,
+    isOlderThan3Days: true,
+    daysAgo: null,
+    statusText: 'loading',
+  });
 
   useEffect(() => {
     if (activePage !== 'home') return;
     loadHomeLiveCounters()
       .then((res) => setLiveCounters(res))
+      .catch(() => {});
+    getBackupStatus()
+      .then((st) => setBackupStatus(st))
       .catch(() => {});
   }, [activePage]);
 
@@ -126,6 +143,14 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     setActivePage('owner');
   };
 
+  const handleOpenBackup = () => {
+    if (currentUser?.role === 'owner') {
+      setActivePage('owner_backup');
+    } else {
+      setIsOwnerGateOpen(true);
+    }
+  };
+
   // 32b Owner Menu
   if (activePage === 'owner') {
     return (
@@ -137,6 +162,9 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
         onOpenDashboard={() => setActivePage('owner_dashboard')}
         onOpenReports={() => setActivePage('owner_reports')}
         onOpenAuditLog={() => setActivePage('audit_log')}
+        onOpenStaff={() => setActivePage('owner_staff')}
+        onOpenSettings={() => setActivePage('owner_settings')}
+        onOpenBackup={() => setActivePage('owner_backup')}
         currentUser={currentUser}
         shop={shop}
         theme={theme}
@@ -308,6 +336,42 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     );
   }
 
+  // 35a-b Staff Management
+  if (activePage === 'owner_staff') {
+    return (
+      <OwnerStaff
+        currentUser={currentUser as any}
+        onBack={() => setActivePage('owner')}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 40, 40b Owner Settings & Approval Rules
+  if (activePage === 'owner_settings') {
+    return (
+      <OwnerSettings
+        currentUser={currentUser as any}
+        onBack={() => setActivePage('owner')}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // 41a-c Backup & Restore
+  if (activePage === 'owner_backup') {
+    return (
+      <OwnerBackup
+        currentUser={currentUser as any}
+        onBack={() => setActivePage('owner')}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
   // If another subpage is currently selected, render subview with 46b EmptyState & top bar
   if (activePage !== 'home') {
     const pageLabel = tButton(`home.tile_${activePage}`);
@@ -417,8 +481,22 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
             {/* StatusChip: Local mode (46d_Shared_StatusChips) */}
             <StatusChip variant="local" label={modeLabel} />
 
-            {/* StatusChip: Backup lo (Honest backup state, none taken yet) */}
-            <StatusChip variant="backup_needed" label={backupBtn.main} />
+            {/* StatusChip: Backup status truthfully (RULES.md / DECISIONS.md) */}
+            {backupStatus.isToday ? (
+              <StatusChip
+                variant="backup_today"
+                label={t('status.backup_today')}
+                className="cursor-pointer"
+                onClick={handleOpenBackup}
+              />
+            ) : (
+              <StatusChip
+                variant="backup_needed"
+                label={backupBtn.main}
+                className="cursor-pointer"
+                onClick={handleOpenBackup}
+              />
+            )}
 
             {/* Quick Suppliers Button */}
             <button
@@ -495,38 +573,41 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
         )}
 
         {/* Red backup warning banner (RULES.md: Red banner on Home if last backup is older than 3 days / none taken) */}
-        <div className="w-full bg-[#FEF3F2] dark:bg-[#2c1514] border-2 border-[#FCA5A5] dark:border-[#7f1d1d] rounded-2xl px-6 py-3.5 flex items-center justify-between mt-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#FEE4E2] dark:bg-[#3f1917] border border-[#FCA5A5] dark:border-[#7f1d1d] flex items-center justify-center text-[#D92D20] dark:text-[#f87171] shrink-0">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" viewBox="0 0 24 24">
-                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-            </div>
-            <div className="flex flex-col">
-              <div className="text-xl font-black text-[#B91C1C] dark:text-[#fca5a5] flex items-center gap-2">
-                <span>{t('home.backup_banner_title')}</span>
+        {backupStatus.isOlderThan3Days && (
+          <div className="w-full bg-[#FEF3F2] dark:bg-[#2c1514] border-2 border-[#FCA5A5] dark:border-[#7f1d1d] rounded-2xl px-6 py-3.5 flex items-center justify-between mt-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#FEE4E2] dark:bg-[#3f1917] border border-[#FCA5A5] dark:border-[#7f1d1d] flex items-center justify-center text-[#D92D20] dark:text-[#f87171] shrink-0">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.3" viewBox="0 0 24 24">
+                  <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
               </div>
-              <span className="text-base font-semibold text-[#D92D20] dark:text-[#f87171]">
-                {t('home.backup_banner_sub')}
-              </span>
+              <div className="flex flex-col">
+                <div className="text-xl font-black text-[#B91C1C] dark:text-[#fca5a5] flex items-center gap-2">
+                  <span>{t('home.backup_banner_title')}</span>
+                </div>
+                <span className="text-base font-semibold text-[#D92D20] dark:text-[#f87171]">
+                  {t('home.backup_banner_sub')}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleOpenBackup}
+                className="h-14 min-w-[200px] px-6 bg-[#D92D20] hover:brightness-105 active:scale-[0.99] text-white rounded-2xl font-bold flex flex-col items-center justify-center shadow-sm cursor-pointer transition-all border border-[#B91C1C]"
+              >
+                <span className="text-lg font-bold leading-tight">{backupBtn.main}</span>
+                {backupBtn.sub ? (
+                  <span className="text-xs font-semibold uppercase tracking-wider text-white/80 leading-none">
+                    {backupBtn.sub}
+                  </span>
+                ) : null}
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="h-14 min-w-[200px] px-6 bg-[#D92D20] hover:brightness-105 active:scale-[0.99] text-white rounded-2xl font-bold flex flex-col items-center justify-center shadow-sm cursor-pointer transition-all border border-[#B91C1C]"
-            >
-              <span className="text-lg font-bold leading-tight">{backupBtn.main}</span>
-              {backupBtn.sub ? (
-                <span className="text-xs font-semibold uppercase tracking-wider text-white/80 leading-none">
-                  {backupBtn.sub}
-                </span>
-              ) : null}
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* MAIN AREA: 8 BIG SQUARE TILES IN A GRID */}
         <main className="w-full flex-1 flex items-center justify-center py-6">

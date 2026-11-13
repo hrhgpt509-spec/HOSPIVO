@@ -34,6 +34,8 @@ export async function getDiscountLimitPercent(): Promise<number> {
   return DEFAULT_DISCOUNT_LIMIT_PERCENT;
 }
 
+export const getDiscountLimit = getDiscountLimitPercent;
+
 /**
  * Computes unit selling price in whole paise for pack vs loose mode.
  */

@@ -1,5 +1,5 @@
 import { db, type DBUser } from '../db';
-import { hashPin, validatePin, verifyPin } from './pin';
+import { getPinLengthSetting, hashPin, validatePin, verifyPin } from './pin';
 import { addAudit } from '../db/audit';
 
 export type ApprovalActionCategory =
@@ -175,13 +175,17 @@ export function validateApprovalPin(
 /**
  * Validates a staff PIN candidate.
  * Returns error codes instead of sentences.
+ * Validates against current PIN length, owner PIN, approval PIN, and other staff PINs.
  */
 export async function validateStaffPin(
   pin: string,
   ownerPin?: string,
-  existingStaffPins?: string[]
+  existingStaffPins?: string[],
+  expectedLength?: number,
+  targetUserId?: string
 ): Promise<ValidateStaffPinResult> {
-  if (!/^\d+$/.test(pin) || pin.length !== 4) {
+  const reqLen = expectedLength ?? (await getPinLengthSetting());
+  if (!/^\d+$/.test(pin) || pin.length !== reqLen) {
     return { ok: false, error: 'staff_pin_length' };
   }
   if (ownerPin && pin === ownerPin) {
@@ -194,6 +198,23 @@ export async function validateStaffPin(
   if (isSameAsApproval) {
     return { ok: false, error: 'staff_pin_same_as_approval' };
   }
+
+  // Check against DB users (Owner and existing active Staff)
+  const users = await getAllUsers();
+  for (const user of users) {
+    if (targetUserId && user.id === targetUserId) continue;
+    if (user.active === false && user.id !== 'owner') continue;
+    if (user.pinHash && user.pinSalt) {
+      const isMatch = await verifyPin(pin, user);
+      if (isMatch) {
+        if (user.role === 'owner') {
+          return { ok: false, error: 'staff_pin_same_as_owner' };
+        }
+        return { ok: false, error: 'staff_pin_duplicate' };
+      }
+    }
+  }
+
   return { ok: true };
 }
 

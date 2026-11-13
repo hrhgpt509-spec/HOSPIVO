@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt F2 - Owner Dashboard, Reports & Audit Log - COMPLETE
+Prompt F3 - Staff Management, Settings & Verified Backup/Restore - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -22,9 +22,13 @@ Prompt F2 - Owner Dashboard, Reports & Audit Log - COMPLETE
 - DEV ONLY: ?reset=1 query parameter in App.tsx clears the database and must be removed before release.
 - DEV ONLY: "DEV: Reset test data" button on Login screen clears database and must be removed before release.
 - DEV ONLY: "DEV: Test Ijazat PIN" test button on Home screen must be removed before release.
-- DEV ONLY: Language switch on Login screen becomes a Settings option in Phase 5.
 
 ## Log (newest first)
+- Built `src/logic/backup.ts`: exported all Dexie tables with SHA-256 integrity hash, verified backup file download, safe restore wiping/rebuilding tables without triggering delete hooks, and truthful backup status calculation.
+- Built `OwnerStaff.tsx` (35a/b) with user listing, Add/Edit staff, PIN reset with on-screen & physical keyboard support, and collision check against Owner/Approval/staff PINs.
+- Built `OwnerSettings.tsx` (40/40b) covering Shop Details, discount limit, auto-lock timeout, theme, language switcher, fullscreen toggle, PIN length migration (4 or 6 digits), Owner/Approval PIN change flows, and the 5-rule Approval Rules Matrix with locked remote approvals.
+- Built `OwnerBackup.tsx` (41a-c) with verified backup creation, failed-state retry, recent backup history, and Approval PIN-guarded database restore; wired truthful backup chips and >3-day warning banner in `Home.tsx` and active tiles in `OwnerMenu.tsx`.
+- Added 7 unit tests in `src/logic/backupAndSettings.test.ts` (23 files, 146 tests passed) and verified `npm run build` cleanly.
 - Built `src/logic/reports.ts` and `src/logic/reports.test.ts`: live Home counters (today's net sales, bill count, 30-day expiry + low-stock alerts), Owner-only Dashboard metrics (`computeOwnerDashboardMetrics`), GST CGST/SGST summary with return deductions, Sales report, Purchase Register, Schedule H/H1 Register, CSV export helpers, and Audit Log filters.
 - Built `OwnerDashboard.tsx`, `OwnerReports.tsx` (with print area + CSV downloads + Referral Sales Report shortcut), and read-only `AuditLogScreen.tsx` matching designs `33_*`, `34_*`, and `36_*`, strictly guarded for Owner role (`isOwner`).
 - Wired the three Owner screens into `OwnerMenu.tsx` and `Home.tsx`, connected live today sales/bill/expiry/low-stock counters on `Home.tsx`, and added `en`/`hi`/`hinglish` translations.

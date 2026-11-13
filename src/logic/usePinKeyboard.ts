@@ -4,6 +4,7 @@ interface UsePinKeyboardOptions {
   onDigit: (digit: string) => void;
   onBackspace: () => void;
   onClear?: () => void;
+  onEnter?: () => void;
   disabled?: boolean;
 }
 
@@ -12,6 +13,7 @@ interface UsePinKeyboardOptions {
  * - Digits from the top number row and numpad type the PIN.
  * - Backspace deletes the last digit.
  * - Escape clears (if supported).
+ * - Enter confirms (if supported).
  * - Non-digit keys are completely ignored.
  * - Does not intercept keys when user is typing in standard text inputs or textareas.
  */
@@ -19,6 +21,7 @@ export function usePinKeyboard({
   onDigit,
   onBackspace,
   onClear,
+  onEnter,
   disabled = false,
 }: UsePinKeyboardOptions) {
   useEffect(() => {
@@ -44,11 +47,14 @@ export function usePinKeyboard({
       } else if (e.key === 'Escape' && onClear) {
         e.preventDefault();
         onClear();
+      } else if (e.key === 'Enter' && onEnter) {
+        e.preventDefault();
+        onEnter();
       }
       // Any other non-digit key is ignored
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onDigit, onBackspace, onClear, disabled]);
+  }, [onDigit, onBackspace, onClear, onEnter, disabled]);
 }
