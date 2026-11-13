@@ -26,20 +26,9 @@ export function App() {
     }, INACTIVITY_TIMEOUT_MS);
   }, []);
 
-  // Check database state and dev-reset query flag on initial load
+  // Check database state on initial load
   useEffect(() => {
     async function initApp() {
-      // DEV ONLY: remove before release
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('reset') === '1') {
-        db.close();
-        await db.delete();
-        await db.open();
-        const url = new URL(window.location.href);
-        url.searchParams.delete('reset');
-        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
-      }
-
       try {
         const shopCount = await db.shop.count();
         if (shopCount === 0) {
@@ -124,7 +113,6 @@ export function App() {
       <Login
         onLoginSuccess={handleLoginSuccess}
         isLocked={false}
-        onResetToSetup={() => setScreen('setup')}
       />
     );
   };

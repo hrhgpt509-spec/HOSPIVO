@@ -4,7 +4,6 @@ import { formatRupees } from '../logic/money';
 import { StatusChip } from '../components/StatusChip';
 import { EmptyState } from '../components/EmptyState';
 import { OwnerPinGate } from '../components/OwnerPinGate';
-import { ApprovalDialog } from '../components/ApprovalDialog';
 import { useTranslation, tButton } from '../i18n';
 import { FullscreenButton } from '../components/FullscreenButton';
 import { Icon } from '../components/Icon';
@@ -78,8 +77,6 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
   const [activePage, setActivePage] = useState<ActivePage>('home');
   const [targetShelfForStickers, setTargetShelfForStickers] = useState<string | undefined>(undefined);
   const [isOwnerGateOpen, setIsOwnerGateOpen] = useState<boolean>(false);
-  const [isTestApprovalOpen, setIsTestApprovalOpen] = useState<boolean>(false);
-  const [approvalMessage, setApprovalMessage] = useState<string>('');
   const [liveCounters, setLiveCounters] = useState<HomeLiveCounters>({
     todaySalesPaise: 0,
     todayBillsCount: 0,
@@ -128,7 +125,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const backupBtn = tButton('home.backup_lo');
   const returnHomeBtn = tButton('home.return_home_btn');
   const tileDawaiBecho = tButton('home.tile_dawai_becho');
@@ -768,27 +765,6 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
           </div>
         )}
 
-        {/* Success Banner when DEV approval granted */}
-        {approvalMessage && (
-          <div className="w-full bg-[#E8F5E9] dark:bg-[#122e1b] border-2 border-[#81C784] rounded-2xl px-6 py-3 flex items-center justify-between mt-3 animate-fadeIn">
-            <div className="flex items-center gap-3">
-              <svg className="w-6 h-6 text-[#2E7D32] dark:text-[#81C784]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-lg font-bold text-[#1B5E20] dark:text-[#a5d6a7]">
-                {approvalMessage}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setApprovalMessage('')}
-              className="text-xs font-semibold text-[#2E7D32] hover:underline cursor-pointer"
-            >
-              {t('home.close_btn')}
-            </button>
-          </div>
-        )}
-
         {/* Red backup warning banner (RULES.md: Red banner on Home if last backup is older than 3 days / none taken) */}
         {backupStatus.isOlderThan3Days && (
           <div className="w-full bg-[#FEF3F2] dark:bg-[#2c1514] border-2 border-[#FCA5A5] dark:border-[#7f1d1d] rounded-2xl px-6 py-3.5 flex items-center justify-between mt-4">
@@ -1020,17 +996,6 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
             </div>
 
           </div>
-
-          {/* DEV ONLY: remove before release */}
-          <div className="absolute right-4 bottom-2 sm:bottom-4">
-            <button
-              type="button"
-              onClick={() => setIsTestApprovalOpen(true)}
-              className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-bold cursor-pointer transition shadow-sm"
-            >
-              {t('home.dev_test_approval_btn')}
-            </button>
-          </div>
         </footer>
 
         {/* 32a Owner PIN Gate Dialog */}
@@ -1038,20 +1003,6 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
           isOpen={isOwnerGateOpen}
           onSuccess={handleOwnerGateSuccess}
           onClose={() => setIsOwnerGateOpen(false)}
-        />
-
-        {/* 18c Approval Dialog (Ijazat PIN) for DEV testing */}
-        {/* DEV ONLY: remove before release */}
-        <ApprovalDialog
-          isOpen={isTestApprovalOpen}
-          actionCategory="discount_above_limit"
-          recordDescription={language === 'en' ? 'Test: 15% discount (Limit 10%)' : 'Test: 15% chhoot (Limit 10%)'}
-          requesterName={userName}
-          onApproved={() => {
-            setIsTestApprovalOpen(false);
-            setApprovalMessage(t('home.dev_approval_success_banner'));
-          }}
-          onClose={() => setIsTestApprovalOpen(false)}
         />
 
       </div>

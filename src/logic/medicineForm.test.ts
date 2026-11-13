@@ -4,6 +4,8 @@ import { db, type Medicine } from '../db';
 import {
   validateMedicineForm,
   computeMedicineChanges,
+  minStockUnitsToPacks,
+  alertPacksToMinUnits,
   type MedicineFormData,
 } from './medicineForm';
 import { findDuplicateMedicines } from './stock';
@@ -183,5 +185,40 @@ describe('medicineForm validation and business rules', () => {
     expect(changes.mrpPaise.new).toBe(3500);
     expect(changes.shelf.old).toBe('S-04');
     expect(changes.shelf.new).toBe('S-09');
+  });
+
+  describe('Low Stock Alert pack <-> loose units conversion', () => {
+    it('converts alert packs to loose units for database storage', () => {
+      // 200 packs with 100 units/pack = 20,000 units
+      expect(alertPacksToMinUnits('200', 100)).toBe(20000);
+      expect(alertPacksToMinUnits(200, 100)).toBe(20000);
+
+      // 10 packs with 15 units/pack = 150 units
+      expect(alertPacksToMinUnits('10', 15)).toBe(150);
+
+      // Default unitsPerPack fallback to 1
+      expect(alertPacksToMinUnits('5', 0)).toBe(5);
+
+      // Zero, empty, or negative returns 0
+      expect(alertPacksToMinUnits('', 10)).toBe(0);
+      expect(alertPacksToMinUnits('0', 10)).toBe(0);
+      expect(alertPacksToMinUnits('-5', 10)).toBe(0);
+      expect(alertPacksToMinUnits(undefined, 10)).toBe(0);
+    });
+
+    it('converts stored loose units to packs for form editing display', () => {
+      // 20,000 units with 100 units/pack = 200 packs
+      expect(minStockUnitsToPacks(20000, 100)).toBe(200);
+
+      // 150 units with 15 units/pack = 10 packs
+      expect(minStockUnitsToPacks(150, 15)).toBe(10);
+
+      // Rounding handles loose remainders gracefully
+      expect(minStockUnitsToPacks(195, 10)).toBe(20);
+
+      // Zero or negative returns 0
+      expect(minStockUnitsToPacks(0, 10)).toBe(0);
+      expect(minStockUnitsToPacks(undefined, 10)).toBe(0);
+    });
   });
 });

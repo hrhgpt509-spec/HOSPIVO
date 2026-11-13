@@ -17,7 +17,7 @@ import {
   type UserRole,
 } from '../db';
 import { canSeeProfit, canSeePurchasePrice } from './roles';
-import { expiryBucket, isLowStock, parseDateOnly } from './stock';
+import { expiryBucket, isReorderNeeded, parseDateOnly } from './stock';
 import { computeUdhaarLedgers, getBillUdhaarPaise } from './udhaar';
 
 export type ReportPreset = 'today' | 'month' | 'custom';
@@ -115,7 +115,7 @@ export function computeHomeLiveCounters(params: {
   for (const med of medicines) {
     if (!med.active || med.id === undefined) continue;
     const qty = stockByMedicine.get(med.id) || 0;
-    if (isLowStock(qty, med.minStockUnits || 0)) {
+    if (isReorderNeeded(qty, med.minStockUnits || 0)) {
       lowStockCount += 1;
     }
   }
@@ -364,7 +364,7 @@ export function computeOwnerDashboardMetrics(params: {
   for (const med of medicines) {
     if (!med.active || med.id === undefined) continue;
     const qty = stockByMedicine.get(med.id) || 0;
-    if (isLowStock(qty, med.minStockUnits || 0)) {
+    if (isReorderNeeded(qty, med.minStockUnits || 0)) {
       const upp = Math.max(1, med.unitsPerPack || 1);
       lowStockMedicinesTop.push({
         medicineName: `${med.name} ${med.strength}`.trim(),

@@ -6,7 +6,7 @@ import {
   sanitizeBatchForUser,
 } from './stockDekho';
 import type { Medicine, Batch, Purchase, PurchaseLine, Supplier, DBUser } from '../db';
-import { isOutOfStock } from './stock';
+import { isOutOfStock, isLowStock, isReorderNeeded } from './stock';
 
 describe('stockDekho logic & filters', () => {
   const sampleItems = [
@@ -52,6 +52,51 @@ describe('stockDekho logic & filters', () => {
     expect(isOutOfStock(0)).toBe(true);
     expect(isOutOfStock(-5)).toBe(true);
     expect(isOutOfStock(1)).toBe(false);
+  });
+
+  it('checks isLowStock and isReorderNeeded with pack thresholds', () => {
+    // 200 packs alert = 20,000 units (100 units/pack)
+    const alertUnits = 20000;
+
+    // Below threshold (e.g. Lulinat at 196 packs = 19,600 units)
+    expect(isLowStock(19600, alertUnits)).toBe(true);
+    expect(isReorderNeeded(19600, alertUnits)).toBe(true);
+
+    // Exactly at threshold
+    expect(isLowStock(20000, alertUnits)).toBe(true);
+    expect(isReorderNeeded(20000, alertUnits)).toBe(true);
+
+    // Above threshold
+    expect(isLowStock(20001, alertUnits)).toBe(false);
+    expect(isReorderNeeded(20001, alertUnits)).toBe(false);
+
+    // 0 units (Out of Stock like Ketorg / Pantop D)
+    expect(isLowStock(0, alertUnits)).toBe(false); // Not low stock (is out of stock)
+    expect(isOutOfStock(0)).toBe(true);
+    expect(isReorderNeeded(0, alertUnits)).toBe(true); // But MUST be in reorder needed!
+
+    // Medicine with minStockUnits = 0 (no alert configured)
+    expect(isLowStock(50, 0)).toBe(false);
+    expect(isReorderNeeded(50, 0)).toBe(false);
+    expect(isReorderNeeded(0, 0)).toBe(true); // 0 stock always needs reorder
+  });
+
+  it('verifies Home reorder count matches outOfStock + lowStock counts', () => {
+    const medsWithStock = [
+      { name: 'Ketorg (Out of Stock)', stock: 0, minStock: 100 },
+      { name: 'Pantop D (Out of Stock, no alert)', stock: 0, minStock: 0 },
+      { name: 'Lulinat (Low Stock, 196 packs)', stock: 19600, minStock: 20000 },
+      { name: 'Crocin (Normal Stock)', stock: 500, minStock: 100 },
+    ];
+
+    const outCount = medsWithStock.filter((m) => isOutOfStock(m.stock)).length;
+    const lowCount = medsWithStock.filter((m) => isLowStock(m.stock, m.minStock)).length;
+    const reorderCount = medsWithStock.filter((m) => isReorderNeeded(m.stock, m.minStock)).length;
+
+    expect(outCount).toBe(2); // Ketorg + Pantop D
+    expect(lowCount).toBe(1); // Lulinat
+    expect(reorderCount).toBe(3); // Ketorg + Pantop D + Lulinat
+    expect(reorderCount).toBe(outCount + lowCount);
   });
 
   it('groups low stock by last supplier and handles "Supplier pata nahi"', () => {

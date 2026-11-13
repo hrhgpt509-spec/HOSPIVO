@@ -11,7 +11,7 @@ import {
   type BatchStockDetail,
   type SupplierLowStockGroup,
 } from '../logic/stockDekho';
-import { lowStock, outOfStock, isOutOfStock } from '../logic/stock';
+import { lowStock, outOfStock, isOutOfStock, isLowStock } from '../logic/stock';
 
 interface StockDekhoProps {
   onReturnHome: () => void;
@@ -98,9 +98,9 @@ export const StockDekho: React.FC<StockDekhoProps> = ({
       const looseUnits = currentStockUnits % upp;
 
       let status: 'normal' | 'low' | 'out' = 'normal';
-      if (outOfStockIds.has(medId) || isOutOfStock(currentStockUnits)) {
+      if (isOutOfStock(currentStockUnits)) {
         status = 'out';
-      } else if (lowStockIds.has(medId) || currentStockUnits <= (med.minStockUnits ?? 0)) {
+      } else if (isLowStock(currentStockUnits, med.minStockUnits ?? 0)) {
         status = 'low';
       }
 

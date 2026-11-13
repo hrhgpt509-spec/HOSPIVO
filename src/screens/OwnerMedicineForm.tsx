@@ -7,6 +7,8 @@ import {
   checkDuplicateMedicine,
   computeMedicineChanges,
   compressImageToDataUrl,
+  minStockUnitsToPacks,
+  alertPacksToMinUnits,
   type MedicineFormData,
   type MedicineFormErrors,
 } from '../logic/medicineForm';
@@ -139,7 +141,9 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
               barcode: med.barcode || '',
               shelf: med.shelf || '',
               scheduleType: med.scheduleType || 'none',
-              minStockUnits: med.minStockUnits ? String(med.minStockUnits) : '',
+              minStockUnits: med.minStockUnits && med.minStockUnits > 0
+                ? String(minStockUnitsToPacks(med.minStockUnits, med.unitsPerPack))
+                : '',
               packPhoto: med.packPhoto || '',
             });
             setIsShortCodeCustomized(true);
@@ -275,9 +279,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
     try {
       const mrpPaise = Math.round(parseFloat(formData.mrpRupees.trim()) * 100);
       const unitsPerPack = parseInt(formData.unitsPerPack.trim(), 10) || 1;
-      const minStockUnits = formData.minStockUnits.trim()
-        ? parseInt(formData.minStockUnits.trim(), 10)
-        : 0;
+      const minStockUnits = alertPacksToMinUnits(formData.minStockUnits, unitsPerPack);
       const gstPercent = formData.gstPercent !== null ? formData.gstPercent : 0;
 
       const formattedName = formatField('name', formData.name.trim());

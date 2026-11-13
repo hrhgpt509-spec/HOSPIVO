@@ -28,6 +28,23 @@ export interface MedicineFormErrors {
 }
 
 /**
+ * Converts stored loose units minStockUnits into packs for display in the form.
+ */
+export function minStockUnitsToPacks(minStockUnits?: number, unitsPerPack?: number): number {
+  if (!minStockUnits || minStockUnits <= 0) return 0;
+  return Math.round(minStockUnits / Math.max(1, unitsPerPack || 1));
+}
+
+/**
+ * Converts user-typed alert packs into loose units for database storage.
+ */
+export function alertPacksToMinUnits(alertPacks?: number | string, unitsPerPack?: number): number {
+  const packs = typeof alertPacks === 'string' ? parseFloat(alertPacks.trim()) : alertPacks;
+  if (!packs || isNaN(packs) || packs <= 0) return 0;
+  return Math.max(0, Math.round(packs)) * Math.max(1, unitsPerPack || 1);
+}
+
+/**
  * Validates a medicine form data against business rules.
  */
 export function validateMedicineForm(

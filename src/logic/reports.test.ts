@@ -330,5 +330,38 @@ describe('reports & owner dashboard analytics', () => {
     expect(filterAuditLogEntries(logs, { timeFilter: 'today', actionFilter: 'all', query: '' }, today)).toHaveLength(1);
     expect(filterAuditLogEntries(logs, { timeFilter: 'all', actionFilter: 'stock_correction', query: 'b1' }, today)).toHaveLength(1);
   });
+
+  it('counts 0-stock and low-stock pack threshold medicines in Home reorder counter', () => {
+    const today = '2026-11-13';
+    const testMeds: Medicine[] = [
+      // 1. Ketorg: 0 stock, minStockUnits = 100 -> Out of Stock, must count
+      { id: 1, name: 'Ketorg', minStockUnits: 100, active: true } as Medicine,
+      // 2. Pantop D: 0 stock, minStockUnits = 0 -> Out of Stock, must count
+      { id: 2, name: 'Pantop D', minStockUnits: 0, active: true } as Medicine,
+      // 3. Lulinat: 196 packs of 100 (19,600 units), alert was 200 packs (20,000 units) -> Low Stock, must count
+      { id: 3, name: 'Lulinat', unitsPerPack: 100, minStockUnits: 20000, active: true } as Medicine,
+      // 4. Paracetamol: 50 packs of 10 (500 units), alert 20 packs (200 units) -> Normal, do not count
+      { id: 4, name: 'Paracetamol', unitsPerPack: 10, minStockUnits: 200, active: true } as Medicine,
+      // 5. Inactive medicine with 0 stock -> do not count
+      { id: 5, name: 'Old Syrup', minStockUnits: 10, active: false } as Medicine,
+    ];
+
+    const testMovements: StockMovement[] = [
+      { id: 1, batchId: 10, medicineId: 3, type: 'purchase', qtyUnits: 19600, reference: 'PO-1', who: 'Owner', at: today },
+      { id: 2, batchId: 20, medicineId: 4, type: 'purchase', qtyUnits: 500, reference: 'PO-2', who: 'Owner', at: today },
+    ];
+
+    const counters = computeHomeLiveCounters({
+      bills: [],
+      billReturns: [],
+      medicines: testMeds,
+      batches: [],
+      stockMovements: testMovements,
+      today,
+    });
+
+    // Ketorg (0 stock) + Pantop D (0 stock) + Lulinat (19600 <= 20000) = 3
+    expect(counters.lowStockCount).toBe(3);
+  });
 });
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { db, type DBUser } from '../db';
 import { attemptUserLogin, getLoginLock } from '../logic/auth';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
-import { ConfirmDialog } from '../components/ConfirmDialog';
 import { triggerFeedback } from '../logic/feedback';
 import { useTranslation, tButton } from '../i18n';
 import { LanguageSwitch } from '../components/LanguageSwitch';
@@ -15,7 +14,6 @@ interface LoginProps {
   isLocked?: boolean;
   lockedUser?: DBUser | null;
   onUnlock?: () => void;
-  onResetToSetup?: () => void;
 }
 
 const AVATAR_PALETTES = [
@@ -30,7 +28,6 @@ export const Login: React.FC<LoginProps> = ({
   isLocked = false,
   lockedUser = null,
   onUnlock,
-  onResetToSetup,
 }) => {
   const { t } = useTranslation();
   const [users, setUsers] = useState<DBUser[]>([]);
@@ -42,7 +39,6 @@ export const Login: React.FC<LoginProps> = ({
   const [lockPin, setLockPin] = useState<string>('');
   const [lockError, setLockError] = useState<boolean>(false);
   const [lockCountdownSeconds, setLockCountdownSeconds] = useState<number>(0);
-  const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [currentLiveTime, setCurrentLiveTime] = useState<Date>(() => new Date());
 
   // Live timer for decorative panel clock
@@ -225,8 +221,6 @@ export const Login: React.FC<LoginProps> = ({
   const unlockBtn = tButton('common.btn_unlock');
   const clearBtn = tButton('common.btn_clear');
   const deleteBtn = tButton('common.btn_delete');
-  const haanBtn = tButton('dialogs.btn_haan');
-  const nahiBtn = tButton('dialogs.btn_nahi');
 
   if (isLocked) {
     const lockTargetLen = 4;
@@ -725,15 +719,6 @@ export const Login: React.FC<LoginProps> = ({
               </svg>
               <span>{t('login.forgot_pin_note')}</span>
             </div>
-
-            {/* DEV ONLY: remove before release */}
-            <button
-              type="button"
-              onClick={() => setShowResetConfirm(true)}
-              className="text-xs font-semibold text-red-600/80 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-            >
-              {t('login.dev_reset_btn')}
-            </button>
           </div>
 
           <div className="flex items-center gap-2.5 px-4 py-2 bg-slate-100 border border-slate-300 rounded-xl text-slate-700">
@@ -744,31 +729,6 @@ export const Login: React.FC<LoginProps> = ({
             </div>
           </div>
         </footer>
-
-        {/* DEV ONLY: remove before release */}
-        <ConfirmDialog
-          isOpen={showResetConfirm}
-          title={t('dialogs.delete_title')}
-          subtitle={t('dialogs.delete_subtitle')}
-          confirmLabel={haanBtn.main}
-          confirmSubLabel={haanBtn.sub}
-          cancelLabel={nahiBtn.main}
-          cancelSubLabel={nahiBtn.sub}
-          isDanger={true}
-          onCancel={() => setShowResetConfirm(false)}
-          onConfirm={async () => {
-            // DEV ONLY: remove before release
-            db.close();
-            await db.delete();
-            await db.open();
-            setShowResetConfirm(false);
-            if (onResetToSetup) {
-              onResetToSetup();
-            } else {
-              window.location.reload();
-            }
-          }}
-        />
 
       </main>
 

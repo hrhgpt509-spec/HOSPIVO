@@ -13,17 +13,19 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt I1 - Phase 8: Cloud-Enabled Mode, Sync Outbox & Remote Approvals - COMPLETE
+Prompt Z1 - Low Stock Pack-to-Units Fix & Launch Cleanup - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
 - Custom product types can be added but not renamed or hidden yet.
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
-- DEV ONLY: ?reset=1 query parameter in App.tsx clears the database and must be removed before release.
-- DEV ONLY: "DEV: Reset test data" button on Login screen clears database and must be removed before release.
-- DEV ONLY: "DEV: Test Ijazat PIN" test button on Home screen must be removed before release.
 
 ## Log (newest first)
+- Fixed Low Stock Alert in `OwnerMedicineForm.tsx` & `medicineForm.ts` to convert between user-entered packs and stored loose units (`minStockUnits = alertPacks * unitsPerPack`), prefilling packs on edit.
+- Added localized pack helper labels across `en.ts`, `hi.ts`, and `hinglish.ts` confirming threshold is in packs.
+- Aligned reorder alerts across `stock.ts`, `reports.ts`, and `stockDekho.ts`: Home's counter now includes all medicines needing reorder (out-of-stock + low-stock), while StockDekho's tabs accurately separate Low Stock (`> 0`) and Out of Stock (`= 0`).
+- Removed temporary DEV buttons and reset query params (`?reset=1`, `DEV: Reset test data`, and `DEV: Test Ijazat PIN`) from `App.tsx`, `Login.tsx`, and `Home.tsx`.
+- Added unit tests across `medicineForm.test.ts`, `stockDekho.test.ts`, and `reports.test.ts` (181/181 vitest tests passing), clean production build.
 - Upgraded Dexie schema to v8 with `syncOutbox` and `approvalRequests` tables; built `src/logic/cloudSync.ts` with FIFO queuing for bills, returns, purchases, stock movements, supplier returns, udhaar payments, and daily closing.
 - Built Cloud Sync & Pairing screen (`src/screens/OwnerCloudSync.tsx`, 02b) with unique Shop Sync ID, device pairing, Supabase sync engine, live outbox status, and manual sync trigger.
 - Built Remote Approval system (`src/components/ApprovalDialog.tsx`, 18/18b) supporting online/offline states with auto-polling, and Remote Approvals Inbox (`src/screens/RemoteApprovalInbox.tsx`, 43a-c) with owner PIN re-auth and immutable audit logging.
