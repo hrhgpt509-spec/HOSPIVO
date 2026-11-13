@@ -7,13 +7,13 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [~] Phase 2: medicine list, Stock Jodo, Stock Dekho, suppliers
 - [~] Phase 3: Dawai Becho, payment, bill done, old bills, returns
 - [~] Phase 4: Expiry, Udhaar, customers, referral report
-- [~] Phase 5: Din Band, Owner area, reports, audit log, settings, backup/restore
-- [ ] Phase 6: Fast Bill
+- [x] Phase 5: Din Band, Owner area, reports, audit log, settings, backup/restore
+- [~] Phase 6: Fast Bill
 - [ ] Phase 7: Shelf map, stickers
 - [ ] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt F3 - Staff Management, Settings & Verified Backup/Restore - COMPLETE
+Prompt G1 - Phase 6: Fast Bill (Rush Mode, Scanner Queue & Top-100 Wall) - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -24,6 +24,10 @@ Prompt F3 - Staff Management, Settings & Verified Backup/Restore - COMPLETE
 - DEV ONLY: "DEV: Test Ijazat PIN" test button on Home screen must be removed before release.
 
 ## Log (newest first)
+- Built `src/logic/fastBill.ts`: scan code resolver (`resolveScanCode`) for barcodes, short codes, and runner command cards (NEXT, UNDO, CANCEL), top-100 sales ranking with valid FEFO stock (`getTopSellingMedicines`), and draft creation.
+- Built `FastBill.tsx` and subcomponents matching designs 19, 19b, 20a-d, 21, and 22: PendingQueueList, ConfirmCardView, FinalReviewView, TileWallView, ScheduleHModal, OutOfStockModal, UnknownScanModal, and BatchSelectModal.
+- Added persistent auto-focused scanner input, POS keyboard shortcuts (Enter, Left Arrow, S, L, Delete, B), 1-tap Cash/UPI checkout, and full PaymentScreen integration.
+- Added 8 unit tests in `src/logic/fastBill.test.ts` (154/154 tests passing across 24 test files) and verified production build cleanly.
 - Built `src/logic/backup.ts`: exported all Dexie tables with SHA-256 integrity hash, verified backup file download, safe restore wiping/rebuilding tables without triggering delete hooks, and truthful backup status calculation.
 - Built `OwnerStaff.tsx` (35a/b) with user listing, Add/Edit staff, PIN reset with on-screen & physical keyboard support, and collision check against Owner/Approval/staff PINs.
 - Built `OwnerSettings.tsx` (40/40b) covering Shop Details, discount limit, auto-lock timeout, theme, language switcher, fullscreen toggle, PIN length migration (4 or 6 digits), Owner/Approval PIN change flows, and the 5-rule Approval Rules Matrix with locked remote approvals.

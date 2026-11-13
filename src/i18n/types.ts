@@ -1383,4 +1383,118 @@ export interface TranslationSchema {
     err_invalid_backup_file: string;
     err_checksum_mismatch: string;
   };
+  fast_bill: {
+    title: string;
+    subtitle: string;
+    scanner_connected: string;
+    scanner_port: string;
+    pending_bills: string;
+    active_count: string;
+    empty_queue_title: string;
+    empty_queue_sub: string;
+    empty_queue_hint: string;
+    ready: string;
+    delayed: string;
+    scanning: string;
+    items_count: string;
+    minutes_ago: string;
+    confirm_card: {
+      medicine_progress: string;
+      shelf_label: string;
+      batch_exp: string;
+      price_per_strip: string;
+      price_per_unit: string;
+      mrp_inclusive: string;
+      scan_matched: string;
+      scan_scanned: string;
+      how_many: string;
+      total_amount: string;
+      confirm_and_next: string;
+      press_enter: string;
+      verification_done: string;
+      verification_pct: string;
+    };
+    tile_wall: {
+      title: string;
+      subtitle: string;
+      single_tap_add: string;
+      search_placeholder: string;
+      live_bill: string;
+      live_bill_sub: string;
+      make_bill: string;
+      make_bill_sub: string;
+      clear_bill: string;
+      items_badge: string;
+      per_strip: string;
+      per_unit: string;
+      pin_tile: string;
+      unpin_tile: string;
+    };
+    final_review: {
+      title: string;
+      item_header_num: string;
+      item_header_med: string;
+      item_header_qty: string;
+      item_header_amt: string;
+      total_payable: string;
+      includes_gst: string;
+      pay_now: string;
+      pay_now_sub: string;
+      wapas: string;
+      one_tap_cash: string;
+      one_tap_upi: string;
+    };
+    schedule_h: {
+      banner_title: string;
+      banner_sub: string;
+      mandatory_badge: string;
+      patient_name: string;
+      patient_name_sub: string;
+      doctor_name: string;
+      doctor_name_sub: string;
+      rx_seen: string;
+      rx_seen_sub: string;
+      yes: string;
+      no: string;
+      next: string;
+    };
+    out_of_stock: {
+      banner_title: string;
+      zero_stock: string;
+      substitutes_callout: string;
+      generic_salt: string;
+      skip: string;
+      skip_sub: string;
+      choose: string;
+      select_sub: string;
+      available_pcs: string;
+      on_shelf: string;
+    };
+    unknown_scan: {
+      banner_title: string;
+      unmapped_title: string;
+      unmapped_count: string;
+      fix_btn: string;
+      fix_sub: string;
+      close: string;
+    };
+    shortcuts: {
+      enter_next: string;
+      left_back: string;
+      s_skip: string;
+      l_loose: string;
+      del_remove: string;
+      b_batch: string;
+    };
+    batch_modal: {
+      title: string;
+      subtitle: string;
+      batch_no: string;
+      expiry: string;
+      stock: string;
+      mrp: string;
+      select_batch: string;
+      close: string;
+    };
+  };
 }

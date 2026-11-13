@@ -14,6 +14,7 @@ import { StockJodo } from './StockJodo';
 import { StockDekho } from './StockDekho';
 import { SuppliersList } from './suppliers/SuppliersList';
 import { DawaiBecho } from './DawaiBecho';
+import { FastBill } from './FastBill';
 import { Expiry } from './Expiry';
 import { Udhaar } from './Udhaar';
 import { ReferralReport } from './ReferralReport';
@@ -228,6 +229,18 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
   if (activePage === 'dawai_becho') {
     return (
       <DawaiBecho
+        onReturnHome={handleReturnHome}
+        currentUser={currentUser as any}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
+    );
+  }
+
+  // Phase 6 Fast Bill (Rush Mode)
+  if (activePage === 'fast_bill') {
+    return (
+      <FastBill
         onReturnHome={handleReturnHome}
         currentUser={currentUser as any}
         theme={theme}
