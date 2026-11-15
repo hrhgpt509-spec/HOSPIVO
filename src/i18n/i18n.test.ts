@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import 'fake-indexeddb/auto';
 import fs from 'node:fs';
 import path from 'node:path';

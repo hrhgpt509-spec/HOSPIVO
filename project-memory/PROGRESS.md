@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt B5 - Auto-Resolve /api/sb URL and Add Local Dev Proxy - COMPLETE
+Fix Vercel Build TS2591 Node Types in i18n Test - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,9 @@ Prompt B5 - Auto-Resolve /api/sb URL and Add Local Dev Proxy - COMPLETE
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Excluded test files (`src/**/*.test.ts`, `src/**/*.test.tsx`) from browser app compilation in [tsconfig.app.json](file:///d:/HOSPIVO/tsconfig.app.json) so `tsc -b` only builds application code on Vercel.
+- Added `/// <reference types="node" />` to [i18n.test.ts](file:///d:/HOSPIVO/src/i18n/i18n.test.ts) to resolve Node filesystem types during standalone test runs.
+- Verified all 205 vitest tests and production build (`tsc -b && vite build`) compile with zero errors.
 - Auto-resolved relative Supabase URL paths (e.g. `/api/sb`) to full active origin URLs in [supabase.ts](file:///d:/HOSPIVO/src/lib/supabase.ts).
 - Added `/api/sb` dev proxy in [vite.config.ts](file:///d:/HOSPIVO/vite.config.ts) and created [vercel.json](file:///d:/HOSPIVO/vercel.json) rewrites to proxy Supabase without CORS issues.
 - Verified all 205 unit tests and production build (`tsc -b && vite build`) compile with zero errors.
