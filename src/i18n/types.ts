@@ -1717,6 +1717,8 @@ export interface TranslationSchema {
     password_placeholder: string;
     confirm_password_label: string;
     confirm_password_placeholder: string;
+    show_password: string;
+    hide_password: string;
     btn_signup: ButtonLabel;
     btn_signin: ButtonLabel;
     btn_continue_offline: ButtonLabel;

@@ -18,6 +18,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { triggerFeedback } from '../logic/feedback';
 import { FullscreenButton } from '../components/FullscreenButton';
 import { useShop } from '../logic/useShop';
+import { enqueueSyncItem } from '../logic/cloudSync';
 import {
   BUILT_IN_PRODUCT_TYPES,
   formatProductType,
@@ -313,6 +314,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
 
         const changes = computeMedicineChanges(originalMedicine, updatedFields);
         await db.medicines.update(medicineId, updatedFields);
+        enqueueSyncItem('medicine', medicineId, { id: medicineId, ...originalMedicine, ...updatedFields }).catch(() => {});
 
         // Rule 9: Audit log entry for medicine_edited
         await db.auditLog.add({
@@ -347,6 +349,9 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
         };
 
         const newId = await db.medicines.add(newMedicine);
+        if (newId) {
+          enqueueSyncItem('medicine', Number(newId), { id: Number(newId), ...newMedicine }).catch(() => {});
+        }
 
         // Rule 9: Audit log entry for medicine_created
         await db.auditLog.add({

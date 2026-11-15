@@ -13,6 +13,7 @@ export interface Shop {
   shopSyncId?: string;
   cloudShopUuid?: string;
   ownerEmail?: string;
+  lastPulledSeq?: number;
 }
 
 export type UserRole = 'owner' | 'cashier' | 'runner';
@@ -327,7 +328,12 @@ export type SyncEntityType =
   | 'udhaar_payment'
   | 'daily_closing'
   | 'audit'
-  | 'approval_request';
+  | 'approval_request'
+  | 'medicine'
+  | 'batch'
+  | 'supplier'
+  | 'customer'
+  | 'staff';
 
 export type SyncStatus = 'pending' | 'synced' | 'failed';
 

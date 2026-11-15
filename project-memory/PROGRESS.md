@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt B1 - Backend Stage 2: Supabase Auth, Env Config & Multi-Tenant Shop Provisioning - COMPLETE
+Prompt B3 - Fix Email Lowercase Input & Password Label in Cloud Account Auth - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,14 @@ Prompt B1 - Backend Stage 2: Supabase Auth, Env Config & Multi-Tenant Shop Provi
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Configured email input in [CloudAccountAuth.tsx](file:///d:/HOSPIVO/src/screens/CloudAccountAuth.tsx) with `autoCapitalize="none"`, `inputMode="email"`, `normal-case`, and lowercase normalization.
+- Replaced "Show PIN" / "Hide PIN" with localized "Show Password" / "Hide Password" (`cloud_auth.show_password` / `hide_password`) in [en.ts](file:///d:/HOSPIVO/src/i18n/en.ts), [hi.ts](file:///d:/HOSPIVO/src/i18n/hi.ts), [hinglish.ts](file:///d:/HOSPIVO/src/i18n/hinglish.ts), and [types.ts](file:///d:/HOSPIVO/src/i18n/types.ts).
+- Verified with full test suite passing (198 tests in 27 files) and zero-error production build.
+- Upgraded `src/logic/cloudSync.ts` with two-way delta sync against `hospivo_sync_events`, sequence tracking with `lastPulledSeq`, and idempotent application to local Dexie tables.
+- Expanded `SyncEntityType` with catalog and staff entities (`medicine`, `batch`, `supplier`, `customer`, `staff`), queuing them on create/update for automatic catalog distribution.
+- Implemented multi-device shop hydration and setup bypass in `src/logic/cloudAuth.ts` and `src/screens/Setup.tsx`, routing sign-ins on second devices directly to Login/Home.
+- Added live remote approvals sync (`hospivo_approval_requests`) and `uploadShopPhoto` helper uploading photos to Supabase storage bucket `hospivo-photos`.
+- All 198 unit tests passing across 27 test suites with a clean production build (`tsc -b && vite build`).
 - Configured Supabase client in `src/lib/supabase.ts` reading `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` with safe offline fallback helper `isBackendConfigured()`.
 - Built multi-tenant auth & shop provisioning logic in `src/logic/cloudAuth.ts` supporting `signUpOwner`, `signInOwner`, `signOutOwner`, and `provisionCloudShop` (persisting `cloudShopUuid`, `ownerEmail`, and `shopSyncId` in Dexie).
 - Created mobile-friendly Cloud Account Sign-Up/Sign-In screen `src/screens/CloudAccountAuth.tsx` with offline continuation support.

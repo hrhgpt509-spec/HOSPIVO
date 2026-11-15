@@ -1698,6 +1698,8 @@ export const en: TranslationSchema = {
     password_placeholder: 'At least 6 characters',
     confirm_password_label: 'Confirm Password',
     confirm_password_placeholder: 'Re-enter password',
+    show_password: 'Show Password',
+    hide_password: 'Hide Password',
     btn_signup: { main: 'Create Account', sub: 'Register Cloud Shop' },
     btn_signin: { main: 'Sign In', sub: 'Connect Existing Shop' },
     btn_continue_offline: { main: 'Continue Offline', sub: 'Local-only mode' },

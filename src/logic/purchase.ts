@@ -264,17 +264,17 @@ export async function savePurchase(
           batchId = existingBatch.id;
         } else {
           newBatchesCount++;
-          batchId = Number(
-            await db.batches.add({
-              medicineId: line.medicineId,
-              batchNo: cleanBatchNo,
-              expiry: line.expiryDate,
-              purchaseRatePaise: line.purchaseRatePaise,
-              mrpPaise: line.mrpPaise,
-              shelf: line.shelf || '',
-              createdAt: new Date().toISOString(),
-            })
-          );
+          const newBatchData = {
+            medicineId: line.medicineId,
+            batchNo: cleanBatchNo,
+            expiry: line.expiryDate,
+            purchaseRatePaise: line.purchaseRatePaise,
+            mrpPaise: line.mrpPaise,
+            shelf: line.shelf || '',
+            createdAt: new Date().toISOString(),
+          };
+          batchId = Number(await db.batches.add(newBatchData));
+          enqueueSyncItem('batch', batchId, { id: batchId, ...newBatchData }).catch(() => {});
         }
 
         // 4. One stockMovements row of type "purchase" per line:

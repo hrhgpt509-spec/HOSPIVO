@@ -1698,6 +1698,8 @@ export const hinglish: TranslationSchema = {
     password_placeholder: 'Kam se kam 6 akshar',
     confirm_password_label: 'Password Dobara Dalein',
     confirm_password_placeholder: 'Re-enter password',
+    show_password: 'Password Dekhein',
+    hide_password: 'Password Chhupayein',
     btn_signup: { main: 'Account Banayein', sub: 'Register Cloud Shop' },
     btn_signin: { main: 'Login Karein', sub: 'Connect Existing Shop' },
     btn_continue_offline: { main: 'Offline Jari Rakhein', sub: 'Local-only mode' },

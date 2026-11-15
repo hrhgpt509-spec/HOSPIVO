@@ -1698,6 +1698,8 @@ export const hi: TranslationSchema = {
     password_placeholder: 'कम से कम 6 अक्षर',
     confirm_password_label: 'पासवर्ड दोबारा डालें',
     confirm_password_placeholder: 'वही पासवर्ड फिर से लिखें',
+    show_password: 'पासवर्ड देखें',
+    hide_password: 'पासवर्ड छिपाएं',
     btn_signup: { main: 'खाता बनाएं', sub: 'क्लाउड रजिस्टर करें' },
     btn_signin: { main: 'लॉगिन करें', sub: 'दुकान कनेक्ट करें' },
     btn_continue_offline: { main: 'ऑफ़लाइन जारी रखें', sub: 'लोकल मोड' },

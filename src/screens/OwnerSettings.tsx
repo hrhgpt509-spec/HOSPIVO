@@ -19,7 +19,7 @@ import { addAudit } from '../db/audit';
 import { triggerFeedback } from '../logic/feedback';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { OwnerCloudSync } from './OwnerCloudSync';
-import { getCloudConfig, type CloudConfig } from '../logic/cloudSync';
+import { getCloudConfig, enqueueSyncItem, type CloudConfig } from '../logic/cloudSync';
 
 interface OwnerSettingsProps {
   currentUser?: DBUser | null;
@@ -313,6 +313,11 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
         pinHash: hash,
         pinSalt: salt,
       });
+      enqueueSyncItem('staff', ownerUser.id, {
+        ...ownerUser,
+        pinHash: hash,
+        pinSalt: salt,
+      }).catch(() => {});
 
       await addAudit(currentUser?.name || 'owner', 'owner_pin_changed', 'auth', 'Owner login PIN changed successfully');
       triggerFeedback('success', t('owner_settings.toast_pin_changed'));

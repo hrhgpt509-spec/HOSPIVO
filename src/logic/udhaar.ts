@@ -675,6 +675,14 @@ export async function saveCustomerProfile(input: SaveCustomerProfileInput): Prom
         creditLimitPaise,
         updatedAt: now,
       });
+      enqueueSyncItem('customer', input.id, {
+        ...existing,
+        name,
+        phone,
+        address,
+        creditLimitPaise,
+        updatedAt: now,
+      }).catch(() => {});
       await addAudit(
         actor,
         'customer_updated',
@@ -700,6 +708,7 @@ export async function saveCustomerProfile(input: SaveCustomerProfileInput): Prom
       updatedAt: now,
     };
     const newId = (await db.customers.add(newCustomer)) as number;
+    enqueueSyncItem('customer', newId, { ...newCustomer, id: newId }).catch(() => {});
     await addAudit(
       actor,
       'customer_created',

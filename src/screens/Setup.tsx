@@ -17,7 +17,7 @@ import { LanguageSwitch } from '../components/LanguageSwitch';
 import { Icon } from '../components/Icon';
 import { OwnerMedicineImport } from './OwnerMedicineImport';
 import { CloudAccountAuth } from './CloudAccountAuth';
-import { generateShopSyncId } from '../logic/cloudSync';
+import { generateShopSyncId, enqueueSyncItem } from '../logic/cloudSync';
 import { provisionCloudShop } from '../logic/cloudAuth';
 
 interface SetupProps {
@@ -349,30 +349,34 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
 
     // 2. Save Owner user with hashed PIN (never plain text)
     const { hash: ownerHash, salt: ownerSalt } = await hashPin(ownerPin1);
-    await db.users.add({
+    const ownerUser = {
       id: 'owner',
       name: formattedOwnerName,
-      role: 'owner',
+      role: 'owner' as const,
       pinHash: ownerHash,
       pinSalt: ownerSalt,
       pinLength: ownerPin1.length,
       active: true,
       createdAt: new Date().toISOString(),
-    });
+    };
+    await db.users.add(ownerUser);
+    enqueueSyncItem('staff', 'owner', ownerUser).catch(() => {});
     await addAudit('Setup', 'owner_created', formattedOwnerName, 'Owner user registered with hashed PIN');
 
     // 3. Save any added staff members
     for (const staff of staffList) {
-      await db.users.add({
+      const staffUser = {
         id: staff.id,
         name: staff.name,
-        role: 'cashier',
+        role: 'cashier' as const,
         pinHash: staff.pinHash,
         pinSalt: staff.pinSalt,
         pinLength: staff.plainPin.length,
         active: true,
         createdAt: new Date().toISOString(),
-      });
+      };
+      await db.users.add(staffUser);
+      enqueueSyncItem('staff', staff.id, staffUser).catch(() => {});
       await addAudit('Setup', 'staff_created', staff.name, 'Staff member added with hashed PIN');
     }
 
@@ -481,13 +485,21 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
         initialTab={authInitialTab}
         shopName={shopName}
         shopSyncId={shopSyncId}
-        onSuccess={(session) => {
+        onSuccess={async (session) => {
           setOwnerEmail(session.email);
           if (session.shopName) setShopName(session.shopName);
           if (session.shopSyncId) setShopSyncId(session.shopSyncId);
           if (session.cloudShopUuid) setCloudShopUuid(session.cloudShopUuid);
           setMode('cloud');
           setIsAuthModalOpen(false);
+
+          // Multi-device restore: if existing shop was hydrated, skip setup and go to Login
+          if (session.cloudShopUuid) {
+            const count = await db.shop.count();
+            if (count > 0) {
+              onComplete();
+            }
+          }
         }}
         onCancel={() => {
           setIsAuthModalOpen(false);

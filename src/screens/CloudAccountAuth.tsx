@@ -52,7 +52,7 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
     e.preventDefault();
     setError('');
 
-    const cleanEmail = email.trim();
+    const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
       setError(t('cloud_auth.err_email_invalid'));
       return;
@@ -235,11 +235,15 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                   <Icon name="mail" className="text-[20px]" />
                 </div>
                 <input
-                  type="email"
                   {...textFieldProps('code', email, setEmail)}
+                  type="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  inputMode="email"
                   placeholder={t('cloud_auth.email_placeholder')}
                   required
-                  className="w-full h-14 pl-12 pr-4 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface text-base focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                  className="w-full h-14 pl-12 pr-4 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface normal-case text-base focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                 />
               </div>
             </div>
@@ -255,7 +259,7 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                   onClick={() => setShowPassword((v) => !v)}
                   className="text-xs text-primary font-bold hover:underline cursor-pointer"
                 >
-                  {showPassword ? t('setup.step3_hide_pin') : t('setup.step3_show_pin')}
+                  {showPassword ? t('cloud_auth.hide_password') : t('cloud_auth.show_password')}
                 </button>
               </div>
               <div className="relative flex items-center">

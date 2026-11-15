@@ -1,7 +1,7 @@
 import { supabase, isBackendConfigured } from '../lib/supabase';
 import { db } from '../db';
 import { addAudit } from '../db/audit';
-import { generateShopSyncId } from './cloudSync';
+import { generateShopSyncId, runSyncCycle } from './cloudSync';
 
 export interface CloudSessionInfo {
   user: { id: string; email?: string } | null;
@@ -120,11 +120,33 @@ export async function signInOwner(
       const localShops = await db.shop.toArray();
       if (localShops.length > 0 && localShops[0].id) {
         await db.shop.update(localShops[0].id, {
+          name: existingShop.name || localShops[0].name,
           cloudShopUuid: existingShop.id,
           shopSyncId: existingShop.syncId,
           ownerEmail: cleanEmail,
           mode: 'cloud',
         });
+      } else {
+        await db.shop.add({
+          name: existingShop.name,
+          ownerName: 'Owner',
+          address: '',
+          phone: '',
+          gstNo: '',
+          drugLicenceNos: '',
+          mode: 'cloud',
+          cloudShopUuid: existingShop.id,
+          shopSyncId: existingShop.syncId,
+          ownerEmail: cleanEmail,
+          lastPulledSeq: 0,
+        });
+      }
+
+      // Auto-trigger sync cycle to hydrate remote catalog & staff onto this device
+      try {
+        await runSyncCycle({ force: true });
+      } catch (syncErr) {
+        console.warn('Initial shop hydration warning:', syncErr);
       }
     }
   } catch (lookupErr) {

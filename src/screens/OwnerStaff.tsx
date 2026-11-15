@@ -12,6 +12,7 @@ import { validateStaffPin } from '../logic/approvals';
 import { addAudit } from '../db/audit';
 import { triggerFeedback } from '../logic/feedback';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
+import { enqueueSyncItem } from '../logic/cloudSync';
 
 interface OwnerStaffProps {
   currentUser?: DBUser | null;
@@ -209,6 +210,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
       };
 
       await db.users.add(newStaff);
+      enqueueSyncItem('staff', newStaffId, newStaff).catch(() => {});
       await addAudit(
         currentUser?.name || 'owner',
         'staff_created',
@@ -222,6 +224,14 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
         name: cleanName,
         active: staffActive,
       });
+      const existingUser = users.find((s) => s.id === editingUserId);
+      if (existingUser) {
+        enqueueSyncItem('staff', editingUserId, {
+          ...existingUser,
+          name: cleanName,
+          active: staffActive,
+        }).catch(() => {});
+      }
       await addAudit(
         currentUser?.name || 'owner',
         'staff_updated',
@@ -239,6 +249,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
     if (user.role === 'owner') return;
     const newActive = !user.active;
     await db.users.update(user.id, { active: newActive });
+    enqueueSyncItem('staff', user.id, { ...user, active: newActive }).catch(() => {});
     await addAudit(
       currentUser?.name || 'owner',
       'staff_updated',
@@ -283,6 +294,12 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
       pinSalt: salt,
       pinLength,
     });
+    enqueueSyncItem('staff', pinTargetUser.id, {
+      ...pinTargetUser,
+      pinHash: hash,
+      pinSalt: salt,
+      pinLength,
+    }).catch(() => {});
 
     await addAudit(
       currentUser?.name || 'owner',
@@ -301,6 +318,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
     if (!userToRemove || userToRemove.role === 'owner') return;
 
     await db.users.update(userToRemove.id, { active: false });
+    enqueueSyncItem('staff', userToRemove.id, { ...userToRemove, active: false }).catch(() => {});
     await addAudit(
       currentUser?.name || 'owner',
       'staff_updated',

@@ -4,6 +4,7 @@ import { capitalizeWords, formatField } from './format';
 import { rupeesToPaise } from './money';
 import { shortCodeFor } from './stock';
 import { BUILT_IN_PRODUCT_TYPES, normalizeTypeName } from './productTypes';
+import { enqueueSyncItem } from './cloudSync';
 
 export interface ParsedMedicineRow {
   rowIndex: number;
@@ -411,19 +412,21 @@ export async function saveImportedMedicines(
 
         if (row.status === 'duplicate' && row.matchedMedicineId) {
           // Update existing medicine
-          await db.medicines.update(row.matchedMedicineId, {
+          const updatedMed = {
             mrpPaise: row.mrpPaise,
             unitsPerPack: row.unitsPerPack,
             shelf: row.shelf || undefined,
             minStockUnits: row.minStockUnits || undefined,
-          });
+          };
+          await db.medicines.update(row.matchedMedicineId, updatedMed);
+          enqueueSyncItem('medicine', row.matchedMedicineId, { id: row.matchedMedicineId, ...updatedMed }).catch(() => {});
           updatedCount++;
         } else {
           // Add new medicine with unique shortCode
           const shortCode = await shortCodeFor(row.name, usedShortCodes);
           usedShortCodes.push(shortCode);
 
-          await db.medicines.add({
+          const newMed = {
             name: row.name,
             strength: row.strength,
             form: row.form,
@@ -440,7 +443,11 @@ export async function saveImportedMedicines(
             minStockUnits: row.minStockUnits,
             active: true,
             createdAt: new Date().toISOString(),
-          });
+          };
+          const newId = await db.medicines.add(newMed);
+          if (newId) {
+            enqueueSyncItem('medicine', Number(newId), { id: Number(newId), ...newMed }).catch(() => {});
+          }
           newCount++;
         }
       }

@@ -83,19 +83,37 @@ describe('cloudAuth unit tests', () => {
       error: null,
     });
 
-    // Mock supabase.from('shops').select(...).eq(...).maybeSingle()
-    const mockMaybeSingle = vi.fn().mockResolvedValueOnce({
-      data: {
-        id: 'shop-uuid-789',
-        shop_name: 'Existing Cloud Meds',
-        shop_sync_id: 'HOSP-SYNC-9999',
-      },
-      error: null,
+    // Mock supabase.from with table dispatch
+    const mockFrom = vi.fn().mockImplementation((table: string) => {
+      if (table === 'shops') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'shop-uuid-789',
+                  shop_name: 'Existing Cloud Meds',
+                  shop_sync_id: 'HOSP-SYNC-9999',
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            gt: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }),
+        }),
+      };
     });
-
-    const mockEq = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
-    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-    vi.spyOn(supabase, 'from').mockReturnValue({ select: mockSelect } as any);
+    vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
 
     // If backend was not configured in env, temporarily mock isBackendConfigured
     const res = await signInOwner('existing@test.com', 'password123');
@@ -113,6 +131,64 @@ describe('cloudAuth unit tests', () => {
       const shops = await db.shop.toArray();
       expect(shops[0].cloudShopUuid).toBe('shop-uuid-789');
       expect(shops[0].mode).toBe('cloud');
+    }
+  });
+
+  it('hydrates empty local db.shop on a second device when signing into an existing shop', async () => {
+    // Empty local shop table (simulating fresh second device)
+    await db.shop.clear();
+    expect(await db.shop.count()).toBe(0);
+
+    vi.spyOn(supabase.auth, 'signInWithPassword').mockResolvedValueOnce({
+      data: {
+        user: { id: 'usr-999', email: 'owner@remote.com' } as any,
+        session: {} as any,
+      },
+      error: null,
+    });
+
+    const mockFromMulti = vi.fn().mockImplementation((table: string) => {
+      if (table === 'shops') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'shop-uuid-multi',
+                  shop_name: 'Remote Branch Pharmacy',
+                  shop_sync_id: 'HOSP-REMO-7777',
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            gt: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }),
+        }),
+      };
+    });
+    vi.spyOn(supabase, 'from').mockImplementation(mockFromMulti as any);
+
+    const res = await signInOwner('owner@remote.com', 'password123');
+    if (res.error !== 'Backend is not configured') {
+      const shopCount = await db.shop.count();
+      expect(shopCount).toBe(1);
+
+      const shops = await db.shop.toArray();
+      const restoredShop = shops[0];
+      expect(restoredShop?.name).toBe('Remote Branch Pharmacy');
+      expect(restoredShop?.cloudShopUuid).toBe('shop-uuid-multi');
+      expect(restoredShop?.shopSyncId).toBe('HOSP-REMO-7777');
+      expect(restoredShop?.mode).toBe('cloud');
     }
   });
 

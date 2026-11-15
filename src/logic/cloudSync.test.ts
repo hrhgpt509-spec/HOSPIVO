@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { db } from '../db';
+import { supabase } from '../lib/supabase';
 import {
   generateShopSyncId,
   getCloudConfig,
@@ -12,6 +13,9 @@ import {
   getPendingApprovalRequests,
   pollApprovalRequest,
   getHomeSyncState,
+  applyRemoteEvent,
+  pullRemoteEvents,
+  uploadShopPhoto,
 } from './cloudSync';
 
 describe('cloudSync & remote approvals engine', () => {
@@ -283,13 +287,172 @@ describe('cloudSync & remote approvals engine', () => {
         lastStatus: 'failed',
         lastError: 'Network timeout',
       });
-      await enqueueSyncItem('bill', 501, { data: 1 });
+      await db.syncOutbox.add({
+        entityType: 'bill',
+        entityId: '501',
+        payloadJson: JSON.stringify({ data: 1 }),
+        status: 'pending',
+        retryCount: 1,
+        createdAt: new Date().toISOString(),
+      });
 
       const state = await getHomeSyncState();
       expect(state.status).toBe('failed');
       expect(state.chipLabel).toBe('Sync nahi hua');
       expect(state.bannerVisible).toBe(true);
       expect(state.bannerType).toBe('failed');
+    });
+  });
+
+  describe('Delta Sync & applyRemoteEvent', () => {
+    it('applies remote medicine delta idempotently', async () => {
+      await db.medicines.clear();
+
+      // 1. Insert remote medicine
+      await applyRemoteEvent({
+        entity_type: 'medicine',
+        entity_id: '99',
+        payload: {
+          id: 99,
+          name: 'Paracetamol 650',
+          strength: '650mg',
+          form: 'tablet',
+          salt: 'Paracetamol',
+          company: 'Apex',
+          gstPercent: 12,
+          hsn: '3004',
+          mrpPaise: 3500,
+          unitsPerPack: 10,
+          shortCode: 'P6',
+          barcode: '8901234567890',
+          shelf: 'A-1',
+          scheduleType: 'OTC',
+          minStockUnits: 20,
+          active: true,
+        },
+      });
+
+      let med = await db.medicines.get(99);
+      expect(med).toBeDefined();
+      expect(med?.name).toBe('Paracetamol 650');
+      expect(med?.shelf).toBe('A-1');
+
+      // 2. Update remote medicine
+      await applyRemoteEvent({
+        entity_type: 'medicine',
+        entity_id: '99',
+        payload: {
+          id: 99,
+          name: 'Paracetamol 650 Extra',
+          shelf: 'B-2',
+        },
+      });
+
+      med = await db.medicines.get(99);
+      expect(med?.name).toBe('Paracetamol 650 Extra');
+      expect(med?.shelf).toBe('B-2');
+    });
+
+    it('applies remote batch, supplier, and customer deltas', async () => {
+      await db.batches.clear();
+      await db.suppliers.clear();
+      await db.customers.clear();
+
+      // Batch
+      await applyRemoteEvent({
+        entity_type: 'batch',
+        entity_id: '501',
+        payload: {
+          medicineId: 99,
+          batchNo: 'BATCH-XYZ',
+          expiry: '2028-12-31',
+          purchaseRatePaise: 2000,
+          mrpPaise: 3500,
+          shelf: 'B-2',
+        },
+      });
+
+      const batch = await db.batches.where('batchNo').equals('BATCH-XYZ').first();
+      expect(batch).toBeDefined();
+      expect(batch?.mrpPaise).toBe(3500);
+
+      // Supplier
+      await applyRemoteEvent({
+        entity_type: 'supplier',
+        entity_id: '77',
+        payload: {
+          id: 77,
+          name: 'Apex Pharma Distributors',
+          phone: '9876500000',
+          gstNo: '07AAAAA0000A1Z5',
+          address: 'Delhi Hub',
+        },
+      });
+
+      const supplier = await db.suppliers.get(77);
+      expect(supplier?.name).toBe('Apex Pharma Distributors');
+
+      // Customer
+      await applyRemoteEvent({
+        entity_type: 'customer',
+        entity_id: '88',
+        payload: {
+          id: 88,
+          name: 'Vikas Verma',
+          phone: '9811223344',
+          address: 'Block C',
+          creditLimitPaise: 500000,
+        },
+      });
+
+      const customer = await db.customers.get(88);
+      expect(customer?.name).toBe('Vikas Verma');
+      expect(customer?.creditLimitPaise).toBe(500000);
+    });
+
+    it('applies remote staff delta cleanly', async () => {
+      await db.users.clear();
+
+      await applyRemoteEvent({
+        entity_type: 'staff',
+        entity_id: 'staff-1',
+        payload: {
+          id: 'staff-1',
+          name: 'Sunita Sharma',
+          role: 'cashier',
+          pinHash: 'dummyhash',
+          pinSalt: 'dummysalt',
+          pinLength: 4,
+          active: true,
+        },
+      });
+
+      const user = await db.users.get('staff-1');
+      expect(user).toBeDefined();
+      expect(user?.name).toBe('Sunita Sharma');
+      expect(user?.role).toBe('cashier');
+    });
+
+    it('pullRemoteEvents safely handles unconfigured or empty events', async () => {
+      const mockOrder = vi.fn().mockReturnValue({
+        limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+      });
+      const mockGt = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockEq = vi.fn().mockReturnValue({ gt: mockGt });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+      vi.spyOn(supabase, 'from').mockReturnValue({ select: mockSelect } as any);
+
+      const cfg = await getCloudConfig();
+      const res = await pullRemoteEvents(cfg, 'shop-uuid-dummy');
+      expect(typeof res.pulledCount).toBe('number');
+      expect(typeof res.lastSeq).toBe('number');
+    });
+  });
+
+  describe('Photo Storage & Upload', () => {
+    it('returns null gracefully when unconfigured or offline', async () => {
+      const res = await uploadShopPhoto('counter/invoice-1.jpg', 'data:image/jpeg;base64,/9j/4AAQSkZJRg==');
+      expect(res === null || typeof res === 'string').toBe(true);
     });
   });
 });

@@ -1,5 +1,6 @@
 import { db, type Supplier, type Purchase, type PurchaseLine, type Medicine } from '../db';
 import { addAudit } from '../db/audit';
+import { enqueueSyncItem } from './cloudSync';
 import { canSeePurchasePrice } from './roles';
 import { formatField } from './format';
 
@@ -247,12 +248,14 @@ export async function saveSupplier(
   const formattedAddress = formatField('free', data.address || '');
 
   if (data.id) {
-    await db.suppliers.update(data.id, {
+    const updated = {
       name: formattedName,
       phone: formattedPhone,
       gstNo: formattedGst,
       address: formattedAddress,
-    });
+    };
+    await db.suppliers.update(data.id, updated);
+    enqueueSyncItem('supplier', data.id, { id: data.id, ...updated }).catch(() => {});
 
     await addAudit(
       who || 'User',
@@ -264,13 +267,17 @@ export async function saveSupplier(
     return data.id;
   }
 
-  const newId = await db.suppliers.add({
+  const newSupplier = {
     name: formattedName,
     phone: formattedPhone,
     gstNo: formattedGst,
     address: formattedAddress,
     createdAt: new Date().toISOString(),
-  });
+  };
+  const newId = await db.suppliers.add(newSupplier);
+  if (newId) {
+    enqueueSyncItem('supplier', Number(newId), { id: Number(newId), ...newSupplier }).catch(() => {});
+  }
 
   await addAudit(
     who || 'User',

@@ -1,5 +1,6 @@
 import { db, type Medicine, type Batch, type StockMovement, type DBUser } from '../db';
 import { addAudit } from '../db/audit';
+import { enqueueSyncItem } from './cloudSync';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -333,12 +334,14 @@ export async function updateMedicineShelf(
     await db.medicines.update(medicineId, {
       shelf: normalizedShelf,
     });
+    enqueueSyncItem('medicine', medicineId, { ...medicine, shelf: normalizedShelf }).catch(() => {});
 
     // 2. Also update batches for this medicine
     const batches = await db.batches.where('medicineId').equals(medicineId).toArray();
     for (const b of batches) {
       if (b.id) {
         await db.batches.update(b.id, { shelf: normalizedShelf });
+        enqueueSyncItem('batch', b.id, { ...b, shelf: normalizedShelf }).catch(() => {});
       }
     }
 
