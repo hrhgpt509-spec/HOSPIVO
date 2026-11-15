@@ -1,7 +1,12 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const rawUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+const rawEnvUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
 const rawKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+
+// Auto-resolve relative paths (e.g. /api/sb) to full domain URL so @supabase/supabase-js always gets an absolute http(s) URL
+const rawUrl = rawEnvUrl.startsWith('/')
+  ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}${rawEnvUrl}`
+  : rawEnvUrl;
 
 /**
  * Returns true if real Supabase backend URL and Anon Key are configured via environment variables.

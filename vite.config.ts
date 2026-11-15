@@ -2,6 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import fs from 'node:fs'
+import path from 'node:path'
+
+// Ensure temporary files generated during build stay inside workspace
+const tmpDir = path.resolve('node_modules/.tmp')
+if (!fs.existsSync(tmpDir)) {
+  fs.mkdirSync(tmpDir, { recursive: true })
+}
+process.env.TEMP = tmpDir
+process.env.TMP = tmpDir
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -10,6 +20,10 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+      },
       manifest: {
         name: 'Hospivo',
         short_name: 'Hospivo',
@@ -24,5 +38,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
+    proxy: {
+      '/api/sb': {
+        target: 'https://hospivo-git-master-hrhgpt.vercel.app',
+        changeOrigin: true,
+      },
+    },
   },
 })

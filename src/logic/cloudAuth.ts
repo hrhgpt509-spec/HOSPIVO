@@ -79,7 +79,17 @@ export async function signInOwner(
   await db.settings.put({ key: 'owner_email', value: cleanEmail });
   await db.settings.put({ key: 'cloud_enabled', value: true });
 
-  // Query Supabase for existing shops owned by this user
+  const shopResult = await hydrateOrFindExistingShop(user, cleanEmail);
+  return { user, shop: shopResult.shop, error: null };
+}
+
+/**
+ * Checks if the user already has an existing shop; if so, hydrates local Dexie and runs syncCycle.
+ */
+async function hydrateOrFindExistingShop(
+  user: any,
+  cleanEmail: string
+): Promise<{ shop: ExistingShopInfo | null; isNewShop: boolean }> {
   let existingShop: ExistingShopInfo | null = null;
   try {
     const { data: shopsData } = await supabase
@@ -148,12 +158,174 @@ export async function signInOwner(
       } catch (syncErr) {
         console.warn('Initial shop hydration warning:', syncErr);
       }
+
+      return { shop: existingShop, isNewShop: false };
     }
   } catch (lookupErr) {
     console.warn('Error checking existing shops:', lookupErr);
   }
 
-  return { user, shop: existingShop, error: null };
+  return { shop: null, isNewShop: true };
+}
+
+/**
+ * Sends a 6-digit OTP code to the given email address.
+ * Does NOT pass emailRedirectTo so Supabase delivers the 6-digit OTP numeric code.
+ */
+export async function sendEmailOtp(
+  email: string
+): Promise<{ error: string | null }> {
+  if (!isBackendConfigured()) {
+    return { error: 'Backend is not configured' };
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const { error } = await supabase.auth.signInWithOtp({
+    email: cleanEmail,
+    options: {
+      shouldCreateUser: true,
+    },
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  await db.settings.put({ key: 'owner_email', value: cleanEmail });
+  await db.settings.put({ key: 'cloud_enabled', value: true });
+
+  return { error: null };
+}
+
+/**
+ * Verifies a 6-digit Email OTP and checks for an existing shop on Supabase.
+ * Hydrates local Dexie and runs sync cycle if found, or flags isNewShop: true.
+ */
+export async function verifyEmailOtp(
+  email: string,
+  token: string
+): Promise<{
+  user: any;
+  shop: ExistingShopInfo | null;
+  isNewShop: boolean;
+  error: string | null;
+}> {
+  if (!isBackendConfigured()) {
+    return { user: null, shop: null, isNewShop: false, error: 'Backend is not configured' };
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanToken = token.trim();
+
+  if (!cleanToken || cleanToken.length !== 6) {
+    return { user: null, shop: null, isNewShop: false, error: 'Please enter a valid 6-digit OTP' };
+  }
+
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: cleanEmail,
+      token: cleanToken,
+      type: 'email',
+    });
+
+    if (error) {
+      return { user: null, shop: null, isNewShop: false, error: error.message };
+    }
+
+    const user = data?.user || (await supabase.auth.getUser()).data.user;
+    if (!user) {
+      return { user: null, shop: null, isNewShop: false, error: 'User session not found' };
+    }
+
+    await db.settings.put({ key: 'owner_email', value: cleanEmail });
+    await db.settings.put({ key: 'cloud_enabled', value: true });
+
+    const shopResult = await hydrateOrFindExistingShop(user, cleanEmail);
+    return {
+      user,
+      shop: shopResult.shop,
+      isNewShop: shopResult.isNewShop,
+      error: null,
+    };
+  } catch (err: any) {
+    console.warn('verifyEmailOtp exception:', err);
+    return { user: null, shop: null, isNewShop: false, error: err?.message || 'Failed to verify OTP' };
+  }
+}
+
+/**
+ * Sends a Supabase Magic Link (OTP) to the given email address.
+ * Uses Supabase's built-in email service with 1-click redirect (no custom SMTP needed).
+ */
+export async function sendMagicLink(
+  email: string
+): Promise<{ error: string | null }> {
+  if (!isBackendConfigured()) {
+    return { error: 'Backend is not configured' };
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const redirectTo = typeof window !== 'undefined' ? window.location.origin : undefined;
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email: cleanEmail,
+    options: {
+      shouldCreateUser: true,
+      emailRedirectTo: redirectTo,
+    },
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  await db.settings.put({ key: 'owner_email', value: cleanEmail });
+  await db.settings.put({ key: 'cloud_enabled', value: true });
+
+  return { error: null };
+}
+
+/**
+ * Completes sign-in from an active Supabase session (e.g. after clicking a Magic Link or redirect).
+ * Checks if the user already has an existing shop; if so, hydrates local Dexie and runs syncCycle.
+ * If not, returns isNewShop: true so Setup can provision a new shop.
+ */
+export async function completeCloudSignInFromSession(): Promise<{
+  user: any;
+  shop: ExistingShopInfo | null;
+  isNewShop: boolean;
+  error: string | null;
+}> {
+  if (!isBackendConfigured()) {
+    return { user: null, shop: null, isNewShop: false, error: 'Backend is not configured' };
+  }
+
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      return { user: null, shop: null, isNewShop: false, error: sessionError.message };
+    }
+
+    const user = session?.user;
+    if (!user) {
+      return { user: null, shop: null, isNewShop: false, error: 'No active session' };
+    }
+
+    const cleanEmail = (user.email || '').trim().toLowerCase();
+    await db.settings.put({ key: 'owner_email', value: cleanEmail });
+    await db.settings.put({ key: 'cloud_enabled', value: true });
+
+    const shopResult = await hydrateOrFindExistingShop(user, cleanEmail);
+    return {
+      user,
+      shop: shopResult.shop,
+      isNewShop: shopResult.isNewShop,
+      error: null,
+    };
+  } catch (err: any) {
+    console.warn('completeCloudSignInFromSession exception:', err);
+    return { user: null, shop: null, isNewShop: false, error: err?.message || 'Failed to complete sign-in' };
+  }
 }
 
 /**

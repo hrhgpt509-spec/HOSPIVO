@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt B3 - Fix Email Lowercase Input & Password Label in Cloud Account Auth - COMPLETE
+Prompt B5 - Auto-Resolve /api/sb URL and Add Local Dev Proxy - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,12 @@ Prompt B3 - Fix Email Lowercase Input & Password Label in Cloud Account Auth - C
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Auto-resolved relative Supabase URL paths (e.g. `/api/sb`) to full active origin URLs in [supabase.ts](file:///d:/HOSPIVO/src/lib/supabase.ts).
+- Added `/api/sb` dev proxy in [vite.config.ts](file:///d:/HOSPIVO/vite.config.ts) and created [vercel.json](file:///d:/HOSPIVO/vercel.json) rewrites to proxy Supabase without CORS issues.
+- Verified all 205 unit tests and production build (`tsc -b && vite build`) compile with zero errors.
+- Resolved TypeScript errors in [CloudAccountAuth.tsx](file:///d:/HOSPIVO/src/screens/CloudAccountAuth.tsx) and forced lowercase email entry without automatic uppercase formatting.
+- Implemented 6-digit Email OTP system (`sendEmailOtp` without redirect link and `verifyEmailOtp` with shop check/hydration) in [cloudAuth.ts](file:///d:/HOSPIVO/src/logic/cloudAuth.ts).
+- Built 6-digit numeric OTP entry screen in [CloudAccountAuth.tsx](file:///d:/HOSPIVO/src/screens/CloudAccountAuth.tsx) with physical keyboard support, 30s resend cooldown, multi-language i18n, 205 passing tests, and clean production build.
 - Configured email input in [CloudAccountAuth.tsx](file:///d:/HOSPIVO/src/screens/CloudAccountAuth.tsx) with `autoCapitalize="none"`, `inputMode="email"`, `normal-case`, and lowercase normalization.
 - Replaced "Show PIN" / "Hide PIN" with localized "Show Password" / "Hide Password" (`cloud_auth.show_password` / `hide_password`) in [en.ts](file:///d:/HOSPIVO/src/i18n/en.ts), [hi.ts](file:///d:/HOSPIVO/src/i18n/hi.ts), [hinglish.ts](file:///d:/HOSPIVO/src/i18n/hinglish.ts), and [types.ts](file:///d:/HOSPIVO/src/i18n/types.ts).
 - Verified with full test suite passing (198 tests in 27 files) and zero-error production build.

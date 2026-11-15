@@ -8,6 +8,10 @@ import {
   signOutOwner,
   provisionCloudShop,
   getCurrentCloudSession,
+  sendMagicLink,
+  sendEmailOtp,
+  verifyEmailOtp,
+  completeCloudSignInFromSession,
 } from './cloudAuth';
 
 describe('cloudAuth unit tests', () => {
@@ -190,6 +194,218 @@ describe('cloudAuth unit tests', () => {
       expect(restoredShop?.shopSyncId).toBe('HOSP-REMO-7777');
       expect(restoredShop?.mode).toBe('cloud');
     }
+  });
+
+  it('sendEmailOtp sends 6-digit OTP code with lowercase email without redirect link', async () => {
+    const signInWithOtpSpy = vi.spyOn(supabase.auth, 'signInWithOtp').mockResolvedValueOnce({
+      data: {} as any,
+      error: null,
+    });
+
+    const res = await sendEmailOtp('Owner.Store@Pharma.COM ');
+    expect(res.error).toBeNull();
+
+    expect(signInWithOtpSpy).toHaveBeenCalledWith({
+      email: 'owner.store@pharma.com',
+      options: {
+        shouldCreateUser: true,
+      },
+    });
+
+    const savedEmail = await db.settings.get('owner_email');
+    expect(savedEmail?.value).toBe('owner.store@pharma.com');
+    const cloudEnabled = await db.settings.get('cloud_enabled');
+    expect(cloudEnabled?.value).toBe(true);
+  });
+
+  it('verifyEmailOtp validates 6-digit length and returns error if invalid', async () => {
+    const res = await verifyEmailOtp('owner@test.com', '123');
+    expect(res.error).toBe('Please enter a valid 6-digit OTP');
+    expect(res.user).toBeNull();
+  });
+
+  it('verifyEmailOtp verifies OTP for new shop user', async () => {
+    vi.spyOn(supabase.auth, 'verifyOtp').mockResolvedValueOnce({
+      data: {
+        user: { id: 'usr-otp-new', email: 'otpnew@test.com' } as any,
+        session: {} as any,
+      },
+      error: null,
+    });
+
+    const mockFrom = vi.fn().mockImplementation(() => ({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    }));
+    vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
+
+    const res = await verifyEmailOtp('OtpNew@Test.COM ', '654321');
+    expect(res.error).toBeNull();
+    expect(res.user?.id).toBe('usr-otp-new');
+    expect(res.isNewShop).toBe(true);
+    expect(res.shop).toBeNull();
+
+    const savedEmail = await db.settings.get('owner_email');
+    expect(savedEmail?.value).toBe('otpnew@test.com');
+  });
+
+  it('verifyEmailOtp verifies OTP and hydrates existing shop on second device', async () => {
+    await db.shop.clear();
+    expect(await db.shop.count()).toBe(0);
+
+    vi.spyOn(supabase.auth, 'verifyOtp').mockResolvedValueOnce({
+      data: {
+        user: { id: 'usr-otp-hydrated', email: 'branch@store.com' } as any,
+        session: {} as any,
+      },
+      error: null,
+    });
+
+    const mockFrom = vi.fn().mockImplementation((table: string) => {
+      if (table === 'shops') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'shop-uuid-otp',
+                  shop_name: 'OTP Verified Branch',
+                  shop_sync_id: 'HOSP-OTPV-8888',
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            gt: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }),
+        }),
+      };
+    });
+    vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
+
+    const res = await verifyEmailOtp('branch@store.com', '123456');
+    expect(res.error).toBeNull();
+    expect(res.isNewShop).toBe(false);
+    expect(res.shop?.id).toBe('shop-uuid-otp');
+    expect(res.shop?.name).toBe('OTP Verified Branch');
+
+    const shop = (await db.shop.toArray())[0];
+    expect(shop).toBeDefined();
+    expect(shop.name).toBe('OTP Verified Branch');
+    expect(shop.cloudShopUuid).toBe('shop-uuid-otp');
+    expect(shop.shopSyncId).toBe('HOSP-OTPV-8888');
+    expect(shop.mode).toBe('cloud');
+  });
+
+  it('sendMagicLink sends OTP with normalized lowercase email', async () => {
+    vi.spyOn(supabase.auth, 'signInWithOtp').mockResolvedValueOnce({
+      data: {} as any,
+      error: null,
+    });
+
+    const res = await sendMagicLink('Owner.Pharmacy@Test.COM ');
+    expect(res.error).toBeNull();
+
+    const savedEmail = await db.settings.get('owner_email');
+    expect(savedEmail?.value).toBe('owner.pharmacy@test.com');
+    const cloudEnabled = await db.settings.get('cloud_enabled');
+    expect(cloudEnabled?.value).toBe(true);
+  });
+
+  it('completeCloudSignInFromSession handles new shop account without existing shop', async () => {
+    vi.spyOn(supabase.auth, 'getSession').mockResolvedValueOnce({
+      data: {
+        session: {
+          user: { id: 'usr-new-1', email: 'newowner@test.com' },
+        } as any,
+      },
+      error: null,
+    });
+
+    const mockFrom = vi.fn().mockImplementation(() => ({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    }));
+    vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
+
+    const res = await completeCloudSignInFromSession();
+    expect(res.error).toBeNull();
+    expect(res.user?.id).toBe('usr-new-1');
+    expect(res.isNewShop).toBe(true);
+    expect(res.shop).toBeNull();
+  });
+
+  it('completeCloudSignInFromSession hydrates existing shop on second device', async () => {
+    await db.shop.clear();
+    expect(await db.shop.count()).toBe(0);
+
+    vi.spyOn(supabase.auth, 'getSession').mockResolvedValueOnce({
+      data: {
+        session: {
+          user: { id: 'usr-existing-2', email: 'existing@store.com' },
+        } as any,
+      },
+      error: null,
+    });
+
+    const mockFrom = vi.fn().mockImplementation((table: string) => {
+      if (table === 'shops') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'shop-uuid-magic',
+                  shop_name: 'Magic Branch Store',
+                  shop_sync_id: 'HOSP-MAGI-1111',
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            gt: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          }),
+        }),
+      };
+    });
+    vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
+
+    const res = await completeCloudSignInFromSession();
+    expect(res.error).toBeNull();
+    expect(res.isNewShop).toBe(false);
+    expect(res.shop?.id).toBe('shop-uuid-magic');
+    expect(res.shop?.name).toBe('Magic Branch Store');
+
+    const shop = (await db.shop.toArray())[0];
+    expect(shop).toBeDefined();
+    expect(shop.name).toBe('Magic Branch Store');
+    expect(shop.cloudShopUuid).toBe('shop-uuid-magic');
+    expect(shop.shopSyncId).toBe('HOSP-MAGI-1111');
+    expect(shop.mode).toBe('cloud');
   });
 
   it('signOutOwner clears owner_email and records audit log', async () => {
