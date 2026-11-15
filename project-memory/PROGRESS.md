@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Prompt Z2 - Unlock Cloud Mode in Setup Wizard & Fix Mobile Step 2 Layout - COMPLETE
+Prompt B1 - Backend Stage 2: Supabase Auth, Env Config & Multi-Tenant Shop Provisioning - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,11 @@ Prompt Z2 - Unlock Cloud Mode in Setup Wizard & Fix Mobile Step 2 Layout - COMPL
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Configured Supabase client in `src/lib/supabase.ts` reading `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` with safe offline fallback helper `isBackendConfigured()`.
+- Built multi-tenant auth & shop provisioning logic in `src/logic/cloudAuth.ts` supporting `signUpOwner`, `signInOwner`, `signOutOwner`, and `provisionCloudShop` (persisting `cloudShopUuid`, `ownerEmail`, and `shopSyncId` in Dexie).
+- Created mobile-friendly Cloud Account Sign-Up/Sign-In screen `src/screens/CloudAccountAuth.tsx` with offline continuation support.
+- Integrated cloud account auth into `Setup.tsx` (Step 1 sign-in link & Step 2 auto-provisioning) and `OwnerCloudSync.tsx`, eliminating all manual Supabase URL/key inputs.
+- Added comprehensive unit tests in `src/logic/cloudAuth.test.ts` (192/192 vitest tests passing across 27 suites, clean build).
 - Unlocked Cloud-enabled Mode in Setup Step 2 (`Setup.tsx`): removed "coming soon" badge and notices, added inline Supabase URL, Anon Key, and Shop Sync ID inputs with Copy ID button.
 - Wired Step 8 (Approval Rules) to dynamically unlock "Remote approval" whenever Cloud mode is selected in Step 2, storing `cloud_enabled` and `shop.mode` in database settings.
 - Fixed mobile squeeze at 390px width in Setup Step 2: stacked icon and title vertically on `< sm`, reduced padding to `p-4 sm:p-6`, and moved footer helper note full-width above Back/Next button row.

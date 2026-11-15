@@ -12,15 +12,23 @@ import {
   type CloudConfig,
 } from '../logic/cloudSync';
 import { triggerFeedback } from '../logic/feedback';
+import { CloudAccountAuth } from './CloudAccountAuth';
+import { getCurrentCloudSession, signOutOwner } from '../logic/cloudAuth';
 
 export interface OwnerCloudSyncProps {
   currentUser?: DBUser | null;
   onBack: () => void;
+  onReturnHome?: () => void;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 }
 
 export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
   currentUser: _currentUser,
   onBack,
+  onReturnHome,
+  theme = 'light',
+  onToggleTheme,
 }) => {
   const { t } = useTranslation();
   const { name: shopName, address: shopAddress } = useShop();
@@ -32,19 +40,22 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
   const [copiedId, setCopiedId] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  // Form fields
+  // Form fields & Cloud Auth state
   const [cloudEnabled, setCloudEnabled] = useState(false);
   const [deviceName, setDeviceName] = useState('');
   const [shopSyncId, setShopSyncId] = useState('');
-  const [cloudUrl, setCloudUrl] = useState('');
-  const [cloudAnonKey, setCloudAnonKey] = useState('');
-  const [showKey, setShowKey] = useState(false);
+  const [ownerEmail, setOwnerEmail] = useState('');
+  const [cloudShopUuid, setCloudShopUuid] = useState('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Button labels
   const btnBack = tButton('cloud_sync.btn_back');
+  const btnHome = tButton('common.btn_home');
   const btnSyncNow = tButton('cloud_sync.btn_sync_now');
   const btnSave = tButton('cloud_sync.btn_save');
   const btnLinkDevice = tButton('cloud_sync.btn_link_device');
+  const btnSignOut = tButton('cloud_sync.btn_sign_out');
+  const btnConnect = tButton('cloud_sync.btn_sign_in_connect');
 
   const loadData = useCallback(async () => {
     try {
@@ -53,8 +64,10 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
       setCloudEnabled(cfg.cloudEnabled);
       setDeviceName(cfg.deviceName);
       setShopSyncId(cfg.shopSyncId);
-      setCloudUrl(cfg.cloudUrl);
-      setCloudAnonKey(cfg.cloudAnonKey);
+
+      const session = await getCurrentCloudSession();
+      setOwnerEmail(session.ownerEmail || '');
+      setCloudShopUuid(session.cloudShopUuid || '');
 
       const count = await db.syncOutbox.where('status').equals('pending').count();
       setPendingCount(count);
@@ -83,14 +96,23 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     }
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOutOwner();
+      setOwnerEmail('');
+      triggerFeedback('success', t('cloud_auth.toast_signout_success'));
+      await loadData();
+    } catch {
+      triggerFeedback('error', t('common.error_occurred'));
+    }
+  };
+
   const handleSaveConfig = async () => {
     try {
       const updated = await saveCloudConfig({
         cloudEnabled,
         deviceName: deviceName.trim(),
         shopSyncId: shopSyncId.trim().toUpperCase(),
-        cloudUrl: cloudUrl.trim(),
-        cloudAnonKey: cloudAnonKey.trim(),
       });
       setConfig(updated);
       triggerFeedback('success', t('cloud_sync.toast_saved'));
@@ -148,6 +170,26 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  if (isAuthModalOpen) {
+    return (
+      <CloudAccountAuth
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        shopName={shopName}
+        shopSyncId={shopSyncId}
+        onSuccess={(sess) => {
+          setOwnerEmail(sess.email);
+          if (sess.cloudShopUuid) setCloudShopUuid(sess.cloudShopUuid);
+          if (sess.shopSyncId) setShopSyncId(sess.shopSyncId);
+          setCloudEnabled(true);
+          setIsAuthModalOpen(false);
+          loadData();
+        }}
+        onCancel={() => setIsAuthModalOpen(false)}
+      />
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center p-6">
@@ -178,21 +220,48 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Status chip */}
           {cloudEnabled ? (
-            <div className="flex items-center gap-2 bg-[#E8F5E9] dark:bg-green-950/40 text-[#1B8F4A] dark:text-green-300 border border-[#A5D6A7] dark:border-green-800 px-4 py-2 rounded-xl font-bold text-sm">
+            <div className="flex items-center gap-2 bg-[#E8F5E9] dark:bg-green-950/40 text-[#1B8F4A] dark:text-green-300 border border-[#A5D6A7] dark:border-green-800 px-3 sm:px-4 py-2 rounded-xl font-bold text-sm">
               <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] inline-block animate-pulse" />
               <span>{t('cloud_sync.status_synced', { time: lastSyncStr })}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 bg-surface-container-low text-on-surface-variant border border-outline-variant px-4 py-2 rounded-xl font-semibold text-sm">
+            <div className="flex items-center gap-2 bg-surface-container-low text-on-surface-variant border border-outline-variant px-3 sm:px-4 py-2 rounded-xl font-semibold text-sm">
               <span className="w-2.5 h-2.5 rounded-full bg-outline inline-block" />
               <span>{t('cloud_sync.local_mode_title')}</span>
             </div>
           )}
 
-          <FullscreenButton />
+          {/* Light/Dark theme toggle */}
+          {onToggleTheme && (
+            <button
+              type="button"
+              aria-label={t('common.toggle_theme')}
+              onClick={onToggleTheme}
+              className="w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant"
+            >
+              <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[20px]" />
+            </button>
+          )}
+
+          <FullscreenButton className="w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant" />
+
+          {/* Home button */}
+          <button
+            type="button"
+            onClick={onReturnHome || onBack}
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-surface-container rounded-xl border border-outline-variant hover:bg-surface-container-high transition-colors cursor-pointer"
+          >
+            <Icon name="home" className="text-primary text-[20px]" />
+            <div className="flex flex-col text-left">
+              <span className="font-bold text-sm text-on-surface leading-none">{btnHome.main}</span>
+              {btnHome.sub && (
+                <span className="text-[10px] text-outline font-normal leading-none mt-0.5">{btnHome.sub}</span>
+              )}
+            </div>
+          </button>
         </div>
       </header>
 
@@ -328,51 +397,65 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
           </div>
         </section>
 
-        {/* SECTION 2: Cloud Provider Credentials (Supabase) */}
+        {/* SECTION 2: Owner Cloud Account */}
         <section className="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/40 shadow-sm flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <span className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center border border-primary/20">
-              2
-            </span>
-            <div className="flex flex-col">
-              <h2 className="text-lg font-bold text-on-surface leading-tight">
-                {t('cloud_sync.owner_account_title')}
-              </h2>
-              <span className="text-xs text-outline">{t('cloud_sync.owner_account_sub')}</span>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center border border-primary/20">
+                2
+              </span>
+              <div className="flex flex-col">
+                <h2 className="text-lg font-bold text-on-surface leading-tight">
+                  {t('cloud_sync.owner_account_title')}
+                </h2>
+                <span className="text-xs text-outline">{t('cloud_sync.owner_account_sub')}</span>
+              </div>
+            </div>
+
+            <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${
+              ownerEmail
+                ? 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/30'
+                : 'bg-surface-container text-on-surface-variant border-outline-variant'
+            }`}>
+              <span className={`w-2 h-2 rounded-full ${ownerEmail ? 'bg-green-600 animate-pulse' : 'bg-outline'}`} />
+              <span>{ownerEmail ? t('cloud_sync.status_connected') : t('cloud_sync.status_not_connected')}</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-bold text-on-surface">{t('cloud_sync.cloud_url')}</label>
-              <input
-                type="text"
-                value={cloudUrl}
-                onChange={(e) => setCloudUrl(e.target.value)}
-                placeholder="https://xyzcompany.supabase.co"
-                className="h-13 px-4 rounded-xl border border-outline-variant bg-surface-container-lowest text-base text-on-surface focus:ring-2 focus:ring-primary focus:border-primary font-mono text-sm"
-              />
+          <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0">
+                <Icon name="account_circle" className="text-[28px]" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-on-surface">
+                  {ownerEmail || t('cloud_sync.status_not_connected')}
+                </span>
+                <span className="text-xs text-outline">
+                  {cloudShopUuid ? `ID: ${cloudShopUuid}` : t('cloud_auth.modal_sub')}
+                </span>
+              </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-on-surface">{t('cloud_sync.cloud_anon_key')}</label>
-                <button
-                  type="button"
-                  onClick={() => setShowKey((v) => !v)}
-                  className="text-xs text-primary font-semibold hover:underline cursor-pointer"
-                >
-                  {showKey ? 'Chupao' : 'Dekho'}
-                </button>
-              </div>
-              <input
-                type={showKey ? 'text' : 'password'}
-                value={cloudAnonKey}
-                onChange={(e) => setCloudAnonKey(e.target.value)}
-                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                className="h-13 px-4 rounded-xl border border-outline-variant bg-surface-container-lowest text-base text-on-surface focus:ring-2 focus:ring-primary focus:border-primary font-mono text-sm"
-              />
-            </div>
+            {ownerEmail ? (
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="h-11 px-4 rounded-xl bg-surface-container hover:bg-error/10 text-error border border-error/30 font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <Icon name="logout" className="text-[18px]" />
+                <span>{btnSignOut.main}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(true)}
+                className="h-11 px-5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
+              >
+                <Icon name="login" className="text-[18px]" />
+                <span>{btnConnect.main}</span>
+              </button>
+            )}
           </div>
         </section>
 

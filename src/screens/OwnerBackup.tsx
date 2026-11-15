@@ -6,9 +6,9 @@ import { FullscreenButton } from '../components/FullscreenButton';
 import { useShop } from '../logic/useShop';
 import { isOwner } from '../logic/roles';
 import {
-  createBackup,
+  generateAndVerifyBackup,
+  saveBackup,
   verifyBackup,
-  downloadBackupFile,
   recordVerifiedBackup,
   getBackupStatus,
   getBackupHistory,
@@ -21,6 +21,7 @@ import { verifyApprovalPin } from '../logic/approvals';
 import { triggerFeedback } from '../logic/feedback';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { getPinLengthSetting } from '../logic/pin';
+import { FallbackSaveModal } from './owner-backup/FallbackSaveModal';
 
 interface OwnerBackupProps {
   currentUser?: DBUser | null;
@@ -48,6 +49,10 @@ export const OwnerBackup: React.FC<OwnerBackupProps> = ({
   const [history, setHistory] = useState<BackupHistoryEntry[]>([]);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [backupFailed, setBackupFailed] = useState(false);
+
+  // Fallback modal state (for browsers without showSaveFilePicker)
+  const [unconfirmedPayload, setUnconfirmedPayload] = useState<BackupPayload | null>(null);
+  const [isFallbackModalOpen, setIsFallbackModalOpen] = useState(false);
 
   // Restore state & modals
   const [stagedPayload, setStagedPayload] = useState<BackupPayload | null>(null);
@@ -132,33 +137,60 @@ export const OwnerBackup: React.FC<OwnerBackupProps> = ({
     setBackupFailed(false);
 
     try {
-      // 1. Create backup payload
-      const payload = await createBackup(shopName);
+      // Step A: Generate & Verify in memory (NO writes to Dexie yet!)
+      const payload = await generateAndVerifyBackup(shopName);
 
-      // 2. Immediately parse and verify SHA-256 integrity
-      const verification = await verifyBackup(payload);
-      if (!verification.valid) {
-        setBackupFailed(true);
-        triggerFeedback('error', t('owner_backup.backup_failed_title'));
-        setIsBackingUp(false);
+      // Step B: Save to disk
+      const result = await saveBackup(payload, currentUser?.name || 'owner');
+
+      if (result.status === 'cancelled') {
+        // User cancelled picker (AbortError) - stop immediately, show neutral toast
+        triggerFeedback('info', t('owner_backup.toast_backup_cancelled'));
         return;
       }
 
-      // 3. Trigger download to device
-      downloadBackupFile(payload);
+      if (result.status === 'needs_confirmation') {
+        // Fallback for browsers without showSaveFilePicker (mobile, Safari, Firefox)
+        setUnconfirmedPayload(payload);
+        setIsFallbackModalOpen(true);
+        return;
+      }
 
-      // 4. Record verified backup in DB
-      await recordVerifiedBackup(payload, currentUser?.name || 'owner');
-
-      triggerFeedback('success', t('status.backup_today'));
-      await loadData();
-    } catch (err) {
+      if (result.status === 'saved') {
+        triggerFeedback('success', t('status.backup_today'));
+        await loadData();
+      }
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        triggerFeedback('info', t('owner_backup.toast_backup_cancelled'));
+        return;
+      }
       console.error('Backup creation failed:', err);
       setBackupFailed(true);
       triggerFeedback('error', t('owner_backup.backup_failed_title'));
     } finally {
       setIsBackingUp(false);
     }
+  };
+
+  const handleConfirmFallbackSave = async () => {
+    if (!unconfirmedPayload) return;
+    try {
+      await recordVerifiedBackup(unconfirmedPayload, currentUser?.name || 'owner');
+      triggerFeedback('success', t('status.backup_today'));
+      setIsFallbackModalOpen(false);
+      setUnconfirmedPayload(null);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to commit fallback backup:', err);
+      triggerFeedback('error', t('owner_backup.backup_failed_title'));
+    }
+  };
+
+  const handleCancelFallbackSave = () => {
+    setIsFallbackModalOpen(false);
+    setUnconfirmedPayload(null);
+    triggerFeedback('info', t('owner_backup.toast_backup_cancelled'));
   };
 
   const handleSelectRestoreFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -542,6 +574,12 @@ export const OwnerBackup: React.FC<OwnerBackupProps> = ({
           </div>
         </div>
       )}
+      {/* Fallback confirmation modal for browsers without showSaveFilePicker */}
+      <FallbackSaveModal
+        isOpen={isFallbackModalOpen}
+        onConfirm={handleConfirmFallbackSave}
+        onCancel={handleCancelFallbackSave}
+      />
     </div>
   );
 };

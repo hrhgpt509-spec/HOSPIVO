@@ -10,6 +10,9 @@ export interface Shop {
   gstNo: string;
   drugLicenceNos: string;
   mode: 'local' | 'cloud';
+  shopSyncId?: string;
+  cloudShopUuid?: string;
+  ownerEmail?: string;
 }
 
 export type UserRole = 'owner' | 'cashier' | 'runner';

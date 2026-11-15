@@ -93,8 +93,10 @@ export async function getCloudConfig(): Promise<CloudConfig> {
   }
 
   const cloudEnabled = Boolean(enabledItem?.value ?? false);
-  const cloudUrl = (urlItem?.value as string) || '';
-  const cloudAnonKey = (keyItem?.value as string) || '';
+  const envUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
+  const envKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+  const cloudUrl = (urlItem?.value as string) || envUrl;
+  const cloudAnonKey = (keyItem?.value as string) || envKey;
   const deviceName = (deviceItem?.value as string) || 'Counter PC 1 (Billing Desk)';
   const lastCloudSyncAt = (lastSyncItem?.value as number) || null;
   const lastStatus = (statusItem?.value as CloudConfig['lastStatus']) || 'never';

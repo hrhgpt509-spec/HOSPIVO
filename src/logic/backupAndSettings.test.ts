@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { db, resetDatabase, type DBUser } from '../db';
 import {
   createBackup,
@@ -8,6 +8,8 @@ import {
   getBackupStatus,
   getBackupHistory,
   restoreBackup,
+  generateAndVerifyBackup,
+  saveBackup,
   type BackupPayload,
 } from './backup';
 import {
@@ -121,6 +123,116 @@ describe('Backup, Staff PIN & Settings Logic', () => {
       expect(history.length).toBe(1);
       expect(history[0].checksum).toBe(backup.checksum);
       expect(history[0].verified).toBe(true);
+
+      // Audit log should record 'backup_created'
+      const audit = await db.auditLog.where('action').equals('backup_created').toArray();
+      expect(audit.length).toBe(1);
+      expect(audit[0].who).toBe('owner_test');
+    });
+
+    it('cancelling the file save (AbortError) does NOT update backup status to "Today" or write a backup_created audit entry', async () => {
+      // Mock window.showSaveFilePicker to simulate user clicking Cancel in file picker
+      const abortErr = new Error('The user aborted a request.');
+      abortErr.name = 'AbortError';
+      (globalThis as any).window = {
+        showSaveFilePicker: vi.fn().mockRejectedValue(abortErr),
+      };
+
+      try {
+        // Verify initial status: no backup taken
+        const initialStatus = await getBackupStatus();
+        expect(initialStatus.isToday).toBe(false);
+        expect(initialStatus.lastVerifiedBackupAt).toBeNull();
+
+        // Step A: Generate & verify in memory WITHOUT writing to Dexie
+        const payload = await generateAndVerifyBackup('Cancel Test Shop');
+        expect(payload).toBeDefined();
+
+        const statusAfterGen = await getBackupStatus();
+        expect(statusAfterGen.isToday).toBe(false);
+        expect(statusAfterGen.lastVerifiedBackupAt).toBeNull();
+        let auditCount = await db.auditLog.where('action').equals('backup_created').count();
+        expect(auditCount).toBe(0);
+
+        // Step B: Save to disk -> user cancels
+        const result = await saveBackup(payload, 'owner');
+        expect(result.status).toBe('cancelled');
+
+        // Verify backup status was NOT updated to Today
+        const statusAfterCancel = await getBackupStatus();
+        expect(statusAfterCancel.isToday).toBe(false);
+        expect(statusAfterCancel.lastVerifiedBackupAt).toBeNull();
+
+        // Verify no 'backup_created' audit entry was written
+        auditCount = await db.auditLog.where('action').equals('backup_created').count();
+        expect(auditCount).toBe(0);
+      } finally {
+        delete (globalThis as any).window;
+      }
+    });
+
+    it('completing the file save DOES update backup status to "Today" and writes the backup_created audit entry', async () => {
+      // Mock window.showSaveFilePicker with valid writable stream
+      const writeMock = vi.fn().mockResolvedValue(undefined);
+      const closeMock = vi.fn().mockResolvedValue(undefined);
+      const createWritableMock = vi.fn().mockResolvedValue({
+        write: writeMock,
+        close: closeMock,
+      });
+      (globalThis as any).window = {
+        showSaveFilePicker: vi.fn().mockResolvedValue({
+          createWritable: createWritableMock,
+        }),
+      };
+
+      try {
+        // Step A: Generate & verify in memory
+        const payload = await generateAndVerifyBackup('Complete Test Shop');
+
+        // Step B: Save to disk and commit
+        const result = await saveBackup(payload, 'owner_tester');
+        expect(result.status).toBe('saved');
+        expect(createWritableMock).toHaveBeenCalled();
+        expect(writeMock).toHaveBeenCalled();
+        expect(closeMock).toHaveBeenCalled();
+
+        // Verify backup status DOES update to Today
+        const status = await getBackupStatus();
+        expect(status.isToday).toBe(true);
+        expect(status.lastVerifiedBackupAt).toBe(payload.meta.exportedAt);
+
+        // Verify 'backup_created' audit entry is written
+        const auditEntries = await db.auditLog.where('action').equals('backup_created').toArray();
+        expect(auditEntries.length).toBe(1);
+        expect(auditEntries[0].action).toBe('backup_created');
+        expect(auditEntries[0].who).toBe('owner_tester');
+      } finally {
+        delete (globalThis as any).window;
+      }
+    });
+
+    it('handles fallback download mode when showSaveFilePicker is not supported without updating status until confirmed', async () => {
+      // Ensure window has no showSaveFilePicker
+      delete (globalThis as any).window;
+
+      const payload = await generateAndVerifyBackup('Fallback Shop');
+      const result = await saveBackup(payload, 'owner');
+
+      // Should return needs_confirmation without writing database
+      expect(result.status).toBe('needs_confirmation');
+
+      let status = await getBackupStatus();
+      expect(status.isToday).toBe(false);
+      let auditCount = await db.auditLog.where('action').equals('backup_created').count();
+      expect(auditCount).toBe(0);
+
+      // Confirmation commits the record
+      await recordVerifiedBackup(payload, 'owner');
+
+      status = await getBackupStatus();
+      expect(status.isToday).toBe(true);
+      auditCount = await db.auditLog.where('action').equals('backup_created').count();
+      expect(auditCount).toBe(1);
     });
 
     it('restores database cleanly from a verified backup payload', async () => {

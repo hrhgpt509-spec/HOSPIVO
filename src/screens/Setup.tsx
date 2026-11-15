@@ -14,8 +14,11 @@ import { formatField, textFieldProps, filterDigits } from '../logic/format';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { useTranslation, tButton } from '../i18n';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { Icon } from '../components/Icon';
 import { OwnerMedicineImport } from './OwnerMedicineImport';
+import { CloudAccountAuth } from './CloudAccountAuth';
 import { generateShopSyncId } from '../logic/cloudSync';
+import { provisionCloudShop } from '../logic/cloudAuth';
 
 interface SetupProps {
   onComplete: () => void;
@@ -52,9 +55,11 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
 
   // Step 2: Mode choice & Cloud config
   const [mode, setMode] = useState<'local' | 'cloud'>('local');
-  const [cloudUrl, setCloudUrl] = useState('');
-  const [cloudAnonKey, setCloudAnonKey] = useState('');
-  const [shopSyncId] = useState(() => generateShopSyncId());
+  const [ownerEmail, setOwnerEmail] = useState('');
+  const [cloudShopUuid, setCloudShopUuid] = useState('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authInitialTab, setAuthInitialTab] = useState<'signup' | 'signin'>('signup');
+  const [shopSyncId, setShopSyncId] = useState(() => generateShopSyncId());
   const [copiedSyncId, setCopiedSyncId] = useState(false);
 
   const handleCopySyncId = () => {
@@ -335,6 +340,9 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
       gstNo: formatField('code', gstNo.trim()),
       drugLicenceNos: drugLicences,
       mode,
+      shopSyncId: shopSyncId.trim().toUpperCase(),
+      cloudShopUuid: cloudShopUuid || undefined,
+      ownerEmail: ownerEmail || undefined,
     };
     await db.shop.add(shopRecord);
     await addAudit('Setup', 'shop_saved', formattedShopName, 'Shop details saved during initial setup');
@@ -378,9 +386,24 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     await db.settings.put({ key: 'pinLength', value: 4 });
     await db.settings.put({ key: 'cloud_enabled', value: mode === 'cloud' });
     await db.settings.put({ key: 'shop_sync_id', value: shopSyncId.trim().toUpperCase() });
-    await db.settings.put({ key: 'cloud_url', value: cloudUrl.trim() });
-    await db.settings.put({ key: 'cloud_anon_key', value: cloudAnonKey.trim() });
     await db.settings.put({ key: 'device_name', value: 'Counter PC 1 (Billing Desk)' });
+    if (ownerEmail) {
+      await db.settings.put({ key: 'owner_email', value: ownerEmail.trim().toLowerCase() });
+    }
+    if (cloudShopUuid) {
+      await db.settings.put({ key: 'cloud_shop_uuid', value: cloudShopUuid });
+    }
+
+    if (mode === 'cloud') {
+      try {
+        const prov = await provisionCloudShop(formattedShopName, shopSyncId.trim().toUpperCase());
+        if (prov?.shopUuid) {
+          await db.settings.put({ key: 'cloud_shop_uuid', value: prov.shopUuid });
+        }
+      } catch (err) {
+        console.warn('Could not provision cloud shop during setup completion:', err);
+      }
+    }
 
     // 6. Audit entry for setup completion
     await addAudit('Setup', 'setup_complete', shopName.trim(), 'Initial setup completed successfully');
@@ -448,6 +471,33 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
       </header>
     );
   };
+
+  // ==========================================================================
+  // VIEW: CLOUD ACCOUNT AUTH OVERLAY
+  // ==========================================================================
+  if (isAuthModalOpen) {
+    return (
+      <CloudAccountAuth
+        initialTab={authInitialTab}
+        shopName={shopName}
+        shopSyncId={shopSyncId}
+        onSuccess={(session) => {
+          setOwnerEmail(session.email);
+          if (session.shopName) setShopName(session.shopName);
+          if (session.shopSyncId) setShopSyncId(session.shopSyncId);
+          if (session.cloudShopUuid) setCloudShopUuid(session.cloudShopUuid);
+          setMode('cloud');
+          setIsAuthModalOpen(false);
+        }}
+        onCancel={() => {
+          setIsAuthModalOpen(false);
+          if (!ownerEmail) {
+            setMode('local');
+          }
+        }}
+      />
+    );
+  }
 
   // ==========================================================================
   // VIEW: IMPORT PREVIEW (05b_Setup_ImportPreview.html / 38c)
@@ -645,8 +695,23 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               </div>
             </button>
 
-            <div className="text-center text-[#5C6E66] text-[16px] font-medium">
-              {t('setup.step2_note')}
+            <div className="flex flex-col items-center gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthInitialTab('signin');
+                  setIsAuthModalOpen(true);
+                }}
+                className="text-sm sm:text-base font-bold text-[#1B8F4A] hover:underline flex items-center gap-1.5 cursor-pointer py-1.5 px-3 rounded-xl hover:bg-[#E7F7EC] transition-colors"
+              >
+                <Icon name="cloud" className="text-[20px]" />
+                <span>{t('setup.sign_in_existing_shop')}</span>
+              </button>
+              <span className="text-center text-[#5C6E66] text-xs sm:text-[14px] font-medium">
+                {ownerEmail
+                  ? t('setup.cloud_account_connected', { email: ownerEmail })
+                  : t('setup.step2_note')}
+              </span>
             </div>
 
             <button
@@ -761,7 +826,13 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
 
               {/* Card 2: Cloud-enabled Mode */}
               <div
-                onClick={() => setMode('cloud')}
+                onClick={() => {
+                  setMode('cloud');
+                  if (!ownerEmail) {
+                    setAuthInitialTab('signup');
+                    setIsAuthModalOpen(true);
+                  }
+                }}
                 className={`relative rounded-2xl p-4 sm:p-6 md:p-7 flex flex-col justify-between transition-all cursor-pointer w-full ${
                   mode === 'cloud'
                     ? 'bg-[#F4FAF6] border-2 border-[#1B8F4A] shadow-[0_8px_24px_rgba(27,143,74,0.12)]'
@@ -854,16 +925,14 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5 self-start sm:self-auto px-3 py-1 bg-[#E7F7EC] text-[#1B8F4A] rounded-xl text-xs font-bold border border-[#BDE7CC]">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
+                    <Icon name="check_circle" className="text-[16px]" />
                     <span>{t('setup.cloud_card_locked')}</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-4">
-                  {/* Shop Sync ID (4 cols) */}
-                  <div className="md:col-span-4 flex flex-col">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-4 items-center">
+                  {/* Shop Sync ID (6 cols) */}
+                  <div className="md:col-span-6 flex flex-col">
                     <label className="text-sm font-bold text-slate-800 mb-1">
                       {t('setup.cloud_shop_sync_id')}
                     </label>
@@ -882,17 +951,12 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                       >
                         {copiedSyncId ? (
                           <>
-                            <svg className="w-4 h-4 text-[#1B8F4A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
+                            <Icon name="check" className="text-[16px] text-[#1B8F4A]" />
                             <span className="text-[#1B8F4A]">{t('setup.cloud_copied')}</span>
                           </>
                         ) : (
                           <>
-                            <svg className="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                            </svg>
+                            <Icon name="content_copy" className="text-[16px] text-slate-500" />
                             <span>{t('setup.cloud_copy_id')}</span>
                           </>
                         )}
@@ -903,37 +967,45 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     </span>
                   </div>
 
-                  {/* Supabase URL (4 cols) */}
-                  <div className="md:col-span-4 flex flex-col">
+                  {/* Owner Account Status / Connect Button (6 cols) */}
+                  <div className="md:col-span-6 flex flex-col justify-center">
                     <label className="text-sm font-bold text-slate-800 mb-1">
-                      {t('setup.cloud_supabase_url')}
+                      {t('cloud_sync.owner_account_title')}
                     </label>
-                    <input
-                      type="url"
-                      value={cloudUrl}
-                      onChange={(e) => setCloudUrl(e.target.value)}
-                      placeholder="https://xyz.supabase.co"
-                      className="w-full h-12 px-3.5 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm focus:ring-2 focus:ring-[#1B8F4A] outline-none font-mono"
-                    />
+                    {ownerEmail ? (
+                      <div className="h-12 px-4 rounded-xl bg-[#E7F7EC] border border-[#BDE7CC] text-[#1B8F4A] flex items-center justify-between text-sm font-bold">
+                        <div className="flex items-center gap-2 truncate">
+                          <Icon name="account_circle" className="text-[20px] shrink-0" />
+                          <span className="truncate">{ownerEmail}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthInitialTab('signin');
+                            setIsAuthModalOpen(true);
+                          }}
+                          className="text-xs text-[#1B8F4A] font-bold underline shrink-0 ml-2 cursor-pointer"
+                        >
+                          Change
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthInitialTab('signup');
+                          setIsAuthModalOpen(true);
+                        }}
+                        className="h-12 px-4 rounded-xl bg-[#1B8F4A] hover:bg-[#16783E] text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
+                      >
+                        <Icon name="person_add" className="text-[18px]" />
+                        <span>{t('cloud_auth.btn_connect_account').main}</span>
+                      </button>
+                    )}
                     <span className="text-xs text-slate-500 mt-1">
-                      Supabase Project URL
-                    </span>
-                  </div>
-
-                  {/* Supabase Anon Key (4 cols) */}
-                  <div className="md:col-span-4 flex flex-col">
-                    <label className="text-sm font-bold text-slate-800 mb-1">
-                      {t('setup.cloud_supabase_anon_key')}
-                    </label>
-                    <input
-                      type="password"
-                      value={cloudAnonKey}
-                      onChange={(e) => setCloudAnonKey(e.target.value)}
-                      placeholder="eyJhbGciOi..."
-                      className="w-full h-12 px-3.5 rounded-xl bg-white border border-slate-300 text-slate-900 text-sm focus:ring-2 focus:ring-[#1B8F4A] outline-none font-mono"
-                    />
-                    <span className="text-xs text-slate-500 mt-1">
-                      Supabase public anon API key
+                      {ownerEmail
+                        ? t('setup.cloud_account_connected', { email: ownerEmail })
+                        : t('cloud_auth.modal_sub')}
                     </span>
                   </div>
                 </div>

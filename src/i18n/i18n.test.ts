@@ -1,4 +1,6 @@
 import 'fake-indexeddb/auto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { en } from './en';
 import { hi } from './hi';
@@ -135,5 +137,78 @@ describe('i18n language catalogs and fallback tests', () => {
     expect(shouldShowSub('Dawai ki jaankari', 'Medicine details', 'hinglish')).toBe(true);
     expect(shouldShowSub('Jodi gayi dawaiyan', 'Added medicine list', 'hinglish')).toBe(true);
     expect(shouldShowSub('Dawai Badlein', '(Edit medicine)', 'hinglish')).toBe(true);
+  });
+
+  it('all t() and tButton() keys in src/screens and src/components exist in en, hi, and hinglish catalogs', () => {
+    function resolveKeyPath(obj: unknown, keyPath: string): unknown {
+      if (!obj || typeof obj !== 'object') return undefined;
+      const parts = keyPath.split('.');
+      let current: unknown = obj;
+      for (const part of parts) {
+        if (current && typeof current === 'object' && part in current) {
+          current = (current as Record<string, unknown>)[part];
+        } else {
+          return undefined;
+        }
+      }
+      return current;
+    }
+
+    function getSourceFiles(dir: string): string[] {
+      let results: string[] = [];
+      if (!fs.existsSync(dir)) return results;
+      const list = fs.readdirSync(dir);
+      for (const file of list) {
+        const fullPath = path.join(dir, file);
+        const stat = fs.statSync(fullPath);
+        if (stat.isDirectory()) {
+          results = results.concat(getSourceFiles(fullPath));
+        } else if ((file.endsWith('.tsx') || file.endsWith('.ts')) && !file.includes('.test.')) {
+          results.push(fullPath);
+        }
+      }
+      return results;
+    }
+
+    const srcDir = path.resolve(process.cwd(), 'src');
+    const screensFiles = getSourceFiles(path.join(srcDir, 'screens'));
+    const componentsFiles = getSourceFiles(path.join(srcDir, 'components'));
+    const allFiles = [...screensFiles, ...componentsFiles];
+
+    expect(allFiles.length).toBeGreaterThan(0);
+
+    const missingKeys: { file: string; key: string; missingIn: string[] }[] = [];
+    const keyRegex = /\b(?:t|tButton)\(\s*['"]([a-zA-Z0-9_.]+)['"]/g;
+
+    for (const filePath of allFiles) {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      let match: RegExpExecArray | null;
+      while ((match = keyRegex.exec(content)) !== null) {
+        const key = match[1];
+        const missingIn: string[] = [];
+
+        if (resolveKeyPath(en, key) === undefined) {
+          missingIn.push('en');
+        }
+        if (resolveKeyPath(hi, key) === undefined) {
+          missingIn.push('hi');
+        }
+        if (resolveKeyPath(hinglish, key) === undefined) {
+          missingIn.push('hinglish');
+        }
+
+        if (missingIn.length > 0) {
+          const relPath = path.relative(srcDir, filePath).replace(/\\/g, '/');
+          missingKeys.push({ file: relPath, key, missingIn });
+        }
+      }
+    }
+
+    if (missingKeys.length > 0) {
+      const failureReport = missingKeys
+        .map((m) => `${m.file}: key "${m.key}" is missing in [${m.missingIn.join(', ')}]`)
+        .join('\n');
+      expect.fail(`Found missing i18n keys in UI files:\n${failureReport}`);
+    }
   });
 });

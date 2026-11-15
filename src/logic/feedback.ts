@@ -4,7 +4,7 @@
  * Error: low buzzy tone + red flash + error message
  */
 
-export type FeedbackType = 'success' | 'error';
+export type FeedbackType = 'success' | 'error' | 'info';
 
 export interface FeedbackEvent {
   type: FeedbackType;
@@ -38,6 +38,7 @@ function getAudioContext(): AudioContext | null {
  * Play synthesized sound using pure Web Audio API
  */
 export function playTone(type: FeedbackType): void {
+  if (type === 'info') return;
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -92,9 +93,20 @@ export function triggerFeedback(
 
   // Set default messages if not specified
   const eventTitle: string =
-    title || (type === 'success' ? t<string>('feedback.success_title') : t<string>('feedback.error_title')) || '';
+    title ||
+    (type === 'success'
+      ? t<string>('feedback.success_title')
+      : type === 'info'
+      ? t<string>('feedback.info_title')
+      : t<string>('feedback.error_title')) ||
+    '';
   const eventSubtitle: string | undefined =
-    subtitle || (type === 'success' ? t<string>('feedback.success_sub') : t<string>('feedback.error_sub'));
+    subtitle ||
+    (type === 'success'
+      ? t<string>('feedback.success_sub')
+      : type === 'info'
+      ? undefined
+      : t<string>('feedback.error_sub'));
 
   const event: FeedbackEvent = {
     type,

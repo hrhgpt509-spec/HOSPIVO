@@ -17,6 +17,9 @@ import { triggerFeedback } from '../logic/feedback';
 export interface RemoteApprovalInboxProps {
   currentUser?: DBUser | null;
   onBack: () => void;
+  onReturnHome?: () => void;
+  theme?: 'light' | 'dark';
+  onToggleTheme?: () => void;
 }
 
 type TabType = 'pending' | 'approved' | 'rejected';
@@ -24,6 +27,9 @@ type TabType = 'pending' | 'approved' | 'rejected';
 export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
   currentUser,
   onBack,
+  onReturnHome,
+  theme = 'light',
+  onToggleTheme,
 }) => {
   const { t } = useTranslation();
   const { name: shopName } = useShop();
@@ -43,7 +49,8 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
   const [isVerifying, setIsVerifying] = useState(false);
 
   // Buttons
-  const btnBack = tButton('common.btn_wapas');
+  const btnBack = tButton('common.btn_back');
+  const btnHome = tButton('common.btn_home');
   const btnConfirmApprove = tButton('remote_approval.btn_confirm_approve');
   const btnConfirmReject = tButton('remote_approval.btn_confirm_reject');
 
@@ -184,8 +191,8 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-surface-container-low text-on-surface-variant border border-outline-variant px-4 py-2 rounded-xl font-medium text-sm">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 bg-surface-container-low text-on-surface-variant border border-outline-variant px-3 sm:px-4 py-2 rounded-xl font-medium text-sm">
             <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block animate-pulse" />
             <span>
               {cloudConfig?.lastCloudSyncAt
@@ -193,7 +200,35 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
                 : 'Local Mode'}
             </span>
           </div>
-          <FullscreenButton />
+
+          {/* Light/Dark theme toggle */}
+          {onToggleTheme && (
+            <button
+              type="button"
+              aria-label={t('common.toggle_theme')}
+              onClick={onToggleTheme}
+              className="w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant"
+            >
+              <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[20px]" />
+            </button>
+          )}
+
+          <FullscreenButton className="w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant" />
+
+          {/* Home button */}
+          <button
+            type="button"
+            onClick={onReturnHome || onBack}
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-surface-container rounded-xl border border-outline-variant hover:bg-surface-container-high transition-colors cursor-pointer"
+          >
+            <Icon name="home" className="text-primary text-[20px]" />
+            <div className="flex flex-col text-left">
+              <span className="font-bold text-sm text-on-surface leading-none">{btnHome.main}</span>
+              {btnHome.sub && (
+                <span className="text-[10px] text-outline font-normal leading-none mt-0.5">{btnHome.sub}</span>
+              )}
+            </div>
+          </button>
         </div>
       </header>
 

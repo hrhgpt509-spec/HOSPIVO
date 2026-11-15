@@ -35,11 +35,12 @@ export const FeedbackOverlay: React.FC = () => {
   if (!currentEvent && !isFlashing) return null;
 
   const isSuccess = currentEvent?.type === 'success';
+  const isInfo = currentEvent?.type === 'info';
 
   return (
     <>
       {/* Visual Flash: full viewport edge pulse & translucent tint */}
-      {isFlashing && (
+      {isFlashing && !isInfo && (
         <div
           aria-hidden="true"
           className={`fixed inset-0 pointer-events-none z-[100] transition-opacity duration-300 ${
@@ -61,6 +62,19 @@ export const FeedbackOverlay: React.FC = () => {
                 <span className="text-lg font-bold text-white">{currentEvent.title}</span>
                 {currentEvent.subtitle && (
                   <span className="text-xs text-white/90 font-medium">{currentEvent.subtitle}</span>
+                )}
+              </div>
+            </div>
+          ) : isInfo ? (
+            /* Info/Neutral Toast: bg-slate-800 text-white rounded-2xl */
+            <div className="flex items-center gap-3 px-5 py-3.5 bg-[#334155] text-white rounded-2xl shadow-xl border border-white/20">
+              <svg className="w-7 h-7 shrink-0 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex flex-col leading-tight">
+                <span className="text-lg font-bold text-white">{currentEvent.title}</span>
+                {currentEvent.subtitle && (
+                  <span className="text-xs text-slate-200 font-medium">{currentEvent.subtitle}</span>
                 )}
               </div>
             </div>

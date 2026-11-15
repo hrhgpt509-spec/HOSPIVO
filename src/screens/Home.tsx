@@ -472,7 +472,10 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     return (
       <OwnerCloudSync
         currentUser={currentUser as any}
-        onBack={handleReturnHome}
+        onBack={() => setActivePage('owner')}
+        onReturnHome={handleReturnHome}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
     );
   }
@@ -482,7 +485,10 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     return (
       <RemoteApprovalInbox
         currentUser={currentUser as any}
-        onBack={handleReturnHome}
+        onBack={() => setActivePage('owner')}
+        onReturnHome={handleReturnHome}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
     );
   }

@@ -165,26 +165,144 @@ export async function verifyBackup(
 }
 
 /**
+ * Returns canonical backup filename: hospivo-backup-YYYY-MM-DD.json
+ */
+export function getBackupFilename(date = new Date()): string {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `hospivo-backup-${yyyy}-${mm}-${dd}.json`;
+}
+
+/**
+ * Step A (Generate & Verify in memory):
+ * Builds the JSON payload from all Dexie tables and verifies its SHA-256 hash in memory.
+ * Does NOT write lastBackupAt, backup history, or backup_created audit entries yet.
+ */
+export async function generateAndVerifyBackup(customShopName?: string): Promise<BackupPayload> {
+  const payload = await createBackup(customShopName);
+  const verification = await verifyBackup(payload);
+  if (!verification.valid || !verification.payload) {
+    throw new Error(`Backup verification failed: ${verification.error || 'invalid_payload'}`);
+  }
+  return verification.payload;
+}
+
+/**
+ * Checks if the Native File System Access API (showSaveFilePicker) is supported.
+ */
+export function isSaveFilePickerSupported(): boolean {
+  return typeof window !== 'undefined' && typeof (window as any).showSaveFilePicker === 'function';
+}
+
+/**
+ * Saves backup file using window.showSaveFilePicker (Chrome/Edge desktop).
+ * Returns { success: true, cancelled: false } on completion,
+ * or { success: false, cancelled: true } if user cancelled (AbortError).
+ */
+export async function saveBackupWithFilePicker(
+  payload: BackupPayload,
+  filename?: string
+): Promise<{ success: boolean; cancelled: boolean }> {
+  if (!isSaveFilePickerSupported()) {
+    throw new Error('showSaveFilePicker is not supported in this browser');
+  }
+
+  const fallbackDate = payload.meta?.exportedAt ? new Date(payload.meta.exportedAt) : new Date();
+  const suggestedName = filename || getBackupFilename(fallbackDate);
+  const jsonStr = JSON.stringify(payload, null, 2);
+
+  try {
+    const handle = await (window as any).showSaveFilePicker({
+      suggestedName,
+      types: [
+        {
+          description: 'JSON Backup File',
+          accept: {
+            'application/json': ['.json'],
+          },
+        },
+      ],
+    });
+
+    const writable = await handle.createWritable();
+    await writable.write(jsonStr);
+    await writable.close();
+
+    return { success: true, cancelled: false };
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      return { success: false, cancelled: true };
+    }
+    throw err;
+  }
+}
+
+/**
  * Triggers browser file download of backup payload as a .json file.
  */
-export function downloadBackupFile(payload: BackupPayload, prefix = 'hospivo_backup'): void {
+export function downloadBackupFile(payload: BackupPayload, filename?: string): void {
+  if (typeof document === 'undefined') {
+    return;
+  }
   const jsonStr = JSON.stringify(payload, null, 2);
   const blob = new Blob([jsonStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
 
-  const dateStr = new Date()
-    .toISOString()
-    .replace(/T/, '_')
-    .replace(/:/g, '-')
-    .slice(0, 19);
+  const fallbackDate = payload.meta?.exportedAt ? new Date(payload.meta.exportedAt) : new Date();
+  const downloadName = filename || getBackupFilename(fallbackDate);
 
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${prefix}_${dateStr}.json`;
+  a.download = downloadName;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+export interface SaveBackupResult {
+  status: 'saved' | 'cancelled' | 'needs_confirmation';
+}
+
+/**
+ * Step B (Save to disk & conditional commit):
+ * If showSaveFilePicker is available:
+ *   - Prompts user to pick location and writes JSON file.
+ *   - If cancelled (AbortError), stops immediately without saving any record/audit.
+ *   - Only AFTER writable.close() resolves, commits verified backup and audit log.
+ * If showSaveFilePicker is NOT available (fallback):
+ *   - Triggers <a download> blob download.
+ *   - Returns { status: 'needs_confirmation' } so caller can show confirmation prompt
+ *     before committing the backup record.
+ */
+export async function saveBackup(
+  payload: BackupPayload,
+  who = 'owner',
+  filename?: string
+): Promise<SaveBackupResult> {
+  if (isSaveFilePickerSupported()) {
+    try {
+      const pickerRes = await saveBackupWithFilePicker(payload, filename);
+      if (pickerRes.cancelled) {
+        return { status: 'cancelled' };
+      }
+      if (pickerRes.success) {
+        await recordVerifiedBackup(payload, who);
+        return { status: 'saved' };
+      }
+      return { status: 'cancelled' };
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        return { status: 'cancelled' };
+      }
+      throw err;
+    }
+  } else {
+    // Fallback: trigger browser download without committing yet
+    downloadBackupFile(payload, filename);
+    return { status: 'needs_confirmation' };
+  }
 }
 
 /**
@@ -198,6 +316,7 @@ export async function recordVerifiedBackup(payload: BackupPayload, who = 'owner'
 
   try {
     await db.settings.put({ key: 'lastVerifiedBackupAt', value: timestamp });
+    await db.settings.put({ key: 'lastBackupAt', value: timestamp });
 
     // Update recent backup history list (up to 10 entries)
     let history: BackupHistoryEntry[] = [];
@@ -219,7 +338,7 @@ export async function recordVerifiedBackup(payload: BackupPayload, who = 'owner'
 
     await addAudit(
       who,
-      'backup_verified',
+      'backup_created',
       'backup',
       `Backup created and verified (SHA-256: ${payload.checksum.slice(0, 10)}...)`
     );
@@ -239,6 +358,11 @@ export async function getBackupStatus(): Promise<BackupStatus> {
     const item = await db.settings.get('lastVerifiedBackupAt');
     if (item && typeof item.value === 'string') {
       lastVerifiedBackupAt = item.value;
+    } else {
+      const alt = await db.settings.get('lastBackupAt');
+      if (alt && typeof alt.value === 'string') {
+        lastVerifiedBackupAt = alt.value;
+      }
     }
   } catch {
     // ignore
@@ -330,6 +454,10 @@ export async function restoreBackup(
   try {
     await db.settings.put({
       key: 'lastVerifiedBackupAt',
+      value: validPayload.meta.exportedAt,
+    });
+    await db.settings.put({
+      key: 'lastBackupAt',
       value: validPayload.meta.exportedAt,
     });
   } catch {

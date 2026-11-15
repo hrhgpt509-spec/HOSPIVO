@@ -36,6 +36,11 @@ export interface TranslationSchema {
     gstin_prefix: string;
     date_placeholder: string;
     saved_on_device: string;
+    loading: string;
+    required: string;
+    error_occurred: string;
+    generic_error: string;
+    saved_badge: string;
   };
   login: {
     pos_title: string;
@@ -137,6 +142,9 @@ export interface TranslationSchema {
     cloud_sync_id_hint: string;
     cloud_supabase_url: string;
     cloud_supabase_anon_key: string;
+    sign_in_existing_shop: string;
+    sign_in_existing_shop_sub: string;
+    cloud_account_connected: string;
     step2_note: string;
 
     step3_badge: string;
@@ -302,6 +310,7 @@ export interface TranslationSchema {
     ijazat_pin_locked: string;
     ijazat_pin_success: string;
     safe_action: string;
+    title_approval: string;
     btn_wapas: ButtonLabel;
     btn_haan_jodo: ButtonLabel;
     btn_haan_wapas: ButtonLabel;
@@ -311,6 +320,7 @@ export interface TranslationSchema {
     success_sub: string;
     error_title: string;
     error_sub: string;
+    info_title: string;
   };
   errors: {
     pin_wrong: string;
@@ -1391,6 +1401,13 @@ export interface TranslationSchema {
     backup_failed_sub: string;
     err_invalid_backup_file: string;
     err_checksum_mismatch: string;
+    toast_backup_cancelled: string;
+    modal_save_confirm_title: string;
+    modal_save_confirm_sub: string;
+    modal_save_confirm_note: string;
+    btn_saved_file: ButtonLabel;
+    btn_cancel_save: ButtonLabel;
+    saving_backup: string;
   };
   fast_bill: {
     title: string;
@@ -1648,6 +1665,12 @@ export interface TranslationSchema {
     toast_synced: string;
     toast_failed: string;
     toast_copied: string;
+    owner_email: string;
+    cloud_shop_uuid: string;
+    status_connected: string;
+    status_not_connected: string;
+    btn_sign_in_connect: ButtonLabel;
+    btn_sign_out: ButtonLabel;
   };
   remote_approval: {
     ask_owner_title: string;
@@ -1682,5 +1705,37 @@ export interface TranslationSchema {
     toast_approved: string;
     toast_rejected: string;
     toast_error: string;
+  };
+  cloud_auth: {
+    modal_title: string;
+    modal_sub: string;
+    tab_signup: string;
+    tab_signin: string;
+    email_label: string;
+    email_placeholder: string;
+    password_label: string;
+    password_placeholder: string;
+    confirm_password_label: string;
+    confirm_password_placeholder: string;
+    btn_signup: ButtonLabel;
+    btn_signin: ButtonLabel;
+    btn_continue_offline: ButtonLabel;
+    err_email_invalid: string;
+    err_password_short: string;
+    err_password_mismatch: string;
+    err_auth_failed: string;
+    toast_signup_success: string;
+    toast_signin_success: string;
+    toast_signout_success: string;
+    existing_shop_found: string;
+    offline_note: string;
+    backend_unconfigured: string;
+    connected_as: string;
+    btn_sign_out: ButtonLabel;
+    btn_connect_account: ButtonLabel;
+    sign_in_existing_link: string;
+    sign_up_new_link: string;
+    cloud_status_connected: string;
+    cloud_status_disconnected: string;
   };
 }
