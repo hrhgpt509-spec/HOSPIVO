@@ -14,6 +14,18 @@ import {
   completeCloudSignInFromSession,
 } from './cloudAuth';
 
+function createMockQueryChain(resolvedData: any[] = []) {
+  const query: any = {
+    eq: vi.fn().mockImplementation(() => query),
+    gt: vi.fn().mockImplementation(() => query),
+    order: vi.fn().mockImplementation(() => query),
+    limit: vi.fn().mockImplementation(() => query),
+    maybeSingle: vi.fn().mockResolvedValue({ data: resolvedData[0] || null, error: null }),
+    then: (resolve: any) => Promise.resolve({ data: resolvedData, error: null }).then(resolve),
+  };
+  return query;
+}
+
 describe('cloudAuth unit tests', () => {
   beforeEach(async () => {
     vi.restoreAllMocks();
@@ -106,15 +118,7 @@ describe('cloudAuth unit tests', () => {
         };
       }
       return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockReturnValue({
-              order: vi.fn().mockReturnValue({
-                limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-              }),
-            }),
-          }),
-        }),
+        select: vi.fn().mockReturnValue(createMockQueryChain([])),
       };
     });
     vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
@@ -169,15 +173,7 @@ describe('cloudAuth unit tests', () => {
         };
       }
       return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockReturnValue({
-              order: vi.fn().mockReturnValue({
-                limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-              }),
-            }),
-          }),
-        }),
+        select: vi.fn().mockReturnValue(createMockQueryChain([])),
       };
     });
     vi.spyOn(supabase, 'from').mockImplementation(mockFromMulti as any);
@@ -282,15 +278,7 @@ describe('cloudAuth unit tests', () => {
         };
       }
       return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockReturnValue({
-              order: vi.fn().mockReturnValue({
-                limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-              }),
-            }),
-          }),
-        }),
+        select: vi.fn().mockReturnValue(createMockQueryChain([])),
       };
     });
     vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
@@ -307,6 +295,117 @@ describe('cloudAuth unit tests', () => {
     expect(shop.cloudShopUuid).toBe('shop-uuid-otp');
     expect(shop.shopSyncId).toBe('HOSP-OTPV-8888');
     expect(shop.mode).toBe('cloud');
+  });
+
+  it('verifyEmailOtp hydrates shop profile and owner/staff users on clean Dexie database', async () => {
+    await db.shop.clear();
+    await db.users.clear();
+    expect(await db.shop.count()).toBe(0);
+    expect(await db.users.count()).toBe(0);
+
+    vi.spyOn(supabase.auth, 'verifyOtp').mockResolvedValueOnce({
+      data: {
+        user: { id: 'usr-otp-hydrated-users', email: 'owner@durga.com' } as any,
+        session: {} as any,
+      },
+      error: null,
+    });
+
+    const mockStaffEvents = [
+      {
+        id: 1,
+        shop_id: 'shop-uuid-durga',
+        entity_type: 'staff',
+        entity_id: 'owner',
+        payload_json: JSON.stringify({
+          id: 'owner',
+          name: 'Shri Ram Owner',
+          role: 'owner',
+          pinHash: 'hashed_owner_pin',
+          pinSalt: 'salt_owner',
+          pinLength: 4,
+          active: true,
+          approvalPin: { hash: 'approval_hash_1', salt: 'approval_salt_1' },
+        }),
+      },
+      {
+        id: 2,
+        shop_id: 'shop-uuid-durga',
+        entity_type: 'staff',
+        entity_id: 'staff_1',
+        payload_json: JSON.stringify({
+          id: 'staff_1',
+          name: 'Ramesh Cashier',
+          role: 'cashier',
+          pinHash: 'hashed_staff_pin',
+          pinSalt: 'salt_staff',
+          pinLength: 4,
+          active: true,
+        }),
+      },
+    ];
+
+    const mockFrom = vi.fn().mockImplementation((table: string) => {
+      if (table === 'shops') {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: 'shop-uuid-durga',
+                  shop_name: 'Maa Durga Medical Hall',
+                  shop_sync_id: 'HOSP-DURG-9999',
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === 'hospivo_sync_events') {
+        return {
+          select: vi.fn().mockReturnValue(createMockQueryChain(mockStaffEvents)),
+        };
+      }
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+        }),
+      };
+    });
+    vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
+
+    const res = await verifyEmailOtp('owner@durga.com', '123456');
+    expect(res.error).toBeNull();
+    expect(res.isNewShop).toBe(false);
+    expect(res.shop?.name).toBe('Maa Durga Medical Hall');
+
+    // Verify shop profile is hydrated
+    const shop = (await db.shop.toArray())[0];
+    expect(shop).toBeDefined();
+    expect(shop.name).toBe('Maa Durga Medical Hall');
+    expect(shop.cloudShopUuid).toBe('shop-uuid-durga');
+
+    // Verify owner & staff users are hydrated into Dexie db.users
+    const users = await db.users.toArray();
+    expect(users.length).toBe(2);
+
+    const owner = await db.users.get('owner');
+    expect(owner).toBeDefined();
+    expect(owner?.name).toBe('Shri Ram Owner');
+    expect(owner?.role).toBe('owner');
+    expect(owner?.pinHash).toBe('hashed_owner_pin');
+
+    const staff1 = await db.users.get('staff_1');
+    expect(staff1).toBeDefined();
+    expect(staff1?.name).toBe('Ramesh Cashier');
+    expect(staff1?.role).toBe('cashier');
+
+    // Verify approval PIN was also restored
+    const approvalSetting = await db.settings.get('approval_pin');
+    expect(approvalSetting?.value).toEqual({ hash: 'approval_hash_1', salt: 'approval_salt_1' });
   });
 
   it('sendMagicLink sends OTP with normalized lowercase email', async () => {
@@ -381,15 +480,7 @@ describe('cloudAuth unit tests', () => {
         };
       }
       return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            gt: vi.fn().mockReturnValue({
-              order: vi.fn().mockReturnValue({
-                limit: vi.fn().mockResolvedValue({ data: [], error: null }),
-              }),
-            }),
-          }),
-        }),
+        select: vi.fn().mockReturnValue(createMockQueryChain([])),
       };
     });
     vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);

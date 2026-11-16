@@ -30,6 +30,7 @@ export interface CloudConfig {
   cloudAnonKey: string;
   shopSyncId: string;
   deviceName: string;
+  deviceId?: string;
   lastCloudSyncAt: number | null;
   lastStatus: 'synced' | 'failed' | 'offline' | 'never';
   lastError: string | null;
@@ -87,6 +88,7 @@ export async function getCloudConfig(): Promise<CloudConfig> {
     keyItem,
     syncIdItem,
     deviceItem,
+    deviceIdItem,
     lastSyncItem,
     statusItem,
     errorItem,
@@ -97,6 +99,7 @@ export async function getCloudConfig(): Promise<CloudConfig> {
     db.settings.get('cloud_anon_key'),
     db.settings.get('shop_sync_id'),
     db.settings.get('device_name'),
+    db.settings.get('device_id'),
     db.settings.get('last_cloud_sync_at'),
     db.settings.get('last_cloud_sync_status'),
     db.settings.get('last_cloud_sync_error'),
@@ -107,6 +110,12 @@ export async function getCloudConfig(): Promise<CloudConfig> {
   if (!shopSyncId) {
     shopSyncId = generateShopSyncId();
     await db.settings.put({ key: 'shop_sync_id', value: shopSyncId });
+  }
+
+  let deviceId = deviceIdItem?.value as string;
+  if (!deviceId) {
+    deviceId = 'DEV-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    await db.settings.put({ key: 'device_id', value: deviceId });
   }
 
   const cloudEnabled = Boolean(enabledItem?.value ?? false);
@@ -126,6 +135,7 @@ export async function getCloudConfig(): Promise<CloudConfig> {
     cloudAnonKey,
     shopSyncId,
     deviceName,
+    deviceId,
     lastCloudSyncAt,
     lastStatus,
     lastError,
@@ -369,13 +379,32 @@ export async function applyRemoteEvent(event: any): Promise<void> {
     }
 
     case 'staff': {
-      const user = (payload.user || payload) as DBUser;
+      const user = (payload.user || payload) as DBUser & { approvalPin?: { hash: string; salt: string } };
       if (user && user.id) {
         const existing = await db.users.get(String(user.id));
+        const userData: DBUser = {
+          id: String(user.id),
+          name: user.name || (user.id === 'owner' ? 'Owner' : 'Staff'),
+          role: user.role || (user.id === 'owner' ? 'owner' : 'cashier'),
+          pinHash: user.pinHash,
+          pinSalt: user.pinSalt,
+          pinLength: user.pinLength || 4,
+          active: user.active !== false,
+          createdAt: user.createdAt || new Date().toISOString(),
+        };
+
         if (existing) {
-          await db.users.update(String(user.id), user);
+          await db.users.update(String(user.id), userData);
         } else {
-          await db.users.put(user);
+          await db.users.put(userData);
+        }
+
+        // Restore approval PIN if bundled with owner user and local approval PIN is not yet set
+        if (user.approvalPin && user.approvalPin.hash && user.approvalPin.salt) {
+          const localApproval = await db.settings.get('approval_pin');
+          if (!localApproval) {
+            await db.settings.put({ key: 'approval_pin', value: user.approvalPin });
+          }
         }
       }
       break;
@@ -531,11 +560,20 @@ export async function pullRemoteEvents(
     }
 
     for (const event of data) {
-      const isLocalOrigin =
-        event.shop_sync_id === config.shopSyncId &&
-        event.device_name === config.deviceName;
+      const isSameDevice =
+        Boolean(config.deviceId && event.device_id && event.device_id === config.deviceId);
 
-      if (!isLocalOrigin) {
+      // CRITICAL: For staff/user records, or if the entity does NOT exist locally in Dexie,
+      // apply it even if device tags match (e.g. multi-device with same name, or cleared db).
+      let shouldApply = !isSameDevice;
+      if (!shouldApply && event.entity_type === 'staff') {
+        const localUser = await db.users.get(String(event.entity_id));
+        if (!localUser) {
+          shouldApply = true;
+        }
+      }
+
+      if (shouldApply) {
         try {
           await applyRemoteEvent(event);
         } catch (applyErr) {
@@ -754,6 +792,7 @@ export async function runSyncCycle(options?: {
               shop_id: cloudShopUuid,
               shop_sync_id: config.shopSyncId,
               device_name: config.deviceName,
+              device_id: config.deviceId || config.deviceName,
               entity_type: item.entityType,
               entity_id: item.entityId,
               payload_json: item.payloadJson,
@@ -1140,4 +1179,50 @@ if (typeof window !== 'undefined') {
     runSyncCycle().catch(() => {});
   });
 }
+
+/**
+ * Enqueues all existing local users (owner & staff) into syncOutbox
+ * so they are backed up to Supabase.
+ */
+export async function syncAllUsersToCloud(): Promise<void> {
+  const users = await db.users.toArray();
+  const approvalPin = (await db.settings.get('approval_pin'))?.value as { hash: string; salt: string } | undefined;
+  for (const user of users) {
+    const payload = user.role === 'owner' && approvalPin
+      ? { ...user, approvalPin }
+      : user;
+    await enqueueSyncItem('staff', user.id, payload);
+  }
+}
+
+/**
+ * Directly pulls all staff / user events for a given cloud shop from Supabase
+ * and upserts them into local Dexie IndexedDB.
+ */
+export async function pullAndHydrateStaffAccounts(cloudShopUuid: string): Promise<number> {
+  if (!isBackendConfigured() || !cloudShopUuid) return 0;
+  try {
+    const { data: staffEvents, error } = await supabase
+      .from('hospivo_sync_events')
+      .select('*')
+      .eq('shop_id', cloudShopUuid)
+      .eq('entity_type', 'staff');
+
+    if (error) {
+      console.warn('pullAndHydrateStaffAccounts query error:', error);
+      return 0;
+    }
+
+    if (Array.isArray(staffEvents)) {
+      for (const evt of staffEvents) {
+        await applyRemoteEvent(evt);
+      }
+      return staffEvents.length;
+    }
+  } catch (err) {
+    console.warn('pullAndHydrateStaffAccounts exception:', err);
+  }
+  return 0;
+}
+
 

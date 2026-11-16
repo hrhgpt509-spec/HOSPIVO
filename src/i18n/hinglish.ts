@@ -65,6 +65,12 @@ export const hinglish: TranslationSchema = {
     dev_lang_btn: 'Language / Bhasha',
     decorative_pos_title: 'HOSPIVO PHARMA POS',
     decorative_search_medicine: 'Dawai khojein...',
+    no_users_title: 'Koi Staff Account Nahi Mila',
+    no_users_desc: 'Is device par abhi tak staff aur owner accounts sync nahi huye hain.',
+    btn_sync_staff: { main: 'Staff Accounts Sync Karein', sub: 'Cloud se users download karein' },
+    sync_staff_success: 'Staff accounts kamyabi se sync ho gaye!',
+    sync_staff_failed: 'Staff sync fail ho gaya. Internet check karein.',
+    no_staff_found: 'Cloud par koi staff account nahi mila.',
   },
   setup: {
     wizard_title: 'Setup Wizard',

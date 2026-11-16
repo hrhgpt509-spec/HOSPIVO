@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Fix Vercel Build TS2591 Node Types in i18n Test - COMPLETE
+Sync & Hydrate Owner/Staff Accounts for Multi-Device Restore - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,10 @@ Fix Vercel Build TS2591 Node Types in i18n Test - COMPLETE
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Ensured Owner and Staff user records (with PIN hashes, salt, and approval PIN) are queued to Supabase sync outbox during cloud setup and updates via [Setup.tsx](file:///d:/HOSPIVO/src/screens/Setup.tsx) and [cloudSync.ts](file:///d:/HOSPIVO/src/logic/cloudSync.ts).
+- Added automatic staff account hydration (`pullAndHydrateStaffAccounts`) during multi-device OTP sign-in in [cloudAuth.ts](file:///d:/HOSPIVO/src/logic/cloudAuth.ts), restoring all accounts into local IndexedDB before the PIN screen loads.
+- Built a localized zero-user fallback card with a 56px "Sync Staff Accounts" retry button on the "Who is using?" PIN screen in [Login.tsx](file:///d:/HOSPIVO/src/screens/Login.tsx).
+- Added multi-device staff hydration unit tests in [cloudAuth.test.ts](file:///d:/HOSPIVO/src/logic/cloudAuth.test.ts) with 206 passing tests across 27 suites and a clean production build.
 - Excluded test files (`src/**/*.test.ts`, `src/**/*.test.tsx`) from browser app compilation in [tsconfig.app.json](file:///d:/HOSPIVO/tsconfig.app.json) so `tsc -b` only builds application code on Vercel.
 - Added `/// <reference types="node" />` to [i18n.test.ts](file:///d:/HOSPIVO/src/i18n/i18n.test.ts) to resolve Node filesystem types during standalone test runs.
 - Verified all 205 vitest tests and production build (`tsc -b && vite build`) compile with zero errors.

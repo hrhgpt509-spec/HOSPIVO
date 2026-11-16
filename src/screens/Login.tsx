@@ -8,6 +8,9 @@ import { LanguageSwitch } from '../components/LanguageSwitch';
 import { FullscreenButton } from '../components/FullscreenButton';
 import { enterFullscreen } from '../logic/fullscreen';
 import { useShop } from '../logic/useShop';
+import { Icon } from '../components/Icon';
+import { pullAndHydrateStaffAccounts, runSyncCycle } from '../logic/cloudSync';
+import { getCurrentCloudSession } from '../logic/cloudAuth';
 
 interface LoginProps {
   onLoginSuccess: (user: DBUser) => void;
@@ -40,6 +43,43 @@ export const Login: React.FC<LoginProps> = ({
   const [lockError, setLockError] = useState<boolean>(false);
   const [lockCountdownSeconds, setLockCountdownSeconds] = useState<number>(0);
   const [currentLiveTime, setCurrentLiveTime] = useState<Date>(() => new Date());
+  const [isSyncingUsers, setIsSyncingUsers] = useState<boolean>(false);
+
+  const btnSyncStaff = tButton('login.btn_sync_staff');
+
+  const loadData = useCallback(async () => {
+    try {
+      const allUsers = await db.users.filter((u) => u.active !== false).toArray();
+      allUsers.sort((a, b) => (a.role === 'owner' ? -1 : b.role === 'owner' ? 1 : 0));
+      setUsers(allUsers);
+    } catch (err) {
+      console.error('Failed to load login users:', err);
+    }
+  }, []);
+
+  const handleSyncStaffAccounts = async () => {
+    setIsSyncingUsers(true);
+    try {
+      const session = await getCurrentCloudSession();
+      if (session.cloudShopUuid) {
+        await pullAndHydrateStaffAccounts(session.cloudShopUuid);
+        await runSyncCycle({ force: true });
+      }
+
+      await loadData();
+      const updatedCount = await db.users.count();
+      if (updatedCount > 0) {
+        triggerFeedback('success', t('login.sync_staff_success'));
+      } else {
+        triggerFeedback('error', t('login.no_staff_found'));
+      }
+    } catch (err: any) {
+      console.error('Failed to sync staff accounts:', err);
+      triggerFeedback('error', t('login.sync_staff_failed'));
+    } finally {
+      setIsSyncingUsers(false);
+    }
+  };
 
   // Live timer for decorative panel clock
   useEffect(() => {
@@ -49,17 +89,8 @@ export const Login: React.FC<LoginProps> = ({
 
   // Load real users from database
   useEffect(() => {
-    async function loadData() {
-      try {
-        const allUsers = await db.users.filter((u) => u.active !== false).toArray();
-        allUsers.sort((a, b) => (a.role === 'owner' ? -1 : b.role === 'owner' ? 1 : 0));
-        setUsers(allUsers);
-      } catch (err) {
-        console.error('Failed to load login users:', err);
-      }
-    }
     loadData();
-  }, []);
+  }, [loadData]);
 
   // Timer countdown for lockout
   useEffect(() => {
@@ -454,7 +485,38 @@ export const Login: React.FC<LoginProps> = ({
 
             {/* Stacked Big Name Buttons (64px tall each) */}
             <div className="flex flex-col gap-3.5 max-w-[540px]">
-              {users.map((user, idx) => {
+              {users.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-6 sm:p-8 bg-surface-container rounded-3xl border border-outline-variant/40 text-center gap-4 animate-fadeIn">
+                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                    <Icon name="group" className="text-[32px]" />
+                  </div>
+                  <div className="flex flex-col gap-1 max-w-sm">
+                    <h3 className="text-xl font-bold text-on-surface">
+                      {t('login.no_users_title')}
+                    </h3>
+                    <p className="text-sm text-outline">
+                      {t('login.no_users_desc')}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSyncStaffAccounts}
+                    disabled={isSyncingUsers}
+                    className="w-full max-w-xs min-h-[56px] h-14 px-6 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-2xl flex items-center justify-center gap-3 font-bold transition-all shadow-md active:scale-[0.99] cursor-pointer"
+                  >
+                    <Icon name="sync" className={`text-[24px] ${isSyncingUsers ? 'animate-spin' : ''}`} />
+                    <div className="flex flex-col text-left">
+                      <span className="text-base font-bold leading-tight">{btnSyncStaff.main}</span>
+                      {btnSyncStaff.sub && (
+                        <span className="text-xs text-on-primary/80 font-normal leading-none">
+                          {btnSyncStaff.sub}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                </div>
+              ) : (
+                users.map((user, idx) => {
                 const isSelected = selectedUser?.id === user.id;
                 const isOwner = user.role === 'owner';
                 const palette = isOwner
@@ -543,7 +605,7 @@ export const Login: React.FC<LoginProps> = ({
                     </div>
                   </button>
                 );
-              })}
+              }))}
             </div>
 
             {/* Note under list */}

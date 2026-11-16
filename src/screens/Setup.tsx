@@ -17,7 +17,12 @@ import { LanguageSwitch } from '../components/LanguageSwitch';
 import { Icon } from '../components/Icon';
 import { OwnerMedicineImport } from './OwnerMedicineImport';
 import { CloudAccountAuth } from './CloudAccountAuth';
-import { generateShopSyncId, enqueueSyncItem } from '../logic/cloudSync';
+import {
+  generateShopSyncId,
+  enqueueSyncItem,
+  runSyncCycle,
+  pullAndHydrateStaffAccounts,
+} from '../logic/cloudSync';
 import { provisionCloudShop } from '../logic/cloudAuth';
 
 interface SetupProps {
@@ -347,43 +352,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     await db.shop.add(shopRecord);
     await addAudit('Setup', 'shop_saved', formattedShopName, 'Shop details saved during initial setup');
 
-    // 2. Save Owner user with hashed PIN (never plain text)
-    const { hash: ownerHash, salt: ownerSalt } = await hashPin(ownerPin1);
-    const ownerUser = {
-      id: 'owner',
-      name: formattedOwnerName,
-      role: 'owner' as const,
-      pinHash: ownerHash,
-      pinSalt: ownerSalt,
-      pinLength: ownerPin1.length,
-      active: true,
-      createdAt: new Date().toISOString(),
-    };
-    await db.users.add(ownerUser);
-    enqueueSyncItem('staff', 'owner', ownerUser).catch(() => {});
-    await addAudit('Setup', 'owner_created', formattedOwnerName, 'Owner user registered with hashed PIN');
-
-    // 3. Save any added staff members
-    for (const staff of staffList) {
-      const staffUser = {
-        id: staff.id,
-        name: staff.name,
-        role: 'cashier' as const,
-        pinHash: staff.pinHash,
-        pinSalt: staff.pinSalt,
-        pinLength: staff.plainPin.length,
-        active: true,
-        createdAt: new Date().toISOString(),
-      };
-      await db.users.add(staffUser);
-      enqueueSyncItem('staff', staff.id, staffUser).catch(() => {});
-      await addAudit('Setup', 'staff_created', staff.name, 'Staff member added with hashed PIN');
-    }
-
-    // 4. Save Approval PIN (salted hash only)
-    await setApprovalPin(approvalPin1, [ownerPin1, ...staffList.map((s) => s.plainPin)]);
-
-    // 5. Save settings (approval rules, auto-lock minutes, backup folder, pinLength, cloud settings)
+    // 2. Save settings (approval rules, auto-lock minutes, backup folder, pinLength, cloud settings)
+    // CRITICAL: cloud_enabled must be saved BEFORE enqueuing users so enqueueSyncItem knows cloud is active
     await db.settings.put({ key: 'approval_rules', value: approvalRules });
     await db.settings.put({ key: 'auto_lock_minutes', value: 5 });
     await db.settings.put({ key: 'backup_folder', value: backupFolder });
@@ -398,12 +368,57 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
       await db.settings.put({ key: 'cloud_shop_uuid', value: cloudShopUuid });
     }
 
+    // 3. Save Approval PIN (salted hash only)
+    await setApprovalPin(approvalPin1, [ownerPin1, ...staffList.map((s) => s.plainPin)]);
+    const approvalHashObj = (await db.settings.get('approval_pin'))?.value as { hash: string; salt: string } | undefined;
+
+    // 4. Save Owner user with hashed PIN (never plain text)
+    const { hash: ownerHash, salt: ownerSalt } = await hashPin(ownerPin1);
+    const ownerUser = {
+      id: 'owner',
+      name: formattedOwnerName,
+      role: 'owner' as const,
+      pinHash: ownerHash,
+      pinSalt: ownerSalt,
+      pinLength: ownerPin1.length,
+      active: true,
+      createdAt: new Date().toISOString(),
+    };
+    await db.users.add(ownerUser);
+    if (mode === 'cloud') {
+      await enqueueSyncItem('staff', 'owner', {
+        ...ownerUser,
+        approvalPin: approvalHashObj,
+      });
+    }
+    await addAudit('Setup', 'owner_created', formattedOwnerName, 'Owner user registered with hashed PIN');
+
+    // 5. Save any added staff members
+    for (const staff of staffList) {
+      const staffUser = {
+        id: staff.id,
+        name: staff.name,
+        role: 'cashier' as const,
+        pinHash: staff.pinHash,
+        pinSalt: staff.pinSalt,
+        pinLength: staff.plainPin.length,
+        active: true,
+        createdAt: new Date().toISOString(),
+      };
+      await db.users.add(staffUser);
+      if (mode === 'cloud') {
+        await enqueueSyncItem('staff', staff.id, staffUser);
+      }
+      await addAudit('Setup', 'staff_created', staff.name, 'Staff member added with hashed PIN');
+    }
+
     if (mode === 'cloud') {
       try {
         const prov = await provisionCloudShop(formattedShopName, shopSyncId.trim().toUpperCase());
         if (prov?.shopUuid) {
           await db.settings.put({ key: 'cloud_shop_uuid', value: prov.shopUuid });
         }
+        await runSyncCycle({ force: true });
       } catch (err) {
         console.warn('Could not provision cloud shop during setup completion:', err);
       }
@@ -497,6 +512,12 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
           if (session.cloudShopUuid) {
             const count = await db.shop.count();
             if (count > 0) {
+              // Ensure staff/user accounts are hydrated into Dexie before navigating to Login
+              const userCount = await db.users.count();
+              if (userCount === 0) {
+                await pullAndHydrateStaffAccounts(session.cloudShopUuid);
+                await runSyncCycle({ force: true }).catch(() => {});
+              }
               onComplete();
             }
           }

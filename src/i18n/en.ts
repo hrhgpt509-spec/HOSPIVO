@@ -65,6 +65,12 @@ export const en: TranslationSchema = {
     dev_lang_btn: 'Language',
     decorative_pos_title: 'HOSPIVO PHARMA POS',
     decorative_search_medicine: 'Search medicine...',
+    no_users_title: 'No Staff Accounts Found',
+    no_users_desc: 'Staff and Owner accounts have not synced to this device yet.',
+    btn_sync_staff: { main: 'Sync Staff Accounts', sub: 'Download users from cloud' },
+    sync_staff_success: 'Staff accounts synced successfully!',
+    sync_staff_failed: 'Failed to sync staff accounts. Please check connection.',
+    no_staff_found: 'No staff accounts found on cloud.',
   },
   setup: {
     wizard_title: 'Setup Wizard',

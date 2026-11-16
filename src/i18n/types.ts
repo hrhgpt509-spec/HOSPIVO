@@ -72,6 +72,12 @@ export interface TranslationSchema {
     dev_lang_btn: string;
     decorative_pos_title: string;
     decorative_search_medicine: string;
+    no_users_title: string;
+    no_users_desc: string;
+    btn_sync_staff: ButtonLabel;
+    sync_staff_success: string;
+    sync_staff_failed: string;
+    no_staff_found: string;
   };
   setup: {
     wizard_title: string;

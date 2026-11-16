@@ -1,7 +1,12 @@
 import { supabase, isBackendConfigured } from '../lib/supabase';
 import { db } from '../db';
 import { addAudit } from '../db/audit';
-import { generateShopSyncId, runSyncCycle } from './cloudSync';
+import {
+  generateShopSyncId,
+  runSyncCycle,
+  pullAndHydrateStaffAccounts,
+  syncAllUsersToCloud,
+} from './cloudSync';
 
 export interface CloudSessionInfo {
   user: { id: string; email?: string } | null;
@@ -126,6 +131,8 @@ async function hydrateOrFindExistingShop(
       // Update local storage with existing shop details
       await db.settings.put({ key: 'cloud_shop_uuid', value: existingShop.id });
       await db.settings.put({ key: 'shop_sync_id', value: existingShop.syncId });
+      await db.settings.put({ key: 'cloud_enabled', value: true });
+      await db.settings.put({ key: 'owner_email', value: cleanEmail });
 
       const localShops = await db.shop.toArray();
       if (localShops.length > 0 && localShops[0].id) {
@@ -152,7 +159,14 @@ async function hydrateOrFindExistingShop(
         });
       }
 
-      // Auto-trigger sync cycle to hydrate remote catalog & staff onto this device
+      // 1. Direct pull and hydration of all staff / user accounts into local Dexie
+      try {
+        await pullAndHydrateStaffAccounts(existingShop.id);
+      } catch (staffHydrateErr) {
+        console.warn('Initial staff hydration warning:', staffHydrateErr);
+      }
+
+      // 2. Auto-trigger sync cycle to hydrate remote catalog & remaining deltas
       try {
         await runSyncCycle({ force: true });
       } catch (syncErr) {
@@ -440,6 +454,14 @@ export async function provisionCloudShop(
           shopSyncId,
           mode: 'cloud',
         });
+      }
+
+      // Back up all local users to cloud and trigger sync push
+      await syncAllUsersToCloud();
+      try {
+        await runSyncCycle({ force: true });
+      } catch (syncErr) {
+        console.warn('Post-provisioning user sync warning:', syncErr);
       }
 
       await addAudit(

@@ -65,6 +65,12 @@ export const hi: TranslationSchema = {
     dev_lang_btn: 'भाषा',
     decorative_pos_title: 'HOSPIVO PHARMA POS',
     decorative_search_medicine: 'दवाई खोजें...',
+    no_users_title: 'कोई स्टाफ खाता नहीं मिला',
+    no_users_desc: 'इस डिवाइस पर अभी तक स्टाफ और ओनर खाते सिंक नहीं हुए हैं।',
+    btn_sync_staff: { main: 'स्टाफ खाते सिंक करें', sub: 'क्लाउड से यूज़र्स डाउनलोड करें' },
+    sync_staff_success: 'स्टाफ खाते सफलतापूर्वक सिंक हो गए!',
+    sync_staff_failed: 'स्टाफ सिंक विफल रहा। कृपया इंटरनेट कनेक्शन जांचें।',
+    no_staff_found: 'क्लाउड पर कोई स्टाफ खाता नहीं मिला।',
   },
   setup: {
     wizard_title: 'सेटअप',
