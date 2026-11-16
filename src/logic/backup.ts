@@ -189,6 +189,57 @@ export async function generateAndVerifyBackup(customShopName?: string): Promise<
 }
 
 /**
+ * Checks if the Native File System Access API (showDirectoryPicker) is supported.
+ */
+export function isDirectoryPickerSupported(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof (window as any).showDirectoryPicker === 'function'
+  );
+}
+
+/**
+ * Prompts user to pick a real directory using window.showDirectoryPicker.
+ * Returns { handle, folderName } or null if cancelled / unsupported.
+ */
+export async function pickBackupDirectory(): Promise<{ handle: any; folderName: string } | null> {
+  if (!isDirectoryPickerSupported()) {
+    return null;
+  }
+  try {
+    const handle = await (window as any).showDirectoryPicker({ mode: 'readwrite' });
+    if (!handle) return null;
+    return { handle, folderName: handle.name || 'Selected Folder' };
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      return null;
+    }
+    throw err;
+  }
+}
+
+/**
+ * Writes a verified backup JSON file directly into a FileSystemDirectoryHandle.
+ */
+export async function writeBackupToDirectoryHandle(
+  dirHandle: any,
+  payload: BackupPayload,
+  filename?: string
+): Promise<{ success: boolean; filename: string }> {
+  if (!dirHandle || typeof dirHandle.getFileHandle !== 'function') {
+    throw new Error('Invalid directory handle');
+  }
+  const fallbackDate = payload.meta?.exportedAt ? new Date(payload.meta.exportedAt) : new Date();
+  const name = filename || getBackupFilename(fallbackDate);
+  const fileHandle = await dirHandle.getFileHandle(name, { create: true });
+  const writable = await fileHandle.createWritable();
+  const jsonStr = JSON.stringify(payload, null, 2);
+  await writable.write(jsonStr);
+  await writable.close();
+  return { success: true, filename: name };
+}
+
+/**
  * Checks if the Native File System Access API (showSaveFilePicker) is supported.
  */
 export function isSaveFilePickerSupported(): boolean {

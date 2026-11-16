@@ -15,14 +15,23 @@ describe('medicineImport logic and tests', () => {
     await db.open();
   });
 
-  it('generates sample CSV template header and 1 example row', () => {
+  it('generates sample CSV template header and 4 realistic Indian sample rows', () => {
     const csv = generateSampleCsv();
     expect(csv).toContain('Name,Strength,Form,Salt,Company,MRP,UnitsPerPack');
-    expect(csv).toContain('Crocin 650 Advance,650mg,Tablet,Paracetamol,GlaxoSmithKline,31.50,15');
+    expect(csv).toContain('Dolo 650,650mg,Tablet,Paracetamol,Micro Labs Ltd,33.60,15');
+    expect(csv).toContain('Mox 500,500mg,Capsule,Amoxicillin,Sun Pharma,72.50,10');
+    expect(csv).toContain('Pan 40,40mg,Tablet,Pantoprazole,Alkem Laboratories,99.00,15');
+    expect(csv).toContain('Cetcip 10,10mg,Tablet,Cetirizine,Cipla Ltd,21.50,10');
     const parsed = parseCsv(csv);
-    expect(parsed).toHaveLength(2);
+    expect(parsed).toHaveLength(5); // Header + 4 rows
     expect(parsed[0][0]).toBe('Name');
-    expect(parsed[1][0]).toBe('Crocin 650 Advance');
+    expect(parsed[1][0]).toBe('Dolo 650');
+
+    // Round-trip validation test: all 4 rows pass validation with 0 errors and 0 duplicates
+    const validation = validateAndClassifyRows(parsed, []);
+    expect(validation.validCount).toBe(4);
+    expect(validation.duplicateCount).toBe(0);
+    expect(validation.errorCount).toBe(0);
   });
 
   it('parses valid CSV rows, converting MRP rupees to paise, and computing minStockUnits', () => {

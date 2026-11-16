@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Add Full Local-to-Cloud Backfill Sync & Fix Node 20+ DNS in Vite Proxy - COMPLETE
+PROMPT F1 - Fix Auto-Lock on PIN Screen, Real Backup Folder, Sample CSV Template, & Phone Layout - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,11 @@ Add Full Local-to-Cloud Backfill Sync & Fix Node 20+ DNS in Vite Proxy - COMPLET
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Gated auto-lock timer in [App.tsx](file:///d:/HOSPIVO/src/App.tsx) and unit tested `shouldRunAutoLock` in [backupAndSettings.test.ts](file:///d:/HOSPIVO/src/logic/backupAndSettings.test.ts): inactivity timer is completely disabled on "Who is using?" PIN screen and Setup Wizard, running strictly in POS (`home` screen with `currentUser`).
+- Replaced dummy backup folder strings with File System Access API picker (`pickBackupDirectory`), immediate verified backup creation (`writeBackupToDirectoryHandle`), and download fallback in [backup.ts](file:///d:/HOSPIVO/src/logic/backup.ts) and [Setup.tsx](file:///d:/HOSPIVO/src/screens/Setup.tsx).
+- Fixed sample CSV template in [medicineImport.ts](file:///d:/HOSPIVO/src/logic/medicineImport.ts) with 4 realistic Indian medicine rows passing zero-error round-trip validation in [medicineImport.test.ts](file:///d:/HOSPIVO/src/logic/medicineImport.test.ts), and added download buttons in [Setup.tsx](file:///d:/HOSPIVO/src/screens/Setup.tsx) and [OwnerMedicineImport.tsx](file:///d:/HOSPIVO/src/screens/OwnerMedicineImport.tsx).
+- Audited and updated responsive mobile layout across [Setup.tsx](file:///d:/HOSPIVO/src/screens/Setup.tsx), [Login.tsx](file:///d:/HOSPIVO/src/screens/Login.tsx), and [Home.tsx](file:///d:/HOSPIVO/src/screens/Home.tsx) with `min-h-dvh`, mobile two-column stacking with Back buttons, and comfortable touch targets (360px-430px).
+- Verified full test suite (214 tests in 28 test files) and production build (`tsc -b && vite build`) passing with zero errors.
 - Implemented `backfillLocalDataToCloud()` in [cloudSync.ts](file:///d:/HOSPIVO/src/logic/cloudSync.ts) and [syncEngine.ts](file:///d:/HOSPIVO/src/logic/syncEngine.ts) scanning all local Dexie tables (users, medicines, batches, sales, returns, purchases, suppliers, customers, stock movements) and pushing upsert events to Supabase `hospivo_sync_events`.
 - Added "Push All Local Data to Cloud" button with localized toast confirmation in [OwnerCloudSync.tsx](file:///d:/HOSPIVO/src/screens/OwnerCloudSync.tsx) across [en.ts](file:///d:/HOSPIVO/src/i18n/en.ts), [hi.ts](file:///d:/HOSPIVO/src/i18n/hi.ts), [hinglish.ts](file:///d:/HOSPIVO/src/i18n/hinglish.ts), and [types.ts](file:///d:/HOSPIVO/src/i18n/types.ts).
 - Updated Node 20+ `options.all` IPv4 DNS resolution for `supabaseAgent` in [vite.config.ts](file:///d:/HOSPIVO/vite.config.ts), with all 212 unit tests passing in [syncEngine.test.ts](file:///d:/HOSPIVO/src/logic/syncEngine.test.ts) and clean production build.

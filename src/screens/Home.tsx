@@ -498,11 +498,11 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     const pageLabel = tButton(`home.tile_${activePage}`);
     const subTitle = pageLabel.main;
     return (
-      <div className="w-full min-h-screen bg-canvas dark:bg-[#0f1713] text-[#101828] dark:text-gray-100 flex flex-col justify-between p-6 antialiased select-none transition-colors">
+      <div className="w-full min-h-dvh bg-canvas dark:bg-[#0f1713] text-[#101828] dark:text-gray-100 flex flex-col justify-between p-3 sm:p-4 lg:p-6 antialiased select-none transition-colors">
         <div className="w-full max-w-[1440px] mx-auto flex-1 flex flex-col justify-between">
           
           {/* Subpage Header (46b_Shared_EmptyState.html context bar) */}
-          <header className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 px-7 py-4 flex flex-wrap items-center justify-between gap-4">
+          <header className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 px-4 sm:px-7 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <button
                 type="button"
@@ -569,11 +569,11 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
 
   // MAIN HOME VIEW
   return (
-    <div className="w-full min-h-screen bg-canvas dark:bg-[#0f1713] text-[#101828] dark:text-gray-100 flex flex-col justify-between p-6 antialiased select-none transition-colors">
+    <div className="w-full min-h-dvh bg-canvas dark:bg-[#0f1713] text-[#101828] dark:text-gray-100 flex flex-col justify-between p-3 sm:p-4 lg:p-6 antialiased select-none transition-colors">
       <div className="w-full max-w-[1440px] mx-auto flex-1 flex flex-col justify-between relative">
         
         {/* TOP BAR (App screen top bar) */}
-        <header className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 px-7 py-4 flex flex-wrap items-center justify-between gap-4">
+        <header className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 px-4 sm:px-7 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-4">
           {/* Left: Brand + Shop Name */}
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-3">
@@ -809,89 +809,89 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
         )}
 
         {/* MAIN AREA: 8 BIG SQUARE TILES IN A GRID */}
-        <main className="w-full flex-1 flex items-center justify-center py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full max-w-[1392px]">
+        <main className="w-full flex-1 flex items-center justify-center py-4 sm:py-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 w-full max-w-[1392px]">
             
             {/* Tile 1: Dawai Becho (Sell, green, largest and first) */}
             <div
               onClick={() => handleTileClick('dawai_becho')}
-              className="bg-brand text-white rounded-2xl flex flex-col justify-between shadow-lg shadow-brand/20 border-2 border-brand hover:brightness-105 cursor-pointer transition h-[225px] p-6 active:scale-[0.99]"
+              className="bg-brand text-white rounded-2xl flex flex-col justify-between shadow-lg shadow-brand/20 border-2 border-brand hover:brightness-105 cursor-pointer transition min-h-[160px] sm:h-[200px] lg:h-[225px] p-4 sm:p-5 lg:p-6 active:scale-[0.99]"
             >
               <div className="flex items-start justify-between">
-                <div className="w-14 h-14 rounded-xl bg-white/20 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-white stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-white/20 flex items-center justify-center">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
                   </svg>
                 </div>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight">{tileDawaiBecho.main}</div>
-                {tileDawaiBecho.sub ? <div className="text-base text-white/85 font-medium mt-0.5">{tileDawaiBecho.sub}</div> : null}
+                <div className="text-xl sm:text-2xl font-bold leading-tight">{tileDawaiBecho.main}</div>
+                {tileDawaiBecho.sub ? <div className="text-xs sm:text-base text-white/85 font-medium mt-0.5">{tileDawaiBecho.sub}</div> : null}
               </div>
             </div>
 
             {/* Tile 2: Fast Bill (Rush) */}
             <div
               onClick={() => handleTileClick('fast_bill')}
-              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6 active:scale-[0.99]"
+              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition min-h-[160px] sm:h-[200px] lg:h-[225px] p-4 sm:p-5 lg:p-6 active:scale-[0.99]"
             >
-              <div className="w-14 h-14 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-semantic-blue flex items-center justify-center">
-                <svg className="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-semantic-blue flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileFastBill.main}</div>
-                {tileFastBill.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileFastBill.sub}</div> : null}
+                <div className="text-xl sm:text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileFastBill.main}</div>
+                {tileFastBill.sub ? <div className="text-xs sm:text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileFastBill.sub}</div> : null}
               </div>
             </div>
 
             {/* Tile 3: Stock Jodo (Add stock) */}
             <div
               onClick={() => handleTileClick('stock_jodo')}
-              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6 active:scale-[0.99]"
+              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition min-h-[160px] sm:h-[200px] lg:h-[225px] p-4 sm:p-5 lg:p-6 active:scale-[0.99]"
             >
-              <div className="w-14 h-14 rounded-xl bg-green-50 dark:bg-green-950/50 text-brand flex items-center justify-center">
-                <svg className="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-green-50 dark:bg-green-950/50 text-brand flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileStockJodo.main}</div>
-                {tileStockJodo.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileStockJodo.sub}</div> : null}
+                <div className="text-xl sm:text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileStockJodo.main}</div>
+                {tileStockJodo.sub ? <div className="text-xs sm:text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileStockJodo.sub}</div> : null}
               </div>
             </div>
 
             {/* Tile 4: Stock Dekho (View stock) */}
             <div
               onClick={() => handleTileClick('stock_dekho')}
-              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6 active:scale-[0.99]"
+              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition min-h-[160px] sm:h-[200px] lg:h-[225px] p-4 sm:p-5 lg:p-6 active:scale-[0.99]"
             >
-              <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 flex items-center justify-center">
-                <svg className="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-slate-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileStockDekho.main}</div>
-                {tileStockDekho.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileStockDekho.sub}</div> : null}
+                <div className="text-xl sm:text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileStockDekho.main}</div>
+                {tileStockDekho.sub ? <div className="text-xs sm:text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileStockDekho.sub}</div> : null}
               </div>
             </div>
 
             {/* Tile 5: Expiry (Alerts, orange accent) */}
             <div
               onClick={() => handleTileClick('expiry')}
-              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border-2 border-semantic-orange/30 dark:border-semantic-orange/40 hover:border-semantic-orange hover:shadow-md cursor-pointer transition h-[225px] p-6 active:scale-[0.99]"
+              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border-2 border-semantic-orange/30 dark:border-semantic-orange/40 hover:border-semantic-orange hover:shadow-md cursor-pointer transition min-h-[160px] sm:h-[200px] lg:h-[225px] p-4 sm:p-5 lg:p-6 active:scale-[0.99]"
             >
               <div className="flex items-start justify-between">
-                <div className="w-14 h-14 rounded-xl bg-semantic-orangeBg dark:bg-orange-950/40 text-semantic-orange flex items-center justify-center">
-                  <svg className="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-semantic-orangeBg dark:bg-orange-950/40 text-semantic-orange flex items-center justify-center">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
                   </svg>
                 </div>
                 {liveCounters.combinedAlertsCount > 0 ? (
-                  <span className="px-2.5 py-0.5 rounded-full bg-semantic-orange text-white text-sm font-extrabold">
+                  <span className="px-2 sm:px-2.5 py-0.5 rounded-full bg-semantic-orange text-white text-xs sm:text-sm font-extrabold">
                     {liveCounters.combinedAlertsCount}
                   </span>
                 ) : (
@@ -899,56 +899,56 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                 )}
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileExpiry.main}</div>
-                {tileExpiry.sub ? <div className="text-base text-semantic-orange font-bold mt-0.5">{tileExpiry.sub}</div> : null}
+                <div className="text-xl sm:text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileExpiry.main}</div>
+                {tileExpiry.sub ? <div className="text-xs sm:text-base text-semantic-orange font-bold mt-0.5">{tileExpiry.sub}</div> : null}
               </div>
             </div>
 
             {/* Tile 6: Udhaar (Credit) */}
             <div
               onClick={() => handleTileClick('udhaar')}
-              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6 active:scale-[0.99]"
+              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition min-h-[160px] sm:h-[200px] lg:h-[225px] p-4 sm:p-5 lg:p-6 active:scale-[0.99]"
             >
-              <div className="w-14 h-14 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-semantic-yellow flex items-center justify-center">
-                <svg className="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-semantic-yellow flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileUdhaar.main}</div>
-                {tileUdhaar.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileUdhaar.sub}</div> : null}
+                <div className="text-xl sm:text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileUdhaar.main}</div>
+                {tileUdhaar.sub ? <div className="text-xs sm:text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileUdhaar.sub}</div> : null}
               </div>
             </div>
 
             {/* Tile 7: Din Band (Close day) */}
             <div
               onClick={() => handleTileClick('din_band')}
-              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6 active:scale-[0.99]"
+              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition min-h-[160px] sm:h-[200px] lg:h-[225px] p-4 sm:p-5 lg:p-6 active:scale-[0.99]"
             >
-              <div className="w-14 h-14 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-semantic-red flex items-center justify-center">
-                <svg className="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-semantic-red flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileDinBand.main}</div>
-                {tileDinBand.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileDinBand.sub}</div> : null}
+                <div className="text-xl sm:text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileDinBand.main}</div>
+                {tileDinBand.sub ? <div className="text-xs sm:text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileDinBand.sub}</div> : null}
               </div>
             </div>
 
             {/* Tile 8: Owner (key icon, Owner PIN gate) */}
             <div
               onClick={() => handleTileClick('owner')}
-              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition h-[225px] p-6 active:scale-[0.99]"
+              className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-2xl flex flex-col justify-between shadow-sm border border-gray-200/90 dark:border-gray-800 hover:border-brand/50 hover:shadow-md cursor-pointer transition min-h-[160px] sm:h-[200px] lg:h-[225px] p-4 sm:p-5 lg:p-6 active:scale-[0.99]"
             >
-              <div className="w-14 h-14 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 flex items-center justify-center">
-                <svg className="w-8 h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-8 sm:h-8 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
                 </svg>
               </div>
               <div>
-                <div className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileOwner.main}</div>
-                {tileOwner.sub ? <div className="text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileOwner.sub}</div> : null}
+                <div className="text-xl sm:text-2xl font-bold leading-tight text-gray-900 dark:text-white">{tileOwner.main}</div>
+                {tileOwner.sub ? <div className="text-xs sm:text-base text-gray-500 dark:text-gray-400 font-medium mt-0.5">{tileOwner.sub}</div> : null}
               </div>
             </div>
 

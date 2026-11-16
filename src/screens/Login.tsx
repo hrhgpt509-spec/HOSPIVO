@@ -57,6 +57,7 @@ export const Login: React.FC<LoginProps> = ({
   const btnCreateOwnerPin = tButton('login.btn_create_owner_pin');
   const btnSaveOwnerPin = tButton('login.btn_save_owner_pin');
   const btnCancelCreateOwner = tButton('login.btn_cancel_create_owner');
+  const btnBack = tButton('common.btn_back');
 
   const loadData = useCallback(async () => {
     try {
@@ -493,10 +494,10 @@ export const Login: React.FC<LoginProps> = ({
   const selectedUserPinLength = 4;
 
   return (
-    <div className="w-full min-h-screen bg-[#F4F6F5] text-slate-800 flex flex-col justify-center items-center p-4 md:p-8 select-none">
+    <div className="w-full min-h-dvh bg-[#F4F6F5] text-slate-800 flex flex-col justify-center items-center p-3 sm:p-6 md:p-8 select-none">
       
       {/* Master Outer Card Container (Matches 08a / 08b) */}
-      <main className="w-full max-w-[1376px] bg-white rounded-3xl shadow-xl border border-slate-200/80 p-6 md:p-8 flex flex-col justify-between min-h-[820px] relative">
+      <main className="w-full max-w-[1376px] bg-white rounded-3xl shadow-xl border border-slate-200/80 p-4 sm:p-6 md:p-8 flex flex-col justify-between min-h-[auto] sm:min-h-[640px] lg:min-h-[820px] relative">
         
         {/* Top Branding / Header inside Card */}
         <header className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-4">
@@ -531,7 +532,7 @@ export const Login: React.FC<LoginProps> = ({
         <section className="grid grid-cols-12 gap-8 my-auto items-stretch py-4">
           
           {/* LEFT HALF (5.5 Columns): "Kaun hai?" with stacked user buttons */}
-          <div className="col-span-12 lg:col-span-5 flex flex-col justify-center pr-0 lg:pr-4">
+          <div className={`col-span-12 lg:col-span-5 ${selectedUser ? 'hidden lg:flex' : 'flex'} flex-col justify-center pr-0 lg:pr-4`}>
             
             {/* Heading */}
             <div className="mb-6">
@@ -813,7 +814,7 @@ export const Login: React.FC<LoginProps> = ({
           </div>
 
           {/* RIGHT HALF (7 Columns): Either Empty State (08a) OR Active PIN Pad (08b) */}
-          <div className="col-span-12 lg:col-span-7 flex flex-col justify-center pl-0 lg:pl-4">
+          <div className={`col-span-12 lg:col-span-7 ${!selectedUser ? 'hidden lg:flex' : 'flex'} flex-col justify-center pl-0 lg:pl-4`}>
             
             {!selectedUser ? (
               // 08a: Empty state "Naam chuniye"
@@ -839,12 +840,12 @@ export const Login: React.FC<LoginProps> = ({
               </div>
             ) : (
               // 08b: Active User PIN Entry & Large Numpad
-              <div className="w-full bg-slate-50/70 border-2 border-slate-200 rounded-3xl p-6 flex flex-col items-center justify-between min-h-[480px]">
+              <div className="w-full bg-slate-50/70 border-2 border-slate-200 rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-between min-h-[480px]">
                 
                 {/* Header Info for Selected User */}
-                <div className="w-full flex items-center justify-between pb-3 border-b border-slate-200/80">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-[#1B8F4A] text-white flex items-center justify-center text-xl font-black shadow-md shadow-[#1B8F4A]/30">
+                <div className="w-full flex items-center justify-between pb-3 border-b border-slate-200/80 gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 rounded-2xl bg-[#1B8F4A] text-white flex items-center justify-center text-xl font-black shadow-md shadow-[#1B8F4A]/30 shrink-0">
                       {selectedUser.role === 'owner' ? (
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
@@ -853,17 +854,32 @@ export const Login: React.FC<LoginProps> = ({
                         selectedUser.name.charAt(0).toUpperCase()
                       )}
                     </div>
-                    <div>
+                    <div className="truncate">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-2xl font-black text-slate-900 leading-tight">{selectedUser.name}</h3>
-                        <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold">{t('login.selected_tag')}</span>
+                        <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight truncate">{selectedUser.name}</h3>
+                        <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-bold shrink-0">{t('login.selected_tag')}</span>
                       </div>
-                      <p className="text-sm font-medium text-slate-500">{t('login.enter_pin_prompt', { digits: selectedUserPinLength })}</p>
+                      <p className="text-sm font-medium text-slate-500 truncate">{t('login.enter_pin_prompt', { digits: selectedUserPinLength })}</p>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedUser(null);
+                        setPin('');
+                        setHasError(false);
+                        setErrorMessage('');
+                      }}
+                      className="lg:hidden h-10 px-3 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                      </svg>
+                      <span>{btnBack.main || 'Back'}</span>
+                    </button>
+                    <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider">
                       {t('login.step_enter_pin')}
                     </span>
                   </div>
@@ -910,15 +926,15 @@ export const Login: React.FC<LoginProps> = ({
                   )}
                 </div>
 
-                {/* Very Large Number Pad (88px Keys, 3x4 Grid - Matches 08b) */}
-                <div className="grid grid-cols-3 gap-3.5 my-1">
+                {/* Responsive Number Pad */}
+                <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 my-1">
                   {/* Rows 1-3 */}
                   {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
                     <button
                       key={digit}
                       type="button"
                       onClick={() => handleAddDigit(digit)}
-                      className="w-[88px] h-[88px] rounded-2xl bg-white hover:bg-slate-100 active:bg-slate-200 border-2 border-slate-200 shadow-sm text-slate-800 text-3xl font-bold flex flex-col items-center justify-center transition-all cursor-pointer"
+                      className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-2xl bg-white hover:bg-slate-100 active:bg-slate-200 border-2 border-slate-200 shadow-sm text-slate-800 text-2xl sm:text-3xl font-bold flex flex-col items-center justify-center transition-all cursor-pointer"
                     >
                       <span>{digit}</span>
                     </button>
@@ -928,18 +944,18 @@ export const Login: React.FC<LoginProps> = ({
                   <button
                     type="button"
                     onClick={handleClear}
-                    className="w-[88px] h-[88px] rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border-2 border-slate-200 text-slate-600 flex flex-col items-center justify-center transition-all cursor-pointer"
+                    className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border-2 border-slate-200 text-slate-600 flex flex-col items-center justify-center transition-all cursor-pointer"
                   >
-                    <span className="text-lg font-bold">{clearBtn.main}</span>
+                    <span className="text-base sm:text-lg font-bold">{clearBtn.main}</span>
                     {clearBtn.sub ? (
-                      <span className="text-xs font-semibold text-slate-500">{clearBtn.sub}</span>
+                      <span className="text-[11px] sm:text-xs font-semibold text-slate-500">{clearBtn.sub}</span>
                     ) : null}
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleAddDigit('0')}
-                    className="w-[88px] h-[88px] rounded-2xl bg-white hover:bg-slate-100 active:bg-slate-200 border-2 border-slate-200 shadow-sm text-slate-800 text-3xl font-bold flex flex-col items-center justify-center transition-all cursor-pointer"
+                    className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-2xl bg-white hover:bg-slate-100 active:bg-slate-200 border-2 border-slate-200 shadow-sm text-slate-800 text-2xl sm:text-3xl font-bold flex flex-col items-center justify-center transition-all cursor-pointer"
                   >
                     <span>0</span>
                   </button>
@@ -948,13 +964,13 @@ export const Login: React.FC<LoginProps> = ({
                     type="button"
                     onClick={handleBackspace}
                     aria-label={t('common.backspace')}
-                    className="w-[88px] h-[88px] rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border-2 border-slate-200 text-slate-700 flex flex-col items-center justify-center transition-all cursor-pointer"
+                    className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border-2 border-slate-200 text-slate-700 flex flex-col items-center justify-center transition-all cursor-pointer"
                   >
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414A2 2 0 0110.828 5H20a2 2 0 012 2v10a2 2 0 01-2 2h-9.172a2 2 0 01-1.414-.586L3 12z" />
                     </svg>
                     {deleteBtn.main ? (
-                      <span className="text-xs font-semibold text-slate-500 mt-0.5">{deleteBtn.main}</span>
+                      <span className="text-[11px] sm:text-xs font-semibold text-slate-500 mt-0.5">{deleteBtn.main}</span>
                     ) : null}
                   </button>
                 </div>

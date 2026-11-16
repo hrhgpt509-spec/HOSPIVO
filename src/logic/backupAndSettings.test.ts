@@ -10,8 +10,12 @@ import {
   restoreBackup,
   generateAndVerifyBackup,
   saveBackup,
+  isDirectoryPickerSupported,
+  pickBackupDirectory,
+  writeBackupToDirectoryHandle,
   type BackupPayload,
 } from './backup';
+import { shouldRunAutoLock } from '../App';
 import {
   setApprovalPin,
   validateStaffPin,
@@ -361,6 +365,60 @@ describe('Backup, Staff PIN & Settings Logic', () => {
       const stored = await db.settings.get('approval_rules');
       expect(stored).toBeDefined();
       expect((stored?.value as Record<string, string>).delete_or_correct_bill).toBe('blocked_offline');
+    });
+  });
+
+  describe('Auto-Lock Screen Gating & Real Backup Folder Integration', () => {
+    it('disables auto-lock on Who is using? PIN screen and Setup Wizard, enabling it ONLY on home when user is logged in', () => {
+      const mockUser = { name: 'Ramesh', role: 'owner' as const };
+
+      // Never run on setup screen
+      expect(shouldRunAutoLock('setup', null)).toBe(false);
+      expect(shouldRunAutoLock('setup', mockUser)).toBe(false);
+
+      // Never run on login / "Who is using?" screen (even when staff card is tapped)
+      expect(shouldRunAutoLock('login', null)).toBe(false);
+      expect(shouldRunAutoLock('login', mockUser)).toBe(false);
+
+      // On home screen, only run when user is logged in
+      expect(shouldRunAutoLock('home', null)).toBe(false);
+      expect(shouldRunAutoLock('home', mockUser)).toBe(true);
+    });
+
+    it('handles native directory picker detection and direct handle writing', async () => {
+      // In node/vitest environment, showDirectoryPicker is undefined unless polyfilled
+      expect(typeof isDirectoryPickerSupported()).toBe('boolean');
+
+      // Writing to an invalid/null handle rejects cleanly
+      const backup = await generateAndVerifyBackup('Test Shop');
+      await expect(writeBackupToDirectoryHandle(null, backup)).rejects.toThrow('Invalid directory handle');
+
+      // Mock Directory Handle test
+      let writtenContent = '';
+      let closed = false;
+      const mockWritable = {
+        write: vi.fn(async (content: string) => {
+          writtenContent = content;
+        }),
+        close: vi.fn(async () => {
+          closed = true;
+        }),
+      };
+      const mockDirHandle = {
+        name: 'My Backups Folder',
+        getFileHandle: vi.fn(async (filename: string, opts: any) => ({
+          createWritable: vi.fn(async () => mockWritable),
+        })),
+      };
+
+      const result = await writeBackupToDirectoryHandle(mockDirHandle, backup, 'custom-backup.json');
+      expect(result.success).toBe(true);
+      expect(result.filename).toBe('custom-backup.json');
+      expect(mockDirHandle.getFileHandle).toHaveBeenCalledWith('custom-backup.json', { create: true });
+      expect(mockWritable.write).toHaveBeenCalled();
+      expect(mockWritable.close).toHaveBeenCalled();
+      expect(closed).toBe(true);
+      expect(writtenContent).toContain('"app": "Hospivo"');
     });
   });
 });

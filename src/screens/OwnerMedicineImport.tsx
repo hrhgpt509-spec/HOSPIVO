@@ -72,6 +72,8 @@ export const OwnerMedicineImport: React.FC<OwnerMedicineImportProps> = ({
       console.error('Failed to parse CSV:', err);
       triggerFeedback('error', t('medicine_import.toast_error'));
       setValidation(null);
+    } finally {
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -183,7 +185,7 @@ export const OwnerMedicineImport: React.FC<OwnerMedicineImportProps> = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,text/csv,application/vnd.ms-excel"
             onChange={handleFileChange}
             className="hidden"
           />

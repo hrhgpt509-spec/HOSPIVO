@@ -1,12 +1,16 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Home } from './screens/Home';
 import { Login } from './screens/Login';
 import { Setup } from './screens/Setup';
 import { FeedbackOverlay } from './components/FeedbackOverlay';
 import { db, type DBUser } from './db';
 
-// 5 minutes of inactivity triggers the auto-lock screen
-const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+// Default 5 minutes of inactivity triggers auto-lock
+export const DEFAULT_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+
+export function shouldRunAutoLock(screen: string, currentUser: unknown): boolean {
+  return screen === 'home' && currentUser !== null && currentUser !== undefined;
+}
 
 type AppScreen = 'loading' | 'setup' | 'login' | 'home';
 
@@ -16,15 +20,6 @@ export function App() {
   const [currentUser, setCurrentUser] = useState<DBUser | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const resetInactivityTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-    timerRef.current = setTimeout(() => {
-      setIsLocked(true);
-    }, INACTIVITY_TIMEOUT_MS);
-  }, []);
 
   // Check database state on initial load
   useEffect(() => {
@@ -45,34 +40,58 @@ export function App() {
     initApp();
   }, []);
 
-  // Listen for user interactions to reset the 5-minute inactivity timer
+  // Inactivity / auto-lock timer:
+  // MUST ONLY run after a user has unlocked the POS with their PIN (screen === 'home' && currentUser).
+  // Never runs on "Who is using?" (screen === 'login') or inside First-Time Setup (screen === 'setup').
   useEffect(() => {
-    const events = ['mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
-    const handleActivity = () => {
-      resetInactivityTimer();
-    };
+    if (!shouldRunAutoLock(screen, currentUser)) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
 
-    events.forEach((event) => window.addEventListener(event, handleActivity));
-    resetInactivityTimer();
+    let timeoutMs = DEFAULT_INACTIVITY_TIMEOUT_MS;
+    db.settings.get('auto_lock_minutes').then((setting) => {
+      if (setting && typeof setting.value === 'number' && setting.value > 0) {
+        timeoutMs = setting.value * 60 * 1000;
+      }
+    }).catch(() => {});
 
-    return () => {
-      events.forEach((event) => window.removeEventListener(event, handleActivity));
+    const resetTimer = () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
+      timerRef.current = setTimeout(() => {
+        // Return to "Who is using?" screen on inactivity
+        setCurrentUser(null);
+        setIsLocked(false);
+        setScreen('login');
+      }, timeoutMs);
     };
-  }, [resetInactivityTimer]);
+
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+    events.forEach((event) => window.addEventListener(event, resetTimer, { passive: true }));
+    resetTimer();
+
+    return () => {
+      events.forEach((event) => window.removeEventListener(event, resetTimer));
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [screen, currentUser]);
 
   const handleLoginSuccess = (user: DBUser) => {
     setCurrentUser(user);
     setScreen('home');
     setIsLocked(false);
-    resetInactivityTimer();
   };
 
   const handleUnlock = () => {
     setIsLocked(false);
-    resetInactivityTimer();
   };
 
   const renderActiveScreen = () => {

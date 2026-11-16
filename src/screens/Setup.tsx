@@ -24,6 +24,15 @@ import {
   pullAndHydrateStaffAccounts,
 } from '../logic/cloudSync';
 import { provisionCloudShop } from '../logic/cloudAuth';
+import {
+  isDirectoryPickerSupported,
+  pickBackupDirectory,
+  writeBackupToDirectoryHandle,
+  generateAndVerifyBackup,
+  recordVerifiedBackup,
+  downloadBackupFile,
+} from '../logic/backup';
+import { downloadSampleCsvTemplate } from '../logic/medicineImport';
 
 interface SetupProps {
   onComplete: () => void;
@@ -89,7 +98,10 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const [staffList, setStaffList] = useState<AddedStaffMember[]>([]);
 
   // Step 6: Backup
-  const [backupFolder, setBackupFolder] = useState('C:\\Hospivo\\Daily_Backups');
+  const [backupFolder, setBackupFolder] = useState<string>('');
+  const [backupHandle, setBackupHandle] = useState<any>(null);
+  const [backupStatusMessage, setBackupStatusMessage] = useState<string>('');
+  const [lastBackupTime, setLastBackupTime] = useState<string>('');
   const [storageStatus, setStorageStatus] = useState<'idle' | 'granted' | 'denied'>('idle');
 
   // Step 7: Ijazat PIN (Approval PIN)
@@ -234,7 +246,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   };
 
   // --------------------------------------------------------------------------
-  // STEP 6 (BACKUP PERMISSION) HANDLER
+  // STEP 6 (BACKUP PERMISSION & DIRECTORY) HANDLERS
   // --------------------------------------------------------------------------
   const handleRequestStoragePermission = async () => {
     try {
@@ -249,6 +261,37 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     } catch {
       setStorageStatus('denied');
       await db.settings.put({ key: 'storage_persisted', value: false });
+    }
+  };
+
+  const handlePickBackupFolder = async () => {
+    try {
+      const result = await pickBackupDirectory();
+      if (!result) return;
+      setBackupFolder(result.folderName);
+      setBackupHandle(result.handle);
+      const payload = await generateAndVerifyBackup(shopName);
+      await writeBackupToDirectoryHandle(result.handle, payload);
+      await recordVerifiedBackup(payload, 'setup');
+      const timeStr = new Date().toLocaleTimeString();
+      setLastBackupTime(timeStr);
+      setBackupStatusMessage(t('setup.step6_backup_saved'));
+    } catch (err: any) {
+      console.error('Failed to pick folder and write backup:', err);
+    }
+  };
+
+  const handleDownloadInitialBackup = async () => {
+    try {
+      const payload = await generateAndVerifyBackup(shopName);
+      downloadBackupFile(payload);
+      await recordVerifiedBackup(payload, 'setup');
+      const timeStr = new Date().toLocaleTimeString();
+      setLastBackupTime(timeStr);
+      setBackupFolder(t('setup.step6_backup_downloaded'));
+      setBackupStatusMessage(t('setup.step6_backup_downloaded'));
+    } catch (err: any) {
+      console.error('Failed to generate and download backup:', err);
     }
   };
 
@@ -356,7 +399,10 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     // CRITICAL: cloud_enabled must be saved BEFORE enqueuing users so enqueueSyncItem knows cloud is active
     await db.settings.put({ key: 'approval_rules', value: approvalRules });
     await db.settings.put({ key: 'auto_lock_minutes', value: 5 });
-    await db.settings.put({ key: 'backup_folder', value: backupFolder });
+    await db.settings.put({ key: 'backup_folder', value: backupFolder || 'Downloads' });
+    if (backupHandle) {
+      await db.settings.put({ key: 'backup_dir_handle', value: backupHandle });
+    }
     await db.settings.put({ key: 'pinLength', value: 4 });
     await db.settings.put({ key: 'cloud_enabled', value: mode === 'cloud' });
     await db.settings.put({ key: 'shop_sync_id', value: shopSyncId.trim().toUpperCase() });
@@ -554,8 +600,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // ==========================================================================
   if (step === 1) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-gradient-to-b from-[#EBF7F0] to-[#E3F2E9] select-none">
-        <main className="w-full max-w-[1240px] min-h-[836px] bg-white rounded-3xl shadow-[0_12px_40px_rgba(27,143,74,0.08)] border border-[#D5E5DC] flex flex-col justify-between px-8 md:px-12 py-8">
+      <div className="w-full min-h-dvh flex items-center justify-center p-3 sm:p-6 md:p-8 bg-gradient-to-b from-[#EBF7F0] to-[#E3F2E9] select-none">
+        <main className="w-full max-w-[1240px] min-h-[auto] sm:min-h-[640px] lg:min-h-[836px] bg-white rounded-3xl shadow-[0_12px_40px_rgba(27,143,74,0.08)] border border-[#D5E5DC] flex flex-col justify-between px-4 sm:px-8 md:px-12 py-6 sm:py-8">
           {renderProgress(1)}
 
           {step1Error && (
@@ -771,8 +817,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // ==========================================================================
   if (step === 2) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#F4F6F5] select-none">
-        <main className="w-full max-w-[1280px] min-h-[820px] bg-white rounded-3xl shadow-[0_16px_48px_rgba(27,143,74,0.08)] border border-[#E1E8E4] flex flex-col justify-between p-4 sm:p-8 md:p-10">
+      <div className="w-full min-h-dvh flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#F4F6F5] select-none">
+        <main className="w-full max-w-[1280px] min-h-[auto] sm:min-h-[640px] lg:min-h-[820px] bg-white rounded-3xl shadow-[0_16px_48px_rgba(27,143,74,0.08)] border border-[#E1E8E4] flex flex-col justify-between p-4 sm:p-8 md:p-10">
           {renderProgress(2)}
 
           <div className="my-auto pt-4 pb-4 w-full">
@@ -1095,8 +1141,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     const clearBtn = tButton('common.btn_clear');
 
     return (
-      <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
-        <main className="w-full max-w-[1240px] min-h-[852px] bg-white rounded-3xl shadow-[0_16px_40px_rgba(0,107,51,0.08)] border border-slate-200 flex flex-col justify-between p-8">
+      <div className="w-full min-h-dvh flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#F4F6F5] select-none">
+        <main className="w-full max-w-[1240px] min-h-[auto] sm:min-h-[640px] lg:min-h-[852px] bg-white rounded-3xl shadow-[0_16px_40px_rgba(0,107,51,0.08)] border border-slate-200 flex flex-col justify-between p-4 sm:p-8">
           <div>
             {renderProgress(3)}
             <div className="flex items-center gap-2 pt-3">
@@ -1107,8 +1153,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-14 my-auto py-4">
-            <div className="flex flex-col gap-6 w-[430px]">
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-14 my-auto py-4 w-full">
+            <div className="flex flex-col gap-6 w-full max-w-[430px]">
               <div
                 onClick={() => setActiveOwnerPinField(1)}
                 className={`flex flex-col gap-2 p-5 rounded-2xl cursor-pointer transition-all ${
@@ -1192,13 +1238,13 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 w-[384px]">
+            <div className="grid grid-cols-3 gap-3 w-full max-w-[384px]">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
                 <button
                   key={digit}
                   type="button"
                   onClick={() => handleOwnerPinDigit(digit)}
-                  className="h-[80px] w-[118px] rounded-2xl bg-white hover:bg-slate-100 border-2 border-slate-200 text-[#1A1F1C] text-3xl font-bold flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
+                  className="h-[70px] sm:h-[80px] w-full max-w-[118px] mx-auto rounded-2xl bg-white hover:bg-slate-100 border-2 border-slate-200 text-[#1A1F1C] text-3xl font-bold flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
                 >
                   {digit}
                 </button>
@@ -1207,7 +1253,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <button
                 type="button"
                 onClick={handleOwnerPinClearAll}
-                className="h-[80px] w-[118px] rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 flex flex-col items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
+                className="h-[70px] sm:h-[80px] w-full max-w-[118px] mx-auto rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 flex flex-col items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
               >
                 <span className="text-[18px] font-bold text-slate-700 leading-none">{clearBtn.main}</span>
                 {clearBtn.sub ? <span className="text-xs font-semibold text-slate-500 mt-1 leading-none">{clearBtn.sub}</span> : null}
@@ -1216,7 +1262,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <button
                 type="button"
                 onClick={() => handleOwnerPinDigit('0')}
-                className="h-[80px] w-[118px] rounded-2xl bg-white hover:bg-slate-100 border-2 border-slate-200 text-[#1A1F1C] text-3xl font-bold flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
+                className="h-[70px] sm:h-[80px] w-full max-w-[118px] mx-auto rounded-2xl bg-white hover:bg-slate-100 border-2 border-slate-200 text-[#1A1F1C] text-3xl font-bold flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
               >
                 0
               </button>
@@ -1225,7 +1271,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 type="button"
                 onClick={handleOwnerPinBackspace}
                 aria-label={t('common.backspace')}
-                className="h-[80px] w-[118px] rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
+                className="h-[70px] sm:h-[80px] w-full max-w-[118px] mx-auto rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
               >
                 <svg className="w-8 h-8 text-slate-700" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414A2 2 0 0110.828 5H20a2 2 0 012 2v10a2 2 0 01-2 2h-9.172a2 2 0 01-1.414-.586L3 12z" />
@@ -1279,8 +1325,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     const addStaffBtn = tButton('setup.staff_btn_add');
 
     return (
-      <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
-        <main className="w-full max-w-[1240px] min-h-[820px] bg-white rounded-3xl shadow-xl border border-slate-200 flex flex-col justify-between p-8">
+      <div className="w-full min-h-dvh flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#F4F6F5] select-none">
+        <main className="w-full max-w-[1240px] min-h-[auto] sm:min-h-[640px] lg:min-h-[820px] bg-white rounded-3xl shadow-xl border border-slate-200 flex flex-col justify-between p-4 sm:p-8">
           {renderProgress(4)}
 
           <div className="grid grid-cols-12 gap-8 items-start my-auto py-4">
@@ -1492,15 +1538,15 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
     const btnChooseFile = tButton('setup.step5_btn_choose_file');
 
     return (
-      <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
-        <main className="w-full max-w-[1160px] min-h-[740px] bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between p-8 md:p-10">
+      <div className="w-full min-h-dvh flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#F4F6F5] select-none">
+        <main className="w-full max-w-[1160px] min-h-[auto] sm:min-h-[640px] lg:min-h-[740px] bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between p-4 sm:p-8 md:p-10">
           {renderProgress(5)}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-auto py-4">
             {/* Option 1: File se Jodo (Active - opens OwnerMedicineImport) */}
             <div
               onClick={() => setIsImportingInSetup(true)}
-              className="bg-white border-2 border-slate-200 hover:border-[#1B8F4A] h-[360px] p-7 rounded-2xl flex flex-col justify-between items-center text-center cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+              className="bg-white border-2 border-slate-200 hover:border-[#1B8F4A] min-h-[360px] p-7 rounded-2xl flex flex-col justify-between items-center text-center cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
             >
               <div className="flex flex-col items-center">
                 <div className="flex items-center gap-2">
@@ -1521,9 +1567,22 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <span className="text-[14px] text-slate-500 mt-1">
                   {t('setup.step5_import_box_desc')}
                 </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    downloadSampleCsvTemplate();
+                  }}
+                  className="mt-3 text-sm font-bold text-[#1B8F4A] hover:text-[#16733B] hover:underline flex items-center gap-1.5 cursor-pointer py-1.5 px-3 rounded-lg bg-emerald-50 border border-emerald-200 transition-colors"
+                >
+                  <svg className="w-4 h-4 text-[#1B8F4A]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  <span>{t('setup.step5_btn_download_sample')}</span>
+                </button>
               </div>
 
-              <div className="w-full max-w-[320px] h-[58px] rounded-2xl bg-primary text-white flex items-center justify-center gap-3 px-6 shadow-sm hover:bg-primary-container transition-colors">
+              <div className="w-full max-w-[320px] h-[58px] min-h-[56px] rounded-2xl bg-primary text-white flex items-center justify-center gap-3 px-6 shadow-sm hover:bg-primary-container transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
                 </svg>
@@ -1539,7 +1598,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             {/* Option 2: Khaali Shuru Karo (Start Empty - ACTIVE) */}
             <div
               onClick={() => setStep(6)}
-              className="bg-[#F4FAF6] border-2 border-[#1B8F4A] h-[360px] p-7 rounded-2xl flex flex-col justify-between items-center text-center cursor-pointer shadow-md shadow-[#1B8F4A]/10 hover:brightness-105 transition-all"
+              className="bg-[#F4FAF6] border-2 border-[#1B8F4A] min-h-[360px] p-7 rounded-2xl flex flex-col justify-between items-center text-center cursor-pointer shadow-md shadow-[#1B8F4A]/10 hover:brightness-105 transition-all"
             >
               <div className="flex flex-col items-center">
                 <h2 className="text-[24px] font-bold text-[#1A1F1C]">{t('setup.step5_empty_title')}</h2>
@@ -1629,8 +1688,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // ==========================================================================
   if (step === 6) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
-        <main className="w-full max-w-[1240px] min-h-[820px] bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between p-8 md:p-10">
+      <div className="w-full min-h-dvh flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#F4F6F5] select-none">
+        <main className="w-full max-w-[1240px] min-h-[auto] sm:min-h-[640px] lg:min-h-[820px] bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between p-4 sm:p-8 md:p-10">
           {renderProgress(6)}
 
           <div className="flex flex-col w-full bg-slate-50 border border-slate-200 rounded-2xl p-6 md:p-8 justify-between gap-6 my-auto">
@@ -1680,7 +1739,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between w-full p-4 bg-white border border-slate-200 rounded-xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full p-4 bg-white border border-slate-200 rounded-xl gap-4">
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 shrink-0">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -1689,24 +1748,42 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 </div>
                 <div className="flex flex-col truncate">
                   <span className="text-[17px] font-bold text-[#1A1F1C]">{t('setup.step6_folder_label')}</span>
-                  <span className="text-[15px] font-mono text-slate-600 truncate">{backupFolder}</span>
+                  <span className="text-[15px] font-mono text-slate-600 truncate">
+                    {backupFolder || t('setup.step6_no_folder_selected')}
+                  </span>
+                  {backupStatusMessage && (
+                    <span className="text-xs text-emerald-700 font-semibold mt-0.5">
+                      ✓ {backupStatusMessage} {lastBackupTime ? `(${lastBackupTime})` : ''}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  setBackupFolder((prev) =>
-                    prev.includes('C:\\') ? 'D:\\Hospivo_Store\\Secure_Backups' : 'C:\\Hospivo\\Daily_Backups'
-                  )
-                }
-                className="h-12 px-5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2 cursor-pointer font-bold text-sm transition-all shrink-0"
-              >
-                <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-.75" />
-                </svg>
-                <span>{t('setup.step6_btn_change_folder')}</span>
-              </button>
+              <div className="flex items-center gap-2 flex-wrap shrink-0">
+                {isDirectoryPickerSupported() ? (
+                  <button
+                    type="button"
+                    onClick={handlePickBackupFolder}
+                    className="h-12 min-h-[48px] px-5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center gap-2 cursor-pointer font-bold text-sm transition-all"
+                  >
+                    <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-.75" />
+                    </svg>
+                    <span>{backupFolder ? t('setup.step6_btn_change_folder') : t('setup.step6_btn_choose_folder')}</span>
+                  </button>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={handleDownloadInitialBackup}
+                  className="h-12 min-h-[48px] px-5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#1B8F4A] border border-emerald-200 flex items-center gap-2 cursor-pointer font-bold text-sm transition-all"
+                >
+                  <svg className="w-5 h-5 text-[#1B8F4A]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  <span>{t('setup.step6_btn_download_backup')}</span>
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center justify-between w-full p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
@@ -1808,8 +1885,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // ==========================================================================
   if (step === 7) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
-        <main className="w-full max-w-[1240px] min-h-[852px] bg-white rounded-3xl shadow-[0_16px_40px_rgba(0,107,51,0.08)] border border-slate-200 flex flex-col justify-between p-8">
+      <div className="w-full min-h-dvh flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#F4F6F5] select-none">
+        <main className="w-full max-w-[1240px] min-h-[auto] sm:min-h-[640px] lg:min-h-[852px] bg-white rounded-3xl shadow-[0_16px_40px_rgba(0,107,51,0.08)] border border-slate-200 flex flex-col justify-between p-4 sm:p-8">
           <div>
             {renderProgress(7)}
             <div className="flex items-center gap-2 pt-3">
@@ -1822,8 +1899,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-14 my-auto py-4">
-            <div className="flex flex-col gap-6 w-[430px]">
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-14 my-auto py-4 w-full">
+            <div className="flex flex-col gap-6 w-full max-w-[430px]">
               <div
                 onClick={() => setActiveApprovalPinField(1)}
                 className={`flex flex-col gap-2 p-5 rounded-2xl cursor-pointer transition-all ${
@@ -1907,13 +1984,13 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 w-[384px]">
+            <div className="grid grid-cols-3 gap-3 w-full max-w-[384px]">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
                 <button
                   key={digit}
                   type="button"
                   onClick={() => handleApprovalPinDigit(digit)}
-                  className="h-[80px] w-[118px] rounded-2xl bg-white hover:bg-slate-100 border-2 border-slate-200 text-[#1A1F1C] text-3xl font-bold flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
+                  className="h-[70px] sm:h-[80px] w-full max-w-[118px] mx-auto rounded-2xl bg-white hover:bg-slate-100 border-2 border-slate-200 text-[#1A1F1C] text-3xl font-bold flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
                 >
                   {digit}
                 </button>
@@ -1922,7 +1999,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <button
                 type="button"
                 onClick={handleApprovalPinClearAll}
-                className="h-[80px] w-[118px] rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 flex flex-col items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
+                className="h-[70px] sm:h-[80px] w-full max-w-[118px] mx-auto rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 flex flex-col items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
               >
                 <span className="text-[18px] font-bold text-slate-700 leading-none">{clearBtn.main}</span>
                 {clearBtn.sub ? <span className="text-xs font-semibold text-slate-500 mt-1 leading-none">{clearBtn.sub}</span> : null}
@@ -1931,7 +2008,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               <button
                 type="button"
                 onClick={() => handleApprovalPinDigit('0')}
-                className="h-[80px] w-[118px] rounded-2xl bg-white hover:bg-slate-100 border-2 border-slate-200 text-[#1A1F1C] text-3xl font-bold flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
+                className="h-[70px] sm:h-[80px] w-full max-w-[118px] mx-auto rounded-2xl bg-white hover:bg-slate-100 border-2 border-slate-200 text-[#1A1F1C] text-3xl font-bold flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
               >
                 0
               </button>
@@ -1940,7 +2017,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 type="button"
                 onClick={handleApprovalPinBackspace}
                 aria-label={t('common.backspace')}
-                className="h-[80px] w-[118px] rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
+                className="h-[70px] sm:h-[80px] w-full max-w-[118px] mx-auto rounded-2xl bg-slate-100 hover:bg-slate-200 border-2 border-slate-200 flex items-center justify-center shadow-sm cursor-pointer active:translate-y-0.5 transition-all"
               >
                 <svg className="w-8 h-8 text-slate-700" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414A2 2 0 0110.828 5H20a2 2 0 012 2v10a2 2 0 01-2 2h-9.172a2 2 0 01-1.414-.586L3 12z" />
@@ -2002,8 +2079,8 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   ];
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8 bg-[#F4F6F5] select-none">
-      <main className="w-full max-w-[1160px] min-h-[820px] bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between p-8 md:p-10">
+    <div className="w-full min-h-dvh flex items-center justify-center p-3 sm:p-6 md:p-8 bg-[#F4F6F5] select-none">
+      <main className="w-full max-w-[1160px] min-h-[auto] sm:min-h-[640px] lg:min-h-[820px] bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between p-4 sm:p-8 md:p-10">
         <div>
           {renderProgress(8)}
 

@@ -36,7 +36,8 @@ export interface ValidationSummary {
 }
 
 /**
- * Generates sample CSV template header and 1 example row.
+ * Generates sample CSV template header and 4 realistic Indian pharmacy sample rows.
+ * (e.g., Paracetamol 650mg, Amoxicillin 500mg, Pantoprazole 40mg, Cetirizine 10mg).
  * Does not write anything to the database.
  */
 export function generateSampleCsv(): string {
@@ -56,23 +57,70 @@ export function generateSampleCsv(): string {
     'MinStockPacks',
   ].join(',');
 
-  const exampleRow = [
-    'Crocin 650 Advance',
-    '650mg',
-    'Tablet',
-    'Paracetamol',
-    'GlaxoSmithKline',
-    '31.50',
-    '15',
-    '12',
-    '30049099',
-    '8901117002138',
-    'S-04',
-    'none',
-    '5',
-  ].join(',');
+  const rows = [
+    [
+      'Dolo 650',
+      '650mg',
+      'Tablet',
+      'Paracetamol',
+      'Micro Labs Ltd',
+      '33.60',
+      '15',
+      '12',
+      '30049099',
+      '8901117002138',
+      'S-01',
+      'none',
+      '5',
+    ].join(','),
+    [
+      'Mox 500',
+      '500mg',
+      'Capsule',
+      'Amoxicillin',
+      'Sun Pharma',
+      '72.50',
+      '10',
+      '12',
+      '30041010',
+      '8901234567890',
+      'S-02',
+      'H',
+      '3',
+    ].join(','),
+    [
+      'Pan 40',
+      '40mg',
+      'Tablet',
+      'Pantoprazole',
+      'Alkem Laboratories',
+      '99.00',
+      '15',
+      '12',
+      '30049099',
+      '8901234567891',
+      'S-03',
+      'none',
+      '4',
+    ].join(','),
+    [
+      'Cetcip 10',
+      '10mg',
+      'Tablet',
+      'Cetirizine',
+      'Cipla Ltd',
+      '21.50',
+      '10',
+      '12',
+      '30049099',
+      '8901234567892',
+      'S-04',
+      'none',
+      '2',
+    ].join(','),
+  ];
 
-  return `${headers}\r\n${exampleRow}\r\n`;
+  return `${headers}\r\n${rows.join('\r\n')}\r\n`;
 }
 
 /**
@@ -84,7 +132,7 @@ export function downloadSampleCsvTemplate(): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', 'hospivo_medicine_template.csv');
+  link.setAttribute('download', 'hospivo-sample-medicines.csv');
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

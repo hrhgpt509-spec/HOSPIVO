@@ -215,6 +215,7 @@ export interface TranslationSchema {
     step5_import_box_title: string;
     step5_import_box_desc: string;
     step5_btn_choose_file: ButtonLabel;
+    step5_btn_download_sample: string;
     step5_note: string;
 
     step6_badge: string;
@@ -229,6 +230,11 @@ export interface TranslationSchema {
     step6_folder_label: string;
     step6_folder_desc: string;
     step6_btn_change_folder: string;
+    step6_btn_choose_folder: string;
+    step6_btn_download_backup: string;
+    step6_backup_saved: string;
+    step6_backup_downloaded: string;
+    step6_no_folder_selected: string;
     step6_perm_title: string;
     step6_perm_sub: string;
     step6_persist_btn: string;
