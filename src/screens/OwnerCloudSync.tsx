@@ -8,6 +8,7 @@ import {
   getCloudConfig,
   saveCloudConfig,
   runSyncCycle,
+  backfillLocalDataToCloud,
   formatTimeHoursMinutes,
   type CloudConfig,
 } from '../logic/cloudSync';
@@ -37,6 +38,7 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
   const [config, setConfig] = useState<CloudConfig | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isBackfilling, setIsBackfilling] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -52,6 +54,7 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
   const btnBack = tButton('cloud_sync.btn_back');
   const btnHome = tButton('common.btn_home');
   const btnSyncNow = tButton('cloud_sync.btn_sync_now');
+  const btnPushLocal = tButton('cloud_sync.btn_push_local_data');
   const btnSave = tButton('cloud_sync.btn_save');
   const btnLinkDevice = tButton('cloud_sync.btn_link_device');
   const btnSignOut = tButton('cloud_sync.btn_sign_out');

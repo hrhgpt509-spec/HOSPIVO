@@ -1671,6 +1671,7 @@ export interface TranslationSchema {
     owner_web_app_sub: string;
     btn_copy_link: string;
     btn_sync_now: ButtonLabel;
+    btn_push_local_data: ButtonLabel;
     btn_save: ButtonLabel;
     btn_back: ButtonLabel;
     btn_retry: ButtonLabel;
@@ -1682,6 +1683,8 @@ export interface TranslationSchema {
     toast_saved: string;
     toast_synced: string;
     toast_failed: string;
+    toast_backfill_success: string;
+    toast_backfill_failed: string;
     toast_copied: string;
     owner_email: string;
     cloud_shop_uuid: string;

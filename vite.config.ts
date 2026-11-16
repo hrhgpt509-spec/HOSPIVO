@@ -13,23 +13,17 @@ dnsResolver.setServers(['8.8.8.8', '1.1.1.1'])
 
 const supabaseAgent = new https.Agent({
   keepAlive: true,
-  lookup: (hostname, options, callback) => {
-    let cb = callback
-    let opts = options
-    if (typeof opts === 'function') {
-      cb = opts
-      opts = {}
-    }
-
+  lookup: (hostname: string, options: any, callback: any) => {
+    const cb = typeof options === 'function' ? options : callback
     dnsResolver.resolve4(hostname, (err, addresses) => {
       if (!err && addresses && addresses.length > 0) {
-        if (opts && typeof opts === 'object' && opts.all) {
-          cb(null, addresses.map((addr) => ({ address: addr, family: 4 })))
+        if (typeof options === 'object' && options?.all) {
+          cb(null, addresses.map((address) => ({ address, family: 4 })))
         } else {
           cb(null, addresses[0], 4)
         }
       } else {
-        dns.lookup(hostname, opts, cb)
+        dns.lookup(hostname, options, cb)
       }
     })
   },

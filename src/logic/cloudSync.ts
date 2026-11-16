@@ -1250,4 +1250,243 @@ export async function pullAndHydrateStaffAccounts(cloudShopUuid: string): Promis
   return 0;
 }
 
+// ---------------------------------------------------------------------------
+// FULL LOCAL-TO-CLOUD BACKFILL
+// ---------------------------------------------------------------------------
+
+export interface BackfillLocalResult {
+  success: boolean;
+  enqueuedCount: number;
+  syncedCount: number;
+  lastError: string | null;
+}
+
+/**
+ * Scans all existing records in local Dexie tables (users, medicines, batches,
+ * sales, returns, purchases, suppliers, customers, stock movements, etc.),
+ * enqueues deterministic upsert sync events for each record into syncOutbox,
+ * and immediately triggers a sync cycle so they are pushed to Supabase hospivo_sync_events.
+ */
+export async function backfillLocalDataToCloud(): Promise<BackfillLocalResult> {
+  // 1. Ensure cloud mode is enabled in config
+  let config = await getCloudConfig();
+  if (!config.cloudEnabled) {
+    config = await saveCloudConfig({ cloudEnabled: true });
+  }
+
+  // 2. Scan all local Dexie tables
+  const itemsToQueue: {
+    entityType: SyncEntityType;
+    entityId: string;
+    payload: unknown;
+    createdAt: string;
+  }[] = [];
+
+  // Users & Owner
+  const users = await db.users.toArray();
+  const approvalPinSetting = await db.settings.get('approval_pin');
+  const approvalPin = approvalPinSetting?.value as { hash: string; salt: string } | undefined;
+  for (const u of users) {
+    const payload = u.id === 'owner' && approvalPin ? { ...u, approvalPin } : u;
+    itemsToQueue.push({
+      entityType: 'staff',
+      entityId: String(u.id),
+      payload,
+      createdAt: u.createdAt || new Date().toISOString(),
+    });
+  }
+
+  // Medicines
+  const medicines = await db.medicines.toArray();
+  for (const m of medicines) {
+    itemsToQueue.push({
+      entityType: 'medicine',
+      entityId: String(m.id),
+      payload: { id: m.id, ...m },
+      createdAt: m.createdAt || new Date().toISOString(),
+    });
+  }
+
+  // Batches
+  const batches = await db.batches.toArray();
+  for (const b of batches) {
+    itemsToQueue.push({
+      entityType: 'batch',
+      entityId: String(b.id),
+      payload: { id: b.id, ...b },
+      createdAt: b.createdAt || new Date().toISOString(),
+    });
+  }
+
+  // Suppliers
+  const suppliers = await db.suppliers.toArray();
+  for (const s of suppliers) {
+    itemsToQueue.push({
+      entityType: 'supplier',
+      entityId: String(s.id),
+      payload: { id: s.id, ...s },
+      createdAt: s.createdAt || new Date().toISOString(),
+    });
+  }
+
+  // Customers
+  const customers = await db.customers.toArray();
+  for (const c of customers) {
+    itemsToQueue.push({
+      entityType: 'customer',
+      entityId: String(c.id),
+      payload: { id: c.id, ...c },
+      createdAt: c.createdAt || new Date().toISOString(),
+    });
+  }
+
+  // Bills (Sales) & BillItems
+  const bills = await db.bills.toArray();
+  for (const bill of bills) {
+    const items = bill.id ? await db.billItems.where('billId').equals(bill.id).toArray() : [];
+    itemsToQueue.push({
+      entityType: 'bill',
+      entityId: String(bill.id),
+      payload: { bill, items },
+      createdAt: bill.createdAt || new Date().toISOString(),
+    });
+  }
+
+  // Bill Returns
+  const returns = await db.billReturns.toArray();
+  for (const ret of returns) {
+    itemsToQueue.push({
+      entityType: 'bill_return',
+      entityId: String(ret.id),
+      payload: ret,
+      createdAt: ret.createdAt || new Date().toISOString(),
+    });
+  }
+
+  // Purchases & PurchaseLines
+  const purchases = await db.purchases.toArray();
+  for (const p of purchases) {
+    const lines = p.id ? await db.purchaseLines.where('purchaseId').equals(p.id).toArray() : [];
+    itemsToQueue.push({
+      entityType: 'purchase',
+      entityId: String(p.id),
+      payload: { purchase: p, lines },
+      createdAt: p.createdAt || new Date().toISOString(),
+    });
+  }
+
+  // Stock Movements
+  const movements = await db.stockMovements.toArray();
+  for (const m of movements) {
+    itemsToQueue.push({
+      entityType: 'stock_movement',
+      entityId: String(m.id),
+      payload: m,
+      createdAt: m.at || new Date().toISOString(),
+    });
+  }
+
+  // Udhaar Payments
+  const udhaarPayments = await db.udhaarPayments.toArray();
+  for (const up of udhaarPayments) {
+    itemsToQueue.push({
+      entityType: 'udhaar_payment',
+      entityId: String(up.id),
+      payload: up,
+      createdAt: up.createdAt || new Date().toISOString(),
+    });
+  }
+
+  // Daily Closings
+  const closings = await db.dailyClosings.toArray();
+  for (const cl of closings) {
+    itemsToQueue.push({
+      entityType: 'daily_closing',
+      entityId: String(cl.id),
+      payload: cl,
+      createdAt: cl.createdAt || new Date().toISOString(),
+    });
+  }
+
+  // Approval Requests
+  const approvalRequests = await db.approvalRequests.toArray();
+  for (const ar of approvalRequests) {
+    itemsToQueue.push({
+      entityType: 'approval_request',
+      entityId: String(ar.id),
+      payload: ar,
+      createdAt: ar.createdAt || new Date().toISOString(),
+    });
+  }
+
+  // 3. Batch enqueue into db.syncOutbox avoiding duplicates
+  const existingOutbox = await db.syncOutbox.toArray();
+  const outboxMap = new Map<string, SyncOutboxItem[]>();
+  for (const item of existingOutbox) {
+    const key = `${item.entityType}:${item.entityId}`;
+    const list = outboxMap.get(key) || [];
+    list.push(item);
+    outboxMap.set(key, list);
+  }
+
+  const toUpdate: { id: number; changes: Partial<SyncOutboxItem> }[] = [];
+  const toAdd: Omit<SyncOutboxItem, 'id'>[] = [];
+  const idsToDelete: number[] = [];
+
+  for (const itm of itemsToQueue) {
+    const key = `${itm.entityType}:${itm.entityId}`;
+    const list = outboxMap.get(key);
+    if (list && list.length > 0) {
+      toUpdate.push({
+        id: list[0].id!,
+        changes: {
+          payloadJson: JSON.stringify(itm.payload),
+          status: 'pending',
+          retryCount: 0,
+          createdAt: itm.createdAt,
+        },
+      });
+      if (list.length > 1) {
+        for (let i = 1; i < list.length; i++) {
+          if (list[i].id) idsToDelete.push(list[i].id!);
+        }
+      }
+    } else {
+      toAdd.push({
+        entityType: itm.entityType,
+        entityId: itm.entityId,
+        payloadJson: JSON.stringify(itm.payload),
+        status: 'pending',
+        retryCount: 0,
+        createdAt: itm.createdAt,
+      });
+    }
+  }
+
+  if (toAdd.length > 0) {
+    await db.syncOutbox.bulkAdd(toAdd);
+  }
+
+  if (toUpdate.length > 0 || idsToDelete.length > 0) {
+    await db.transaction('rw', db.syncOutbox, async () => {
+      for (const u of toUpdate) {
+        await db.syncOutbox.update(u.id, u.changes);
+      }
+      if (idsToDelete.length > 0) {
+        await db.syncOutbox.bulkDelete(idsToDelete);
+      }
+    });
+  }
+
+  // 4. Immediately trigger runSyncCycle to push outbox to Supabase hospivo_sync_events
+  const syncResult = await runSyncCycle({ force: true });
+
+  return {
+    success: syncResult.success,
+    enqueuedCount: itemsToQueue.length,
+    syncedCount: syncResult.processedCount,
+    lastError: syncResult.lastError,
+  };
+}
+
 
