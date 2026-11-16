@@ -151,6 +151,41 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     }
   };
 
+  const handlePushLocalData = async () => {
+    if (isBackfilling || isSyncing) return;
+    setIsBackfilling(true);
+    try {
+      const res = await backfillLocalDataToCloud();
+      const updatedConfig = await getCloudConfig();
+      setConfig(updatedConfig);
+      const remaining = await db.syncOutbox.where('status').equals('pending').count();
+      setPendingCount(remaining);
+
+      if (res.success) {
+        triggerFeedback(
+          'success',
+          t('cloud_sync.toast_backfill_success', {
+            count: res.syncedCount || res.enqueuedCount,
+          })
+        );
+      } else {
+        triggerFeedback(
+          'error',
+          t('cloud_sync.toast_backfill_failed', {
+            error: res.lastError || t('common.error_occurred'),
+          })
+        );
+      }
+    } catch (err: any) {
+      triggerFeedback(
+        'error',
+        t('cloud_sync.toast_backfill_failed', { error: err?.message || 'Error' })
+      );
+    } finally {
+      setIsBackfilling(false);
+    }
+  };
+
   const handleCopyId = () => {
     if (shopSyncId) {
       navigator.clipboard?.writeText(shopSyncId);
@@ -583,11 +618,28 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3 self-stretch sm:self-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 self-stretch sm:self-auto">
+            <button
+              type="button"
+              onClick={handlePushLocalData}
+              disabled={isBackfilling || isSyncing || !cloudEnabled}
+              className="flex-1 sm:flex-none h-14 min-h-[48px] px-5 rounded-2xl bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant disabled:opacity-50 disabled:cursor-not-allowed text-on-surface font-bold flex items-center justify-center gap-2 cursor-pointer transition-all"
+            >
+              <Icon name="cloud_upload" className={`text-[20px] ${isBackfilling ? 'animate-bounce' : ''}`} />
+              <div className="flex flex-col text-left">
+                <span className="text-sm sm:text-base font-bold leading-tight">{btnPushLocal.main}</span>
+                {btnPushLocal.sub && (
+                  <span className="text-xs font-normal text-outline leading-none">
+                    {btnPushLocal.sub}
+                  </span>
+                )}
+              </div>
+            </button>
+
             <button
               type="button"
               onClick={handleSyncNow}
-              disabled={isSyncing || !cloudEnabled}
+              disabled={isSyncing || isBackfilling || !cloudEnabled}
               className="flex-1 sm:flex-none h-14 min-h-[56px] px-6 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed text-on-primary font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
             >
               <Icon name="sync" className={`text-[20px] ${isSyncing ? 'animate-spin' : ''}`} />

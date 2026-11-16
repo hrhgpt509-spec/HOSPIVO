@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Fix BigInt client_created_at in Sync Engine & Google DNS Proxy Agent in Vite - COMPLETE
+Add Full Local-to-Cloud Backfill Sync & Fix Node 20+ DNS in Vite Proxy - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,9 @@ Fix BigInt client_created_at in Sync Engine & Google DNS Proxy Agent in Vite - C
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Implemented `backfillLocalDataToCloud()` in [cloudSync.ts](file:///d:/HOSPIVO/src/logic/cloudSync.ts) and [syncEngine.ts](file:///d:/HOSPIVO/src/logic/syncEngine.ts) scanning all local Dexie tables (users, medicines, batches, sales, returns, purchases, suppliers, customers, stock movements) and pushing upsert events to Supabase `hospivo_sync_events`.
+- Added "Push All Local Data to Cloud" button with localized toast confirmation in [OwnerCloudSync.tsx](file:///d:/HOSPIVO/src/screens/OwnerCloudSync.tsx) across [en.ts](file:///d:/HOSPIVO/src/i18n/en.ts), [hi.ts](file:///d:/HOSPIVO/src/i18n/hi.ts), [hinglish.ts](file:///d:/HOSPIVO/src/i18n/hinglish.ts), and [types.ts](file:///d:/HOSPIVO/src/i18n/types.ts).
+- Updated Node 20+ `options.all` IPv4 DNS resolution for `supabaseAgent` in [vite.config.ts](file:///d:/HOSPIVO/vite.config.ts), with all 212 unit tests passing in [syncEngine.test.ts](file:///d:/HOSPIVO/src/logic/syncEngine.test.ts) and clean production build.
 - Converted `client_created_at` in [cloudSync.ts](file:///d:/HOSPIVO/src/logic/cloudSync.ts) to numeric epoch ms integer (`bigint` schema match) and normalized `id` as string.
 - Configured custom `https.Agent` in [vite.config.ts](file:///d:/HOSPIVO/vite.config.ts) using Google and Cloudflare DNS (`8.8.8.8`, `1.1.1.1`) so localhost `/api/sb` resolves `*.supabase.co` without ISP DNS failures.
 - Verified with 211 passing tests across 28 test suites and zero errors on production build (`tsc -b && vite build`).

@@ -8,6 +8,7 @@ import {
   saveCloudConfig,
   toClientCreatedAtEpochMs,
   parseEventCreatedAt,
+  backfillLocalDataToCloud,
 } from './syncEngine';
 
 function createMockQueryChain(resolvedData: any[] = []) {
@@ -134,6 +135,135 @@ describe('syncEngine - hospivo_sync_events schema alignment', () => {
       expect(parseEventCreatedAt(epoch)).toBe(new Date(epoch).toISOString());
       expect(parseEventCreatedAt(String(epoch))).toBe(new Date(epoch).toISOString());
       expect(parseEventCreatedAt(iso)).toBe(iso);
+    });
+  });
+
+  describe('backfillLocalDataToCloud', () => {
+    it('scans pre-existing local medicines, batches, customers, and staff users and pushes them to hospivo_sync_events', async () => {
+      // 1. Populate pre-existing records directly in local Dexie tables WITHOUT queueing in syncOutbox
+      await db.medicines.put({
+        id: 1,
+        name: 'Amoxicillin 500mg',
+        strength: '500mg',
+        form: 'capsule',
+        salt: 'Amoxicillin',
+        company: 'Cipla',
+        gstPercent: 12,
+        hsn: '3004',
+        mrpPaise: 12000,
+        unitsPerPack: 10,
+        shortCode: 'A1',
+        barcode: '8901234567890',
+        shelf: 'S-01',
+        scheduleType: 'H',
+        minStockUnits: 20,
+        active: true,
+        createdAt: '2026-11-01T10:00:00.000Z',
+      });
+
+      await db.batches.put({
+        id: 10,
+        medicineId: 1,
+        batchNo: 'AMX-001',
+        expiry: '2027-12-31',
+        purchaseRatePaise: 8000,
+        mrpPaise: 12000,
+        shelf: 'S-01',
+        createdAt: '2026-11-01T10:05:00.000Z',
+      });
+
+      await db.users.put({
+        id: 'owner',
+        name: 'Dr. Ramesh Sharma',
+        role: 'owner',
+        pinHash: 'dummy-hash',
+        pinSalt: 'dummy-salt',
+        active: true,
+        createdAt: '2026-11-01T09:00:00.000Z',
+      });
+      await db.settings.put({
+        key: 'approval_pin',
+        value: { hash: 'approval-hash', salt: 'approval-salt' },
+      });
+
+      await db.customers.put({
+        id: 5,
+        name: 'Rajesh Kumar',
+        phone: '9876543210',
+        address: 'Ranchi',
+        createdAt: '2026-11-01T11:00:00.000Z',
+        updatedAt: '2026-11-01T11:00:00.000Z',
+      });
+
+      // Confirm outbox is initially empty
+      expect(await db.syncOutbox.count()).toBe(0);
+
+      // Track pushed batches to hospivo_sync_events
+      const pushedBatches: any[][] = [];
+      const mockFrom = vi.fn().mockImplementation((table: string) => {
+        if (table === 'hospivo_sync_events') {
+          return {
+            upsert: vi.fn().mockImplementation((events: any[]) => {
+              pushedBatches.push(events);
+              return Promise.resolve({ error: null });
+            }),
+            insert: vi.fn().mockImplementation((events: any[]) => {
+              pushedBatches.push(events);
+              return Promise.resolve({ error: null });
+            }),
+            select: vi.fn().mockReturnValue(createMockQueryChain([])),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnValue(createMockQueryChain([])),
+        };
+      });
+      vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
+
+      // Execute backfill
+      const result = await backfillLocalDataToCloud();
+      expect(result.success).toBe(true);
+      expect(result.enqueuedCount).toBeGreaterThanOrEqual(4);
+
+      // Verify events pushed to hospivo_sync_events
+      expect(pushedBatches.length).toBeGreaterThan(0);
+      const flatEvents = pushedBatches.flat();
+      expect(flatEvents.length).toBeGreaterThanOrEqual(4);
+
+      // Check medicine event
+      const medEvent = flatEvents.find((e) => e.entity_type === 'medicine' && e.entity_id === '1');
+      expect(medEvent).toBeDefined();
+      expect(medEvent.shop_id).toBe('shop-uuid-1234');
+      expect(medEvent.shop_sync_id).toBe('HOSP-TEST-SYNC');
+      expect(typeof medEvent.client_created_at).toBe('number');
+      const medPayload = JSON.parse(medEvent.payload_json);
+      expect(medPayload.name).toBe('Amoxicillin 500mg');
+
+      // Check batch event
+      const batchEvent = flatEvents.find((e) => e.entity_type === 'batch' && e.entity_id === '10');
+      expect(batchEvent).toBeDefined();
+      expect(batchEvent.entity_id).toBe('10');
+      const batchPayload = JSON.parse(batchEvent.payload_json);
+      expect(batchPayload.batchNo).toBe('AMX-001');
+
+      // Check staff user event (bundled with approval PIN)
+      const staffEvent = flatEvents.find((e) => e.entity_type === 'staff' && e.entity_id === 'owner');
+      expect(staffEvent).toBeDefined();
+      const staffPayload = JSON.parse(staffEvent.payload_json);
+      expect(staffPayload.name).toBe('Dr. Ramesh Sharma');
+      expect(staffPayload.approvalPin?.hash).toBe('approval-hash');
+
+      // Check customer event
+      const custEvent = flatEvents.find((e) => e.entity_type === 'customer' && e.entity_id === '5');
+      expect(custEvent).toBeDefined();
+      const custPayload = JSON.parse(custEvent.payload_json);
+      expect(custPayload.name).toBe('Rajesh Kumar');
+
+      // Verify that all outbox items are now marked synced
+      const pendingAfter = await db.syncOutbox.where('status').equals('pending').count();
+      expect(pendingAfter).toBe(0);
+      const syncedAfter = await db.syncOutbox.where('status').equals('synced').count();
+      expect(syncedAfter).toBeGreaterThanOrEqual(4);
     });
   });
 });
