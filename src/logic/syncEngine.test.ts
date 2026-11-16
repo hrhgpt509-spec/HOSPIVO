@@ -6,6 +6,8 @@ import {
   enqueueSyncItem,
   runSyncCycle,
   saveCloudConfig,
+  toClientCreatedAtEpochMs,
+  parseEventCreatedAt,
 } from './syncEngine';
 
 function createMockQueryChain(resolvedData: any[] = []) {
@@ -82,9 +84,9 @@ describe('syncEngine - hospivo_sync_events schema alignment', () => {
     expect(pushedEvents.length).toBe(2);
 
     for (const event of pushedEvents) {
-      // 1. Must include valid id
+      // 1. Must include valid id (string format)
       expect(event.id).toBeDefined();
-      expect(typeof event.id === 'number' || typeof event.id === 'string').toBe(true);
+      expect(typeof event.id).toBe('string');
 
       // 2. Must include required shop & entity columns
       expect(event.shop_id).toBe('shop-uuid-1234');
@@ -92,9 +94,10 @@ describe('syncEngine - hospivo_sync_events schema alignment', () => {
       expect(['medicine', 'staff']).toContain(event.entity_type);
       expect(event.entity_id).toBeDefined();
 
-      // 3. Must include payload_json and client_created_at
+      // 3. Must include payload_json and numeric bigint epoch ms client_created_at
       expect(typeof event.payload_json).toBe('string');
-      expect(typeof event.client_created_at).toBe('string');
+      expect(typeof event.client_created_at).toBe('number');
+      expect(event.client_created_at).toBeGreaterThan(0);
 
       // 4. Must NOT include non-existent columns (device_id, device_name, duplicate payload)
       expect(event).not.toHaveProperty('device_id');
@@ -113,5 +116,24 @@ describe('syncEngine - hospivo_sync_events schema alignment', () => {
         'shop_sync_id',
       ]);
     }
+  });
+
+  describe('timestamp conversions for bigint client_created_at', () => {
+    it('converts ISO string, epoch number, and dates to epoch integer milliseconds', () => {
+      const iso = '2026-11-16T09:37:05.910Z';
+      const expectedEpoch = Date.parse(iso);
+      expect(toClientCreatedAtEpochMs(iso)).toBe(expectedEpoch);
+      expect(toClientCreatedAtEpochMs(expectedEpoch)).toBe(expectedEpoch);
+      expect(toClientCreatedAtEpochMs(1710000000123.456)).toBe(1710000000123);
+      expect(toClientCreatedAtEpochMs(undefined)).toBeGreaterThan(0);
+    });
+
+    it('parses numeric epoch milliseconds or ISO strings back to ISO strings', () => {
+      const iso = '2026-11-16T09:37:05.910Z';
+      const epoch = Date.parse(iso);
+      expect(parseEventCreatedAt(epoch)).toBe(new Date(epoch).toISOString());
+      expect(parseEventCreatedAt(String(epoch))).toBe(new Date(epoch).toISOString());
+      expect(parseEventCreatedAt(iso)).toBe(iso);
+    });
   });
 });

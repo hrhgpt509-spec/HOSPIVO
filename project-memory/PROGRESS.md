@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Align Sync Payload With Supabase Schema & Enable Local /api/sb Proxy - COMPLETE
+Fix BigInt client_created_at in Sync Engine & Google DNS Proxy Agent in Vite - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,9 @@ Align Sync Payload With Supabase Schema & Enable Local /api/sb Proxy - COMPLETE
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Converted `client_created_at` in [cloudSync.ts](file:///d:/HOSPIVO/src/logic/cloudSync.ts) to numeric epoch ms integer (`bigint` schema match) and normalized `id` as string.
+- Configured custom `https.Agent` in [vite.config.ts](file:///d:/HOSPIVO/vite.config.ts) using Google and Cloudflare DNS (`8.8.8.8`, `1.1.1.1`) so localhost `/api/sb` resolves `*.supabase.co` without ISP DNS failures.
+- Verified with 211 passing tests across 28 test suites and zero errors on production build (`tsc -b && vite build`).
 - Aligned `hospivo_sync_events` payload in [cloudSync.ts](file:///d:/HOSPIVO/src/logic/cloudSync.ts) by removing non-existent columns (`device_id`, `device_name`, duplicate `payload`) and including explicit `id`.
 - Configured localhost `/api/sb` proxy in [vite.config.ts](file:///d:/HOSPIVO/vite.config.ts) and [supabase.ts](file:///d:/HOSPIVO/src/lib/supabase.ts) with `.env.local` pointing to `/api/sb`.
 - Added unit tests in [syncEngine.test.ts](file:///d:/HOSPIVO/src/logic/syncEngine.test.ts) verifying exact schema payload keys; all 209 tests passed with a clean build.

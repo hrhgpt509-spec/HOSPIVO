@@ -4,6 +4,36 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import fs from 'node:fs'
 import path from 'node:path'
+import https from 'node:https'
+import dns from 'node:dns'
+
+// Resolver configured with public DNS (Google 8.8.8.8 and Cloudflare 1.1.1.1) to bypass local ISP DNS blocking
+const dnsResolver = new dns.Resolver()
+dnsResolver.setServers(['8.8.8.8', '1.1.1.1'])
+
+const supabaseAgent = new https.Agent({
+  keepAlive: true,
+  lookup: (hostname, options, callback) => {
+    let cb = callback
+    let opts = options
+    if (typeof opts === 'function') {
+      cb = opts
+      opts = {}
+    }
+
+    dnsResolver.resolve4(hostname, (err, addresses) => {
+      if (!err && addresses && addresses.length > 0) {
+        if (opts && typeof opts === 'object' && opts.all) {
+          cb(null, addresses.map((addr) => ({ address: addr, family: 4 })))
+        } else {
+          cb(null, addresses[0], 4)
+        }
+      } else {
+        dns.lookup(hostname, opts, cb)
+      }
+    })
+  },
+})
 
 // Ensure temporary files generated during build stay inside workspace
 const tmpDir = path.resolve('node_modules/.tmp')
@@ -43,6 +73,7 @@ export default defineConfig({
         target: 'https://njsxgbslglzdprcngzw.supabase.co',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/sb/, ''),
+        agent: supabaseAgent,
       },
     },
   },
@@ -53,6 +84,7 @@ export default defineConfig({
         target: 'https://njsxgbslglzdprcngzw.supabase.co',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/sb/, ''),
+        agent: supabaseAgent,
       },
     },
   },

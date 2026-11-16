@@ -293,6 +293,39 @@ export async function uploadShopPhoto(
 // ---------------------------------------------------------------------------
 
 /**
+ * Converts a createdAt timestamp (ISO string, number, or Date) to a numeric epoch millisecond integer.
+ */
+export function toClientCreatedAtEpochMs(val: unknown): number {
+  if (typeof val === 'number') {
+    return Math.trunc(val);
+  }
+  const parsed = Date.parse(String(val));
+  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : Date.now();
+}
+
+/**
+ * Safely parses event.client_created_at which can be either a numeric bigint epoch ms or an ISO string.
+ */
+export function parseEventCreatedAt(val: unknown): string {
+  if (typeof val === 'number') {
+    return new Date(val).toISOString();
+  }
+  if (typeof val === 'string') {
+    if (/^\d+$/.test(val.trim())) {
+      const num = Number(val);
+      if (Number.isFinite(num) && num > 0) {
+        return new Date(num).toISOString();
+      }
+    }
+    const parsed = Date.parse(val);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return new Date(parsed).toISOString();
+    }
+  }
+  return new Date().toISOString();
+}
+
+/**
  * Applies a single delta event pulled from hospivo_sync_events to local Dexie tables idempotently.
  */
 export async function applyRemoteEvent(event: any): Promise<void> {
@@ -390,7 +423,7 @@ export async function applyRemoteEvent(event: any): Promise<void> {
           pinSalt: user.pinSalt,
           pinLength: user.pinLength || 4,
           active: user.active !== false,
-          createdAt: user.createdAt || new Date().toISOString(),
+          createdAt: user.createdAt || (event.client_created_at ? parseEventCreatedAt(event.client_created_at) : new Date().toISOString()),
           ...(user.authUserId ? { authUserId: user.authUserId } : existing?.authUserId ? { authUserId: existing.authUserId } : {}),
         };
 
@@ -783,13 +816,13 @@ export async function runSyncCycle(options?: {
       if (isBackendConfigured() && cloudShopUuid) {
         try {
           const events = pendingItems.map((item) => ({
-            id: item.id || Date.now(),
+            id: String(item.id || Date.now()),
             shop_id: cloudShopUuid,
             shop_sync_id: config.shopSyncId,
             entity_type: item.entityType,
             entity_id: String(item.entityId),
             payload_json: item.payloadJson,
-            client_created_at: item.createdAt,
+            client_created_at: toClientCreatedAtEpochMs(item.createdAt),
           }));
 
           let pushError: any = null;
@@ -845,13 +878,13 @@ export async function runSyncCycle(options?: {
         // Fallback REST fetch transport
         try {
           const events = pendingItems.map((item) => ({
-            id: item.id || Date.now(),
+            id: String(item.id || Date.now()),
             shop_id: cloudShopUuid,
             shop_sync_id: config.shopSyncId,
             entity_type: item.entityType,
             entity_id: String(item.entityId),
             payload_json: item.payloadJson,
-            client_created_at: item.createdAt,
+            client_created_at: toClientCreatedAtEpochMs(item.createdAt),
           }));
 
           const cleanUrl = config.cloudUrl.replace(/\/+$/, '');
