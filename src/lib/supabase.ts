@@ -3,10 +3,19 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 const rawEnvUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
 const rawKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
 
-// Auto-resolve relative paths (e.g. /api/sb) to full domain URL so @supabase/supabase-js always gets an absolute http(s) URL
-const rawUrl = rawEnvUrl.startsWith('/')
-  ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}${rawEnvUrl}`
-  : rawEnvUrl;
+// Auto-resolve relative paths (e.g. /api/sb) or unset URL when dev proxy is active to full origin URL so @supabase/supabase-js always gets an absolute http(s) URL
+const resolveSupabaseUrl = (): string => {
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+  if (!rawEnvUrl || rawEnvUrl === '/api/sb') {
+    return `${origin}/api/sb`;
+  }
+  if (rawEnvUrl.startsWith('/')) {
+    return `${origin}${rawEnvUrl}`;
+  }
+  return rawEnvUrl;
+};
+
+const rawUrl = resolveSupabaseUrl();
 
 /**
  * Returns true if real Supabase backend URL and Anon Key are configured via environment variables.

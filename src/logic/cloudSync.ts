@@ -782,25 +782,15 @@ export async function runSyncCycle(options?: {
     if (pendingCount > 0) {
       if (isBackendConfigured() && cloudShopUuid) {
         try {
-          const events = pendingItems.map((item) => {
-            let parsedPayload: any = null;
-            try {
-              parsedPayload = JSON.parse(item.payloadJson);
-            } catch {
-              parsedPayload = item.payloadJson;
-            }
-            return {
-              shop_id: cloudShopUuid,
-              shop_sync_id: config.shopSyncId,
-              device_name: config.deviceName,
-              device_id: config.deviceId || config.deviceName,
-              entity_type: item.entityType,
-              entity_id: item.entityId,
-              payload_json: item.payloadJson,
-              payload: parsedPayload,
-              client_created_at: item.createdAt,
-            };
-          });
+          const events = pendingItems.map((item) => ({
+            id: item.id || Date.now(),
+            shop_id: cloudShopUuid,
+            shop_sync_id: config.shopSyncId,
+            entity_type: item.entityType,
+            entity_id: String(item.entityId),
+            payload_json: item.payloadJson,
+            client_created_at: item.createdAt,
+          }));
 
           let pushError: any = null;
           try {
@@ -855,12 +845,13 @@ export async function runSyncCycle(options?: {
         // Fallback REST fetch transport
         try {
           const events = pendingItems.map((item) => ({
+            id: item.id || Date.now(),
+            shop_id: cloudShopUuid,
             shop_sync_id: config.shopSyncId,
-            device_name: config.deviceName,
             entity_type: item.entityType,
-            entity_id: item.entityId,
-            payload: JSON.parse(item.payloadJson),
-            created_at: item.createdAt,
+            entity_id: String(item.entityId),
+            payload_json: item.payloadJson,
+            client_created_at: item.createdAt,
           }));
 
           const cleanUrl = config.cloudUrl.replace(/\/+$/, '');

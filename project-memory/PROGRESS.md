@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Owner PIN Recovery When Sync Events Has 0 Users - COMPLETE
+Align Sync Payload With Supabase Schema & Enable Local /api/sb Proxy - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,9 @@ Owner PIN Recovery When Sync Events Has 0 Users - COMPLETE
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Aligned `hospivo_sync_events` payload in [cloudSync.ts](file:///d:/HOSPIVO/src/logic/cloudSync.ts) by removing non-existent columns (`device_id`, `device_name`, duplicate `payload`) and including explicit `id`.
+- Configured localhost `/api/sb` proxy in [vite.config.ts](file:///d:/HOSPIVO/vite.config.ts) and [supabase.ts](file:///d:/HOSPIVO/src/lib/supabase.ts) with `.env.local` pointing to `/api/sb`.
+- Added unit tests in [syncEngine.test.ts](file:///d:/HOSPIVO/src/logic/syncEngine.test.ts) verifying exact schema payload keys; all 209 tests passed with a clean build.
 - Added `createRecoveryOwnerPin` in [cloudAuth.ts](file:///d:/HOSPIVO/src/logic/cloudAuth.ts) linking the Owner to the authenticated Supabase user ID, storing salted PIN hashes, and syncing the record to `hospivo_sync_events`.
 - Added "Create Owner PIN" recovery button and inline setup form (Owner Name + 4-digit PIN + Confirm PIN) in [Login.tsx](file:///d:/HOSPIVO/src/screens/Login.tsx) when zero staff accounts are found.
 - Added comprehensive unit tests in [cloudAuth.test.ts](file:///d:/HOSPIVO/src/logic/cloudAuth.test.ts) (208 passing tests across 27 suites, zero-error production build).

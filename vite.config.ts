@@ -40,8 +40,19 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api/sb': {
-        target: 'https://hospivo-git-master-hrhgpt.vercel.app',
+        target: 'https://njsxgbslglzdprcngzw.supabase.co',
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/sb/, ''),
+      },
+    },
+  },
+  preview: {
+    port: 3000,
+    proxy: {
+      '/api/sb': {
+        target: 'https://njsxgbslglzdprcngzw.supabase.co',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/sb/, ''),
       },
     },
   },
