@@ -1,11 +1,13 @@
 import { supabase, isBackendConfigured } from '../lib/supabase';
-import { db } from '../db';
+import { db, type DBUser } from '../db';
 import { addAudit } from '../db/audit';
+import { hashPin, validatePin } from './pin';
 import {
   generateShopSyncId,
   runSyncCycle,
   pullAndHydrateStaffAccounts,
   syncAllUsersToCloud,
+  enqueueSyncItem,
 } from './cloudSync';
 
 export interface CloudSessionInfo {
@@ -521,4 +523,87 @@ export async function getCurrentCloudSession(): Promise<CloudSessionInfo> {
       isConfigured: true,
     };
   }
+}
+
+/**
+ * Creates an Owner user with a 4-digit PIN when restoring an existing cloud shop
+ * where hospivo_sync_events contains 0 staff/user records.
+ * 1) Links user to authenticated Supabase user.id
+ * 2) Saves owner to local Dexie users table
+ * 3) Queues staff sync item and runs sync cycle to push to Supabase hospivo_sync_events
+ */
+export async function createRecoveryOwnerPin(params: {
+  name: string;
+  pin: string;
+  authUserId?: string;
+}): Promise<{ success: boolean; user?: DBUser; error?: string }> {
+  const cleanName = params.name.trim();
+  if (!cleanName) {
+    return { success: false, error: 'Owner name is required' };
+  }
+
+  const pinValidation = validatePin(params.pin, true, 4);
+  if (!pinValidation.valid) {
+    return { success: false, error: pinValidation.error || 'PIN must be 4 digits' };
+  }
+
+  // 1. Resolve auth user ID
+  let authUserId = params.authUserId;
+  if (!authUserId) {
+    try {
+      const session = await getCurrentCloudSession();
+      authUserId = session.user?.id;
+    } catch {
+      // offline or unconfigured
+    }
+  }
+
+  // 2. Hash PIN with unique salt
+  const { hash, salt } = await hashPin(params.pin);
+
+  // 3. Create or update owner DBUser
+  const ownerUser: DBUser = {
+    id: 'owner',
+    name: cleanName,
+    role: 'owner',
+    pinHash: hash,
+    pinSalt: salt,
+    pinLength: 4,
+    active: true,
+    createdAt: new Date().toISOString(),
+    ...(authUserId ? { authUserId } : {}),
+  };
+
+  await db.users.put(ownerUser);
+
+  // Update shop ownerName in db.shop if exists
+  const existingShop = await db.shop.toCollection().first();
+  if (existingShop) {
+    await db.shop.update(existingShop.id!, {
+      ownerName: cleanName,
+      ...(existingShop.mode !== 'cloud' ? { mode: 'cloud' } : {}),
+    });
+  }
+
+  // Ensure cloud is marked enabled if shop has a cloudShopUuid
+  const cloudShopUuid =
+    ((await db.settings.get('cloud_shop_uuid'))?.value as string) ||
+    existingShop?.cloudShopUuid ||
+    null;
+  if (cloudShopUuid) {
+    await db.settings.put({ key: 'cloud_enabled', value: true });
+  }
+
+  // Audit log
+  await addAudit('Login', 'recovery_owner_created', cleanName, 'Owner created via recovery PIN form');
+
+  // 4. Queue user sync event & trigger sync cycle
+  const approvalPin = (await db.settings.get('approval_pin'))?.value as
+    | { hash: string; salt: string }
+    | undefined;
+  const payload = approvalPin ? { ...ownerUser, approvalPin } : ownerUser;
+  await enqueueSyncItem('staff', 'owner', payload);
+  await runSyncCycle({ force: true }).catch(() => {});
+
+  return { success: true, user: ownerUser };
 }

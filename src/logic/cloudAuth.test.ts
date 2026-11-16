@@ -12,7 +12,9 @@ import {
   sendEmailOtp,
   verifyEmailOtp,
   completeCloudSignInFromSession,
+  createRecoveryOwnerPin,
 } from './cloudAuth';
+import { verifyPin } from './pin';
 
 function createMockQueryChain(resolvedData: any[] = []) {
   const query: any = {
@@ -31,7 +33,6 @@ describe('cloudAuth unit tests', () => {
     vi.restoreAllMocks();
     await db.settings.clear();
     await db.shop.clear();
-    await db.auditLog.clear();
 
     await db.shop.add({
       name: 'Test Pharmacy',
@@ -510,5 +511,93 @@ describe('cloudAuth unit tests', () => {
 
     const audits = await db.auditLog.where('action').equals('owner_sign_out').toArray();
     expect(audits.length).toBe(1);
+  });
+
+  it('creates and syncs a recovery Owner PIN when hospivo_sync_events has 0 users', async () => {
+    await db.users.clear();
+    await db.syncOutbox.clear();
+    await db.settings.put({ key: 'cloud_enabled', value: true });
+    await db.settings.put({ key: 'cloud_shop_uuid', value: 'shop-uuid-zero-users' });
+    await db.settings.put({ key: 'shop_sync_id', value: 'HOSP-ZERO-0000' });
+
+    // Mock getCurrentCloudSession auth user
+    vi.spyOn(supabase.auth, 'getSession').mockResolvedValueOnce({
+      data: {
+        session: {
+          user: { id: 'usr-auth-recovered', email: 'owner@zero.com' },
+        } as any,
+      },
+      error: null,
+    });
+
+    // Mock hospivo_sync_events insert/upsert
+    const insertedEvents: any[] = [];
+    const mockFrom = vi.fn().mockImplementation((table: string) => {
+      if (table === 'hospivo_sync_events') {
+        return {
+          upsert: vi.fn().mockImplementation((evts) => {
+            insertedEvents.push(...evts);
+            return Promise.resolve({ error: null });
+          }),
+          insert: vi.fn().mockImplementation((evts) => {
+            insertedEvents.push(...evts);
+            return Promise.resolve({ error: null });
+          }),
+          select: vi.fn().mockReturnValue(createMockQueryChain([])),
+        };
+      }
+      return {
+        select: vi.fn().mockReturnValue(createMockQueryChain([])),
+      };
+    });
+    vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
+
+    // Call createRecoveryOwnerPin
+    const res = await createRecoveryOwnerPin({
+      name: 'Maa Durga Owner',
+      pin: '4321',
+    });
+
+    expect(res.success).toBe(true);
+    expect(res.user).toBeDefined();
+    expect(res.user?.name).toBe('Maa Durga Owner');
+    expect(res.user?.role).toBe('owner');
+    expect(res.user?.pinLength).toBe(4);
+    expect(res.user?.authUserId).toBe('usr-auth-recovered');
+
+    // Verify stored user in local Dexie
+    const localUser = await db.users.get('owner');
+    expect(localUser).toBeDefined();
+    expect(localUser?.name).toBe('Maa Durga Owner');
+
+    // Verify PIN works with verifyPin
+    const isValidPin = await verifyPin('4321', localUser!);
+    expect(isValidPin).toBe(true);
+    const isWrongPin = await verifyPin('0000', localUser!);
+    expect(isWrongPin).toBe(false);
+
+    // Verify sync outbox item was created and processed
+    const outboxItems = await db.syncOutbox.toArray();
+    expect(outboxItems.length).toBeGreaterThan(0);
+    const staffItem = outboxItems.find((item) => item.entityType === 'staff');
+    expect(staffItem).toBeDefined();
+    expect(staffItem?.status).toBe('synced');
+
+    // Verify event was pushed to hospivo_sync_events
+    expect(insertedEvents.length).toBeGreaterThan(0);
+    const pushedStaffEvent = insertedEvents.find((e) => e.entity_type === 'staff');
+    expect(pushedStaffEvent).toBeDefined();
+    expect(pushedStaffEvent.shop_id).toBe('shop-uuid-zero-users');
+    expect(pushedStaffEvent.entity_id).toBe('owner');
+  });
+
+  it('createRecoveryOwnerPin validates required name and 4-digit PIN', async () => {
+    const invalidNameRes = await createRecoveryOwnerPin({ name: '', pin: '1234' });
+    expect(invalidNameRes.success).toBe(false);
+    expect(invalidNameRes.error).toBe('Owner name is required');
+
+    const invalidPinRes = await createRecoveryOwnerPin({ name: 'Owner', pin: '12' });
+    expect(invalidPinRes.success).toBe(false);
+    expect(invalidPinRes.error).toBe('owner_pin_length');
   });
 });

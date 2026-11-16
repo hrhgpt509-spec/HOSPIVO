@@ -391,6 +391,7 @@ export async function applyRemoteEvent(event: any): Promise<void> {
           pinLength: user.pinLength || 4,
           active: user.active !== false,
           createdAt: user.createdAt || new Date().toISOString(),
+          ...(user.authUserId ? { authUserId: user.authUserId } : existing?.authUserId ? { authUserId: existing.authUserId } : {}),
         };
 
         if (existing) {

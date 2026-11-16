@@ -27,6 +27,7 @@ export interface DBUser {
   pinLength?: number;
   active: boolean;
   createdAt?: string;
+  authUserId?: string;
 }
 
 export interface SettingsMap {

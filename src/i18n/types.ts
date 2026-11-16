@@ -78,6 +78,18 @@ export interface TranslationSchema {
     sync_staff_success: string;
     sync_staff_failed: string;
     no_staff_found: string;
+    btn_create_owner_pin: ButtonLabel;
+    create_owner_title: string;
+    create_owner_desc: string;
+    owner_name_label: string;
+    owner_pin_label: string;
+    confirm_pin_label: string;
+    btn_save_owner_pin: ButtonLabel;
+    btn_cancel_create_owner: ButtonLabel;
+    pin_mismatch_error: string;
+    pin_length_error: string;
+    owner_name_required_error: string;
+    owner_created_success: string;
   };
   setup: {
     wizard_title: string;

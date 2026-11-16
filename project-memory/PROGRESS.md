@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Sync & Hydrate Owner/Staff Accounts for Multi-Device Restore - COMPLETE
+Owner PIN Recovery When Sync Events Has 0 Users - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,9 @@ Sync & Hydrate Owner/Staff Accounts for Multi-Device Restore - COMPLETE
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Added `createRecoveryOwnerPin` in [cloudAuth.ts](file:///d:/HOSPIVO/src/logic/cloudAuth.ts) linking the Owner to the authenticated Supabase user ID, storing salted PIN hashes, and syncing the record to `hospivo_sync_events`.
+- Added "Create Owner PIN" recovery button and inline setup form (Owner Name + 4-digit PIN + Confirm PIN) in [Login.tsx](file:///d:/HOSPIVO/src/screens/Login.tsx) when zero staff accounts are found.
+- Added comprehensive unit tests in [cloudAuth.test.ts](file:///d:/HOSPIVO/src/logic/cloudAuth.test.ts) (208 passing tests across 27 suites, zero-error production build).
 - Ensured Owner and Staff user records (with PIN hashes, salt, and approval PIN) are queued to Supabase sync outbox during cloud setup and updates via [Setup.tsx](file:///d:/HOSPIVO/src/screens/Setup.tsx) and [cloudSync.ts](file:///d:/HOSPIVO/src/logic/cloudSync.ts).
 - Added automatic staff account hydration (`pullAndHydrateStaffAccounts`) during multi-device OTP sign-in in [cloudAuth.ts](file:///d:/HOSPIVO/src/logic/cloudAuth.ts), restoring all accounts into local IndexedDB before the PIN screen loads.
 - Built a localized zero-user fallback card with a 56px "Sync Staff Accounts" retry button on the "Who is using?" PIN screen in [Login.tsx](file:///d:/HOSPIVO/src/screens/Login.tsx).

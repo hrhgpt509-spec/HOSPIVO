@@ -10,7 +10,7 @@ import { enterFullscreen } from '../logic/fullscreen';
 import { useShop } from '../logic/useShop';
 import { Icon } from '../components/Icon';
 import { pullAndHydrateStaffAccounts, runSyncCycle } from '../logic/cloudSync';
-import { getCurrentCloudSession } from '../logic/cloudAuth';
+import { getCurrentCloudSession, createRecoveryOwnerPin } from '../logic/cloudAuth';
 
 interface LoginProps {
   onLoginSuccess: (user: DBUser) => void;
@@ -34,7 +34,7 @@ export const Login: React.FC<LoginProps> = ({
 }) => {
   const { t } = useTranslation();
   const [users, setUsers] = useState<DBUser[]>([]);
-  const { name: shopName } = useShop();
+  const { name: shopName, ownerName: shopOwnerName } = useShop();
   const [selectedUser, setSelectedUser] = useState<DBUser | null>(null);
   const [pin, setPin] = useState<string>('');
   const [hasError, setHasError] = useState<boolean>(false);
@@ -45,7 +45,18 @@ export const Login: React.FC<LoginProps> = ({
   const [currentLiveTime, setCurrentLiveTime] = useState<Date>(() => new Date());
   const [isSyncingUsers, setIsSyncingUsers] = useState<boolean>(false);
 
+  // Recovery Owner PIN form states
+  const [isCreatingOwner, setIsCreatingOwner] = useState<boolean>(false);
+  const [createOwnerName, setCreateOwnerName] = useState<string>('');
+  const [createOwnerPin, setCreateOwnerPin] = useState<string>('');
+  const [createOwnerConfirmPin, setCreateOwnerConfirmPin] = useState<string>('');
+  const [createOwnerError, setCreateOwnerError] = useState<string>('');
+  const [isSavingOwner, setIsSavingOwner] = useState<boolean>(false);
+
   const btnSyncStaff = tButton('login.btn_sync_staff');
+  const btnCreateOwnerPin = tButton('login.btn_create_owner_pin');
+  const btnSaveOwnerPin = tButton('login.btn_save_owner_pin');
+  const btnCancelCreateOwner = tButton('login.btn_cancel_create_owner');
 
   const loadData = useCallback(async () => {
     try {
@@ -133,6 +144,50 @@ export const Login: React.FC<LoginProps> = ({
       setLockCountdownSeconds(lock.secondsLeft);
     } else {
       setLockCountdownSeconds(0);
+    }
+  };
+
+  const handleSaveOwnerPin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (isSavingOwner) return;
+
+    const trimmedName = createOwnerName.trim();
+    if (!trimmedName) {
+      setCreateOwnerError(t('login.owner_name_required_error'));
+      return;
+    }
+    if (createOwnerPin.length !== 4) {
+      setCreateOwnerError(t('login.pin_length_error'));
+      return;
+    }
+    if (createOwnerPin !== createOwnerConfirmPin) {
+      setCreateOwnerError(t('login.pin_mismatch_error'));
+      return;
+    }
+
+    setIsSavingOwner(true);
+    setCreateOwnerError('');
+
+    try {
+      const res = await createRecoveryOwnerPin({
+        name: trimmedName,
+        pin: createOwnerPin,
+      });
+
+      if (!res.success || !res.user) {
+        setCreateOwnerError(res.error || 'Failed to create owner PIN');
+        return;
+      }
+
+      await loadData();
+      setIsCreatingOwner(false);
+      triggerFeedback('success', t('login.owner_created_success'));
+      await handleSelectUser(res.user);
+    } catch (err: any) {
+      console.error('Failed to create recovery owner PIN:', err);
+      setCreateOwnerError(err?.message || 'Failed to create owner PIN');
+    } finally {
+      setIsSavingOwner(false);
     }
   };
 
@@ -244,6 +299,7 @@ export const Login: React.FC<LoginProps> = ({
     onDigit: handleAddDigit,
     onBackspace: handleBackspace,
     onClear: handleClear,
+    disabled: isCreatingOwner,
   });
 
   // -------------------------------------------------------------
@@ -486,35 +542,173 @@ export const Login: React.FC<LoginProps> = ({
             {/* Stacked Big Name Buttons (64px tall each) */}
             <div className="flex flex-col gap-3.5 max-w-[540px]">
               {users.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-6 sm:p-8 bg-surface-container rounded-3xl border border-outline-variant/40 text-center gap-4 animate-fadeIn">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                    <Icon name="group" className="text-[32px]" />
-                  </div>
-                  <div className="flex flex-col gap-1 max-w-sm">
-                    <h3 className="text-xl font-bold text-on-surface">
-                      {t('login.no_users_title')}
-                    </h3>
-                    <p className="text-sm text-outline">
-                      {t('login.no_users_desc')}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSyncStaffAccounts}
-                    disabled={isSyncingUsers}
-                    className="w-full max-w-xs min-h-[56px] h-14 px-6 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-2xl flex items-center justify-center gap-3 font-bold transition-all shadow-md active:scale-[0.99] cursor-pointer"
+                isCreatingOwner ? (
+                  <form
+                    onSubmit={handleSaveOwnerPin}
+                    className="flex flex-col p-6 sm:p-7 bg-surface-container rounded-3xl border border-outline-variant/50 gap-4 text-left animate-fadeIn shadow-lg max-w-[540px]"
                   >
-                    <Icon name="sync" className={`text-[24px] ${isSyncingUsers ? 'animate-spin' : ''}`} />
-                    <div className="flex flex-col text-left">
-                      <span className="text-base font-bold leading-tight">{btnSyncStaff.main}</span>
-                      {btnSyncStaff.sub && (
-                        <span className="text-xs text-on-primary/80 font-normal leading-none">
-                          {btnSyncStaff.sub}
-                        </span>
-                      )}
+                    <div className="flex items-center gap-3 pb-3 border-b border-outline-variant/30">
+                      <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <Icon name="person_add" className="text-[26px]" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-extrabold text-on-surface leading-tight">
+                          {t('login.create_owner_title')}
+                        </h3>
+                        <p className="text-xs text-outline font-medium mt-0.5">
+                          {t('login.create_owner_desc')}
+                        </p>
+                      </div>
                     </div>
-                  </button>
-                </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                        {t('login.owner_name_label')}
+                      </label>
+                      <input
+                        type="text"
+                        value={createOwnerName}
+                        onChange={(e) => {
+                          setCreateOwnerName(e.target.value);
+                          if (createOwnerError) setCreateOwnerError('');
+                        }}
+                        placeholder="Owner Name"
+                        className="w-full h-12 px-4 rounded-xl border border-outline-variant/80 bg-surface text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none font-semibold text-base transition-all"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                          {t('login.owner_pin_label')}
+                        </label>
+                        <input
+                          type="password"
+                          maxLength={4}
+                          inputMode="numeric"
+                          value={createOwnerPin}
+                          onChange={(e) => {
+                            const clean = e.target.value.replace(/\D/g, '').slice(0, 4);
+                            setCreateOwnerPin(clean);
+                            if (createOwnerError) setCreateOwnerError('');
+                          }}
+                          placeholder="••••"
+                          className="w-full h-12 px-3 rounded-xl border border-outline-variant/80 bg-surface text-on-surface tracking-widest text-center text-xl font-bold focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                          {t('login.confirm_pin_label')}
+                        </label>
+                        <input
+                          type="password"
+                          maxLength={4}
+                          inputMode="numeric"
+                          value={createOwnerConfirmPin}
+                          onChange={(e) => {
+                            const clean = e.target.value.replace(/\D/g, '').slice(0, 4);
+                            setCreateOwnerConfirmPin(clean);
+                            if (createOwnerError) setCreateOwnerError('');
+                          }}
+                          placeholder="••••"
+                          className="w-full h-12 px-3 rounded-xl border border-outline-variant/80 bg-surface text-on-surface tracking-widest text-center text-xl font-bold focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    {createOwnerError && (
+                      <div className="text-xs font-bold text-error bg-error-container/40 p-2.5 rounded-xl border border-error/30 flex items-center gap-1.5">
+                        <Icon name="error" className="text-sm shrink-0" />
+                        <span>{createOwnerError}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCreatingOwner(false);
+                          setCreateOwnerError('');
+                        }}
+                        disabled={isSavingOwner}
+                        className="flex-1 min-h-[56px] h-14 px-4 bg-surface hover:bg-surface-container-high border border-outline-variant/80 text-on-surface rounded-2xl flex items-center justify-center gap-2 font-bold transition-all active:scale-[0.99] cursor-pointer"
+                      >
+                        <Icon name="close" className="text-[20px]" />
+                        <span>{btnCancelCreateOwner.main}</span>
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={isSavingOwner}
+                        className="flex-1 min-h-[56px] h-14 px-4 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-2xl flex items-center justify-center gap-2 font-bold transition-all shadow-md active:scale-[0.99] cursor-pointer"
+                      >
+                        <Icon name={isSavingOwner ? 'sync' : 'check'} className={`text-[20px] ${isSavingOwner ? 'animate-spin' : ''}`} />
+                        <div className="flex flex-col text-left">
+                          <span className="text-base font-bold leading-tight">{btnSaveOwnerPin.main}</span>
+                          {btnSaveOwnerPin.sub && (
+                            <span className="text-xs text-on-primary/80 font-normal leading-none">
+                              {btnSaveOwnerPin.sub}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-6 sm:p-8 bg-surface-container rounded-3xl border border-outline-variant/40 text-center gap-4 animate-fadeIn max-w-[540px]">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                      <Icon name="group" className="text-[32px]" />
+                    </div>
+                    <div className="flex flex-col gap-1 max-w-sm">
+                      <h3 className="text-xl font-bold text-on-surface">
+                        {t('login.no_users_title')}
+                      </h3>
+                      <p className="text-sm text-outline">
+                        {t('login.no_users_desc')}
+                      </p>
+                    </div>
+                    <div className="flex flex-col w-full max-w-xs gap-3">
+                      <button
+                        type="button"
+                        onClick={handleSyncStaffAccounts}
+                        disabled={isSyncingUsers}
+                        className="w-full min-h-[56px] h-14 px-6 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-2xl flex items-center justify-center gap-3 font-bold transition-all shadow-md active:scale-[0.99] cursor-pointer"
+                      >
+                        <Icon name="sync" className={`text-[24px] ${isSyncingUsers ? 'animate-spin' : ''}`} />
+                        <div className="flex flex-col text-left">
+                          <span className="text-base font-bold leading-tight">{btnSyncStaff.main}</span>
+                          {btnSyncStaff.sub && (
+                            <span className="text-xs text-on-primary/80 font-normal leading-none">
+                              {btnSyncStaff.sub}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCreatingOwner(true);
+                          setCreateOwnerName(shopOwnerName || '');
+                          setCreateOwnerPin('');
+                          setCreateOwnerConfirmPin('');
+                          setCreateOwnerError('');
+                        }}
+                        className="w-full min-h-[56px] h-14 px-6 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant/60 text-primary rounded-2xl flex items-center justify-center gap-3 font-bold transition-all shadow-sm active:scale-[0.99] cursor-pointer"
+                      >
+                        <Icon name="person_add" className="text-[24px]" />
+                        <div className="flex flex-col text-left">
+                          <span className="text-base font-bold leading-tight">{btnCreateOwnerPin.main}</span>
+                          {btnCreateOwnerPin.sub && (
+                            <span className="text-xs text-outline font-normal leading-none">
+                              {btnCreateOwnerPin.sub}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )
               ) : (
                 users.map((user, idx) => {
                 const isSelected = selectedUser?.id === user.id;
