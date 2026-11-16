@@ -6,28 +6,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import https from 'node:https'
 import dns from 'node:dns'
-
-// Resolver configured with public DNS (Google 8.8.8.8 and Cloudflare 1.1.1.1) to bypass local ISP DNS blocking
-const dnsResolver = new dns.Resolver()
-dnsResolver.setServers(['8.8.8.8', '1.1.1.1'])
-
-const supabaseAgent = new https.Agent({
-  keepAlive: true,
-  lookup: (hostname: string, options: any, callback: any) => {
-    const cb = typeof options === 'function' ? options : callback
-    dnsResolver.resolve4(hostname, (err, addresses) => {
-      if (!err && addresses && addresses.length > 0) {
-        if (typeof options === 'object' && options?.all) {
-          cb(null, addresses.map((address) => ({ address, family: 4 })))
-        } else {
-          cb(null, addresses[0], 4)
-        }
-      } else {
-        dns.lookup(hostname, options, cb)
-      }
-    })
-  },
-})
+import type { IncomingMessage, ServerResponse } from 'node:http'
 
 // Ensure temporary files generated during build stay inside workspace
 const tmpDir = path.resolve('node_modules/.tmp')
@@ -37,7 +16,70 @@ if (!fs.existsSync(tmpDir)) {
 process.env.TEMP = tmpDir
 process.env.TMP = tmpDir
 
-// https://vite.dev/config/
+const SUPABASE_HOST = 'njsxgbslgzlzdprcngzw.supabase.co'
+
+const resolver = new dns.Resolver()
+resolver.setServers(['8.8.8.8', '1.1.1.1'])
+
+const supabaseAgent = new https.Agent({
+  keepAlive: true,
+  lookup: (hostname, options, callback) => {
+    const cb = typeof options === 'function' ? options : callback
+    if (hostname !== SUPABASE_HOST) {
+      dns.lookup(hostname, options as dns.LookupOptions, cb as never)
+      return
+    }
+    const all = typeof options === 'object' && options !== null && Boolean(options.all)
+    resolver.resolve4(hostname, (err, addresses) => {
+      const ips = !err && addresses && addresses.length > 0
+        ? addresses
+        : ['104.18.38.10', '172.64.149.246']
+      if (all) {
+        ; (cb as (err: null, addresses: dns.LookupAddress[]) => void)(
+          null,
+          ips.map((address) => ({ address, family: 4 })),
+        )
+      } else {
+        ; (cb as (err: null, address: string, family: number) => void)(null, ips[0], 4)
+      }
+    })
+  },
+})
+
+function supabaseProxyMiddleware(req: IncomingMessage, res: ServerResponse) {
+  const targetPath = req.url && req.url.startsWith('/') ? req.url : `/${req.url || ''}`
+  const headers: Record<string, string | string[] | undefined> = { ...req.headers }
+  headers.host = SUPABASE_HOST
+  delete headers.origin
+  delete headers.referer
+  delete headers.connection
+
+  const proxyReq = https.request(
+    {
+      hostname: SUPABASE_HOST,
+      servername: SUPABASE_HOST,
+      port: 443,
+      path: targetPath,
+      method: req.method,
+      headers,
+      agent: supabaseAgent,
+    },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode || 502, proxyRes.headers)
+      proxyRes.pipe(res)
+    },
+  )
+
+  proxyReq.on('error', (err) => {
+    if (!res.headersSent) {
+      res.writeHead(502, { 'Content-Type': 'application/json' })
+    }
+    res.end(JSON.stringify({ message: `Local Supabase proxy error: ${err.message}` }))
+  })
+
+  req.pipe(proxyReq)
+}
+
 export default defineConfig({
   plugins: [
     react(),
@@ -58,28 +100,21 @@ export default defineConfig({
         display_override: ['fullscreen', 'standalone'],
       },
     }),
+    {
+      name: 'supabase-local-proxy',
+      configureServer(server) {
+        server.middlewares.use('/api/sb', supabaseProxyMiddleware)
+      },
+      configurePreviewServer(server) {
+        server.middlewares.use('/api/sb', supabaseProxyMiddleware)
+      },
+    },
   ],
   server: {
     host: '0.0.0.0',
     port: 3000,
-    proxy: {
-      '/api/sb': {
-        target: 'https://njsxgbslglzdprcngzw.supabase.co',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/sb/, ''),
-        agent: supabaseAgent,
-      },
-    },
   },
   preview: {
     port: 3000,
-    proxy: {
-      '/api/sb': {
-        target: 'https://njsxgbslglzdprcngzw.supabase.co',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/sb/, ''),
-        agent: supabaseAgent,
-      },
-    },
   },
 })
