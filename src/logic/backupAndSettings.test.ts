@@ -10,6 +10,9 @@ import {
   restoreBackup,
   generateAndVerifyBackup,
   saveBackup,
+  saveBackupDirectoryHandle,
+  getSavedBackupDirectoryHandle,
+  _resetBackupDirectoryHandleForTesting,
   isDirectoryPickerSupported,
   pickBackupDirectory,
   writeBackupToDirectoryHandle,
@@ -31,6 +34,7 @@ describe('Backup, Staff PIN & Settings Logic', () => {
   beforeEach(async () => {
     await resetDatabase();
     _resetApprovalStoreForTesting();
+    _resetBackupDirectoryHandleForTesting();
   });
 
   describe('Backup Export, SHA-256 Verification & Restore', () => {
@@ -237,6 +241,42 @@ describe('Backup, Staff PIN & Settings Logic', () => {
       expect(status.isToday).toBe(true);
       auditCount = await db.auditLog.where('action').equals('backup_created').count();
       expect(auditCount).toBe(1);
+    });
+
+    it('saveBackup writes directly to saved directory handle if present and commits backup', async () => {
+      const writeMock = vi.fn().mockResolvedValue(undefined);
+      const closeMock = vi.fn().mockResolvedValue(undefined);
+      const getFileHandleMock = vi.fn().mockResolvedValue({
+        createWritable: vi.fn().mockResolvedValue({
+          write: writeMock,
+          close: closeMock,
+        }),
+      });
+      const mockDirHandle = {
+        name: 'Saved Pharmacy Backups',
+        getFileHandle: getFileHandleMock,
+        queryPermission: vi.fn().mockResolvedValue('granted'),
+      };
+
+      await saveBackupDirectoryHandle(mockDirHandle);
+      const retrieved = await getSavedBackupDirectoryHandle();
+      expect(retrieved).toBeDefined();
+      expect(retrieved.name).toBe('Saved Pharmacy Backups');
+
+      const payload = await generateAndVerifyBackup('Direct Dir Shop');
+      const result = await saveBackup(payload, 'owner_dir_tester');
+      expect(result.status).toBe('saved');
+      expect(getFileHandleMock).toHaveBeenCalled();
+      expect(writeMock).toHaveBeenCalled();
+      expect(closeMock).toHaveBeenCalled();
+
+      const status = await getBackupStatus();
+      expect(status.isToday).toBe(true);
+      expect(status.lastVerifiedBackupAt).toBe(payload.meta.exportedAt);
+
+      const audits = await db.auditLog.where('action').equals('backup_created').toArray();
+      const lastAudit = audits[audits.length - 1];
+      expect(lastAudit.who).toBe('owner_dir_tester');
     });
 
     it('restores database cleanly from a verified backup payload', async () => {

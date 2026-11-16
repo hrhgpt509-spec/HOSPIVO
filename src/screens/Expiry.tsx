@@ -420,7 +420,6 @@ export const Expiry: React.FC<ExpiryProps> = ({
                     <EmptyState
                       title={t('expiry.empty_bucket_title')}
                       subtitle={t('expiry.empty_bucket_sub')}
-                      icon={activeTab === 'expired' ? 'verified' : 'event_available'}
                     />
                   </div>
                 ) : (

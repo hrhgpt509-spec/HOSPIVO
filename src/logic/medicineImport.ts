@@ -135,8 +135,10 @@ export function downloadSampleCsvTemplate(): void {
   link.setAttribute('download', 'hospivo-sample-medicines.csv');
   document.body.appendChild(link);
   link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  setTimeout(() => {
+    if (link.parentNode) document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 1500);
 }
 
 /**

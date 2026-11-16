@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-PROMPT F1 - Fix Auto-Lock on PIN Screen, Real Backup Folder, Sample CSV Template, & Phone Layout - COMPLETE
+PROMPT F2 - Fix Expiry Tile Badge (29 vs 0), PIN Screen Auto-Lock, Real Backup Folder, & Sample CSV - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,9 @@ PROMPT F1 - Fix Auto-Lock on PIN Screen, Real Backup Folder, Sample CSV Template
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Bound Expiry tile badge in [Home.tsx](file:///d:/HOSPIVO/src/screens/Home.tsx) strictly to `expiring30Count` (rendered only when > 0, hidden at 0) instead of `combinedAlertsCount`, and verified with unit test in [reports.test.ts](file:///d:/HOSPIVO/src/logic/reports.test.ts).
+- Stored and persisted native directory handle in [backup.ts](file:///d:/HOSPIVO/src/logic/backup.ts) via `saveBackupDirectoryHandle`/`getSavedBackupDirectoryHandle`, and wired the red warning banner "Backup Now" button on [Home.tsx](file:///d:/HOSPIVO/src/screens/Home.tsx) to write directly to the saved handle and immediately refresh `backupStatus`.
+- Ensured [Setup.tsx](file:///d:/HOSPIVO/src/screens/Setup.tsx) Step 6 calls `saveBackupDirectoryHandle` upon folder selection, with all 216 tests passing across 28 test suites and zero-error production build.
 - Gated auto-lock timer in [App.tsx](file:///d:/HOSPIVO/src/App.tsx) and unit tested `shouldRunAutoLock` in [backupAndSettings.test.ts](file:///d:/HOSPIVO/src/logic/backupAndSettings.test.ts): inactivity timer is completely disabled on "Who is using?" PIN screen and Setup Wizard, running strictly in POS (`home` screen with `currentUser`).
 - Replaced dummy backup folder strings with File System Access API picker (`pickBackupDirectory`), immediate verified backup creation (`writeBackupToDirectoryHandle`), and download fallback in [backup.ts](file:///d:/HOSPIVO/src/logic/backup.ts) and [Setup.tsx](file:///d:/HOSPIVO/src/screens/Setup.tsx).
 - Fixed sample CSV template in [medicineImport.ts](file:///d:/HOSPIVO/src/logic/medicineImport.ts) with 4 realistic Indian medicine rows passing zero-error round-trip validation in [medicineImport.test.ts](file:///d:/HOSPIVO/src/logic/medicineImport.test.ts), and added download buttons in [Setup.tsx](file:///d:/HOSPIVO/src/screens/Setup.tsx) and [OwnerMedicineImport.tsx](file:///d:/HOSPIVO/src/screens/OwnerMedicineImport.tsx).

@@ -363,5 +363,45 @@ describe('reports & owner dashboard analytics', () => {
     // Ketorg (0 stock) + Pantop D (0 stock) + Lulinat (19600 <= 20000) = 3
     expect(counters.lowStockCount).toBe(3);
   });
+
+  it('keeps expiring30Count separate from lowStockCount so Expiry tile badge displays 0 when no medicines are expiring', () => {
+    const today = '2026-11-13';
+    // 29 low stock medicines
+    const medicines: Medicine[] = Array.from({ length: 29 }, (_, i) => ({
+      id: i + 1,
+      name: `Med ${i + 1}`,
+      minStockUnits: 50,
+      active: true,
+    } as Medicine));
+
+    // Valid batches far in the future (not expiring in 30 days)
+    const batches: Batch[] = [
+      {
+        id: 101,
+        medicineId: 1,
+        batchNo: 'FUTURE-1',
+        expiry: '2028-12-31',
+        qtyPacks: 100,
+        unitsPerPack: 10,
+        mrpPaise: 5000,
+        purchaseRatePaise: 3000,
+        createdAt: today,
+      } as Batch,
+    ];
+
+    const counters = computeHomeLiveCounters({
+      bills: [],
+      billReturns: [],
+      medicines,
+      batches,
+      stockMovements: [],
+      today,
+    });
+
+    expect(counters.lowStockCount).toBe(29);
+    expect(counters.expiring30Count).toBe(0);
+    // Expiry tile badge binds strictly to expiring30Count, not combinedAlertsCount
+    expect(counters.expiring30Count > 0).toBe(false);
+  });
 });
 

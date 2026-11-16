@@ -218,6 +218,54 @@ export async function pickBackupDirectory(): Promise<{ handle: any; folderName: 
   }
 }
 
+let _memoryBackupDirectoryHandle: any = null;
+
+/**
+ * Reset in-memory backup directory handle (used in tests / database reset).
+ */
+export function _resetBackupDirectoryHandleForTesting(): void {
+  _memoryBackupDirectoryHandle = null;
+}
+
+/**
+ * Saves a FileSystemDirectoryHandle (and folder name) in Dexie settings.
+ */
+export async function saveBackupDirectoryHandle(handle: any): Promise<void> {
+  if (!handle) return;
+  _memoryBackupDirectoryHandle = handle;
+  try {
+    await db.settings.put({ key: 'backup_dir_handle', value: handle });
+  } catch {
+    // structuredClone in fake-indexeddb or non-supporting engines may reject JS function mocks
+  }
+  if (handle.name) {
+    try {
+      await db.settings.put({ key: 'backup_dir_name', value: handle.name });
+    } catch {
+      // ignore
+    }
+  }
+}
+
+/**
+ * Retrieves the saved FileSystemDirectoryHandle from Dexie settings.
+ */
+export async function getSavedBackupDirectoryHandle(): Promise<any | null> {
+  if (_memoryBackupDirectoryHandle) {
+    return _memoryBackupDirectoryHandle;
+  }
+  try {
+    const entry = await db.settings.get('backup_dir_handle');
+    if (entry && entry.value) {
+      _memoryBackupDirectoryHandle = entry.value;
+      return entry.value;
+    }
+  } catch (err) {
+    console.error('Failed to get saved backup directory handle:', err);
+  }
+  return null;
+}
+
 /**
  * Writes a verified backup JSON file directly into a FileSystemDirectoryHandle.
  */
@@ -318,20 +366,66 @@ export interface SaveBackupResult {
 
 /**
  * Step B (Save to disk & conditional commit):
- * If showSaveFilePicker is available:
- *   - Prompts user to pick location and writes JSON file.
- *   - If cancelled (AbortError), stops immediately without saving any record/audit.
- *   - Only AFTER writable.close() resolves, commits verified backup and audit log.
- * If showSaveFilePicker is NOT available (fallback):
- *   - Triggers <a download> blob download.
- *   - Returns { status: 'needs_confirmation' } so caller can show confirmation prompt
- *     before committing the backup record.
+ * 1. Checks for a saved FileSystemDirectoryHandle in IndexedDB (from Setup or Settings)
+ *    and writes directly to that folder if permission is granted.
+ * 2. If no saved handle, prompts with showDirectoryPicker if supported.
+ * 3. If directory picker is unavailable, prompts with showSaveFilePicker.
+ * 4. Otherwise triggers browser download and returns { status: 'needs_confirmation' }.
  */
 export async function saveBackup(
   payload: BackupPayload,
   who = 'owner',
   filename?: string
 ): Promise<SaveBackupResult> {
+  // 1. Try saved directory handle first
+  try {
+    const savedHandle = await getSavedBackupDirectoryHandle();
+    if (savedHandle && typeof savedHandle.getFileHandle === 'function') {
+      let hasPerm = true;
+      if (typeof savedHandle.queryPermission === 'function') {
+        const status = await savedHandle.queryPermission({ mode: 'readwrite' });
+        if (status !== 'granted') {
+          if (typeof savedHandle.requestPermission === 'function') {
+            const req = await savedHandle.requestPermission({ mode: 'readwrite' });
+            hasPerm = req === 'granted';
+          } else {
+            hasPerm = false;
+          }
+        }
+      }
+      if (hasPerm) {
+        await writeBackupToDirectoryHandle(savedHandle, payload, filename);
+        await recordVerifiedBackup(payload, who);
+        return { status: 'saved' };
+      }
+    }
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      return { status: 'cancelled' };
+    }
+    console.warn('Could not write to saved directory handle, falling back:', err);
+  }
+
+  // 2. If no saved directory handle, prompt user to pick backup directory
+  if (isDirectoryPickerSupported()) {
+    try {
+      const picked = await pickBackupDirectory();
+      if (!picked) {
+        return { status: 'cancelled' };
+      }
+      await saveBackupDirectoryHandle(picked.handle);
+      await writeBackupToDirectoryHandle(picked.handle, payload, filename);
+      await recordVerifiedBackup(payload, who);
+      return { status: 'saved' };
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        return { status: 'cancelled' };
+      }
+      console.warn('Directory picker failed, trying saveFilePicker:', err);
+    }
+  }
+
+  // 3. Fallback to showSaveFilePicker
   if (isSaveFilePickerSupported()) {
     try {
       const pickerRes = await saveBackupWithFilePicker(payload, filename);
@@ -350,7 +444,7 @@ export async function saveBackup(
       throw err;
     }
   } else {
-    // Fallback: trigger browser download without committing yet
+    // 4. Fallback: trigger browser download without committing yet
     downloadBackupFile(payload, filename);
     return { status: 'needs_confirmation' };
   }

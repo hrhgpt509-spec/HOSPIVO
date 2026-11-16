@@ -27,7 +27,13 @@ import { OwnerBackup } from './OwnerBackup';
 import { OwnerShelfMap } from './OwnerShelfMap';
 import { OwnerStickers } from './OwnerStickers';
 import { loadHomeLiveCounters, type HomeLiveCounters } from '../logic/reports';
-import { getBackupStatus, type BackupStatus } from '../logic/backup';
+import {
+  getBackupStatus,
+  generateAndVerifyBackup,
+  saveBackup,
+  type BackupStatus,
+} from '../logic/backup';
+import { triggerFeedback } from '../logic/feedback';
 import { getHomeSyncState, runSyncCycle, type HomeSyncState } from '../logic/cloudSync';
 import { OwnerCloudSync } from './OwnerCloudSync';
 import { RemoteApprovalInbox } from './RemoteApprovalInbox';
@@ -161,11 +167,40 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
     setActivePage('owner');
   };
 
+  const [isBackingUp, setIsBackingUp] = useState<boolean>(false);
+
   const handleOpenBackup = () => {
     if (currentUser?.role === 'owner') {
       setActivePage('owner_backup');
     } else {
       setIsOwnerGateOpen(true);
+    }
+  };
+
+  const handleBackupNowFromBanner = async () => {
+    if (isBackingUp) return;
+    setIsBackingUp(true);
+    try {
+      const payload = await generateAndVerifyBackup(shopName);
+      const res = await saveBackup(payload, currentUser?.name || 'owner');
+      if (res.status === 'saved') {
+        const updated = await getBackupStatus();
+        setBackupStatus(updated);
+        triggerFeedback('success', t('status.backup_today'));
+      } else if (res.status === 'cancelled') {
+        triggerFeedback('info', t('owner_backup.toast_backup_cancelled'));
+      } else if (res.status === 'needs_confirmation') {
+        handleOpenBackup();
+      }
+    } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        triggerFeedback('info', t('owner_backup.toast_backup_cancelled'));
+      } else {
+        console.error('Failed to take backup from banner:', err);
+        triggerFeedback('error', t('owner_backup.backup_failed_title'));
+      }
+    } finally {
+      setIsBackingUp(false);
     }
   };
 
@@ -794,8 +829,9 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={handleOpenBackup}
-                className="h-14 min-w-[200px] px-6 bg-[#D92D20] hover:brightness-105 active:scale-[0.99] text-white rounded-2xl font-bold flex flex-col items-center justify-center shadow-sm cursor-pointer transition-all border border-[#B91C1C]"
+                disabled={isBackingUp}
+                onClick={handleBackupNowFromBanner}
+                className="h-14 min-w-[200px] px-6 bg-[#D92D20] hover:brightness-105 active:scale-[0.99] disabled:opacity-70 text-white rounded-2xl font-bold flex flex-col items-center justify-center shadow-sm cursor-pointer transition-all border border-[#B91C1C]"
               >
                 <span className="text-lg font-bold leading-tight">{backupBtn.main}</span>
                 {backupBtn.sub ? (
@@ -890,12 +926,10 @@ export const Home: React.FC<HomeProps> = ({ currentUser }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
                   </svg>
                 </div>
-                {liveCounters.combinedAlertsCount > 0 ? (
+                {liveCounters.expiring30Count > 0 && (
                   <span className="px-2 sm:px-2.5 py-0.5 rounded-full bg-semantic-orange text-white text-xs sm:text-sm font-extrabold">
-                    {liveCounters.combinedAlertsCount}
+                    {liveCounters.expiring30Count}
                   </span>
-                ) : (
-                  <span className="w-3.5 h-3.5 rounded-full bg-semantic-orange"></span>
                 )}
               </div>
               <div>

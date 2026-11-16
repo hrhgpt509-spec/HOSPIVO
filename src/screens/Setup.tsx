@@ -1545,8 +1545,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-auto py-4">
             {/* Option 1: File se Jodo (Active - opens OwnerMedicineImport) */}
             <div
-              onClick={() => setIsImportingInSetup(true)}
-              className="bg-white border-2 border-slate-200 hover:border-[#1B8F4A] min-h-[360px] p-7 rounded-2xl flex flex-col justify-between items-center text-center cursor-pointer shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+                            className="bg-white border-2 border-slate-200 hover:border-[#1B8F4A] min-h-[360px] p-7 rounded-2xl flex flex-col justify-between items-center text-center shadow-sm hover:shadow-md transition-all "
             >
               <div className="flex flex-col items-center">
                 <div className="flex items-center gap-2">
@@ -1582,7 +1581,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 </button>
               </div>
 
-              <div className="w-full max-w-[320px] h-[58px] min-h-[56px] rounded-2xl bg-primary text-white flex items-center justify-center gap-3 px-6 shadow-sm hover:bg-primary-container transition-colors">
+              <button type="button" onClick={() => setIsImportingInSetup(true)} className="w-full max-w-[320px] h-[58px] min-h-[56px] rounded-2xl bg-primary text-white flex items-center justify-center gap-3 px-6 shadow-sm hover:bg-primary-container cursor-pointer active:scale-[0.99] transition-all">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
                 </svg>
@@ -1592,7 +1591,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                     <span className="text-[13px] opacity-80 leading-tight">{btnChooseFile.sub}</span>
                   ) : null}
                 </div>
-              </div>
+              </button>
             </div>
 
             {/* Option 2: Khaali Shuru Karo (Start Empty - ACTIVE) */}
