@@ -313,7 +313,7 @@ export const Login: React.FC<LoginProps> = ({
   if (isLocked) {
     const lockTargetLen = 4;
     return (
-      <div className="w-full min-h-screen bg-[#f1fcf6] flex items-center justify-center p-0 m-0 select-none relative overflow-hidden">
+      <div className="w-full min-h-dvh bg-[#f1fcf6] flex items-center justify-center px-2 py-16 m-0 select-none relative overflow-y-auto">
         {/* Background blurred representation of the app (matches 08c) */}
         <div aria-hidden="true" className="absolute inset-0 w-full h-full flex flex-col bg-[#f1fcf6] p-4 filter blur-[6px] opacity-45 pointer-events-none scale-100">
           <div className="w-full h-16 bg-[#e5f0eb] rounded-xl flex items-center justify-between px-6 mb-4">

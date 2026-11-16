@@ -461,7 +461,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
 
       {/* 2. Main Content Canvas */}
       <main className="w-full pt-16 flex-1 flex flex-col justify-between max-w-[1440px] mx-auto px-4 md:px-8">
-        <div className="flex flex-col w-full h-[calc(100vh-64px-44px)] overflow-hidden p-2 select-none justify-between">
+        <div className="flex flex-col w-full min-h-[calc(100dvh-64px-44px)] lg:h-[calc(100vh-64px-44px)] overflow-y-auto lg:overflow-hidden p-2 select-none justify-between">
           
           {/* Top Title & GST Compliant Badge */}
           <div className="flex items-center justify-between gap-4 mb-2 shrink-0">

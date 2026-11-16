@@ -504,7 +504,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   const doneLabel = tButton('stock_jodo.btn_done');
 
   return (
-    <div className="w-full h-screen bg-canvas font-body-md text-body-md text-on-surface antialiased select-none flex flex-col overflow-hidden">
+    <div className="w-full min-h-dvh lg:h-screen bg-canvas font-body-md text-body-md text-on-surface antialiased select-none flex flex-col overflow-y-auto lg:overflow-hidden">
       {/* GLOBAL APP HEADER */}
       <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-16 w-full max-w-[1440px] mx-auto px-4 sm:px-gutter flex items-center justify-between">
@@ -570,12 +570,12 @@ export const StockJodo: React.FC<StockJodoProps> = ({
       </header>
 
       {/* MAIN VIEWPORT CONTAINER */}
-      <main className="w-full h-screen pt-16 bg-canvas overflow-hidden flex flex-col">
+      <main className="w-full min-h-dvh lg:h-screen pt-16 bg-canvas overflow-y-auto lg:overflow-hidden flex flex-col">
         {/* ============================================================== */}
         {/* STEP 1: CHOOSE SUPPLIER & INVOICE DETAILS (23a) */}
         {/* ============================================================== */}
         {currentStep === 1 && (
-          <div className="flex flex-col w-full max-w-[1440px] mx-auto h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] overflow-y-auto lg:overflow-hidden select-none px-4 sm:px-gutter py-space-sm sm:py-space-md justify-between box-border">
+          <div className="flex flex-col w-full max-w-[1440px] mx-auto min-h-[calc(100dvh-64px)] lg:h-[calc(100vh-64px)] lg:max-h-[calc(100vh-64px)] overflow-y-auto lg:overflow-hidden select-none px-4 sm:px-gutter py-space-sm sm:py-space-md justify-between box-border">
             {/* Step Tracker & Header */}
             <div className="flex flex-col w-full gap-space-xs shrink-0">
               <div className="grid grid-cols-4 gap-space-xs w-full">
@@ -818,7 +818,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         {/* STEP 2: INVOICE PHOTO (23b / 23b2) */}
         {/* ============================================================== */}
         {currentStep === 2 && (
-          <div className="flex flex-col w-full max-w-[1440px] mx-auto h-[calc(100vh-64px)] max-h-[calc(100vh-64px)] overflow-y-auto lg:overflow-hidden select-none px-4 sm:px-gutter lg:px-margin py-space-sm justify-between">
+          <div className="flex flex-col w-full max-w-[1440px] mx-auto min-h-[calc(100dvh-64px)] lg:h-[calc(100vh-64px)] lg:max-h-[calc(100vh-64px)] overflow-y-auto lg:overflow-hidden select-none px-4 sm:px-gutter lg:px-margin py-space-sm justify-between">
             {/* Step Tracker & Header Block */}
             <div className="flex flex-col gap-space-xs w-full max-w-5xl mx-auto flex-shrink-0">
               <div className="flex items-baseline justify-between">
@@ -1048,7 +1048,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         {/* STEP 3: ADD MEDICINES (23c) */}
         {/* ============================================================== */}
         {currentStep === 3 && (
-          <div className="flex flex-col w-full max-w-[1440px] mx-auto h-[calc(100vh-64px)] px-4 sm:px-gutter py-space-sm justify-between select-none overflow-y-auto lg:overflow-hidden">
+          <div className="flex flex-col w-full max-w-[1440px] mx-auto min-h-[calc(100dvh-64px)] lg:h-[calc(100vh-64px)] px-4 sm:px-gutter py-space-sm justify-between select-none overflow-y-auto lg:overflow-hidden">
             {/* Top Section: Step Header & Progress Bar */}
             <div className="flex flex-col gap-space-xs shrink-0">
               <div className="flex items-center justify-between">
@@ -1503,7 +1503,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         {/* STEP 4: REVIEW & SAVE (23d) */}
         {/* ============================================================== */}
         {currentStep === 4 && (
-          <div className="flex flex-col w-full max-w-[1440px] mx-auto h-[calc(100vh-4rem)] px-4 sm:px-gutter py-space-sm sm:py-space-md select-none overflow-y-auto lg:overflow-hidden justify-between">
+          <div className="flex flex-col w-full max-w-[1440px] mx-auto min-h-[calc(100dvh-4rem)] lg:h-[calc(100vh-4rem)] px-4 sm:px-gutter py-space-sm sm:py-space-md select-none overflow-y-auto lg:overflow-hidden justify-between">
             {/* Top Progress & Header */}
             <div className="flex flex-col gap-space-xs shrink-0 mb-space-xs">
               <div className="flex items-center justify-between">

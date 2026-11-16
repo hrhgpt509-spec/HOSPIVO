@@ -35,6 +35,16 @@
   user-select: none;
 }
 
+input, textarea, select {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: 'Noto Sans', 'Noto Sans Devanagari', sans-serif;
   background-color: #F4F6F5;

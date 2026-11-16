@@ -832,7 +832,7 @@ export const FastBill: React.FC<FastBillProps> = ({
 
       {/* Main Screen Workspace */}
       <main className="w-full pt-16 md:pt-20 bg-background flex-1 flex flex-col min-h-0">
-        <div className="flex-1 w-full p-space-md md:p-space-lg box-border overflow-hidden min-h-[calc(100vh-5rem)]">
+        <div className="flex-1 w-full p-space-md md:p-space-lg box-border overflow-y-auto lg:overflow-hidden min-h-[calc(100dvh-5rem)]">
           {viewMode === 'queue' ? (
             <div className="flex flex-col lg:flex-row w-full h-full gap-space-lg max-h-[860px]">
               {/* Left Column: Pending Bills Queue (30%) */}
