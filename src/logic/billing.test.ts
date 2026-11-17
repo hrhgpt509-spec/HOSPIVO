@@ -215,6 +215,139 @@ describe('billing.ts Phase 3 core logic & DB engine', () => {
     expect(overItemDiscount.approvalCategory).toBe('discount_above_limit');
   });
 
+  describe('bill-level flat discount (wholeBillDiscountPaise)', () => {
+    const pack385 = {
+      medicineId: 1,
+      mrpPaise: 38500, // Rs 385
+      unitsPerPack: 10,
+      gstPercent: 12,
+      unitMode: 'pack' as const,
+      qtyInput: 1,
+    };
+
+    it('turns Rs 385 into Rs 380 or Rs 370 with whole-paise math and no approval inside the limit', () => {
+      const none = calculateBillTotals([pack385]);
+      expect(none.totalPaise).toBe(38500);
+
+      const to380 = calculateBillTotals([pack385], 0, 5, 500); // Rs 5 off (1.3%)
+      expect(to380.discountPaise).toBe(500);
+      expect(to380.totalPaise).toBe(38000);
+      expect(to380.requiresApproval).toBe(false);
+
+      const to370 = calculateBillTotals([pack385], 0, 5, 1500); // Rs 15 off (3.9%)
+      expect(to370.discountPaise).toBe(1500);
+      expect(to370.totalPaise).toBe(37000);
+      expect(to370.requiresApproval).toBe(false);
+      expect(to370.approvalCategory).toBeUndefined();
+      expect(to370.taxablePaise + to370.gstPaise).toBe(to370.netBeforeRoundOffPaise);
+    });
+
+    it('requires approval exactly when total discount goes above the limit (5% of 38500 = 1925)', () => {
+      expect(calculateBillTotals([pack385], 0, 5, 1925).requiresApproval).toBe(false);
+
+      const over = calculateBillTotals([pack385], 0, 5, 1926);
+      expect(over.requiresApproval).toBe(true);
+      expect(over.approvalCategory).toBe('discount_above_limit');
+
+      // Owner raised the limit to 10%: Rs 30 off (7.8%) is fine, Rs 40 off (10.4%) is not
+      expect(calculateBillTotals([pack385], 0, 10, 3000).requiresApproval).toBe(false);
+      expect(calculateBillTotals([pack385], 0, 10, 4000).requiresApproval).toBe(true);
+    });
+
+    it('counts item discount + bill discount together against the limit', () => {
+      const line = {
+        medicineId: 1,
+        mrpPaise: 10000,
+        unitsPerPack: 10,
+        gstPercent: 12,
+        unitMode: 'pack' as const,
+        qtyInput: 1,
+        itemDiscountPercent: 3, // 300 paise
+      };
+      const atLimit = calculateBillTotals([line], 0, 5, 200); // 300 + 200 = 500 = 5%
+      expect(atLimit.discountPaise).toBe(500);
+      expect(atLimit.requiresApproval).toBe(false);
+
+      const over = calculateBillTotals([line], 0, 5, 250); // 550 = 5.5%
+      expect(over.discountPaise).toBe(550);
+      expect(over.requiresApproval).toBe(true);
+    });
+
+    it('splits a flat amount over several lines without losing or inventing a paisa', () => {
+      const lines = [
+        { medicineId: 1, mrpPaise: 12345, unitsPerPack: 10, gstPercent: 12, unitMode: 'pack' as const, qtyInput: 1 },
+        { medicineId: 2, mrpPaise: 6789, unitsPerPack: 10, gstPercent: 5, unitMode: 'pack' as const, qtyInput: 1 },
+        { medicineId: 3, mrpPaise: 1111, unitsPerPack: 10, gstPercent: 0, unitMode: 'pack' as const, qtyInput: 3 },
+      ];
+      const res = calculateBillTotals(lines, 0, 5, 777);
+      const shares = res.lines.map((l) => l.billDiscountSharePaise);
+      expect(shares.reduce((a, b) => a + b, 0)).toBe(777);
+      expect(res.discountPaise).toBe(777);
+      expect(res.subtotalPaise).toBe(12345 + 6789 + 3333);
+      expect(res.netBeforeRoundOffPaise).toBe(res.subtotalPaise - 777);
+      for (const l of res.lines) {
+        expect(Number.isInteger(l.billDiscountSharePaise)).toBe(true);
+        expect(Number.isInteger(l.lineTotalPaise)).toBe(true);
+      }
+    });
+
+    it('uses the flat amount instead of the percent, clamps to the bill, and ignores bad values', () => {
+      const both = calculateBillTotals([pack385], 50, 5, 1000);
+      expect(both.discountPaise).toBe(1000);
+
+      const huge = calculateBillTotals([pack385], 0, 5, 99999999);
+      expect(huge.discountPaise).toBe(38500);
+      expect(huge.totalPaise).toBe(0);
+      expect(huge.requiresApproval).toBe(true);
+
+      expect(calculateBillTotals([pack385], 0, 5, -500).discountPaise).toBe(0);
+      expect(calculateBillTotals([pack385], 0, 5, 0).totalPaise).toBe(38500);
+      expect(calculateBillTotals([pack385], 0, 5, 12.4).discountPaise).toBe(12);
+    });
+
+    it('finalizeBill blocks a flat discount above the limit unless the Approval PIN was verified, and saves it', async () => {
+      const { medicineId } = await seedMedicineWithBatch(
+        { name: 'Costly Med', shortCode: 'C9', unitsPerPack: 15, mrpPaise: 38500 },
+        [{ batchNo: 'C-01', expiry: '2028-12-31', qtyUnits: 30 }]
+      );
+
+      // Rs 15 off (3.9%) -> allowed straight away
+      const ok = await finalizeBill(
+        {
+          lines: [{ medicineId, unitMode: 'pack', qtyInput: 1 }],
+          wholeBillDiscountPaise: 1500,
+          paymentMode: 'cash',
+          cashReceivedPaise: 37000,
+          date: '2026-11-12',
+        },
+        CASHIER_USER,
+        { today: '2026-11-12' }
+      );
+      expect(ok.bill.totalPaise).toBe(37000);
+      expect(ok.bill.discountPaise).toBe(1500);
+
+      // Rs 20 off (5.19%) -> needs approval
+      const overDraft = {
+        lines: [{ medicineId, unitMode: 'pack' as const, qtyInput: 1 }],
+        wholeBillDiscountPaise: 2000,
+        paymentMode: 'cash' as const,
+        cashReceivedPaise: 36500,
+        date: '2026-11-12',
+      };
+      await expect(
+        finalizeBill(overDraft, CASHIER_USER, { today: '2026-11-12' })
+      ).rejects.toThrow('discount_above_limit');
+      expect(await db.bills.count()).toBe(1);
+
+      const approved = await finalizeBill(overDraft, CASHIER_USER, {
+        today: '2026-11-12',
+        approvalVerified: true,
+      });
+      expect(approved.bill.discountPaise).toBe(2000);
+      expect(approved.bill.totalPaise).toBe(36500);
+    });
+  });
+
   it('rejects Schedule H / H1 medicine without complete prescription metadata', async () => {
     const { medicineId } = await seedMedicineWithBatch(
       { name: 'Augmentin 625', scheduleType: 'H', shortCode: 'A1' },

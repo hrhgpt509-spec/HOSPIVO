@@ -4,10 +4,15 @@ import { Icon } from '../../components/Icon';
 import { formatRupees } from '../../logic/money';
 import { textFieldProps } from '../../logic/format';
 import type { BillTotalsResult } from '../../logic/billing';
+import { BillDiscountRow, type BillDiscountMode } from './BillDiscountRow';
 import type { CartItem } from './types';
 import type { UnitMode } from '../../db';
 
 interface BillPanelProps {
+  wholeBillDiscountPaise: number;
+  discountApproved: boolean;
+  onApplyBillDiscount: (mode: BillDiscountMode, value: number) => void;
+  onRemoveBillDiscount: () => void;
   nextBillNo: string;
   cart: CartItem[];
   totals: BillTotalsResult;
@@ -52,6 +57,10 @@ export const BillPanel: React.FC<BillPanelProps> = ({
   customerPhone,
   doctorName,
   wholeBillDiscountPercent,
+  wholeBillDiscountPaise,
+  discountApproved,
+  onApplyBillDiscount,
+  onRemoveBillDiscount,
   onCustomerNameChange,
   onCustomerPhoneChange,
   onDoctorNameChange,
@@ -111,7 +120,7 @@ export const BillPanel: React.FC<BillPanelProps> = ({
               onClick={() => setShowMetaInputs((prev) => !prev)}
               aria-label={t('dawai_becho.customer_name_placeholder')}
               className={`h-12 px-3 rounded-xl flex items-center gap-1 font-bold text-sm transition-colors cursor-pointer ${
-                showMetaInputs || customerName || doctorName || wholeBillDiscountPercent > 0
+                showMetaInputs || customerName || doctorName || wholeBillDiscountPercent > 0 || wholeBillDiscountPaise > 0
                   ? 'bg-primary-fixed text-on-primary-fixed'
                   : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
               }`}
@@ -340,6 +349,17 @@ export const BillPanel: React.FC<BillPanelProps> = ({
 
         {/* Bottom of Bill Panel: Live Totals & Bill Banao CTA */}
         <div className="flex flex-col gap-space-xs pt-space-xs border-t border-outline-variant/30 shrink-0">
+          {/* Bill-level discount (percent or flat Rs) right above the Subtotal / Total block */}
+          {cart.length > 0 && (
+            <BillDiscountRow
+              appliedPercent={wholeBillDiscountPercent}
+              appliedPaise={wholeBillDiscountPaise}
+              subtotalPaise={totals.subtotalPaise}
+              requiresApproval={totals.requiresApproval && !discountApproved}
+              onApply={onApplyBillDiscount}
+              onRemove={onRemoveBillDiscount}
+            />
+          )}
           {/* Subtotal / Discount / Round-off breakdown when cart is non-empty */}
           {cart.length > 0 && (
             <div className="flex flex-col gap-0.5 px-2 text-xs font-semibold text-on-surface-variant">

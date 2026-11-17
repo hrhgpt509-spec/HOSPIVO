@@ -323,3 +323,8 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
 - Cloud sign-in: sendEmailOtp(email, { createUser }) now defaults to shouldCreateUser:false, so no OTP is sent for an email with no account.
 - Missing account returns { success:false, errorCode:'account_not_found' }; the screen shows a red message (new text in en/hi/hinglish) and stays on the email step.
 - New-shop setup (and Owner Cloud Sync) still creates the account. No Supabase table check was added (owner chose the simple way). 239 tests and build pass.
+
+- Bill discount: calculateBillTotals() now takes an optional flat whole-bill discount in paise (wholeBillDiscountPaise); BillDraft and finalizeBill pass it through.
+- Limit check counts item + bill discount together; above the owner limit (default 5%) the Approval PIN is needed.
+- Dawai Becho cart panel: new row above Subtotal/Total (Rs or %, Apply/Remove). Above limit it opens the Approval dialog before applying. Held bills keep the flat amount.
+- 6 new tests in billing.test.ts; 245 tests pass. Note: DawaiBecho.tsx is over 600 lines and still needs a split.

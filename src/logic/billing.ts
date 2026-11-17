@@ -142,13 +142,21 @@ export interface BillTotalsResult {
 /**
  * Pure calculation for line items, item/whole-bill discounts, approval threshold,
  * MRP-inclusive GST extraction, and nearest-rupee round-off in whole paise.
+ *
+ * Whole-bill discount can be a percentage (wholeBillDiscountPercent) OR a flat amount in
+ * whole paise (wholeBillDiscountPaise). If a flat amount above zero is given, it is used and
+ * the percentage is ignored. The approval check uses the TOTAL discount (item + whole bill)
+ * against maxDiscountLimit.
  */
 export function calculateBillTotals(
   lines: BillLineInput[],
   wholeBillDiscountPercent = 0,
-  maxDiscountLimit = DEFAULT_DISCOUNT_LIMIT_PERCENT
+  maxDiscountLimit = DEFAULT_DISCOUNT_LIMIT_PERCENT,
+  wholeBillDiscountPaise = 0
 ): BillTotalsResult {
   const safeWholeDiscount = Math.max(0, Math.min(100, wholeBillDiscountPercent || 0));
+  const safeFlatDiscountPaise = Math.max(0, Math.round(wholeBillDiscountPaise || 0));
+  const useFlatDiscount = safeFlatDiscountPaise > 0;
 
   let subtotalPaise = 0;
   let totalItemDiscountPaise = 0;
@@ -185,8 +193,9 @@ export function calculateBillTotals(
   });
 
   const subtotalAfterItemDiscounts = Math.max(0, subtotalPaise - totalItemDiscountPaise);
-  const targetBillDiscountPaise =
-    safeWholeDiscount > 0
+  const targetBillDiscountPaise = useFlatDiscount
+    ? Math.min(subtotalAfterItemDiscounts, safeFlatDiscountPaise)
+    : safeWholeDiscount > 0
       ? Math.min(
           subtotalAfterItemDiscounts,
           Math.round((subtotalAfterItemDiscounts * safeWholeDiscount) / 100)
@@ -209,6 +218,13 @@ export function calculateBillTotals(
     if (targetBillDiscountPaise > 0 && item.afterItemDiscount > 0) {
       if (idx === lastNonZeroIdx) {
         billDiscountSharePaise = Math.min(item.afterItemDiscount, remainingBillDiscount);
+      } else if (useFlatDiscount) {
+        // Spread a flat amount in proportion to each line (integer paise, last line takes the rest)
+        billDiscountSharePaise = Math.min(
+          item.afterItemDiscount,
+          remainingBillDiscount,
+          Math.round((item.afterItemDiscount * targetBillDiscountPaise) / subtotalAfterItemDiscounts)
+        );
       } else {
         billDiscountSharePaise = Math.min(
           item.afterItemDiscount,
@@ -223,7 +239,14 @@ export function calculateBillTotals(
     const effectiveLineDiscountPercent =
       item.grossPaise > 0 ? (totalLineDiscountPaise * 100) / item.grossPaise : 0;
 
-    if (effectiveLineDiscountPercent > maxDiscountLimit + 1e-6) {
+    // With a flat whole-bill amount the per-line share is only a rounding split, so the limit is
+    // judged on the whole bill (below) plus each line's own item discount.
+    const limitCheckLinePercent = useFlatDiscount
+      ? item.grossPaise > 0
+        ? (item.itemDiscountPaise * 100) / item.grossPaise
+        : 0
+      : effectiveLineDiscountPercent;
+    if (limitCheckLinePercent > maxDiscountLimit + 1e-6) {
       anyLineExceedsLimit = true;
     }
 
@@ -268,9 +291,15 @@ export function calculateBillTotals(
   const totalPaise = Math.round(netBeforeRoundOffPaise / 100) * 100;
   const roundOffPaise = totalPaise - netBeforeRoundOffPaise;
 
+  // A flat amount is compared exactly in integers (no 2-decimal rounding), so even a tiny
+  // overshoot of the limit needs approval. Percent mode keeps the existing comparison.
+  const flatOverLimit =
+    useFlatDiscount && totalDiscountPaise * 100 > maxDiscountLimit * subtotalPaise + 1e-6;
+
   const requiresApproval =
     effectiveDiscountPercent > maxDiscountLimit ||
     safeWholeDiscount > maxDiscountLimit ||
+    flatOverLimit ||
     anyLineExceedsLimit;
 
   return {
@@ -434,6 +463,7 @@ export interface BillDraftLine {
 export interface BillDraft {
   lines: BillDraftLine[];
   wholeBillDiscountPercent?: number;
+  wholeBillDiscountPaise?: number; // flat whole-bill discount in whole paise (used instead of the percent when > 0)
   customerName?: string;
   customerPhone?: string;
   doctorName?: string;
@@ -629,7 +659,8 @@ export async function finalizeBill(
       const totals = calculateBillTotals(
         lineInputs,
         draft.wholeBillDiscountPercent || 0,
-        maxDiscountLimit
+        maxDiscountLimit,
+        draft.wholeBillDiscountPaise || 0
       );
 
       if (totals.requiresApproval && !options?.approvalVerified) {

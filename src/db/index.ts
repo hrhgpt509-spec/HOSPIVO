@@ -212,6 +212,7 @@ export interface HeldBill {
   label: string;
   itemsJson: string;
   discountPercent: number;
+  discountPaise?: number; // flat whole-bill discount in whole paise (optional, not indexed)
   customerName: string;
   doctorName: string;
   heldBy: string;

@@ -25,6 +25,7 @@ import {
   DEFAULT_DISCOUNT_LIMIT_PERCENT,
 } from '../logic/billing';
 import { BillPanel } from './dawai-becho/BillPanel';
+import type { BillDiscountMode } from './dawai-becho/BillDiscountRow';
 import { MedicineCatalogPanel } from './dawai-becho/MedicineCatalogPanel';
 import { ScheduleHModal } from './dawai-becho/ScheduleHModal';
 import { OutOfStockModal } from './dawai-becho/OutOfStockModal';
@@ -82,6 +83,12 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
   const [customerPhone, setCustomerPhone] = useState<string>('');
   const [doctorName, setDoctorName] = useState<string>('');
   const [wholeBillDiscountPercent, setWholeBillDiscountPercent] = useState<number>(0);
+  const [wholeBillDiscountPaise, setWholeBillDiscountPaise] = useState<number>(0);
+  const [pendingBillDiscount, setPendingBillDiscount] = useState<{
+    mode: BillDiscountMode;
+    value: number;
+    description: string;
+  } | null>(null);
   const [discountApproved, setDiscountApproved] = useState<boolean>(false);
 
   // Modals & mobile sheet state
@@ -173,24 +180,35 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
   ]);
 
   // Live bill math from billing.ts
-  const totals = useMemo(() => {
-    const lineInputs: BillLineInput[] = cart.map((item) => ({
-      medicineId: item.medicine.id || 0,
-      medicineName: item.medicine.name,
-      mrpPaise: item.medicine.mrpPaise,
-      unitsPerPack: item.medicine.unitsPerPack,
-      gstPercent: item.medicine.gstPercent,
-      unitMode: item.unitMode,
-      qtyInput: item.qtyInput,
-      itemDiscountPercent: item.itemDiscountPercent,
-      isScheduleH: item.medicine.scheduleType === 'H' || item.medicine.scheduleType === 'H1',
-      patientName: item.patientName,
-      doctorName: item.doctorName,
-      prescriptionChecked: item.prescriptionChecked,
-    }));
+  const cartLineInputs = useMemo<BillLineInput[]>(
+    () =>
+      cart.map((item) => ({
+        medicineId: item.medicine.id || 0,
+        medicineName: item.medicine.name,
+        mrpPaise: item.medicine.mrpPaise,
+        unitsPerPack: item.medicine.unitsPerPack,
+        gstPercent: item.medicine.gstPercent,
+        unitMode: item.unitMode,
+        qtyInput: item.qtyInput,
+        itemDiscountPercent: item.itemDiscountPercent,
+        isScheduleH: item.medicine.scheduleType === 'H' || item.medicine.scheduleType === 'H1',
+        patientName: item.patientName,
+        doctorName: item.doctorName,
+        prescriptionChecked: item.prescriptionChecked,
+      })),
+    [cart]
+  );
 
-    return calculateBillTotals(lineInputs, wholeBillDiscountPercent, discountLimit);
-  }, [cart, wholeBillDiscountPercent, discountLimit]);
+  const totals = useMemo(
+    () =>
+      calculateBillTotals(
+        cartLineInputs,
+        wholeBillDiscountPercent,
+        discountLimit,
+        wholeBillDiscountPaise
+      ),
+    [cartLineInputs, wholeBillDiscountPercent, wholeBillDiscountPaise, discountLimit]
+  );
 
   const filteredMedicines = useMemo(() => {
     return searchMedicines(medicines, searchQuery);
@@ -491,7 +509,60 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
 
   const handleWholeBillDiscountChange = (val: number) => {
     setWholeBillDiscountPercent(val);
+    setWholeBillDiscountPaise(0);
     setDiscountApproved(false);
+  };
+
+  const applyBillDiscount = (mode: BillDiscountMode, value: number) => {
+    setWholeBillDiscountPercent(mode === 'percent' ? value : 0);
+    setWholeBillDiscountPaise(mode === 'paise' ? value : 0);
+  };
+
+  const handleRemoveBillDiscount = () => {
+    setWholeBillDiscountPercent(0);
+    setWholeBillDiscountPaise(0);
+    setPendingBillDiscount(null);
+    setDiscountApproved(false);
+  };
+
+  // New bill-level discount (Rs or %): within the owner's limit it applies at once,
+  // above the limit it waits for the Approval PIN (ApprovalDialog) before it is applied.
+  const handleApplyBillDiscount = async (mode: BillDiscountMode, value: number) => {
+    const preview = calculateBillTotals(
+      cartLineInputs,
+      mode === 'percent' ? value : 0,
+      discountLimit,
+      mode === 'paise' ? value : 0
+    );
+
+    if (!preview.requiresApproval) {
+      applyBillDiscount(mode, value);
+      setDiscountApproved(false);
+      triggerFeedback('success', t('dawai_becho.bill_disc_applied_toast'));
+      return;
+    }
+
+    let rule: ApprovalRuleType = DEFAULT_APPROVAL_RULES.discount_above_limit;
+    try {
+      const setting = await db.settings.get('approval_rules');
+      const rules = setting?.value as Partial<Record<ApprovalActionCategory, ApprovalRuleType>> | undefined;
+      if (rules && rules.discount_above_limit) {
+        rule = rules.discount_above_limit;
+      }
+    } catch {
+      // use default
+    }
+    if (rule === 'blocked_offline' || rule === 'remote_approval') {
+      triggerFeedback('error', t('dawai_becho.err_discount_blocked_offline'));
+      return;
+    }
+
+    setPendingBillDiscount({
+      mode,
+      value,
+      description: `Bill #${nextBillNo}: ${preview.effectiveDiscountPercent}% discount (${formatRupees(preview.discountPaise)}) on ${formatRupees(preview.subtotalPaise)}`,
+    });
+    setIsApprovalOpen(true);
   };
 
   // Clear active bill
@@ -501,6 +572,8 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
     setCustomerPhone('');
     setDoctorName('');
     setWholeBillDiscountPercent(0);
+    setWholeBillDiscountPaise(0);
+    setPendingBillDiscount(null);
     setDiscountApproved(false);
     setIsMobileBillSheetOpen(false);
   };
@@ -547,6 +620,7 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
       label,
       itemsJson: JSON.stringify(serialized),
       discountPercent: wholeBillDiscountPercent,
+      discountPaise: wholeBillDiscountPaise,
       customerName: customerName.trim(),
       doctorName: doctorName.trim(),
       heldBy: userName,
@@ -605,6 +679,8 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
       setCustomerName(hb.customerName || '');
       setDoctorName(hb.doctorName || '');
       setWholeBillDiscountPercent(hb.discountPercent || 0);
+      setWholeBillDiscountPaise(hb.discountPaise || 0);
+      setPendingBillDiscount(null);
       setDiscountApproved(false);
       setIsHeldModalOpen(false);
       setHeldBills(await getHeldBills());
@@ -632,6 +708,7 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
       prescriptionChecked: item.prescriptionChecked,
     })),
     wholeBillDiscountPercent,
+    wholeBillDiscountPaise,
     customerName: customerName.trim(),
     customerPhone: customerPhone.trim(),
     doctorName: doctorName.trim(),
@@ -695,6 +772,10 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
     customerPhone,
     doctorName,
     wholeBillDiscountPercent,
+    wholeBillDiscountPaise,
+    discountApproved,
+    onApplyBillDiscount: handleApplyBillDiscount,
+    onRemoveBillDiscount: handleRemoveBillDiscount,
     onCustomerNameChange: setCustomerName,
     onCustomerPhoneChange: setCustomerPhone,
     onDoctorNameChange: setDoctorName,
@@ -1498,14 +1579,28 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
       <ApprovalDialog
         isOpen={isApprovalOpen}
         actionCategory="discount_above_limit"
-        recordDescription={`Bill #${nextBillNo}: ${totals.effectiveDiscountPercent}% discount (${formatRupees(totals.discountPaise)}) on ${formatRupees(totals.subtotalPaise)}`}
+        recordDescription={
+          pendingBillDiscount
+            ? pendingBillDiscount.description
+            : `Bill #${nextBillNo}: ${totals.effectiveDiscountPercent}% discount (${formatRupees(totals.discountPaise)}) on ${formatRupees(totals.subtotalPaise)}`
+        }
         requesterName={userName}
         onApproved={() => {
           setIsApprovalOpen(false);
           setDiscountApproved(true);
+          if (pendingBillDiscount) {
+            // Approval was for applying a bill discount: apply it now, stay on the bill screen
+            applyBillDiscount(pendingBillDiscount.mode, pendingBillDiscount.value);
+            setPendingBillDiscount(null);
+            triggerFeedback('success', t('dawai_becho.bill_disc_applied_toast'));
+            return;
+          }
           executePaymentProceed(true);
         }}
-        onClose={() => setIsApprovalOpen(false)}
+        onClose={() => {
+          setIsApprovalOpen(false);
+          setPendingBillDiscount(null);
+        }}
       />
     </div>
   );

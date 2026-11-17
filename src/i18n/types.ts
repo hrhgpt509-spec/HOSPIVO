@@ -835,6 +835,13 @@ export interface TranslationSchema {
     batch_exp_prefix: string;
     item_discount_label: string;
     bill_discount_label: string;
+    bill_disc_row_label: string;
+    bill_disc_mode_pct: string;
+    bill_disc_mode_rs: string;
+    bill_disc_apply: string;
+    bill_disc_remove: string;
+    bill_disc_needs_pin: string;
+    bill_disc_applied_toast: string;
     customer_name_placeholder: string;
     customer_phone_placeholder: string;
     doctor_name_placeholder: string;
