@@ -173,7 +173,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
   if (!isOwner(currentUser)) {
     return (
-      <div className="w-full min-h-screen bg-surface flex flex-col items-center justify-center p-6 text-on-surface">
+      <div className="w-full min-h-dvh bg-surface flex flex-col items-center justify-center p-6 text-on-surface">
         <Icon name="lock" className="text-error text-[48px] mb-4" />
         <h1 className="text-headline-lg font-bold text-on-surface mb-2">{t('owner_dashboard.owner_only_error')}</h1>
         <button
@@ -477,7 +477,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-surface font-body-md text-on-surface antialiased select-none flex flex-col justify-between">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased select-none flex flex-col justify-between">
       {/* 1. Top Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm">
         <div className="h-20 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
@@ -921,7 +921,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               <button
                 type="button"
                 onClick={() => setCurrentView('main')}
-                className="h-14 min-w-[160px] px-6 rounded-2xl bg-surface-container-lowest hover:bg-surface-container transition-all flex items-center gap-2 shadow-sm cursor-pointer font-bold border border-outline-variant/30"
+                className="h-14 min-w-[160px] max-sm:min-w-0 max-sm:flex-1 px-6 rounded-2xl bg-surface-container-lowest hover:bg-surface-container transition-all flex items-center gap-2 shadow-sm cursor-pointer font-bold border border-outline-variant/30"
               >
                 <Icon name="arrow_back" className="text-[24px] text-outline" />
                 <span>{btnBack.main}</span>
@@ -930,7 +930,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               <button
                 type="button"
                 onClick={handleSaveApprovalRules}
-                className="h-14 min-w-[200px] px-8 rounded-2xl bg-primary hover:bg-primary-container text-on-primary transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer font-bold"
+                className="h-14 min-w-[200px] max-sm:min-w-0 max-sm:flex-1 px-8 rounded-2xl bg-primary hover:bg-primary-container text-on-primary transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer font-bold"
               >
                 <Icon name="check" className="text-[26px]" />
                 <span>{btnSaveRules.main}</span>
@@ -1043,7 +1043,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
       {/* MODAL: Discount Limit */}
       {isDiscountModalOpen && (
         <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30">
+          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface">
               {t('owner_settings.modal_discount_title')}
             </h2>
@@ -1082,7 +1082,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
       {/* MODAL: Auto-lock Timeout */}
       {isAutoLockModalOpen && (
         <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30">
+          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface">
               {t('owner_settings.modal_autolock_title')}
             </h2>
@@ -1121,7 +1121,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
       {/* MODAL: Language Picker */}
       {isLanguageModalOpen && (
         <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30">
+          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface">{t('owner_settings.row_bhasha')}</h2>
 
             <div className="flex flex-col gap-3 my-2">
@@ -1163,7 +1163,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
       {/* MODAL: PIN Length Change Flow */}
       {isPinLengthModalOpen && (
         <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[460px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30">
+          <div className="w-[460px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface">
               {t('owner_settings.modal_pin_length_title')} ({targetPinLength} Digits)
             </h2>
@@ -1245,7 +1245,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
       {/* MODAL: Change Owner Login PIN */}
       {isChangeOwnerPinModalOpen && (
         <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col items-center gap-4 border border-outline-variant/30">
+          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col items-center gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface text-center">
               {t('owner_settings.modal_change_owner_pin_title')}
             </h2>
@@ -1324,7 +1324,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
       {/* MODAL: Change Approval (Ijazat) PIN */}
       {isChangeApprovalPinModalOpen && (
         <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col items-center gap-4 border border-outline-variant/30">
+          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col items-center gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface text-center">
               {t('owner_settings.modal_change_approval_pin_title')}
             </h2>

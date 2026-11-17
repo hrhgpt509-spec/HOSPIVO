@@ -230,7 +230,7 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center p-6">
+      <div className="min-h-dvh bg-surface flex items-center justify-center p-6">
         <span className="text-xl font-bold text-on-surface">{t('common.loading')}</span>
       </div>
     );
@@ -241,7 +241,7 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     : '--:--';
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface flex flex-col justify-between selection:bg-primary-fixed selection:text-on-primary-fixed">
+    <div className="min-h-dvh bg-surface text-on-surface flex flex-col justify-between selection:bg-primary-fixed selection:text-on-primary-fixed">
       {/* Top Bar matching Hospivo standards */}
       <header className="h-20 w-full px-4 sm:px-8 border-b border-outline-variant/30 bg-surface-container-lowest flex items-center justify-between shrink-0 shadow-sm">
         <div className="flex items-center gap-4">

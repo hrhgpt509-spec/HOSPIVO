@@ -1,1 +1,1 @@
-{"rewrites":[{"source":"/api/sb/:path*","destination":"https://njsxgbslgzlzdprcngzw.supabase.co/:path*"},{"source":"/((?!api/sb/).*)","destination":"/index.html"}]}
+{"rewrites":[{"source":"/api/sb/:path*","destination":"https://njsxgbslglzdprcngzw.supabase.co/:path*"},{"source":"/((?!api/sb/).*)","destination":"/index.html"}]}

@@ -122,7 +122,7 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
   const btnPrintShelfLabel = tButton('shelf_map.btn_print_shelf_label');
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface font-body-md text-on-surface antialiased select-none">
+    <div className="flex flex-col min-h-dvh bg-surface font-body-md text-on-surface antialiased select-none">
       {/* ================= TOP BAR ================= */}
       <header className="fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/60">
         <div className="h-16 sm:h-20 w-full px-4 sm:px-gutter flex items-center justify-between gap-2 sm:gap-4">
@@ -182,7 +182,7 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
 
       {/* ================= MAIN CONTENT ================= */}
       <main className="w-full pt-16 sm:pt-20 flex-1 flex flex-col min-h-0 bg-surface">
-        <div className="flex flex-col w-full flex-1 px-4 sm:px-gutter py-3 sm:py-4 gap-3 sm:gap-4 overflow-hidden">
+        <div className="flex flex-col w-full flex-1 px-4 sm:px-gutter py-3 sm:py-4 gap-3 sm:gap-4 lg:overflow-hidden">
           {/* Subheader Title & Search & Action Strip */}
           <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
             <div className="flex items-baseline gap-3">
@@ -244,9 +244,9 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
           </div>
 
           {/* Dual-Pane View: 65% Shelf Grid + 35% Shelf Inspector */}
-          <div className="flex flex-col lg:flex-row gap-4 w-full flex-1 min-h-0 overflow-hidden pb-1">
+          <div className="flex flex-col lg:flex-row gap-4 w-full flex-1 lg:min-h-0 lg:overflow-hidden pb-1">
             {/* Left Section: Shelf Grid (65%) */}
-            <section className="w-full lg:w-[65%] flex flex-col flex-1 min-h-0 bg-surface-container-low rounded-2xl p-3 sm:p-4 border border-outline-variant/60 overflow-hidden">
+            <section className="w-full lg:w-[65%] flex flex-col flex-1 lg:min-h-0 bg-surface-container-low rounded-2xl p-3 sm:p-4 border border-outline-variant/60 lg:overflow-hidden">
               <div className="flex items-center justify-between pb-2 shrink-0 border-b border-outline-variant/40 mb-3">
                 <span className="text-sm font-bold text-on-surface uppercase tracking-wider">
                   {t('shelf_map.stat_total_shelves')} ({filteredGroups.length})
@@ -262,7 +262,7 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
                   <p className="text-base font-bold">{t('shelf_map.empty_shelf')}</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto flex-1 pr-1 auto-rows-max">
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 lg:overflow-y-auto flex-1 pr-1 auto-rows-max">
                   {filteredGroups.map((group) => {
                     const isSelected = selectedGroup?.shelf === group.shelf;
                     return (
@@ -316,7 +316,7 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
             </section>
 
             {/* Right Section: Selected Shelf Inspector (35%) */}
-            <aside className="w-full lg:w-[35%] bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/60 p-4 flex flex-col justify-between overflow-hidden flex-1 lg:flex-initial">
+            <aside className="w-full lg:w-[35%] bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/60 p-4 flex flex-col justify-between lg:overflow-hidden flex-1 lg:flex-initial">
               {selectedGroup ? (
                 <>
                   {/* Top Header of Inspector */}

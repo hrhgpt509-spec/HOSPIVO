@@ -174,7 +174,7 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface flex flex-col justify-between selection:bg-primary-fixed selection:text-on-primary-fixed">
+    <div className="min-h-dvh bg-surface text-on-surface flex flex-col justify-between selection:bg-primary-fixed selection:text-on-primary-fixed">
       {/* Top Bar */}
       <header className="h-20 w-full px-4 sm:px-8 border-b border-outline-variant/30 bg-surface-container-lowest flex items-center justify-between shrink-0 shadow-sm">
         <div className="flex items-center gap-4">
@@ -448,7 +448,7 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
           aria-modal="true"
           className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none animate-fadeIn"
         >
-          <div className="relative z-10 m-auto w-full max-w-[560px] bg-surface-container-lowest rounded-[24px] shadow-2xl p-8 flex flex-col gap-6 border border-outline-variant">
+          <div className="relative z-10 m-auto w-full max-w-[560px] bg-surface-container-lowest rounded-[24px] shadow-2xl p-8 flex flex-col gap-6 border border-outline-variant max-h-[92dvh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">

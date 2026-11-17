@@ -94,7 +94,7 @@ export const AuditLogScreen: React.FC<AuditLogScreenProps> = ({
   const weekBtn = tButton('audit_log.filter_week');
 
   return (
-    <div className="w-full min-h-screen bg-surface font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-space-md">

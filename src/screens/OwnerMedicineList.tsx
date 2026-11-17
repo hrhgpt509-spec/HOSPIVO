@@ -123,7 +123,7 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
   const filteredMedicines = searchMedicines(medicines, searchQuery);
 
   return (
-    <div className="w-full min-h-screen bg-canvas text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
+    <div className="w-full min-h-dvh bg-canvas text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
       {/* 1. Fixed Top Header (Matching 38a) */}
       <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-16 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
@@ -349,7 +349,7 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
             </div>
           ) : (
             /* Medicine Rows List (each row >= 60px) */
-            <div className="w-full bg-surface-container-lowest rounded-[16px] shadow-sm border border-outline-variant flex flex-col shrink-0 overflow-hidden divide-y divide-outline-variant/30">
+            <div className="w-full bg-surface-container-lowest rounded-[16px] shadow-sm border border-outline-variant flex flex-col shrink-0 overflow-hidden divide-y divide-outline-variant/30 max-md:bg-transparent max-md:border-0 max-md:shadow-none max-md:overflow-visible max-md:divide-y-0 max-md:gap-3">
               {filteredMedicines.map((med) => {
                 const stockUnits = (med.id !== undefined && stockMap[med.id] !== undefined) ? stockMap[med.id] : 0;
                 const formattedStock = formatMedicineStock(
@@ -365,12 +365,12 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
                     onClick={() => {
                       if (med.id) setEditingMedicineId(med.id);
                     }}
-                    className="min-h-[72px] px-6 py-3.5 flex items-center justify-between hover:bg-surface-container-low transition-colors cursor-pointer active:bg-surface-container"
+                    className="min-h-[72px] px-6 py-3.5 flex items-center justify-between max-md:flex-col max-md:items-stretch max-md:gap-2 max-md:px-4 max-md:rounded-2xl max-md:border max-md:border-outline-variant max-md:bg-surface-container-lowest max-md:shadow-sm hover:bg-surface-container-low transition-colors cursor-pointer active:bg-surface-container"
                   >
                     {/* Left Details */}
-                    <div className="flex flex-col justify-center min-w-0 pr-4">
+                    <div className="flex flex-col justify-center min-w-0 pr-4 max-md:pr-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg md:text-xl font-bold text-on-surface leading-tight truncate">
+                        <span className="text-lg md:text-xl font-bold text-on-surface leading-tight truncate max-md:whitespace-normal max-md:break-words">
                           {med.name} {med.strength}
                         </span>
                         {med.scheduleType && med.scheduleType !== 'none' && (
@@ -379,7 +379,7 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
                           </span>
                         )}
                       </div>
-                      <div className="text-sm md:text-base font-medium text-outline leading-tight mt-1 truncate">
+                      <div className="text-sm md:text-base font-medium text-outline leading-tight mt-1 truncate max-md:whitespace-normal max-md:break-words">
                         {med.form ? `${formatProductType(med.form, t)} · ` : ''}
                         {med.salt ? `${med.salt} · ` : ''}
                         {med.company ? `${med.company} · ` : ''}
@@ -390,7 +390,7 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
                     </div>
 
                     {/* Right: Stock Count (packs & loose) */}
-                    <div className="flex flex-col items-end text-right shrink-0">
+                    <div className="flex flex-col items-end text-right shrink-0 max-md:flex-row max-md:items-center max-md:justify-between max-md:text-left max-md:gap-2 max-md:pt-2 max-md:border-t max-md:border-outline-variant/30">
                       <span className={`text-base md:text-lg font-bold leading-tight ${stockUnits > 0 ? 'text-primary' : 'text-error'}`}>
                         {formattedStock}
                       </span>

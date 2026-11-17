@@ -383,7 +383,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-canvas text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
+    <div className="w-full min-h-dvh bg-canvas text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
       
       {/* 1. Header (Matching 38b) */}
       <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
@@ -461,7 +461,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
 
       {/* 2. Main Content Canvas */}
       <main className="w-full pt-16 flex-1 flex flex-col justify-between max-w-[1440px] mx-auto px-4 md:px-8">
-        <div className="flex flex-col w-full min-h-[calc(100dvh-64px-44px)] lg:h-[calc(100vh-64px-44px)] overflow-y-auto lg:overflow-hidden p-2 select-none justify-between">
+        <div className="flex flex-col w-full min-h-[calc(100dvh-64px)] lg:min-h-[calc(100dvh-64px-44px)] lg:h-[calc(100vh-64px-44px)] lg:overflow-hidden p-2 select-none justify-between">
           
           {/* Top Title & GST Compliant Badge */}
           <div className="flex items-center justify-between gap-4 mb-2 shrink-0">
@@ -490,7 +490,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
 
           {/* Main Split 2-Column Form Canvas (Matching 38b grid) */}
           <form
-            className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 min-h-0 bg-surface-container-lowest rounded-2xl p-4 md:p-6 shadow-sm border border-outline-variant overflow-y-auto"
+            className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:min-h-0 bg-surface-container-lowest rounded-2xl p-4 md:p-6 shadow-sm border border-outline-variant lg:overflow-y-auto"
             onSubmit={(e) => {
               e.preventDefault();
               handleSaveAttempt();
@@ -1030,12 +1030,12 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
           </form>
 
           {/* Bottom Action Bar (Fixed Ergonomics >= 56px) */}
-          <div className="shrink-0 h-16 pt-2 flex items-center justify-between gap-4">
+          <div className="shrink-0 h-16 pt-2 flex items-center justify-between gap-4 max-lg:sticky max-lg:bottom-0 max-lg:z-30 max-lg:h-auto max-lg:py-3 max-lg:gap-3 max-lg:bg-canvas max-lg:border-t max-lg:border-outline-variant">
             {/* Wapas Button */}
             <button
               type="button"
               onClick={handleBackClick}
-              className="h-14 min-w-[180px] px-6 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-2 transition-all active:translate-y-0.5 shadow-sm cursor-pointer border border-outline-variant"
+              className="h-14 min-w-[180px] max-lg:min-w-0 max-lg:flex-1 px-6 max-lg:px-3 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-2 transition-all active:translate-y-0.5 shadow-sm cursor-pointer border border-outline-variant"
             >
               <svg className="w-6 h-6 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -1063,7 +1063,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
               type="button"
               disabled={isSubmitting}
               onClick={handleSaveAttempt}
-              className="h-14 min-w-[260px] px-8 rounded-xl bg-primary hover:bg-[#088643] text-on-primary flex items-center justify-center gap-3 transition-all active:translate-y-0.5 shadow-md cursor-pointer disabled:opacity-50"
+              className="h-14 min-w-[260px] max-lg:min-w-0 max-lg:flex-[2] px-8 max-lg:px-3 rounded-xl bg-primary hover:bg-[#088643] text-on-primary flex items-center justify-center gap-3 transition-all active:translate-y-0.5 shadow-md cursor-pointer disabled:opacity-50"
             >
               <svg className="w-7 h-7 text-on-primary" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
@@ -1083,7 +1083,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
       </main>
 
       {/* 3. Footer Ribbon (Matching 38b) */}
-      <footer className="fixed bottom-0 left-0 w-full h-11 px-6 md:px-8 bg-surface-container-low border-t border-outline-variant flex items-center justify-between text-xs md:text-sm text-on-surface-variant font-medium select-none z-40">
+      <footer className="hidden lg:flex fixed bottom-0 left-0 w-full h-11 px-6 md:px-8 bg-surface-container-low border-t border-outline-variant flex items-center justify-between text-xs md:text-sm text-on-surface-variant font-medium select-none z-40">
         <div className="flex items-center gap-2 truncate">
           {shopName ? <span>{shopName}</span> : null}
           {shopName && currentGst ? <span>•</span> : null}
@@ -1118,7 +1118,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
           aria-modal="true"
           className="fixed inset-0 bg-[#0f172a]/70 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none animate-fadeIn"
         >
-          <div className="w-full max-w-[560px] bg-surface-container-lowest rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col border border-amber-300 dark:border-amber-700">
+          <div className="w-full max-w-[560px] bg-surface-container-lowest rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col border border-amber-300 dark:border-amber-700 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center gap-3 text-amber-600 mb-3">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

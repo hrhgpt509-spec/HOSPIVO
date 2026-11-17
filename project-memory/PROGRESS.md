@@ -285,3 +285,6 @@ Dedicated Mobile & Portrait-Tablet layouts (< 1024px) for Inventory & Daily Ops 
 - Created empty folders: src/screens, src/components, src/db, src/logic, src/theme, designs.
 - Configured home page to display Hospivo in big letters.
 - Initialized Git repository, configured .gitignore, and verified build.
+
+- Mobile/tablet (<1024px) layouts for 15 Owner screens: tile/KPI grids, sticky bottom bars, medicine list and import cards, scrollable shelf/sticker stacks, scrollable modals. Desktop classes unchanged (only lg:-prefixed or max-lg:-prefixed additions).
+- Reports tables scroll sideways inside their card on phones. Build and 222 tests pass.

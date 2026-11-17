@@ -100,7 +100,7 @@ export const ReferralReport: React.FC<ReferralReportProps> = ({
   const barOpacities = ['bg-primary', 'bg-primary/80', 'bg-primary/60', 'bg-primary/45', 'bg-primary/30'];
 
   return (
-    <div className="w-full min-h-screen bg-background font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
+    <div className="w-full min-h-dvh bg-background font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/30">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-space-md">

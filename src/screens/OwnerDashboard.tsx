@@ -118,7 +118,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   const auditBtn = tButton('owner_dashboard.btn_open_audit');
 
   return (
-    <div className="w-full min-h-screen bg-surface font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
       {/* Top Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-space-md">
@@ -250,7 +250,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
               ) : (
                 <>
                   {/* Row 1: 4 Key Stat Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-md">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-space-md">
                     <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30 flex flex-col justify-between">
                       <div className="text-sm sm:text-base text-on-surface-variant font-medium">
                         {t('owner_dashboard.stat_today_sales')}
@@ -413,7 +413,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                           {t('owner_dashboard.top_selling_empty')}
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-1.5 max-lg:max-h-64 max-lg:overflow-y-auto">
                           {metrics.topSellingMedicines.map((item, idx) => (
                             <div
                               key={item.medicineName}
@@ -448,7 +448,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                           {t('owner_dashboard.expiry_empty')}
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-1.5 max-lg:max-h-64 max-lg:overflow-y-auto">
                           {metrics.expiringBatchesTop.map((b) => (
                             <div
                               key={`${b.medicineName}-${b.batchNo}`}
@@ -483,7 +483,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                           {t('owner_dashboard.low_stock_empty')}
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-1.5 max-lg:max-h-64 max-lg:overflow-y-auto">
                           {metrics.lowStockMedicinesTop.map((m) => (
                             <div
                               key={m.medicineName}
@@ -505,7 +505,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
               )}
 
               {/* Bottom Action Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 max-lg:sticky max-lg:bottom-0 max-lg:z-30 max-lg:bg-surface/95 max-lg:backdrop-blur max-lg:border-t max-lg:border-outline-variant/40 max-lg:py-3 max-lg:-mx-gutter max-lg:px-gutter">
                 <button
                   type="button"
                   onClick={onBackToOwnerMenu}

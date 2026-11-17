@@ -110,7 +110,7 @@ export const OwnerMedicineImport: React.FC<OwnerMedicineImportProps> = ({
   const chooseCsvBtn = tButton('medicine_import.btn_choose_csv');
 
   return (
-    <div className="w-full min-h-screen bg-background text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
+    <div className="w-full min-h-dvh bg-background text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
       {/* 1. Header (Matching 38c Stitch design) */}
       <header className="fixed top-0 left-0 right-0 w-full z-40 bg-surface/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/40">
         <div className="h-16 w-full px-margin flex items-center justify-between">
@@ -370,7 +370,7 @@ export const OwnerMedicineImport: React.FC<OwnerMedicineImportProps> = ({
               {/* Preview Table Container (38c design) */}
               <div className="w-full flex-1 my-space-xs flex flex-col rounded-xl bg-surface-container-lowest shadow-md overflow-hidden border border-outline-variant/50 max-h-[500px]">
                 {/* Table Header (Clean, bold, 18px text, 52px height) */}
-                <div className="grid grid-cols-12 px-space-lg py-3.5 bg-surface-container-high text-on-surface font-body-md text-body-md font-bold tracking-normal select-none shrink-0 border-b border-outline-variant/40">
+                <div className="hidden md:grid grid-cols-12 px-space-lg py-3.5 bg-surface-container-high text-on-surface font-body-md text-body-md font-bold tracking-normal select-none shrink-0 border-b border-outline-variant/40">
                   <div className="col-span-4 flex items-center gap-space-xs">
                     <span>{t('medicine_import.col_name')}</span>
                     <span className="font-label-sub-english text-label-sub-english text-on-surface-variant font-normal">
@@ -403,8 +403,57 @@ export const OwnerMedicineImport: React.FC<OwnerMedicineImportProps> = ({
                   </div>
                 </div>
 
+                {/* Mobile cards (< 768px) */}
+                <div className="md:hidden flex flex-col gap-3 p-3 overflow-y-auto">
+                  {validation.parsedRows.map((row, idx) => {
+                    const isDup = row.status === 'duplicate';
+                    const isErr = row.status === 'error';
+                    return (
+                      <div
+                        key={idx}
+                        className={`min-h-[60px] rounded-xl border p-3 flex flex-col gap-2 ${
+                          isErr
+                            ? 'bg-error-container/30 border-error'
+                            : isDup
+                              ? 'bg-tertiary-fixed/30 border-tertiary'
+                              : 'bg-surface-container-lowest border-outline-variant/50'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-title-hinglish text-on-surface font-bold break-words min-w-0">
+                            {row.name || row.raw.name || '—'}
+                          </span>
+                          {isErr ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-bold text-xs shrink-0">
+                              <Icon name="error" className="text-[14px]" />
+                            </span>
+                          ) : isDup ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-bold text-xs shrink-0">
+                              <Icon name="history" className="text-[14px]" />
+                              <span>{t('medicine_import.badge_duplicate')}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container text-primary font-bold text-xs shrink-0">
+                              {t('medicine_import.badge_new')}
+                            </span>
+                          )}
+                        </div>
+                        {isErr && row.errorMessage && (
+                          <span className="text-sm text-on-error-container font-medium break-words">{row.errorMessage}</span>
+                        )}
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-on-surface-variant">
+                          <span className="font-medium">{[row.strength, row.company].filter(Boolean).join(' · ') || '—'}</span>
+                          <span className="font-bold text-on-surface">{row.mrpPaise > 0 ? formatRupees(row.mrpPaise) : '—'}</span>
+                        </div>
+                        {row.shelf && (
+                          <span className="self-start px-2 py-1 rounded bg-surface-container font-bold text-on-surface text-sm">{row.shelf}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
                 {/* Table Rows (>= 60px height each) */}
-                <div className="flex flex-col flex-1 overflow-y-auto divide-y divide-outline-variant/20">
+                <div className="hidden md:flex flex-col flex-1 overflow-y-auto divide-y divide-outline-variant/20">
                   {validation.parsedRows.map((row, idx) => {
                     const isDup = row.status === 'duplicate';
                     const isErr = row.status === 'error';

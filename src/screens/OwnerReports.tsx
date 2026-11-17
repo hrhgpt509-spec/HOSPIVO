@@ -186,7 +186,7 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
   ];
 
   return (
-    <div className="w-full min-h-screen bg-surface font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30 print:hidden">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-space-md">
@@ -269,8 +269,8 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="inline-flex p-1 bg-surface-container rounded-2xl gap-1">
+                <div className="flex flex-wrap items-center gap-3 max-sm:flex-col max-sm:items-stretch">
+                  <div className="inline-flex p-1 bg-surface-container rounded-2xl gap-1 max-sm:w-full [&>button]:max-sm:flex-1 [&>button]:max-sm:h-12">
                     {(['today', 'month', 'custom'] as ReportPreset[]).map((p) => (
                       <button
                         key={p}
@@ -292,19 +292,19 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
                   </div>
 
                   {preset === 'custom' && (
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 max-sm:flex-nowrap max-sm:w-full">
                       <input
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
-                        className="h-11 px-3 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface text-sm font-semibold"
+                        className="h-11 max-sm:h-12 max-sm:flex-1 max-sm:min-w-0 px-3 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface text-sm font-semibold"
                       />
                       <span className="font-bold text-on-surface-variant">—</span>
                       <input
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
-                        className="h-11 px-3 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface text-sm font-semibold"
+                        className="h-11 max-sm:h-12 max-sm:flex-1 max-sm:min-w-0 px-3 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface text-sm font-semibold"
                       />
                     </div>
                   )}
@@ -381,7 +381,7 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
                           {t('owner_reports.empty_rows')}
                         </div>
                       ) : (
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full max-lg:min-w-[640px] text-left border-collapse">
                           <thead>
                             <tr className="border-b border-outline-variant/50 text-xs sm:text-sm text-on-surface-variant uppercase">
                               <th className="py-3 px-2">{t('owner_reports.col_bill_no')}</th>
@@ -432,7 +432,7 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
 
                     {/* TAB 2: GST SUMMARY */}
                     {activeTab === 'gst' && (
-                      <table className="w-full text-left border-collapse">
+                      <table className="w-full max-lg:min-w-[640px] text-left border-collapse">
                         <thead>
                           <tr className="border-b border-outline-variant/50 text-xs sm:text-sm text-on-surface-variant uppercase">
                             <th className="py-3 px-2">{t('owner_reports.col_gst_slab')}</th>
@@ -489,7 +489,7 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
                           {t('owner_reports.empty_rows')}
                         </div>
                       ) : (
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full max-lg:min-w-[640px] text-left border-collapse">
                           <thead>
                             <tr className="border-b border-outline-variant/50 text-xs sm:text-sm text-on-surface-variant uppercase">
                               <th className="py-3 px-2">{t('owner_reports.col_date')}</th>
@@ -553,7 +553,7 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
                           {t('owner_reports.empty_rows')}
                         </div>
                       ) : (
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full max-lg:min-w-[640px] text-left border-collapse">
                           <thead>
                             <tr className="border-b border-outline-variant/50 text-xs sm:text-sm text-on-surface-variant uppercase">
                               <th className="py-3 px-2">{t('owner_reports.col_date')}</th>

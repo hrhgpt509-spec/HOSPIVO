@@ -250,7 +250,7 @@ export const OwnerStickers: React.FC<OwnerStickersProps> = ({
   const btnLinkBarcode = tButton('stickers.btn_link_barcode');
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface font-body-md text-on-surface antialiased select-none">
+    <div className="flex flex-col min-h-dvh bg-surface font-body-md text-on-surface antialiased select-none">
       {/* Print-specific style tag for crisp sticker outputs */}
       <style>{`
         @media print {
@@ -358,7 +358,7 @@ export const OwnerStickers: React.FC<OwnerStickersProps> = ({
 
       {/* ================= MAIN CONTENT ================= */}
       <main className="w-full pt-16 sm:pt-20 flex-1 flex flex-col min-h-0 bg-surface">
-        <div className="flex flex-col w-full flex-1 px-4 sm:px-gutter py-3 sm:py-4 gap-3 sm:gap-4 overflow-hidden">
+        <div className="flex flex-col w-full flex-1 px-4 sm:px-gutter py-3 sm:py-4 gap-3 sm:gap-4 lg:overflow-hidden">
           {/* Header Strip & Tabs */}
           <div className="flex flex-wrap items-center justify-between gap-3 shrink-0 no-print">
             <div className="flex items-baseline gap-3">
@@ -401,9 +401,9 @@ export const OwnerStickers: React.FC<OwnerStickersProps> = ({
 
           {/* ================= TAB 1: MEDICINE STICKERS (39a) ================= */}
           {activeTab === 'medicine' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0 items-stretch overflow-hidden pb-1">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 lg:min-h-0 items-stretch lg:overflow-hidden pb-1">
               {/* Left Column: Controls & Selection (5 of 12 cols) */}
-              <div className="col-span-1 lg:col-span-5 flex flex-col justify-between gap-3 min-h-0 bg-surface-container-lowest p-3 sm:p-4 rounded-2xl shadow-sm border border-outline-variant/60 overflow-hidden no-print">
+              <div className="col-span-1 lg:col-span-5 flex flex-col justify-between gap-3 lg:min-h-0 bg-surface-container-lowest p-3 sm:p-4 rounded-2xl shadow-sm border border-outline-variant/60 lg:overflow-hidden no-print">
                 {/* Section A: 3 Choice Filter Buttons */}
                 <div className="grid grid-cols-3 gap-2 shrink-0">
                   <button
@@ -669,7 +669,7 @@ export const OwnerStickers: React.FC<OwnerStickersProps> = ({
               {/* Right Column: A4 Sheet Preview (7 of 12 cols) */}
               <div
                 ref={printAreaRef}
-                className="col-span-1 lg:col-span-7 flex flex-col items-center justify-start min-h-0 bg-surface-container-low p-2 sm:p-4 rounded-2xl shadow-inner border border-outline-variant/60 relative overflow-y-auto"
+                className="col-span-1 lg:col-span-7 flex flex-col items-center justify-start lg:min-h-0 bg-surface-container-low p-2 sm:p-4 rounded-2xl shadow-inner border border-outline-variant/60 relative lg:overflow-y-auto"
               >
                 {/* Header Info Tag in Preview */}
                 <div className="w-full flex items-center justify-between pb-2 text-xs font-bold text-on-surface-variant no-print">

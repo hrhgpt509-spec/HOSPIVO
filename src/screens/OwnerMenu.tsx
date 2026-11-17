@@ -83,7 +83,7 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-canvas text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
+    <div className="w-full min-h-dvh bg-canvas text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
       {/* 1. Header (Matching 32b_Owner_Menu.html) */}
       <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-16 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
@@ -181,7 +181,7 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
 
       {/* 2. Main Area (Matching 32b layout) */}
       <main className="w-full pt-16 flex-1 flex flex-col justify-between">
-        <div className="flex flex-col w-full max-w-[1440px] mx-auto min-h-[calc(100vh-4rem)] lg:h-[calc(100vh-4rem)] overflow-y-auto lg:overflow-hidden justify-between px-4 sm:px-6 md:px-12 py-6 box-border select-none relative">
+        <div className="flex flex-col w-full max-w-[1440px] mx-auto min-h-[calc(100dvh-4rem)] lg:h-[calc(100vh-4rem)] lg:overflow-hidden justify-between px-4 sm:px-6 md:px-12 py-6 box-border select-none relative">
           
           {/* Subtle Ambient Glow */}
           <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[900px] h-72 bg-gradient-to-b from-[#006B33]/5 via-[#72dc8e]/5 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
@@ -239,7 +239,7 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
 
           {/* Centered Grid of 9 Tiles (5 in row 1, 4 in row 2) */}
           <div className="w-full max-w-6xl mx-auto flex-1 flex items-center justify-center my-auto py-2">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 md:gap-6 w-full justify-center">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6 w-full justify-center">
               
               {/* Row 1: 5 Items */}
 
@@ -453,7 +453,7 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
           </div>
 
           {/* 3. Bottom Ribbon (Matching 32b) */}
-          <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between shrink-0 py-3 px-4 sm:px-6 bg-surface-container-low rounded-xl border border-outline-variant gap-2 sm:gap-0">
+          <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-30 max-lg:shadow-lg py-3 px-4 sm:px-6 bg-surface-container-low rounded-xl border border-outline-variant gap-2 sm:gap-0">
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />

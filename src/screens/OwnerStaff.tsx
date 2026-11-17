@@ -144,7 +144,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
   // Check Owner access
   if (!isOwner(currentUser)) {
     return (
-      <div className="w-full min-h-screen bg-surface flex flex-col items-center justify-center p-6 text-on-surface">
+      <div className="w-full min-h-dvh bg-surface flex flex-col items-center justify-center p-6 text-on-surface">
         <Icon name="lock" className="text-error text-[48px] mb-4" />
         <h1 className="text-headline-lg font-bold text-on-surface mb-2">{t('owner_dashboard.owner_only_error')}</h1>
         <button
@@ -343,7 +343,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-surface font-body-md text-on-surface antialiased select-none flex flex-col justify-between">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased select-none flex flex-col justify-between">
       {/* 1. Top Fixed Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm">
         <div className="h-20 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
@@ -472,7 +472,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
                         <button
                           type="button"
                           onClick={() => handleOpenResetPin(u)}
-                          className="h-14 min-w-[130px] px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-2 cursor-pointer transition-all active:translate-y-0.5"
+                          className="h-14 min-w-[130px] max-sm:min-w-0 max-sm:flex-1 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-2 cursor-pointer transition-all active:translate-y-0.5"
                         >
                           <Icon name="key" className="text-[24px] text-on-surface-variant" />
                           <div className="flex flex-col text-left">
@@ -491,7 +491,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
                         <button
                           type="button"
                           onClick={() => handleToggleActive(u)}
-                          className={`h-14 min-w-[110px] px-4 rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all active:translate-y-0.5 ${
+                          className={`h-14 min-w-[110px] max-sm:min-w-0 max-sm:flex-1 px-4 rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all active:translate-y-0.5 ${
                             u.active
                               ? 'bg-tertiary-fixed hover:bg-tertiary-fixed-dim text-on-tertiary-fixed'
                               : 'bg-primary-fixed hover:bg-primary-fixed-dim text-on-primary-fixed'
@@ -515,7 +515,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
                         <button
                           type="button"
                           onClick={() => setUserToRemove(u)}
-                          className="h-14 min-w-[110px] px-4 rounded-2xl bg-error-container hover:bg-error-container/80 text-on-error-container flex items-center justify-center gap-2 cursor-pointer transition-all active:translate-y-0.5"
+                          className="h-14 min-w-[110px] max-sm:min-w-0 max-sm:flex-1 px-4 rounded-2xl bg-error-container hover:bg-error-container/80 text-on-error-container flex items-center justify-center gap-2 cursor-pointer transition-all active:translate-y-0.5"
                         >
                           <Icon name="delete" className="text-[24px] text-error" />
                           <div className="flex flex-col text-left">
@@ -678,7 +678,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
       {/* MODAL 1: Add/Edit Staff Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[500px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-5 border border-outline-variant/30">
+          <div className="w-[500px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-5 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-headline-md font-bold text-on-surface">
@@ -768,7 +768,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
       {/* MODAL 2: Reset PIN Modal with Keypad & Physical Keyboard */}
       {isResetPinModalOpen && pinTargetUser && (
         <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col items-center gap-4 border border-outline-variant/30">
+          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col items-center gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between w-full">
               <div className="flex flex-col">
                 <h2 className="text-headline-md font-bold text-on-surface">
