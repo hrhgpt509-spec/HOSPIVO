@@ -27,6 +27,7 @@ import { EmptyState } from '../components/EmptyState';
 import { FullscreenButton } from '../components/FullscreenButton';
 import { formatField, textFieldProps } from '../logic/format';
 import { useShop } from '../logic/useShop';
+import { useIsCompactViewport } from '../logic/useViewport';
 
 interface StockJodoProps {
   onReturnHome: () => void;
@@ -49,6 +50,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   const { name: hookShopName } = useShop();
   const shopName = shop?.name || hookShopName || '';
   const isOwner = canSeePurchasePrice(currentUser);
+  const isCompactViewport = useIsCompactViewport();
 
   // Stepper state
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
@@ -502,6 +504,680 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   const confirmSaveLabel = tButton('stock_jodo.btn_confirm_save');
   const addMoreStockLabel = tButton('stock_jodo.btn_add_more_stock');
   const doneLabel = tButton('stock_jodo.btn_done');
+
+  // Dedicated Mobile & Portrait-Tablet Layout (< 1024px)
+  if (isCompactViewport) {
+    const stepNum = currentStep === 1 ? 1 : currentStep === 2 ? 2 : currentStep === 3 ? 3 : currentStep === 4 ? 4 : 4;
+
+    return (
+      <div className="w-full min-h-dvh bg-canvas font-body-md text-on-surface antialiased select-none flex flex-col overflow-x-hidden overflow-y-auto pb-28">
+        {/* Sticky Compact Top Header */}
+        <header className="sticky top-0 left-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-md shadow-xs border-b border-outline-variant/30 px-3 py-2 flex items-center justify-between gap-2">
+          {/* Left: Home / Back */}
+          <button
+            type="button"
+            onClick={handleAttemptReturnHome}
+            className="h-11 min-h-[44px] px-3 bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 rounded-2xl shadow-xs text-on-surface active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            aria-label="Home"
+          >
+            <Icon name="home" className="text-primary text-[20px]" />
+            <span className="text-xs sm:text-sm font-bold">{tButton('common.btn_home').main}</span>
+          </button>
+
+          {/* Center Title & Step */}
+          <div className="flex flex-col items-center min-w-0 flex-1 px-1">
+            <h1 className="text-base sm:text-lg font-extrabold text-on-surface tracking-tight truncate">
+              {t('home.tile_stock_jodo.main')}
+            </h1>
+            <span className="text-xs text-primary font-bold">
+              Step {stepNum} of 4
+            </span>
+          </div>
+
+          {/* Right Controls */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {onToggleTheme && (
+              <button
+                type="button"
+                onClick={onToggleTheme}
+                aria-label={t('common.toggle_theme')}
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer"
+              >
+                <Icon name={theme === 'dark' ? 'dark_mode' : 'light_mode'} className="text-[20px]" />
+              </button>
+            )}
+            <FullscreenButton className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" />
+          </div>
+        </header>
+
+        {/* 4-Bar Progress Bar */}
+        <div className="px-4 pt-2.5 pb-1 w-full">
+          <div className="grid grid-cols-4 gap-1.5 w-full">
+            <div className={`h-2 rounded-full ${stepNum >= 1 ? 'bg-primary' : 'bg-surface-container-highest'}`} />
+            <div className={`h-2 rounded-full ${stepNum >= 2 ? 'bg-primary' : 'bg-surface-container-highest'}`} />
+            <div className={`h-2 rounded-full ${stepNum >= 3 ? 'bg-primary' : 'bg-surface-container-highest'}`} />
+            <div className={`h-2 rounded-full ${stepNum >= 4 ? 'bg-primary' : 'bg-surface-container-highest'}`} />
+          </div>
+        </div>
+
+        {/* ============================================================== */}
+        {/* STEP 1: Supplier & Bill Details Compact */}
+        {/* ============================================================== */}
+        {currentStep === 1 && (
+          <div className="flex flex-col gap-3 px-3 sm:px-4 py-2">
+            {/* Card 1: Supplier Selection */}
+            <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-xs border border-outline-variant/50 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-on-surface">
+                    {t('stock_jodo.supplier_select_title')} *
+                  </h2>
+                  <p className="text-xs text-on-surface-variant">
+                    {t('stock_jodo.supplier_select_sub')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsNewSupplierOpen(true)}
+                  className="min-h-[44px] px-3 rounded-xl bg-primary-container text-on-primary-container font-bold text-xs sm:text-sm flex items-center gap-1 cursor-pointer shrink-0"
+                >
+                  <Icon name="add" className="text-[18px]" />
+                  <span>{tButton('stock_jodo.btn_add_supplier').main}</span>
+                </button>
+              </div>
+
+              {suppliers.length === 0 ? (
+                <div className="p-6 text-center text-on-surface-variant text-sm bg-surface-container-low rounded-xl">
+                  {t('stock_jodo.empty_suppliers_title')}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 max-h-[260px] overflow-y-auto pr-1">
+                  {suppliers.map((s) => {
+                    const isSelected = selectedSupplierId === s.id;
+                    return (
+                      <div
+                        key={s.id}
+                        onClick={() => setSelectedSupplierId(s.id!)}
+                        className={`min-h-[56px] rounded-xl px-3.5 py-2 flex items-center justify-between cursor-pointer transition-all border ${
+                          isSelected
+                            ? 'bg-primary-fixed/20 border-primary shadow-xs'
+                            : 'bg-surface-container-lowest border-outline-variant/40 hover:bg-surface-container-low'
+                        }`}
+                      >
+                        <div className="flex flex-col min-w-0 pr-2">
+                          <span className="font-bold text-sm text-on-surface truncate">
+                            {s.name}
+                          </span>
+                          <span className="text-xs text-on-surface-variant truncate">
+                            {s.phone ? `${s.phone} · ` : ''}{s.address || ''}
+                          </span>
+                        </div>
+                        <div
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                            isSelected ? 'border-primary bg-primary text-on-primary' : 'border-outline-variant'
+                          }`}
+                        >
+                          {isSelected && <Icon name="check" className="text-[16px]" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Card 2: Invoice Details */}
+            <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-xs border border-outline-variant/50 flex flex-col gap-3">
+              <h2 className="text-base sm:text-lg font-bold text-on-surface">
+                {t('stock_jodo.bill_info_title')}
+              </h2>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-on-surface-variant">
+                  {t('stock_jodo.invoice_no_label')} *
+                </label>
+                <input
+                  type="text"
+                  {...textFieldProps('code', invoiceNo, setInvoiceNo)}
+                  placeholder={t('stock_jodo.invoice_no_placeholder')}
+                  className="w-full h-12 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-on-surface-variant">
+                  {t('stock_jodo.invoice_date_label')} (DD/MM/YYYY)
+                </label>
+                <input
+                  type="text"
+                  {...textFieldProps('code', invoiceDate, setInvoiceDate)}
+                  placeholder="DD/MM/YYYY"
+                  className="w-full h-12 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
+
+            {/* Sticky Bottom Action Bar */}
+            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleAttemptReturnHome}
+                className="h-14 min-h-[56px] px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Icon name="arrow_back" className="text-[22px]" />
+                <span>{backButtonLabel.main}</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={!selectedSupplierId || !invoiceNo.trim()}
+                onClick={handleProceedFromStep1}
+                className="h-14 min-h-[56px] flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-base sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all"
+              >
+                <span>{nextButtonLabel.main} (Photo)</span>
+                <Icon name="arrow_forward" className="text-[22px]" />
+              </button>
+            </footer>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* STEP 2: Invoice Photo Compact */}
+        {/* ============================================================== */}
+        {currentStep === 2 && (
+          <div className="flex flex-col gap-3 px-3 sm:px-4 py-2">
+            <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-xs border border-outline-variant/50 flex flex-col gap-3">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-on-surface">
+                  {t('stock_jodo.photo_framing_title')}
+                </h2>
+                <p className="text-xs text-on-surface-variant">
+                  {t('stock_jodo.photo_framing_sub')}
+                </p>
+              </div>
+
+              {!invoicePhoto ? (
+                <div className="flex flex-col gap-2.5 py-4">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-14 min-h-[56px] w-full rounded-2xl bg-primary hover:bg-primary-container text-on-primary font-bold text-base flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-95 transition-all"
+                  >
+                    <Icon name="photo_camera" className="text-[24px]" />
+                    <span>{tButton('stock_jodo.btn_take_photo').main}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => galleryInputRef.current?.click()}
+                    className="h-13 min-h-[52px] w-full rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm flex items-center justify-center gap-2 border border-outline-variant/50 cursor-pointer active:scale-95 transition-all"
+                  >
+                    <Icon name="image" className="text-[22px]" />
+                    <span>{tButton('stock_jodo.btn_choose_gallery').main}</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <div className="w-full flex justify-center bg-surface-container-low rounded-xl p-2 border border-outline-variant/40">
+                    <img
+                      src={invoicePhoto}
+                      alt={t('stock_jodo.alt_invoice_scan')}
+                      className="max-h-[260px] object-contain rounded-lg"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-12 min-h-[48px] flex-1 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Icon name="replay" className="text-[18px]" />
+                      <span>{tButton('stock_jodo.btn_retake_photo').main}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInvoicePhoto('')}
+                      className="h-12 min-h-[48px] px-3 rounded-xl text-error hover:bg-error-container/20 font-bold text-xs sm:text-sm flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <Icon name="delete" className="text-[18px]" />
+                      <span>{t('stock_jodo.btn_remove_photo')}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sticky Bottom Action Bar */}
+            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(1)}
+                className="h-14 min-h-[56px] px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Icon name="arrow_back" className="text-[22px]" />
+                <span>{backButtonLabel.main}</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={!invoicePhoto}
+                onClick={() => setCurrentStep(3)}
+                className="h-14 min-h-[56px] flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-base sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all"
+              >
+                <span>{nextButtonLabel.main} (Medicines)</span>
+                <Icon name="arrow_forward" className="text-[22px]" />
+              </button>
+            </footer>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* STEP 3: Add Medicines Compact */}
+        {/* ============================================================== */}
+        {currentStep === 3 && (
+          <div className="flex flex-col gap-3 px-3 sm:px-4 py-2">
+            {/* Card 1: Add Medicine Form */}
+            <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-xs border border-outline-variant/50 flex flex-col gap-3">
+              <h2 className="text-base sm:text-lg font-bold text-on-surface">
+                {editingLineId ? updateLineLabel.main : addLineLabel.main}
+              </h2>
+
+              {/* Medicine search */}
+              <div className="relative">
+                <label className="text-xs font-bold text-on-surface-variant block mb-1">
+                  {t('stock_jodo.medicine_name_label')} *
+                </label>
+                <div className="flex items-center h-12 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl focus-within:ring-2 focus-within:ring-primary">
+                  <Icon name="search" className="text-on-surface-variant text-[20px] mr-2" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setIsSearchOpen(true);
+                    }}
+                    placeholder={t('stock_jodo.medicine_search_placeholder')}
+                    className="w-full bg-transparent text-sm font-medium text-on-surface outline-none"
+                  />
+                </div>
+
+                {/* Instant Medicine Results Dropdown */}
+                {isSearchOpen && filteredMedicines.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                    {filteredMedicines.map((m) => (
+                      <div
+                        key={m.id}
+                        onClick={() => {
+                          setSelectedMedicine(m);
+                          setSearchQuery(m.name);
+                          setIsSearchOpen(false);
+                          if (m.mrpPaise) setMrpInput(String(paiseToRupees(m.mrpPaise)));
+                          batchInputRef.current?.focus();
+                        }}
+                        className="px-3 py-2 hover:bg-surface-container cursor-pointer border-b border-outline-variant/20 flex items-center justify-between"
+                      >
+                        <span className="font-bold text-sm text-on-surface">{m.name} {m.strength || ''}</span>
+                        {m.shelf && <span className="text-xs text-on-surface-variant">Shelf: {m.shelf}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {selectedMedicine && (
+                <div className="flex items-center gap-2 p-2 bg-primary-fixed/20 rounded-xl border border-primary/30">
+                  <Icon name="medication" className="text-primary text-[20px]" />
+                  <span className="text-sm font-bold text-primary truncate">
+                    {selectedMedicine.name} {selectedMedicine.strength || ''}
+                  </span>
+                </div>
+              )}
+
+              {/* Form fields */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-bold text-on-surface-variant block mb-1">
+                    {t('stock_jodo.batch_no_label')} *
+                  </label>
+                  <input
+                    ref={batchInputRef}
+                    type="text"
+                    {...textFieldProps('code', batchNo, setBatchNo)}
+                    placeholder={t('stock_jodo.batch_no_placeholder')}
+                    className="w-full h-11 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-on-surface-variant block mb-1">
+                    {t('stock_jodo.expiry_label')} *
+                  </label>
+                  <input
+                    ref={expiryInputRef}
+                    type="text"
+                    {...textFieldProps('code', expiryInput, setExpiryInput)}
+                    placeholder="MM/YYYY"
+                    className="w-full h-11 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-bold text-on-surface-variant block mb-1">
+                    {t('stock_jodo.packs_label')} *
+                  </label>
+                  <input
+                    ref={packsInputRef}
+                    type="number"
+                    min={1}
+                    value={packsInput}
+                    onChange={(e) => setPacksInput(e.target.value)}
+                    className="w-full h-11 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-on-surface-variant block mb-1">
+                    {t('stock_jodo.free_packs_label')}
+                  </label>
+                  <input
+                    ref={freePacksInputRef}
+                    type="number"
+                    min={0}
+                    value={freePacksInput}
+                    onChange={(e) => setFreePacksInput(e.target.value)}
+                    className="w-full h-11 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {isOwner && (
+                  <div>
+                    <label className="text-xs font-bold text-on-surface-variant block mb-1">
+                      {t('stock_jodo.purchase_rate_label')} (₹)
+                    </label>
+                    <input
+                      ref={rateInputRef}
+                      type="number"
+                      step="any"
+                      min={0}
+                      value={purchaseRateInput}
+                      onChange={(e) => setPurchaseRateInput(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full h-11 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                )}
+                <div className={isOwner ? '' : 'col-span-2'}>
+                  <label className="text-xs font-bold text-on-surface-variant block mb-1">
+                    {t('stock_jodo.mrp_label')} (₹) *
+                  </label>
+                  <input
+                    ref={mrpInputRef}
+                    type="number"
+                    step="any"
+                    min={0}
+                    value={mrpInput}
+                    onChange={(e) => setMrpInput(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full h-11 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {lineError && (
+                <div className="p-2 bg-error-container text-on-error-container rounded-lg text-xs font-bold">
+                  {lineError}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleCommitLine}
+                className="h-12 min-h-[48px] w-full rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-sm flex items-center justify-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+              >
+                <Icon name={editingLineId ? 'check' : 'add'} className="text-[20px]" />
+                <span>{editingLineId ? updateLineLabel.main : addLineLabel.main}</span>
+              </button>
+            </div>
+
+            {/* Card 2: Added Medicines List */}
+            <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-xs border border-outline-variant/50 flex flex-col gap-2.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-sm text-on-surface">
+                  Added Medicines ({lines.length})
+                </span>
+                <span className="text-xs text-on-surface-variant">
+                  Total: {totalPacksSum} packs {totalFreePacksSum > 0 ? `(+${totalFreePacksSum} free)` : ''}
+                </span>
+              </div>
+
+              {lines.length === 0 ? (
+                <div className="p-6 text-center text-on-surface-variant text-xs bg-surface-container-low rounded-xl">
+                  No medicines added to this invoice yet.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {lines.map((l) => (
+                    <div
+                      key={l.id}
+                      className="p-3 bg-surface-container-low/60 rounded-xl border border-outline-variant/30 flex items-center justify-between gap-2"
+                    >
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="font-bold text-sm text-on-surface truncate">
+                          {l.medicineName} {l.strength || ''}
+                        </span>
+                        <span className="text-xs text-on-surface-variant">
+                          Batch: {l.batchNo} · Exp: {l.expiryMonthYear} · {l.packs} packs
+                          {l.freePacks > 0 ? ` (+${l.freePacks} free)` : ''} · MRP: {formatRupees(l.mrpPaise)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleEditLine(l)}
+                          className="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center cursor-pointer"
+                          aria-label="Edit line"
+                        >
+                          <Icon name="edit" className="text-[18px]" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLineToDeleteId(l.id)}
+                          className="w-9 h-9 rounded-lg hover:bg-error-container text-error flex items-center justify-center cursor-pointer"
+                          aria-label="Delete line"
+                        >
+                          <Icon name="delete" className="text-[18px]" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Sticky Bottom Action Bar */}
+            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(2)}
+                className="h-14 min-h-[56px] px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Icon name="arrow_back" className="text-[22px]" />
+                <span>{backButtonLabel.main}</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={lines.length === 0}
+                onClick={() => {
+                  if (lines.length > 0) setCurrentStep(4);
+                }}
+                className="h-14 min-h-[56px] flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-base sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all"
+              >
+                <span>{nextButtonLabel.main} (Review)</span>
+                <Icon name="arrow_forward" className="text-[22px]" />
+              </button>
+            </footer>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* STEP 4: Review and Save Compact */}
+        {/* ============================================================== */}
+        {currentStep === 4 && (
+          <div className="flex flex-col gap-3 px-3 sm:px-4 py-2">
+            {/* Card 1: Invoice & Supplier Summary */}
+            <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-xs border border-outline-variant/50 flex flex-col gap-2.5">
+              <h2 className="text-base sm:text-lg font-bold text-on-surface">
+                {t('stock_jodo.review_supplier_title')}
+              </h2>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-on-surface-variant">Supplier:</span>
+                  <p className="font-bold text-on-surface text-sm truncate">{selectedSupplier?.name}</p>
+                </div>
+                <div>
+                  <span className="text-on-surface-variant">Invoice No & Date:</span>
+                  <p className="font-bold text-on-surface text-sm truncate">{invoiceNo} ({invoiceDate})</p>
+                </div>
+                <div>
+                  <span className="text-on-surface-variant">Total Medicines:</span>
+                  <p className="font-bold text-on-surface text-sm">{lines.length} lines</p>
+                </div>
+                <div>
+                  <span className="text-on-surface-variant">Total Packs:</span>
+                  <p className="font-bold text-on-surface text-sm">{totalPacksSum} packs {totalFreePacksSum > 0 ? `(+${totalFreePacksSum} free)` : ''}</p>
+                </div>
+                {isOwner && (
+                  <div className="col-span-2 pt-1 border-t border-outline-variant/30 flex items-center justify-between">
+                    <span className="text-on-surface-variant font-bold">Total Amount:</span>
+                    <span className="font-extrabold text-primary text-base">{formatRupees(totalPaiseSum)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Card 2: Breakdown of Lines */}
+            <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-xs border border-outline-variant/50 flex flex-col gap-2">
+              <span className="font-bold text-sm text-on-surface">Medicines in this Invoice</span>
+              <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+                {lines.map((l) => (
+                  <div
+                    key={l.id}
+                    className="p-2.5 bg-surface-container-low/60 rounded-xl border border-outline-variant/30 flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <p className="font-bold text-on-surface text-sm">{l.medicineName} {l.strength || ''}</p>
+                      <p className="text-on-surface-variant">Batch: {l.batchNo} · Exp: {l.expiryMonthYear}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-on-surface">{l.packs} packs</p>
+                      <p className="text-on-surface-variant">MRP: {formatRupees(l.mrpPaise)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Sticky Bottom Action Bar */}
+            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(3)}
+                className="h-14 min-h-[56px] px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Icon name="arrow_back" className="text-[22px]" />
+                <span>{backButtonLabel.main}</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={handleSavePurchase}
+                className="h-14 min-h-[56px] flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-base sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all"
+              >
+                <Icon name="check_circle" className="text-[24px]" />
+                <span>{confirmSaveLabel.main}</span>
+              </button>
+            </footer>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* STEP 'saved': Success Compact */}
+        {/* ============================================================== */}
+        {currentStep === 'saved' && (
+          <div className="flex flex-col gap-4 px-4 py-6 items-center text-center">
+            <div className="w-20 h-20 rounded-full bg-primary-fixed/40 text-primary flex items-center justify-center">
+              <Icon name="check_circle" className="text-[52px]" />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-on-surface">
+                {t('stock_jodo.saved_title')}
+              </h2>
+              <p className="text-sm text-on-surface-variant">
+                {t('stock_jodo.saved_sub')}
+              </p>
+            </div>
+
+            <div className="w-full bg-surface-container-lowest rounded-2xl p-4 border border-outline-variant/40 flex flex-col gap-2 text-sm text-left">
+              <div className="flex justify-between">
+                <span className="text-on-surface-variant">Supplier:</span>
+                <span className="font-bold text-on-surface">{selectedSupplier?.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-on-surface-variant">Invoice:</span>
+                <span className="font-bold text-on-surface">{invoiceNo}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-on-surface-variant">Medicines Added:</span>
+                <span className="font-bold text-primary">{saveResult?.itemsCount || lines.length} items</span>
+              </div>
+            </div>
+
+            <div className="w-full flex flex-col gap-2 pt-2">
+              <button
+                type="button"
+                onClick={onReturnHome}
+                className="h-14 min-h-[56px] w-full rounded-2xl bg-primary hover:bg-primary-container text-on-primary font-extrabold text-base flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+              >
+                <Icon name="home" className="text-[22px]" />
+                <span>{doneLabel.main}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleResetForMoreStock}
+                className="h-13 min-h-[52px] w-full rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm flex items-center justify-center gap-2 border border-outline-variant/40 cursor-pointer"
+              >
+                <Icon name="add" className="text-[20px]" />
+                <span>{addMoreStockLabel.main}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Hidden inputs & modals */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handlePhotoUpload}
+        />
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoUpload}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-dvh lg:h-screen bg-canvas font-body-md text-body-md text-on-surface antialiased select-none flex flex-col overflow-y-auto lg:overflow-hidden">

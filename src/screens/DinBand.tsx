@@ -30,6 +30,7 @@ import { Step1CashCount } from './din-band/Step1CashCount';
 import { Step2CashMatch } from './din-band/Step2CashMatch';
 import { Step3CounterPhoto } from './din-band/Step3CounterPhoto';
 import { Step4Report } from './din-band/Step4Report';
+import { useIsCompactViewport } from '../logic/useViewport';
 
 interface DinBandProps {
   onReturnHome: () => void;
@@ -188,6 +189,137 @@ export const DinBand: React.FC<DinBandProps> = ({
           : { title: t('din_band.step4_title'), sub: t('din_band.step4_sub') };
 
   const homeBtn = tButton('home.return_home_btn');
+
+  const isCompactViewport = useIsCompactViewport();
+
+  if (isCompactViewport) {
+    return (
+      <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col overflow-x-hidden antialiased select-none transition-colors">
+        {/* Sticky Compact Header */}
+        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={onReturnHome}
+              aria-label={t('common.btn_home.main')}
+              className="min-w-[48px] min-h-[48px] rounded-xl bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface cursor-pointer shrink-0"
+              type="button"
+            >
+              <Icon name="arrow_back" className="text-[24px]" />
+            </button>
+            <div className="flex flex-col min-w-0">
+              <h1 className="font-title-hinglish font-bold text-base text-on-surface truncate">
+                {t('din_band.page_title')}
+              </h1>
+              <span className="text-xs text-primary font-bold truncate">
+                {stepMeta.title}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <div className="px-2.5 py-1 rounded-full bg-surface-container-high text-primary font-bold text-xs shrink-0">
+              {t('din_band.step_indicator', { step })}
+            </div>
+            {onToggleTheme && (
+              <button
+                type="button"
+                onClick={onToggleTheme}
+                aria-label={t('common.toggle_theme')}
+                className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
+              >
+                <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[22px]" />
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* 4-Segment Progress Bar */}
+        <div className="px-3 pt-2.5 pb-2">
+          <div className="grid grid-cols-4 gap-1.5 w-full">
+            {[1, 2, 3, 4].map((seg) => (
+              <div
+                key={seg}
+                className={`h-2 rounded-full transition-colors ${
+                  seg <= step ? 'bg-primary' : 'bg-surface-container-highest'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Step Body */}
+        <div className="flex-1 px-3 pb-8 flex flex-col gap-3">
+          {step === 1 && (
+            <Step1CashCount
+              openingCashStr={openingCashStr}
+              onChangeOpeningCashStr={setOpeningCashStr}
+              denominations={denominations}
+              onChangeDenominations={setDenominations}
+              directCashStr={directCashStr}
+              onChangeDirectCashStr={setDirectCashStr}
+              countMode={countMode}
+              onChangeCountMode={setCountMode}
+              countedCashPaise={countedCashPaise}
+              expectedCashPaise={summary.expectedCashPaise}
+              onBack={onReturnHome}
+              onNext={() => setStep(2)}
+            />
+          )}
+
+          {step === 2 && (
+            <Step2CashMatch
+              expectedCashPaise={summary.expectedCashPaise}
+              countedCashPaise={countedCashPaise}
+              mismatchRule={mismatchRule}
+              mismatchAuthorized={mismatchAuthorized}
+              onOpenApprovalPin={() => setIsApprovalOpen(true)}
+              onSavePendingMismatch={() => void handleSaveClosing('pending_auth')}
+              onBack={() => setStep(1)}
+              onNext={() => setStep(3)}
+            />
+          )}
+
+          {step === 3 && (
+            <Step3CounterPhoto
+              photoDataUrl={photoDataUrl}
+              onChangePhoto={setPhotoDataUrl}
+              onBack={() => setStep(2)}
+              onNext={() => setStep(4)}
+            />
+          )}
+
+          {step === 4 && (
+            <Step4Report
+              summary={summary}
+              countedCashPaise={countedCashPaise}
+              photoDataUrl={photoDataUrl}
+              closingStatus={effectiveStatus}
+              savedClosingId={savedClosingId}
+              notes={notes}
+              onChangeNotes={setNotes}
+              isSaving={isSaving}
+              onSaveClosing={() => void handleSaveClosing(effectiveStatus)}
+              onBack={() => setStep(3)}
+              onReturnHome={onReturnHome}
+            />
+          )}
+        </div>
+
+        {/* Approval PIN Dialog for Cash Mismatch */}
+        <ApprovalDialog
+          isOpen={isApprovalOpen}
+          actionCategory="cash_mismatch"
+          recordDescription={`${summary.date} (${formatRupees(differencePaise)})`}
+          requesterName={userName}
+          onApproved={() => {
+            setIsApprovalOpen(false);
+            setMismatchAuthorized(true);
+          }}
+          onClose={() => setIsApprovalOpen(false)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-surface font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">

@@ -610,7 +610,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             </div>
           )}
 
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-4 my-auto pt-2">
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-4 my-auto pt-2">
             <div className="flex flex-col gap-4">
               <div>
                 <label className="block text-[18px] font-bold text-[#1A1F1C] mb-1.5 flex items-center justify-between">
@@ -730,7 +730,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                 <p className="text-[15px] text-[#5C6E66] mt-1">{t('setup.gst_sub')}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[17px] font-bold text-[#1A1F1C] mb-1.5 truncate">
                     {t('setup.dl1_label')}
@@ -759,7 +759,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             </div>
           </section>
 
-          <footer className="flex items-center justify-between border-t border-[#E8EFEA] pt-5">
+          <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-[#E8EFEA] pt-5">
             <button
               type="button"
               disabled
@@ -822,7 +822,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
           {renderProgress(2)}
 
           <div className="my-auto pt-4 pb-4 w-full">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 w-full">
               {/* Card 1: Local-only */}
               <div
                 onClick={() => setMode('local')}
@@ -1009,9 +1009,9 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 pt-4 items-center">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-4 items-center">
                   {/* Shop Sync ID (6 cols) */}
-                  <div className="md:col-span-6 flex flex-col">
+                  <div className="col-span-12 lg:col-span-6 flex flex-col">
                     <label className="text-sm font-bold text-slate-800 mb-1">
                       {t('setup.cloud_shop_sync_id')}
                     </label>
@@ -1047,7 +1047,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
                   </div>
 
                   {/* Owner Account Status / Connect Button (6 cols) */}
-                  <div className="md:col-span-6 flex flex-col justify-center">
+                  <div className="col-span-12 lg:col-span-6 flex flex-col justify-center">
                     <label className="text-sm font-bold text-slate-800 mb-1">
                       {t('cloud_sync.owner_account_title')}
                     </label>
@@ -1280,7 +1280,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             </div>
           </div>
 
-          <footer className="w-full flex items-center justify-between border-t border-slate-200 pt-5">
+          <footer className="w-full flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-5">
             <button
               type="button"
               onClick={() => setStep(2)}
@@ -1476,7 +1476,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             </div>
           </div>
 
-          <footer className="w-full flex items-center justify-between border-t border-slate-200 pt-5">
+          <footer className="w-full flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-5">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -1542,7 +1542,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
         <main className="w-full max-w-[1160px] min-h-[auto] sm:min-h-[640px] lg:min-h-[740px] bg-white rounded-3xl shadow-sm border border-slate-200 flex flex-col justify-between p-4 sm:p-8 md:p-10">
           {renderProgress(5)}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-auto py-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 my-auto py-4">
             {/* Option 1: File se Jodo (Active - opens OwnerMedicineImport) */}
             <div
                             className="bg-white border-2 border-slate-200 hover:border-[#1B8F4A] min-h-[360px] p-7 rounded-2xl flex flex-col justify-between items-center text-center shadow-sm hover:shadow-md transition-all "
@@ -1641,7 +1641,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             </div>
           </div>
 
-          <footer className="pt-4 border-t border-slate-200 flex items-center justify-between">
+          <footer className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4">
             <button
               type="button"
               onClick={() => setStep(4)}
@@ -1710,7 +1710,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
               <div className="flex items-start gap-3.5 p-4 rounded-xl bg-blue-50 border border-blue-200">
                 <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white shrink-0">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -1837,7 +1837,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             </div>
           </div>
 
-          <footer className="w-full flex items-center justify-between border-t border-slate-200 pt-5">
+          <footer className="w-full flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-5">
             <button
               type="button"
               onClick={() => setStep(5)}
@@ -2025,7 +2025,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
             </div>
           </div>
 
-          <footer className="w-full flex items-center justify-between border-t border-slate-200 pt-5">
+          <footer className="w-full flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-5">
             <button
               type="button"
               onClick={() => setStep(6)}
@@ -2109,14 +2109,14 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               return (
                 <div
                   key={item.category}
-                  className="bg-white rounded-2xl p-4 md:px-5 min-h-[70px] flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-sm border border-gray-200"
+                  className="bg-white rounded-2xl p-4 md:px-5 min-h-[70px] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 shadow-sm border border-gray-200"
                 >
-                  <div className="w-full md:w-[300px]">
+                  <div className="w-full lg:w-[300px]">
                     <span className="text-base md:text-[18px] font-bold text-gray-900">{item.title}</span>
                   </div>
 
                   {/* 3-option Segmented Selector */}
-                  <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                  <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
                     {/* Option 1: Ijazat PIN (yahin) */}
                     <button
                       type="button"
@@ -2191,7 +2191,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
         </div>
 
         {/* Bottom Actions Bar */}
-        <footer className="w-full pt-4 border-t border-slate-200 flex items-center justify-between">
+        <footer className="w-full pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4">
           <button
             type="button"
             onClick={() => setStep(7)}

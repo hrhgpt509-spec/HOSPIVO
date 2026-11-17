@@ -14,6 +14,7 @@ import {
   loadUdhaarDashboardData,
   type CustomerLedgerEntry,
 } from '../logic/udhaar';
+import { useIsCompactViewport } from '../logic/useViewport';
 import { PaisaMilaModal } from './udhaar/PaisaMilaModal';
 import { YaadDilaoModal } from './udhaar/YaadDilaoModal';
 import { CustomerDetailScreen } from './udhaar/CustomerDetailScreen';
@@ -168,6 +169,341 @@ export const Udhaar: React.FC<UdhaarProps> = ({
       .slice(0, 2)
       .map((w) => w.charAt(0).toUpperCase())
       .join('');
+
+  const isCompactViewport = useIsCompactViewport();
+
+  if (isCompactViewport) {
+    return (
+      <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col overflow-x-hidden antialiased select-none transition-colors">
+        {/* Sticky Compact Header */}
+        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={onReturnHome}
+              aria-label={t('common.btn_home.main')}
+              className="min-w-[48px] min-h-[48px] rounded-xl bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface cursor-pointer shrink-0"
+              type="button"
+            >
+              <Icon name="arrow_back" className="text-[24px]" />
+            </button>
+            <div className="flex flex-col min-w-0">
+              <h1 className="font-title-hinglish font-bold text-base text-on-surface truncate">
+                {view === 'udhaar' ? t('udhaar.page_title') : t('customers.page_title')}
+              </h1>
+              <span className="text-xs text-error font-extrabold truncate">
+                {formatRupees(totalOutstandingPaise)} {t('udhaar.total_outstanding_label')}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setIsNewCustomerOpen(true)}
+              className="min-h-[48px] px-3 rounded-xl bg-primary text-on-primary text-xs font-bold flex items-center gap-1 cursor-pointer shadow-xs"
+            >
+              <Icon name="person_add" className="text-[18px]" />
+              <span>{newCustomerBtn.main}</span>
+            </button>
+
+            {onToggleTheme && (
+              <button
+                type="button"
+                onClick={onToggleTheme}
+                aria-label={t('common.toggle_theme')}
+                className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
+              >
+                <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[22px]" />
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* View Switcher Tabs */}
+        <div className="px-3 pt-3">
+          <div className="w-full grid grid-cols-2 p-1 bg-surface-container rounded-2xl gap-1">
+            <button
+              type="button"
+              onClick={() => setView('udhaar')}
+              className={`min-h-[44px] rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                view === 'udhaar'
+                  ? 'bg-primary text-on-primary shadow-xs'
+                  : 'text-on-surface hover:bg-surface-container-high'
+              }`}
+            >
+              <Icon name="account_balance_wallet" className="text-[18px]" />
+              <span>{t('udhaar.page_title')}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('customers')}
+              className={`min-h-[44px] rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                view === 'customers'
+                  ? 'bg-primary text-on-primary shadow-xs'
+                  : 'text-on-surface hover:bg-surface-container-high'
+              }`}
+            >
+              <Icon name="groups" className="text-[18px]" />
+              <span>{customersTabBtn.main}</span>
+              {dueSoonReminders.length > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-error text-on-error text-[10px] font-extrabold">
+                  {dueSoonReminders.length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="px-3 pt-2.5 pb-2">
+          <div className="relative w-full min-h-[52px] flex items-center">
+            <div className="absolute left-3.5 flex items-center pointer-events-none text-outline">
+              <Icon name="search" className="text-[22px]" />
+            </div>
+            <input
+              {...textFieldProps('free', searchQuery, setSearchQuery)}
+              placeholder={t('udhaar.search_placeholder')}
+              className="w-full h-[52px] pl-11 pr-11 bg-surface-container-lowest text-on-surface rounded-2xl border border-outline-variant/40 shadow-xs text-sm outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface cursor-pointer"
+                type="button"
+              >
+                <Icon name="close" className="text-[18px]" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 px-3 pb-8 flex flex-col gap-2.5">
+          {view === 'udhaar' && (
+            <>
+              {dueSoonReminders.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setView('customers')}
+                  className="w-full p-3 rounded-2xl bg-primary-fixed/40 border border-primary/30 text-on-surface flex items-center justify-between gap-2 cursor-pointer transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon name="notifications_active" className="text-primary text-[20px] shrink-0" />
+                    <span className="font-bold text-xs">
+                      {t('customers.morning_alert_title')} ({dueSoonReminders.length})
+                    </span>
+                  </div>
+                  <Icon name="arrow_forward" className="text-primary text-[18px] shrink-0" />
+                </button>
+              )}
+
+              {isLoading ? (
+                <div className="p-8 rounded-2xl bg-surface-container-lowest text-center text-on-surface-variant font-semibold">
+                  {t('stock_dekho.loading_stock')}
+                </div>
+              ) : filteredPending.length === 0 ? (
+                <div className="py-8">
+                  <EmptyState
+                    title={t('udhaar.empty_title')}
+                    subtitle={t('udhaar.empty_sub')}
+                    icon="account_balance_wallet"
+                  />
+                </div>
+              ) : (
+                filteredPending.map((cust) => {
+                  const canRemind = isYaadDilaoEligible(cust.daysPending);
+                  return (
+                    <div
+                      key={cust.key}
+                      className="w-full bg-surface-container-lowest rounded-2xl p-3.5 shadow-xs border border-outline-variant/30 flex flex-col gap-3"
+                    >
+                      <div className="flex items-start justify-between gap-2.5">
+                        <div
+                          onClick={() => setSelectedCustomerKey(cust.key)}
+                          className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                            {getInitials(cust.customerName)}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-title-hinglish font-bold text-sm text-on-surface truncate">
+                              {cust.customerName}
+                            </span>
+                            <span className="text-xs text-on-surface-variant truncate">
+                              {cust.customerPhone ? `${cust.customerPhone} · ` : ''}
+                              {cust.daysPending > 0
+                                ? t('udhaar.days_pending_text', { days: cust.daysPending })
+                                : t('udhaar.due_today_text')}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="font-headline-md text-lg font-extrabold text-error tabular-nums">
+                            {formatRupees(cust.pendingBalancePaise)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-outline-variant/20">
+                        <button
+                          type="button"
+                          onClick={() => setPaisaMilaTarget(cust)}
+                          className="min-h-[48px] rounded-xl bg-surface-container-low hover:bg-surface-container text-primary border border-primary/30 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
+                        >
+                          <Icon name="payments" className="text-[20px]" />
+                          <span>{paisaMilaBtn.main}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={!canRemind}
+                          onClick={() => canRemind && setYaadDilaoTarget(cust)}
+                          className={`min-h-[48px] rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                            canRemind
+                              ? 'bg-primary text-on-primary hover:bg-primary-container shadow-xs active:scale-[0.98] cursor-pointer'
+                              : 'bg-surface-container text-outline cursor-not-allowed opacity-60'
+                          }`}
+                        >
+                          <Icon name="chat" className="text-[20px]" />
+                          <span>{yaadDilaoBtn.main}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </>
+          )}
+
+          {view === 'customers' && (
+            <div className="flex flex-col gap-2.5">
+              {dueSoonReminders.length > 0 && (
+                <div className="bg-primary-container/10 border border-primary/25 rounded-2xl p-3 flex flex-col gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Icon name="notifications_active" className="text-primary text-[20px]" />
+                    <h2 className="font-title-hinglish text-sm font-bold text-on-surface">
+                      {t('customers.morning_alert_title')}
+                    </h2>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    {dueSoonReminders.map((rem) => (
+                      <div
+                        key={rem.id}
+                        className="p-3 rounded-xl bg-surface-container-lowest border border-outline-variant/40 flex items-center justify-between gap-2 shadow-xs"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-xs text-on-surface truncate">
+                            {rem.customerName}
+                          </div>
+                          <div className="text-[11px] text-on-surface-variant truncate">
+                            {rem.medicineName} · {t('customers.next_due_prefix')}{' '}
+                            <strong>{rem.nextDueDate}</strong>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenWhatsAppMorning(rem)}
+                          className="min-h-[44px] px-3 rounded-xl bg-primary text-on-primary font-bold text-xs flex items-center gap-1 cursor-pointer shrink-0"
+                        >
+                          <Icon name="chat" className="text-[16px]" />
+                          <span>{tButton('customers.btn_wa_reminder').main}</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {filteredCustomers.length === 0 ? (
+                <div className="py-8">
+                  <EmptyState
+                    title={t('customers.empty_title')}
+                    subtitle={t('customers.empty_sub')}
+                    icon="groups"
+                  />
+                </div>
+              ) : (
+                filteredCustomers.map((cust) => {
+                  const remCount = regularReminders.filter(
+                    (r) =>
+                      r.active &&
+                      ((cust.customerId && r.customerId === cust.customerId) ||
+                        r.customerPhone === cust.customerPhone)
+                  ).length;
+
+                  return (
+                    <button
+                      key={cust.key}
+                      type="button"
+                      onClick={() => setSelectedCustomerKey(cust.key)}
+                      className="min-h-[64px] w-full bg-surface-container-lowest hover:bg-surface-container-low rounded-2xl p-3 flex items-center justify-between gap-2.5 shadow-xs border border-outline-variant/30 cursor-pointer text-left transition-all active:scale-[0.99]"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="w-10 h-10 rounded-full bg-primary-container/15 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+                          {getInitials(cust.customerName)}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-title-hinglish font-bold text-sm text-on-surface truncate">
+                            {cust.customerName}
+                          </span>
+                          <span className="text-xs text-on-surface-variant truncate">
+                            {cust.customerPhone || '—'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {remCount > 0 && (
+                          <span className="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-[11px] font-bold">
+                            {remCount}
+                          </span>
+                        )}
+                        {cust.pendingBalancePaise > 0 && (
+                          <span className="font-headline-md text-sm font-extrabold text-error">
+                            {formatRupees(cust.pendingBalancePaise)}
+                          </span>
+                        )}
+                        <Icon name="chevron_right" className="text-outline text-[20px]" />
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Modals */}
+        <PaisaMilaModal
+          isOpen={paisaMilaTarget !== null}
+          customer={paisaMilaTarget}
+          currentUser={currentUser}
+          onClose={() => setPaisaMilaTarget(null)}
+          onSaved={() => {
+            setPaisaMilaTarget(null);
+            void refreshData();
+          }}
+        />
+
+        <YaadDilaoModal
+          isOpen={yaadDilaoTarget !== null}
+          customer={yaadDilaoTarget}
+          onClose={() => setYaadDilaoTarget(null)}
+        />
+
+        <CustomerFormModal
+          isOpen={isNewCustomerOpen}
+          currentUser={currentUser}
+          onClose={() => setIsNewCustomerOpen(false)}
+          onSaved={() => {
+            setIsNewCustomerOpen(false);
+            void refreshData();
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-surface font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">

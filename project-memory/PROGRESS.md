@@ -13,7 +13,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-PROMPT F2 - Fix Expiry Tile Badge (29 vs 0), PIN Screen Auto-Lock, Real Backup Folder, & Sample CSV - COMPLETE
+Dedicated Mobile & Portrait-Tablet layouts (< 1024px) for Inventory & Daily Ops screens (Stock Jodo, Stock Dekho, Expiry, Udhaar, Din Band) - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +21,18 @@ PROMPT F2 - Fix Expiry Tile Badge (29 vs 0), PIN Screen Auto-Lock, Real Backup F
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Added dedicated mobile & portrait-tablet layouts (< 1024px) in [StockJodo.tsx](file:///d:/HOSPIVO/src/screens/StockJodo.tsx) (single-column step cards & sticky action bar), [StockList.tsx](file:///d:/HOSPIVO/src/screens/stockDekho/StockList.tsx) (compact inventory list with scrollable filter pills & 52px search bar), [Expiry.tsx](file:///d:/HOSPIVO/src/screens/Expiry.tsx) (2x2 color-coded alert buckets & prominent 56px return button), [Udhaar.tsx](file:///d:/HOSPIVO/src/screens/Udhaar.tsx) (thumb-friendly credit cards with Paisa Mila & Yaad Dilao action triggers), and [DinBand.tsx](file:///d:/HOSPIVO/src/screens/DinBand.tsx) (vertical 4-step cash closing & denomination tally).
+- Preserved existing desktop layouts (>= 1024px) 100% unchanged with zero modifications to business logic, DB, or i18n catalogs.
+- Verified all 222 tests pass across 29 test suites and production build (`npm run build`) succeeds cleanly with 0 errors.
+- Added dedicated mobile & portrait-tablet layout (< 1024px) in [DawaiBecho.tsx](file:///d:/HOSPIVO/src/screens/DawaiBecho.tsx): sticky compact header with Home/Back & search focus, prominent 52px medicine search bar with instant results list, single-column cart cards with 44px +/- steppers, pack/loose toggle, batch info, and sticky bottom checkout bar (56px "Bill Banao" button).
+- Added dedicated mobile & portrait-tablet layout (< 1024px) in [FastBill.tsx](file:///d:/HOSPIVO/src/screens/FastBill.tsx): top horizontal scrollable bill tabs with + New Bill for one-thumb switching, full-width 52px scanner input, tap-to-add top medicines strip, compact cart items list, and sticky bottom bar with 1-tap Cash & UPI buttons.
+- Preserved existing desktop layouts (>= 1024px) 100% unchanged with zero modifications to business logic, DB, or i18n catalogs.
+- Verified all 222 tests pass across 29 test suites and production build (`npm run build`) succeeds cleanly with 0 errors.
+- Created [useViewport.ts](file:///d:/HOSPIVO/src/logic/useViewport.ts) and unit tests in [useViewport.test.ts](file:///d:/HOSPIVO/src/logic/useViewport.test.ts) tracking `< 1024px` compact viewports on resize and orientationchange.
+- Built dedicated mobile/portrait-tablet (< 1024px) layouts in [Login.tsx](file:///d:/HOSPIVO/src/screens/Login.tsx) with compact header, stacked staff cards, full-screen PIN entry with prominent Back button and large 3-column numpad, and centered scrollable lock screen.
+- Converted all 8 steps in [Setup.tsx](file:///d:/HOSPIVO/src/screens/Setup.tsx) to clean single-column (< 1024px) grids with wrapping footers and buttons >= 56px, preserving Step 5 sample CSV download and Step 6 folder picker intact.
+- Implemented dedicated mobile/tablet dashboard in [Home.tsx](file:///d:/HOSPIVO/src/screens/Home.tsx) with compact top bar, full-width "Dawai Becho" hero CTA, 2-column action grid (3-column on tablet), 2x2 today's summary strip, and fixed 5-tab Android-ready bottom nav bar, keeping desktop (>= 1024px) 100% unchanged.
+- Verified 222 tests passing across 29 test suites and production build (`tsc -b && vite build`) succeeding with 0 errors.
 - Bound Expiry tile badge in [Home.tsx](file:///d:/HOSPIVO/src/screens/Home.tsx) strictly to `expiring30Count` (rendered only when > 0, hidden at 0) instead of `combinedAlertsCount`, and verified with unit test in [reports.test.ts](file:///d:/HOSPIVO/src/logic/reports.test.ts).
 - Stored and persisted native directory handle in [backup.ts](file:///d:/HOSPIVO/src/logic/backup.ts) via `saveBackupDirectoryHandle`/`getSavedBackupDirectoryHandle`, and wired the red warning banner "Backup Now" button on [Home.tsx](file:///d:/HOSPIVO/src/screens/Home.tsx) to write directly to the saved handle and immediately refresh `backupStatus`.
 - Ensured [Setup.tsx](file:///d:/HOSPIVO/src/screens/Setup.tsx) Step 6 calls `saveBackupDirectoryHandle` upon folder selection, with all 216 tests passing across 28 test suites and zero-error production build.

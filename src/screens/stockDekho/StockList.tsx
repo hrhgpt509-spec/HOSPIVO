@@ -8,6 +8,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { textFieldProps } from '../../logic/format';
 import { searchMedicines, formatMedicineStock } from '../../logic/medicineSearch';
 import { filterStockSummaries, type StockFilter, type MedicineStockSummary } from '../../logic/stockDekho';
+import { useIsCompactViewport } from '../../logic/useViewport';
 
 interface StockListProps {
   stockSummaries: MedicineStockSummary[];
@@ -90,6 +91,240 @@ export const StockList: React.FC<StockListProps> = ({
     main: t('stock_dekho.btn_shopping_list.main'),
     sub: t('stock_dekho.btn_shopping_list.sub'),
   };
+
+  const isCompactViewport = useIsCompactViewport();
+
+  if (isCompactViewport) {
+    return (
+      <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased flex flex-col overflow-x-hidden select-none">
+        {/* Sticky Top Header */}
+        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={onReturnHome}
+              aria-label={t('common.btn_home.main')}
+              className="min-w-[48px] min-h-[48px] rounded-xl bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface cursor-pointer shrink-0"
+              type="button"
+            >
+              <Icon name="arrow_back" className="text-[24px]" />
+            </button>
+            <div className="flex flex-col min-w-0">
+              <h1 className="font-title-hinglish font-bold text-base text-on-surface truncate">
+                {t('stock_dekho.screen_title')}
+              </h1>
+              <span className="text-xs text-on-surface-variant truncate">
+                {t('stock_dekho.items_count', { count: displayedSummaries.length })}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={onOpenShoppingList}
+              type="button"
+              className="min-h-[48px] px-3 rounded-xl bg-tertiary-fixed text-tertiary font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Icon name="local_shipping" className="text-[20px]" />
+              <span>{shoppingListBtn.main}</span>
+              {lowCount + outCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-tertiary text-on-tertiary text-[10px] font-bold">
+                  {lowCount + outCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={onToggleTheme}
+              aria-label={t('common.toggle_theme')}
+              className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
+              type="button"
+            >
+              <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[22px]" />
+            </button>
+          </div>
+        </header>
+
+        {/* Search Bar */}
+        <div className="px-3 pt-3 pb-2">
+          <div className="relative w-full min-h-[52px] flex items-center">
+            <div className="absolute left-3.5 flex items-center pointer-events-none text-outline">
+              <Icon name="search" className="text-[22px]" />
+            </div>
+            <input
+              {...textFieldProps('free', searchQuery, setSearchQuery)}
+              id="compactStockSearchInput"
+              placeholder={t('stock_dekho.search_placeholder')}
+              className="w-full h-[52px] pl-11 pr-11 bg-surface-container-lowest text-on-surface rounded-2xl border border-outline-variant/40 shadow-xs text-sm outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            {searchQuery ? (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface cursor-pointer"
+                type="button"
+              >
+                <Icon name="close" className="text-[18px]" />
+              </button>
+            ) : (
+              <div className="absolute right-3.5 text-outline pointer-events-none">
+                <Icon name="barcode_scanner" className="text-[22px] text-primary" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Filter Pills */}
+        <div className="px-3 pb-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => setActiveFilter('all')}
+            className={`min-h-[48px] px-4 rounded-full font-bold text-xs flex items-center gap-2 shrink-0 cursor-pointer transition-colors ${
+              activeFilter === 'all'
+                ? 'bg-primary text-on-primary shadow-xs'
+                : 'bg-surface-container-lowest text-on-surface border border-outline-variant/30'
+            }`}
+            type="button"
+          >
+            <span>{tabAll.main}</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] ${
+                activeFilter === 'all' ? 'bg-white/20 text-white' : 'bg-surface-container text-on-surface'
+              }`}
+            >
+              {allCount}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveFilter('low')}
+            className={`min-h-[48px] px-4 rounded-full font-bold text-xs flex items-center gap-2 shrink-0 cursor-pointer transition-colors ${
+              activeFilter === 'low'
+                ? 'bg-tertiary text-on-tertiary shadow-xs'
+                : 'bg-surface-container-lowest text-tertiary border border-outline-variant/30'
+            }`}
+            type="button"
+          >
+            <Icon name="warning" className="text-[16px]" filled />
+            <span>{tabLow.main}</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] ${
+                activeFilter === 'low' ? 'bg-white/20 text-white' : 'bg-surface-container text-tertiary'
+              }`}
+            >
+              {lowCount}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveFilter('out')}
+            className={`min-h-[48px] px-4 rounded-full font-bold text-xs flex items-center gap-2 shrink-0 cursor-pointer transition-colors ${
+              activeFilter === 'out'
+                ? 'bg-error text-on-error shadow-xs'
+                : 'bg-surface-container-lowest text-error border border-outline-variant/30'
+            }`}
+            type="button"
+          >
+            <Icon name="block" className="text-[16px]" filled />
+            <span>{tabOut.main}</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] ${
+                activeFilter === 'out' ? 'bg-white/20 text-white' : 'bg-surface-container text-error'
+              }`}
+            >
+              {outCount}
+            </span>
+          </button>
+        </div>
+
+        {/* Medicine List */}
+        <div className="flex-1 px-3 pb-6 flex flex-col gap-2">
+          {displayedSummaries.length === 0 ? (
+            <div className="my-8">
+              <EmptyState title={t('stock_dekho.empty_title')} subtitle={t('stock_dekho.empty_sub')} hintText="" />
+            </div>
+          ) : (
+            displayedSummaries.map((summary) => {
+              const med = summary.medicine;
+              const formattedStock = formatMedicineStock(
+                summary.currentStockUnits,
+                med.unitsPerPack || 1,
+                t('medicine.packs_unit'),
+                t('medicine.loose_unit')
+              );
+              return (
+                <div
+                  key={med.id}
+                  onClick={() => onSelectMedicine(med)}
+                  className="w-full min-h-[60px] p-3 bg-surface-container-lowest hover:bg-surface-container-low rounded-2xl shadow-xs border border-outline-variant/30 flex items-center justify-between gap-2.5 cursor-pointer active:scale-[0.99] transition-all"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                        summary.status === 'low'
+                          ? 'bg-tertiary-fixed text-tertiary'
+                          : summary.status === 'out'
+                          ? 'bg-error-container text-error'
+                          : 'bg-surface-container text-primary'
+                      }`}
+                    >
+                      <Icon
+                        name={
+                          summary.status === 'low'
+                            ? 'warning'
+                            : summary.status === 'out'
+                            ? 'block'
+                            : 'medication'
+                        }
+                        className="text-[20px]"
+                      />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-sm text-on-surface truncate">
+                          {med.name}
+                          {med.strength ? ` ${med.strength}` : ''}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-on-surface-variant font-medium mt-0.5 truncate">
+                        <span
+                          className={
+                            summary.status === 'out'
+                              ? 'text-error font-bold'
+                              : summary.status === 'low'
+                              ? 'text-tertiary font-bold'
+                              : 'text-primary font-bold'
+                          }
+                        >
+                          {formattedStock}
+                        </span>
+                        {med.shelf && (
+                          <>
+                            <span>•</span>
+                            <span className="truncate">{med.shelf}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {summary.status === 'out' && (
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-error-container text-error">
+                        {t('stock_dekho.badge_out_of_stock')}
+                      </span>
+                    )}
+                    {summary.status === 'low' && (
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-tertiary-fixed text-tertiary">
+                        {t('stock_dekho.badge_low_stock')}
+                      </span>
+                    )}
+                    <Icon name="chevron_right" className="text-outline text-[22px]" />
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-surface font-body-md text-on-surface antialiased flex flex-col select-none">

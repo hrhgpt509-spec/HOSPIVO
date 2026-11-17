@@ -8,6 +8,7 @@ import { EmptyState } from '../components/EmptyState';
 import { formatRupees } from '../logic/money';
 import { canSeePurchasePrice } from '../logic/roles';
 import { formatMedicineStock } from '../logic/medicineSearch';
+import { useIsCompactViewport } from '../logic/useViewport';
 import {
   loadExpiryDashboardData,
   type ExpiryBatchItem,
@@ -132,6 +133,295 @@ export const Expiry: React.FC<ExpiryProps> = ({
   const backBtn = tButton('suppliers.btn_back');
 
   const showOwnerLoss = isOwnerUser && lossSummary !== null;
+
+  const isCompactViewport = useIsCompactViewport();
+
+  if (isCompactViewport) {
+    return (
+      <div className="w-full min-h-dvh bg-background font-body-md text-on-surface flex flex-col overflow-x-hidden antialiased select-none transition-colors">
+        {/* Sticky Compact Header */}
+        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={onReturnHome}
+              aria-label={t('common.btn_home.main')}
+              className="min-w-[48px] min-h-[48px] rounded-xl bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface cursor-pointer shrink-0"
+              type="button"
+            >
+              <Icon name="arrow_back" className="text-[24px]" />
+            </button>
+            <div className="flex flex-col min-w-0">
+              <h1 className="font-title-hinglish font-bold text-base text-on-surface truncate">
+                {t('expiry.page_title')}
+              </h1>
+              <span className="text-xs text-on-surface-variant truncate">
+                {t('expiry.critical_window_stat', { count: countsByBucket['30'] })}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setViewMode('tracker')}
+              className="min-h-[48px] px-3 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/60 text-on-surface text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Icon name="local_shipping" className="text-[20px] text-primary" />
+              <span>{trackerBtn.main}</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-[10px] font-extrabold">
+                {pendingReturnsCount > 0 ? pendingReturnsCount : returns.length}
+              </span>
+            </button>
+            {onToggleTheme && (
+              <button
+                type="button"
+                onClick={onToggleTheme}
+                aria-label={t('common.toggle_theme')}
+                className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
+              >
+                <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[22px]" />
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <div className="p-3 flex flex-col gap-3 flex-1 pb-8">
+          {/* 4 Alert Bucket Grid (2x2) */}
+          <div className="grid grid-cols-2 gap-2">
+            {/* 30 Days */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('30')}
+              className={`min-h-[56px] rounded-2xl p-2.5 flex items-center justify-between text-left cursor-pointer transition-all ${
+                activeTab === '30'
+                  ? 'bg-error-container text-on-error-container shadow-xs ring-2 ring-error'
+                  : 'bg-surface-container-lowest text-on-surface shadow-xs border border-outline-variant/30'
+              }`}
+            >
+              <div className="flex flex-col min-w-0 pr-1">
+                <span className="font-title-hinglish font-bold text-sm leading-tight truncate">
+                  {tab30Btn.main}
+                </span>
+                {tab30Btn.sub && <span className="text-[10px] opacity-80 truncate">{tab30Btn.sub}</span>}
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded-xl font-bold text-sm shrink-0 ${
+                  activeTab === '30' ? 'bg-error text-on-error' : 'bg-surface-container text-on-surface'
+                }`}
+              >
+                {countsByBucket['30']}
+              </span>
+            </button>
+
+            {/* 60 Days */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('60')}
+              className={`min-h-[56px] rounded-2xl p-2.5 flex items-center justify-between text-left cursor-pointer transition-all ${
+                activeTab === '60'
+                  ? 'bg-tertiary-fixed text-on-tertiary-fixed shadow-xs ring-2 ring-tertiary'
+                  : 'bg-surface-container-lowest text-on-surface shadow-xs border border-outline-variant/30'
+              }`}
+            >
+              <div className="flex flex-col min-w-0 pr-1">
+                <span className="font-title-hinglish font-bold text-sm leading-tight truncate">
+                  {tab60Btn.main}
+                </span>
+                {tab60Btn.sub && <span className="text-[10px] opacity-80 truncate">{tab60Btn.sub}</span>}
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded-xl font-bold text-sm shrink-0 ${
+                  activeTab === '60' ? 'bg-tertiary text-on-tertiary' : 'bg-surface-container text-on-surface'
+                }`}
+              >
+                {countsByBucket['60']}
+              </span>
+            </button>
+
+            {/* 90 Days */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('90')}
+              className={`min-h-[56px] rounded-2xl p-2.5 flex items-center justify-between text-left cursor-pointer transition-all ${
+                activeTab === '90'
+                  ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-950 dark:text-amber-100 shadow-xs ring-2 ring-amber-500'
+                  : 'bg-surface-container-lowest text-on-surface shadow-xs border border-outline-variant/30'
+              }`}
+            >
+              <div className="flex flex-col min-w-0 pr-1">
+                <span className="font-title-hinglish font-bold text-sm leading-tight truncate">
+                  {tab90Btn.main}
+                </span>
+                {tab90Btn.sub && <span className="text-[10px] opacity-80 truncate">{tab90Btn.sub}</span>}
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded-xl font-bold text-sm shrink-0 ${
+                  activeTab === '90' ? 'bg-amber-500 text-amber-950' : 'bg-surface-container text-on-surface'
+                }`}
+              >
+                {countsByBucket['90']}
+              </span>
+            </button>
+
+            {/* Expired */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('expired')}
+              className={`min-h-[56px] rounded-2xl p-2.5 flex items-center justify-between text-left cursor-pointer transition-all ${
+                activeTab === 'expired'
+                  ? 'bg-inverse-surface text-inverse-on-surface shadow-xs ring-2 ring-error'
+                  : 'bg-surface-container-lowest text-on-surface shadow-xs border border-outline-variant/30'
+              }`}
+            >
+              <div className="flex flex-col min-w-0 pr-1">
+                <span className="font-title-hinglish font-bold text-sm leading-tight truncate">
+                  {tabExpBtn.main}
+                </span>
+                {tabExpBtn.sub && <span className="text-[10px] opacity-80 truncate">{tabExpBtn.sub}</span>}
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded-xl font-bold text-sm shrink-0 ${
+                  activeTab === 'expired' ? 'bg-error text-on-error' : 'bg-surface-container text-on-surface'
+                }`}
+              >
+                {countsByBucket.expired}
+              </span>
+            </button>
+          </div>
+
+          {/* Items List */}
+          <div className="flex flex-col gap-2.5">
+            {isLoading ? (
+              <div className="p-8 rounded-2xl bg-surface-container-lowest text-center text-on-surface-variant font-semibold">
+                {t('stock_dekho.loading_stock')}
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="py-6">
+                <EmptyState
+                  title={t('expiry.empty_bucket_title')}
+                  subtitle={t('expiry.empty_bucket_sub')}
+                />
+              </div>
+            ) : (
+              filteredItems.map((item) => {
+                const isExp = item.bucket === 'expired';
+                const badgeClass =
+                  item.bucket === 'expired' || item.bucket === '30'
+                    ? 'bg-error-container text-on-error-container'
+                    : item.bucket === '60'
+                      ? 'bg-tertiary-fixed text-on-tertiary-fixed'
+                      : 'bg-amber-100 dark:bg-amber-950/70 text-amber-950 dark:text-amber-100';
+
+                const iconWrapClass =
+                  item.bucket === 'expired' || item.bucket === '30'
+                    ? 'bg-error-container text-error'
+                    : item.bucket === '60'
+                      ? 'bg-tertiary-fixed text-tertiary'
+                      : 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300';
+
+                return (
+                  <div
+                    key={item.batchId}
+                    className="bg-surface-container-lowest rounded-2xl p-3.5 shadow-xs border border-outline-variant/30 flex flex-col gap-3"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconWrapClass}`}
+                      >
+                        <Icon name={isExp ? 'block' : 'medication'} className="text-[20px]" />
+                      </div>
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-sm text-on-surface truncate">
+                            {item.medicineName} {item.medicineStrength}
+                          </span>
+                          {isExp ? (
+                            <span className={`px-2 py-0.5 rounded-lg text-xs font-bold shrink-0 ${badgeClass}`}>
+                              {blockedBadge.main}
+                            </span>
+                          ) : (
+                            <span className={`px-2 py-0.5 rounded-lg text-xs font-bold shrink-0 ${badgeClass}`}>
+                              {item.daysRemaining === 0
+                                ? t('expiry.days_left_today')
+                                : t('expiry.days_left_badge', { days: item.daysRemaining })}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-on-surface-variant font-medium mt-1">
+                          <span>{t('expiry.batch_prefix')} {item.batchNo}</span>
+                          <span> · </span>
+                          <span>{t('expiry.exp_prefix')} {item.expiryMonthYear}</span>
+                        </div>
+                        <div className="text-xs text-on-surface mt-0.5">
+                          <strong>
+                            {formatMedicineStock(
+                              item.qtyUnits,
+                              item.unitsPerPack,
+                              t('medicine.packs_unit'),
+                              t('medicine.loose_unit')
+                            )}
+                          </strong>
+                          {item.shelf ? ` · ${t('expiry.shelf_suffix', { shelf: item.shelf })}` : ''}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setReturnTarget(item)}
+                      className="w-full min-h-[56px] rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99]"
+                    >
+                      <Icon name="assignment_return" className="text-[22px]" />
+                      <span className="text-sm font-bold">{returnSupplierBtn.main}</span>
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Owner Loss Card if applicable */}
+          {showOwnerLoss && (
+            <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-xs border border-outline-variant/40 flex flex-col gap-3 mt-2">
+              <div className="flex items-center gap-2 pb-2 border-b border-outline-variant/30">
+                <div className="w-8 h-8 rounded-lg bg-error-container text-error flex items-center justify-center shrink-0">
+                  <Icon name="trending_down" className="text-[20px]" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-sm text-on-surface">
+                    {t('expiry.loss_card_title')}
+                  </span>
+                  <span className="text-[11px] text-on-surface-variant">
+                    {t('expiry.loss_card_sub')}
+                  </span>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-error-container text-on-error-container flex items-center justify-between">
+                <span className="font-bold text-sm">{t('expiry.loss_total_label')}</span>
+                <span className="text-lg font-extrabold text-error">
+                  {formatRupees(lossSummary.totalLossPaise)}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Supplier Return Confirmation Modal */}
+        <SupplierReturnModal
+          isOpen={returnTarget !== null}
+          item={returnTarget}
+          suppliers={suppliers}
+          currentUser={currentUser}
+          onClose={() => setReturnTarget(null)}
+          onSaved={() => {
+            setReturnTarget(null);
+            void refreshData();
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-background font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">

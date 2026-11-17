@@ -33,6 +33,8 @@ import { PaymentScreen } from './dawai-becho/PaymentScreen';
 import { BillDoneScreen } from './dawai-becho/BillDoneScreen';
 import type { SubstituteMedicineInfo } from '../logic/billing';
 import type { CartItem } from './dawai-becho/types';
+import { formatRupees } from '../logic/money';
+import { useIsCompactViewport } from '../logic/useViewport';
 
 interface FastBillProps {
   currentUser?: DBUser | { id?: string; name?: string; role?: string } | null;
@@ -48,6 +50,7 @@ export const FastBill: React.FC<FastBillProps> = ({
   onReturnHome,
 }) => {
   const shop = useShop();
+  const isCompactViewport = useIsCompactViewport();
 
   // Operational View Mode: 'queue' (Runner Scanning & Confirm Card) vs 'wall' (Top-100 Wall)
   const [viewMode, setViewMode] = useState<'queue' | 'wall'>('queue');
@@ -707,6 +710,401 @@ export const FastBill: React.FC<FastBillProps> = ({
     activeBill.items.length > 0 &&
     currentIdx >= activeBill.items.length;
   const currentItem = activeBill?.items[currentIdx];
+
+  // Dedicated Mobile & Portrait-Tablet Layout (< 1024px)
+  if (isCompactViewport) {
+    const fastTotals = calculateFastBillTotals(activeBill?.items ?? []);
+
+    return (
+      <div
+        className={`w-full min-h-dvh flex flex-col font-body-md text-on-surface select-none overflow-x-hidden transition-colors duration-150 pb-36 ${
+          isActionFeedback ? 'bg-primary/10' : 'bg-background'
+        }`}
+      >
+        {/* Sticky Compact Top Header */}
+        <header className="sticky top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-xs px-3 py-2 flex items-center justify-between gap-2">
+          {/* Left: Home */}
+          <button
+            type="button"
+            onClick={onReturnHome}
+            className="h-11 min-h-[44px] px-3 bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 rounded-2xl shadow-xs text-on-surface active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            aria-label="Home"
+          >
+            <Icon name="home" className="text-primary text-[20px]" />
+            <span className="text-xs sm:text-sm font-bold">{t('common.btn_home.main')}</span>
+          </button>
+
+          {/* Center Title */}
+          <div className="flex flex-col items-center min-w-0 flex-1 px-1">
+            <h1 className="text-base sm:text-lg font-extrabold text-on-surface tracking-tight truncate">
+              {t('fast_bill.title')}
+            </h1>
+            {shop.name && (
+              <span className="text-[11px] text-on-surface-variant font-medium truncate max-w-[150px]">
+                {shop.name}
+              </span>
+            )}
+          </div>
+
+          {/* Right Controls */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {onToggleTheme && (
+              <button
+                type="button"
+                onClick={onToggleTheme}
+                aria-label={t('common.toggle_theme')}
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer"
+              >
+                <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[20px]" />
+              </button>
+            )}
+
+            <FullscreenButton className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" />
+          </div>
+        </header>
+
+        {/* Top Horizontal Scrollable Bill Tabs (One-thumb active bill switching) */}
+        <div className="overflow-x-auto flex items-center gap-2 px-3 py-2 bg-surface-container-low border-b border-outline-variant/30 shrink-0 no-scrollbar">
+          {pendingBills.map((bill) => (
+            <button
+              key={bill.id}
+              type="button"
+              onClick={() => setSelectedBillId(bill.id)}
+              className={`min-h-[44px] px-3.5 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                bill.id === selectedBillId
+                  ? 'bg-primary text-on-primary shadow-xs'
+                  : 'bg-surface-container-lowest border border-outline-variant/50 text-on-surface hover:bg-surface-container'
+              }`}
+            >
+              <span>{bill.billNumberLabel}</span>
+              <span
+                className={`text-xs px-1.5 py-0.5 rounded-full font-extrabold ${
+                  bill.id === selectedBillId
+                    ? 'bg-primary-container text-on-primary-container'
+                    : 'bg-surface-container text-on-surface-variant'
+                }`}
+              >
+                {bill.items.length}
+              </span>
+            </button>
+          ))}
+
+          <button
+            type="button"
+            onClick={handleCreateNewBill}
+            className="min-h-[44px] px-3 py-1.5 rounded-xl bg-primary-container text-on-primary-container font-bold text-sm flex items-center gap-1 shrink-0 active:scale-95 transition-all cursor-pointer"
+          >
+            <Icon name="add" className="text-[18px]" />
+            <span>+ New Bill</span>
+          </button>
+        </div>
+
+        {/* Full-width Quick Search / Barcode Input (min-h-[52px]) */}
+        <div className="px-3 pt-2.5 pb-1 shrink-0">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleExecuteScan(scanCodeInput);
+              setScanCodeInput('');
+            }}
+            className="relative flex items-center w-full"
+          >
+            <div className="absolute left-3.5 text-primary pointer-events-none">
+              <Icon name="barcode_scanner" className="text-[22px]" />
+            </div>
+            <input
+              ref={scannerInputRef}
+              type="text"
+              value={scanCodeInput}
+              onChange={(e) => setScanCodeInput(e.target.value)}
+              placeholder="Scan barcode / short code (C1) / search..."
+              className="w-full h-13 min-h-[52px] pl-11 pr-14 rounded-2xl bg-surface-container-lowest border-2 border-primary/60 focus:border-primary text-sm sm:text-base text-on-surface outline-none shadow-xs transition-all"
+            />
+            <button
+              type="submit"
+              className="absolute right-1.5 h-10 px-3 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-sm flex items-center justify-center cursor-pointer active:scale-95"
+            >
+              ↵
+            </button>
+          </form>
+        </div>
+
+        {/* Tap-to-Add Top Medicines Strip */}
+        {topMedicines.length > 0 && (
+          <div className="px-3 py-1.5 shrink-0">
+            <div className="overflow-x-auto flex items-center gap-2 pb-1 no-scrollbar">
+              {topMedicines.slice(0, 10).map((med) => (
+                <button
+                  key={med.id}
+                  type="button"
+                  onClick={() => handleExecuteScan(med.shortCode || med.barcode || med.name)}
+                  className="min-h-[48px] px-3 py-1.5 rounded-xl bg-surface-container-lowest border border-outline-variant/60 hover:border-primary text-left flex items-center gap-2 shrink-0 active:scale-95 transition-all cursor-pointer shadow-xs"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-on-surface truncate max-w-[120px]">
+                      {med.name}
+                    </span>
+                    <span className="text-[10px] text-on-surface-variant font-medium">
+                      {formatRupees(med.mrp)}
+                    </span>
+                  </div>
+                  <div className="w-7 h-7 rounded-lg bg-primary-fixed text-primary flex items-center justify-center font-bold">
+                    <Icon name="add" className="text-[16px]" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Compact Cart List for activeBill */}
+        <div className="flex-1 w-full px-3 py-2 flex flex-col gap-2.5">
+          {activeBill.items.length === 0 ? (
+            <div className="p-8 bg-surface-container-lowest rounded-2xl border border-outline-variant/40 flex flex-col items-center justify-center text-center text-on-surface-variant gap-2 my-2">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                <Icon name="barcode_scanner" className="text-[36px]" />
+              </div>
+              <span className="font-bold text-base text-on-surface">
+                {activeBill.billNumberLabel} - Ready for Scanning
+              </span>
+              <span className="text-xs max-w-xs">
+                Scan barcode, enter short code, or tap top medicines above to add items.
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {activeBill.items.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className="w-full bg-surface-container-lowest border border-outline-variant/60 rounded-2xl p-3 flex flex-col gap-2 shadow-xs transition-all"
+                >
+                  {/* Top row: Medicine name, strength, details & line total */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="text-base font-bold text-on-surface leading-tight truncate">
+                          {item.medicineName}
+                        </h3>
+                        {item.strength && (
+                          <span className="text-xs font-semibold px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant">
+                            {item.strength}
+                          </span>
+                        )}
+                        {item.isScheduleH && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-error-container text-on-error-container">
+                            Sch H
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs font-medium text-on-surface-variant mt-0.5">
+                        {formatRupees(item.mrpPaise)} / strip
+                        {item.batchNo ? ` · Batch: ${item.batchNo}` : ''}
+                        {item.shelf ? ` · Shelf: ${item.shelf}` : ''}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-base font-extrabold text-primary">
+                        {formatRupees(item.lineTotalPaise)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bottom row: Strip/Loose Toggle + Stepper + Change Batch + Remove */}
+                  <div className="flex items-center justify-between pt-2 border-t border-outline-variant/30 gap-2 flex-wrap">
+                    <div className="flex bg-surface-container-low rounded-xl p-1 border border-outline-variant/50 h-11 items-center shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => item.unitType !== 'strip' && handleToggleItemUnit(idx)}
+                        className={`h-full px-3 rounded-lg text-xs font-bold flex items-center justify-center cursor-pointer transition-colors ${
+                          item.unitType === 'strip'
+                            ? 'bg-primary text-on-primary shadow-xs'
+                            : 'text-on-surface-variant hover:text-on-surface'
+                        }`}
+                      >
+                        Strip
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => item.unitType !== 'loose' && handleToggleItemUnit(idx)}
+                        className={`h-full px-3 rounded-lg text-xs font-bold flex items-center justify-center cursor-pointer transition-colors ${
+                          item.unitType === 'loose'
+                            ? 'bg-primary text-on-primary shadow-xs'
+                            : 'text-on-surface-variant hover:text-on-surface'
+                        }`}
+                      >
+                        Loose
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                      <button
+                        type="button"
+                        aria-label="Decrease quantity"
+                        onClick={() => {
+                          if (item.quantity > 1) {
+                            handleUpdateItemQuantity(idx, item.quantity - 1);
+                          } else {
+                            handleRemoveItem(idx);
+                          }
+                        }}
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] bg-surface-container-low hover:bg-surface-container border border-outline-variant/60 text-on-surface rounded-xl flex items-center justify-center font-bold text-xl active:scale-95 transition-all cursor-pointer"
+                      >
+                        −
+                      </button>
+                      <span className="text-base font-bold text-on-surface w-7 text-center">
+                        {item.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label="Increase quantity"
+                        onClick={() => handleUpdateItemQuantity(idx, item.quantity + 1)}
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] bg-primary-fixed border border-primary/30 text-on-primary-fixed rounded-xl flex items-center justify-center font-bold text-xl active:bg-primary active:text-on-primary active:scale-95 transition-all cursor-pointer"
+                      >
+                        +
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Change batch"
+                        onClick={() =>
+                          setBatchModalState({
+                            isOpen: true,
+                            itemIndex: idx,
+                            medicineId: item.medicineId,
+                            medicineName: item.medicineName,
+                            currentBatchId: item.batchId,
+                          })
+                        }
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] text-on-surface-variant hover:bg-surface-container rounded-xl flex items-center justify-center cursor-pointer"
+                        title="Change batch"
+                      >
+                        <Icon name="layers" className="text-[18px]" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Remove item"
+                        onClick={() => handleRemoveItem(idx)}
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] text-error hover:bg-error-container/20 rounded-xl flex items-center justify-center cursor-pointer"
+                      >
+                        <Icon name="delete" className="text-[20px]" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Sticky Bottom "Complete Bill" Bar */}
+        <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2.5 w-full">
+            <div className="text-sm sm:text-base font-bold text-on-surface tracking-tight truncate">
+              {activeBill.billNumberLabel} ·{' '}
+              <span className="text-on-surface-variant font-medium">
+                {activeBill.items.length} items
+              </span>
+            </div>
+            <span className="font-display-total-mobile text-[30px] sm:text-[34px] leading-none font-extrabold text-primary shrink-0">
+              {formatRupees(fastTotals.totalPaise)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 w-full">
+            <button
+              type="button"
+              onClick={handleQuickCashFinalize}
+              disabled={activeBill.items.length === 0}
+              className="h-14 min-h-[56px] flex-1 bg-primary hover:bg-primary-container disabled:opacity-40 text-on-primary rounded-2xl font-extrabold text-base sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all"
+            >
+              <Icon name="payments" className="text-[24px]" />
+              <span>Cash {formatRupees(fastTotals.totalPaise)}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleQuickUpiFinalize}
+              disabled={activeBill.items.length === 0}
+              className="h-14 min-h-[56px] px-4 bg-tertiary-container hover:brightness-105 disabled:opacity-40 text-on-tertiary-container rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer transition-all"
+            >
+              <Icon name="qr_code_2" className="text-[22px]" />
+              <span>UPI</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenDetailedPayment}
+              disabled={activeBill.items.length === 0}
+              className="h-14 min-h-[56px] w-14 rounded-2xl bg-surface-container-low hover:bg-surface-container disabled:opacity-40 text-on-surface flex items-center justify-center cursor-pointer transition-all shrink-0"
+              title="Detailed Payment"
+            >
+              <Icon name="receipt_long" className="text-[24px]" />
+            </button>
+          </div>
+        </footer>
+
+        {/* Modals for Compact View */}
+        <ScheduleHModal
+          isOpen={scheduleHState.isOpen}
+          medicineName={scheduleHState.medicineName}
+          onConfirm={(pName, dName) => {
+            scheduleHState.pendingAction?.(pName, dName);
+            setScheduleHState({ isOpen: false, medicineName: '' });
+          }}
+          onCancel={() => {
+            setScheduleHState({ isOpen: false, medicineName: '' });
+          }}
+        />
+
+        <OutOfStockModal
+          isOpen={outOfStockState.isOpen}
+          medicineName={outOfStockState.medicineName}
+          salt={outOfStockState.salt}
+          substitutes={outOfStockState.substitutes}
+          onSelectSubstitute={(sub) => {
+            setOutOfStockState({ isOpen: false, medicineName: '', substitutes: [] });
+            handleExecuteScan(sub.name);
+          }}
+          onSkip={() => {
+            setOutOfStockState({ isOpen: false, medicineName: '', substitutes: [] });
+          }}
+        />
+
+        <UnknownScanModal
+          isOpen={isUnknownModalOpen}
+          unmappedScans={unmappedScans}
+          onFixScan={(code) => {
+            setIsUnknownModalOpen(false);
+            setScanCodeInput(code);
+          }}
+          onDismissScan={(code) => {
+            setUnmappedScans((prev) => prev.filter((s) => s.code !== code));
+          }}
+          onClose={() => setIsUnknownModalOpen(false)}
+        />
+
+        <BatchSelectModal
+          isOpen={batchModalState.isOpen}
+          medicineId={batchModalState.medicineId}
+          medicineName={batchModalState.medicineName}
+          currentBatchId={batchModalState.currentBatchId}
+          onSelectBatch={(batch) => {
+            if (batchModalState.itemIndex >= 0) {
+              handleChangeBatchForItem(batchModalState.itemIndex, batch);
+            }
+          }}
+          onClose={() =>
+            setBatchModalState({
+              isOpen: false,
+              itemIndex: -1,
+              medicineId: 0,
+              medicineName: '',
+              currentBatchId: 0,
+            })
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div

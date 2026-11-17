@@ -125,7 +125,19 @@ export function App() {
     }
 
     if (screen === 'home') {
-      return <Home currentUser={currentUser} />;
+      return (
+        <Home
+          currentUser={currentUser}
+          onLock={() => {
+            setIsLocked(true);
+          }}
+          onSwitchUser={() => {
+            setCurrentUser(null);
+            setIsLocked(false);
+            setScreen('login');
+          }}
+        />
+      );
     }
 
     return (
