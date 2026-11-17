@@ -1,4 +1,19 @@
-# Hospivo - progress (update after EVERY task, 3-5 lines)
+Task: Implement advanced Customer Udhaar statements, ledger calculations, and WhatsApp/SMS reminder message generation in `src/logic/udhaar.ts` and add unit tests in `src/logic/udhaar.test.ts`.
+
+STRICT SAFETY RULES:
+1. DO NOT break existing UI layouts or Dexie table structures.
+2. Ensure all monetary calculations use whole paise (integers).
+3. Run `npm run test` and `npm run build` and ensure 0 errors.
+
+WHAT TO BUILD:
+1. `src/logic/udhaar.ts`:
+   - Add/enhance: `getCustomerLedgerStatement(customerId: number, startDate?: string, endDate?: string): Promise<{ customer: Customer; openingBalancePaise: number; totalCreditPaise: number; totalPaidPaise: number; closingBalancePaise: number; transactions: Array<{ date: string; type: 'bill' | 'payment'; reference: string; amountPaise: number; note?: string }> }>`
+   - Add: `formatUdhaarReminderMessage(shopName: string, customerName: string, balancePaise: number): string` (returning a clean Hindi/English text message for WhatsApp/SMS).
+2. `src/logic/udhaar.test.ts`:
+   - Add unit tests verifying correct ledger summation, transaction sorting by date, and reminder text formatting.
+
+VERIFICATION:
+- Run `npm run test` and `npm run build` and confirm 0 errors.# Hospivo - progress (update after EVERY task, 3-5 lines)
 
 Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 
@@ -13,7 +28,7 @@ Legend: [ ] not started  [~] in progress  [x] done and checked by owner
 - [x] Phase 8: Cloud-enabled mode (sync, owner web app, remote approvals)
 
 ## Current task
-Dedicated Mobile & Portrait-Tablet layouts (< 1024px) for Inventory & Daily Ops screens (Stock Jodo, Stock Dekho, Expiry, Udhaar, Din Band) - COMPLETE
+Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunking, Dead-Letter Cap & Retry, Auto-Reconnect Heartbeat) - COMPLETE
 
 ## Known problems
 - App icons (192/512) needed before the app can be installed.
@@ -21,6 +36,10 @@ Dedicated Mobile & Portrait-Tablet layouts (< 1024px) for Inventory & Daily Ops 
 - Setup hints use the owner's own shop details; change to neutral examples before other shops use the app.
 
 ## Log (newest first)
+- Hardened Cloud Sync outbox reliability in [cloudSync.ts](file:///d:/HOSPIVO/src/logic/cloudSync.ts): exported `buildSyncEventId`, `SYNC_BATCH_SIZE = 50`, `MAX_SYNC_RETRIES = 10`, and `retryFailedSyncItems()`, added sequential 50-item chunking and dead-letter `'failed'` transition, and added `failedCount` to `HomeSyncState`.
+- Added automatic `'online'` reconnect listener and 60-second background sync heartbeat with unmount cleanup in [App.tsx](file:///d:/HOSPIVO/src/App.tsx).
+- Surfaced failed outbox count and a one-tap retry button (`retryFailedSyncItems()` + `runSyncCycle()`) in [OwnerCloudSync.tsx](file:///d:/HOSPIVO/src/screens/OwnerCloudSync.tsx).
+- Added unit tests for unique event IDs, 50-item chunking, dead-letter transitions, and recovery in [syncEngine.test.ts](file:///d:/HOSPIVO/src/logic/syncEngine.test.ts); all 226 tests (29 suites) and `npm run build` pass with 0 errors.
 - Added dedicated mobile & portrait-tablet layouts (< 1024px) in [StockJodo.tsx](file:///d:/HOSPIVO/src/screens/StockJodo.tsx) (single-column step cards & sticky action bar), [StockList.tsx](file:///d:/HOSPIVO/src/screens/stockDekho/StockList.tsx) (compact inventory list with scrollable filter pills & 52px search bar), [Expiry.tsx](file:///d:/HOSPIVO/src/screens/Expiry.tsx) (2x2 color-coded alert buckets & prominent 56px return button), [Udhaar.tsx](file:///d:/HOSPIVO/src/screens/Udhaar.tsx) (thumb-friendly credit cards with Paisa Mila & Yaad Dilao action triggers), and [DinBand.tsx](file:///d:/HOSPIVO/src/screens/DinBand.tsx) (vertical 4-step cash closing & denomination tally).
 - Preserved existing desktop layouts (>= 1024px) 100% unchanged with zero modifications to business logic, DB, or i18n catalogs.
 - Verified all 222 tests pass across 29 test suites and production build (`npm run build`) succeeds cleanly with 0 errors.
@@ -288,3 +307,19 @@ Dedicated Mobile & Portrait-Tablet layouts (< 1024px) for Inventory & Daily Ops 
 
 - Mobile/tablet (<1024px) layouts for 15 Owner screens: tile/KPI grids, sticky bottom bars, medicine list and import cards, scrollable shelf/sticker stacks, scrollable modals. Desktop classes unchanged (only lg:-prefixed or max-lg:-prefixed additions).
 - Reports tables scroll sideways inside their card on phones. Build and 222 tests pass.
+
+- Supplier returns logic: src/logic/supplierReturns.ts (create return, update status, summary, debit note in whole paise).
+- Stock goes down by an append-only 'supplier_return' movement; audit log + sync queue added. No DB changes.
+- Added 5 tests to src/logic/suppliers.test.ts. 231 tests and build pass.
+
+- Backup checksum & integrity validation: added `meta.checksum` to backup manifests, `createBackupJson()`, `computeSha256Sync()`, and `verifyBackupPayload(jsonString)` in `src/logic/backup.ts`.
+- Preserved all existing folder picker, File System Access API, and download fallback functions and signatures.
+- Added unit tests for valid, tampered, and corrupted JSON backups in `src/logic/backupAndSettings.test.ts` (233 tests and production build pass).
+
+- Udhaar statements: added getCustomerLedgerStatement() and formatUdhaarReminderMessage() in src/logic/udhaar.ts (whole paise, no DB changes).
+- Statement = Udhaar bills, payments and udhaar_adjust returns, sorted by date, with opening/closing balance for a date range.
+- Reminder text is Hindi + English; empty when nothing is due. Added 5 tests in src/logic/udhaar.test.ts (238 tests pass).
+
+- Cloud sign-in: sendEmailOtp(email, { createUser }) now defaults to shouldCreateUser:false, so no OTP is sent for an email with no account.
+- Missing account returns { success:false, errorCode:'account_not_found' }; the screen shows a red message (new text in en/hi/hinglish) and stays on the email step.
+- New-shop setup (and Owner Cloud Sync) still creates the account. No Supabase table check was added (owner chose the simple way). 239 tests and build pass.

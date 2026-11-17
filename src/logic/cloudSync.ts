@@ -50,6 +50,7 @@ export interface HomeSyncState {
   cloudEnabled: boolean;
   status: 'local' | 'synced' | 'syncing' | 'offline' | 'failed';
   pendingCount: number;
+  failedCount: number;
   lastSyncedAt: number | null;
   lastError: string | null;
   chipLabel: string;
@@ -195,7 +196,46 @@ export async function saveCloudConfig(updates: Partial<CloudConfig>): Promise<Cl
 // SYNC OUTBOX ENGINE
 // ---------------------------------------------------------------------------
 
+export const SYNC_BATCH_SIZE = 50;
+export const MAX_SYNC_RETRIES = 10;
+
 let isSyncRunning = false;
+
+/**
+ * Builds a globally unique, deterministic, idempotent event ID for hospivo_sync_events
+ * so multiple devices with local auto-increment IDs never collide or overwrite each other.
+ */
+export function buildSyncEventId(
+  shopSyncId: string,
+  item: Pick<SyncOutboxItem, 'id' | 'entityType' | 'entityId'>
+): string {
+  return `${shopSyncId}:${item.entityType}:${item.entityId}:${item.id ?? Date.now()}`;
+}
+
+/**
+ * Resets all dead-lettered ('failed') items in db.syncOutbox back to 'pending'
+ * with retryCount = 0 and cleared lastError, returning the number of items reset.
+ */
+export async function retryFailedSyncItems(): Promise<number> {
+  const failedItems = await db.syncOutbox.where('status').equals('failed').toArray();
+  if (failedItems.length === 0) return 0;
+
+  let resetCount = 0;
+  await db.transaction('rw', db.syncOutbox, async () => {
+    for (const item of failedItems) {
+      if (item.id !== undefined) {
+        await db.syncOutbox.update(item.id, {
+          status: 'pending',
+          retryCount: 0,
+          lastError: undefined,
+        });
+        resetCount++;
+      }
+    }
+  });
+
+  return resetCount;
+}
 
 /**
  * Appends a record to the syncOutbox table whenever cloudEnabled is true.
@@ -715,8 +755,85 @@ export async function syncApprovalRequests(
   await pullRemoteApprovals(config);
 }
 
+function chunkOutboxItems<T>(items: T[], batchSize: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    chunks.push(items.slice(i, i + batchSize));
+  }
+  return chunks;
+}
+
+function buildSyncEventRows(
+  chunk: SyncOutboxItem[],
+  cloudShopUuid: string | null,
+  shopSyncId: string
+) {
+  return chunk.map((item) => ({
+    id: buildSyncEventId(shopSyncId, item),
+    shop_id: cloudShopUuid,
+    shop_sync_id: shopSyncId,
+    entity_type: item.entityType,
+    entity_id: String(item.entityId),
+    payload_json: item.payloadJson,
+    client_created_at: toClientCreatedAtEpochMs(item.createdAt),
+  }));
+}
+
+async function markChunkSynced(chunk: SyncOutboxItem[]): Promise<void> {
+  const syncedAt = new Date().toISOString();
+  await db.transaction('rw', db.syncOutbox, async () => {
+    for (const item of chunk) {
+      if (item.id !== undefined) {
+        await db.syncOutbox.update(item.id, {
+          status: 'synced',
+          syncedAt,
+        });
+      }
+    }
+  });
+}
+
+async function markChunkFailed(chunk: SyncOutboxItem[], errMsg: string): Promise<void> {
+  await db.transaction('rw', db.syncOutbox, async () => {
+    for (const item of chunk) {
+      if (item.id !== undefined) {
+        const nextRetryCount = (item.retryCount || 0) + 1;
+        await db.syncOutbox.update(item.id, {
+          retryCount: nextRetryCount,
+          status: nextRetryCount >= MAX_SYNC_RETRIES ? 'failed' : 'pending',
+          lastError: errMsg,
+        });
+      }
+    }
+  });
+}
+
+async function handlePushFailure(
+  chunk: SyncOutboxItem[],
+  processedCount: number,
+  errMsg: string
+): Promise<SyncCycleResult> {
+  await markChunkFailed(chunk, errMsg);
+  await saveCloudConfig({
+    lastStatus: 'failed',
+    lastError: errMsg,
+  });
+  const [remainingPendingCount, totalFailedCount] = await Promise.all([
+    db.syncOutbox.where('status').equals('pending').count(),
+    db.syncOutbox.where('status').equals('failed').count(),
+  ]);
+  return {
+    success: false,
+    offline: false,
+    processedCount,
+    pendingCount: remainingPendingCount,
+    failedCount: totalFailedCount,
+    lastError: errMsg,
+  };
+}
+
 /**
- * Runs a sync cycle, processing pending syncOutbox items in FIFO order,
+ * Runs a sync cycle, processing pending syncOutbox items in FIFO order in chunks of SYNC_BATCH_SIZE,
  * pulling remote delta events from hospivo_sync_events, and syncing approval requests.
  * Safe against network failures and offline conditions.
  */
@@ -749,6 +866,7 @@ export async function runSyncCycle(options?: {
 
     const pendingItems = await db.syncOutbox.where('status').equals('pending').sortBy('id');
     const pendingCount = pendingItems.length;
+    const existingFailedCount = await db.syncOutbox.where('status').equals('failed').count();
 
     // Check offline status
     const isOffline =
@@ -764,37 +882,46 @@ export async function runSyncCycle(options?: {
         offline: true,
         processedCount: 0,
         pendingCount,
-        failedCount: 0,
+        failedCount: existingFailedCount,
         lastError: 'Device is offline',
       };
     }
 
+    const chunks = chunkOutboxItems(pendingItems, SYNC_BATCH_SIZE);
+    let processedCount = 0;
+
     // 1. Loopback test transport
     if (options?.loopbackTransport) {
-      const ok = await options.loopbackTransport(pendingItems);
-      if (ok) {
-        for (const item of pendingItems) {
-          if (item.id) {
-            await db.syncOutbox.update(item.id, {
-              status: 'synced',
-              syncedAt: new Date().toISOString(),
-            });
+      for (const chunk of chunks) {
+        try {
+          const ok = await options.loopbackTransport(chunk);
+          if (!ok) {
+            throw new Error('Loopback transport failed');
           }
+          await markChunkSynced(chunk);
+          processedCount += chunk.length;
+        } catch (err: any) {
+          return handlePushFailure(chunk, processedCount, err?.message || 'Loopback transport failed');
         }
-        await saveCloudConfig({
-          lastCloudSyncAt: Date.now(),
-          lastStatus: 'synced',
-          lastError: null,
-        });
-        return {
-          success: true,
-          offline: false,
-          processedCount: pendingCount,
-          pendingCount: 0,
-          failedCount: 0,
-          lastError: null,
-        };
       }
+
+      const [remainingPendingCount, totalFailedCount] = await Promise.all([
+        db.syncOutbox.where('status').equals('pending').count(),
+        db.syncOutbox.where('status').equals('failed').count(),
+      ]);
+      await saveCloudConfig({
+        lastCloudSyncAt: Date.now(),
+        lastStatus: totalFailedCount > 0 ? 'failed' : 'synced',
+        lastError: totalFailedCount > 0 ? config.lastError || 'Sync failed for one or more items' : null,
+      });
+      return {
+        success: true,
+        offline: false,
+        processedCount,
+        pendingCount: remainingPendingCount,
+        failedCount: totalFailedCount,
+        lastError: null,
+      };
     }
 
     // Resolve cloud shop UUID
@@ -811,132 +938,65 @@ export async function runSyncCycle(options?: {
       }
     }
 
-    // 2. Remote push phase
+    // 2. Remote push phase (chunked sequentially by SYNC_BATCH_SIZE)
     if (pendingCount > 0) {
       if (isBackendConfigured() && cloudShopUuid) {
-        try {
-          const events = pendingItems.map((item) => ({
-            id: String(item.id || Date.now()),
-            shop_id: cloudShopUuid,
-            shop_sync_id: config.shopSyncId,
-            entity_type: item.entityType,
-            entity_id: String(item.entityId),
-            payload_json: item.payloadJson,
-            client_created_at: toClientCreatedAtEpochMs(item.createdAt),
-          }));
-
-          let pushError: any = null;
+        for (const chunk of chunks) {
           try {
-            const { error } = await supabase
-              .from('hospivo_sync_events')
-              .upsert(events, { onConflict: 'id', ignoreDuplicates: true });
-            pushError = error;
-          } catch (e) {
-            pushError = e;
-          }
+            const events = buildSyncEventRows(chunk, cloudShopUuid, config.shopSyncId);
 
-          if (pushError) {
-            const { error: insertErr } = await supabase
-              .from('hospivo_sync_events')
-              .insert(events);
-            if (insertErr) throw insertErr;
-          }
+            let pushError: any = null;
+            try {
+              const { error } = await supabase
+                .from('hospivo_sync_events')
+                .upsert(events, { onConflict: 'id', ignoreDuplicates: true });
+              pushError = error;
+            } catch (e) {
+              pushError = e;
+            }
 
-          // Successfully pushed batch
-          for (const item of pendingItems) {
-            if (item.id) {
-              await db.syncOutbox.update(item.id, {
-                status: 'synced',
-                syncedAt: new Date().toISOString(),
-              });
+            if (pushError) {
+              const { error: insertErr } = await supabase
+                .from('hospivo_sync_events')
+                .insert(events);
+              if (insertErr) throw insertErr;
             }
+
+            await markChunkSynced(chunk);
+            processedCount += chunk.length;
+          } catch (pushErr: any) {
+            return handlePushFailure(chunk, processedCount, pushErr?.message || 'Sync push network error');
           }
-        } catch (pushErr: any) {
-          const errMsg = pushErr?.message || 'Sync push network error';
-          for (const item of pendingItems) {
-            if (item.id) {
-              await db.syncOutbox.update(item.id, {
-                retryCount: (item.retryCount || 0) + 1,
-                lastError: errMsg,
-              });
-            }
-          }
-          await saveCloudConfig({
-            lastStatus: 'failed',
-            lastError: errMsg,
-          });
-          return {
-            success: false,
-            offline: false,
-            processedCount: 0,
-            pendingCount,
-            failedCount: pendingCount,
-            lastError: errMsg,
-          };
         }
       } else if (config.cloudUrl && config.cloudAnonKey) {
         // Fallback REST fetch transport
-        try {
-          const events = pendingItems.map((item) => ({
-            id: String(item.id || Date.now()),
-            shop_id: cloudShopUuid,
-            shop_sync_id: config.shopSyncId,
-            entity_type: item.entityType,
-            entity_id: String(item.entityId),
-            payload_json: item.payloadJson,
-            client_created_at: toClientCreatedAtEpochMs(item.createdAt),
-          }));
+        const cleanUrl = config.cloudUrl.replace(/\/+$/, '');
+        const endpoint = `${cleanUrl}/rest/v1/hospivo_sync_events`;
 
-          const cleanUrl = config.cloudUrl.replace(/\/+$/, '');
-          const endpoint = `${cleanUrl}/rest/v1/hospivo_sync_events`;
+        for (const chunk of chunks) {
+          try {
+            const events = buildSyncEventRows(chunk, cloudShopUuid, config.shopSyncId);
 
-          const resp = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              apikey: config.cloudAnonKey,
-              Authorization: `Bearer ${config.cloudAnonKey}`,
-              'Content-Type': 'application/json',
-              Prefer: 'return=minimal',
-            },
-            body: JSON.stringify(events),
-          });
+            const resp = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                apikey: config.cloudAnonKey,
+                Authorization: `Bearer ${config.cloudAnonKey}`,
+                'Content-Type': 'application/json',
+                Prefer: 'return=minimal',
+              },
+              body: JSON.stringify(events),
+            });
 
-          if (!resp.ok) {
-            throw new Error(`Sync server responded with ${resp.status}`);
-          }
-
-          for (const item of pendingItems) {
-            if (item.id) {
-              await db.syncOutbox.update(item.id, {
-                status: 'synced',
-                syncedAt: new Date().toISOString(),
-              });
+            if (!resp.ok) {
+              throw new Error(`Sync server responded with ${resp.status}`);
             }
-          }
-        } catch (err: any) {
-          const errMsg = err?.message || 'Sync network error';
-          for (const item of pendingItems) {
-            if (item.id) {
-              await db.syncOutbox.update(item.id, {
-                retryCount: (item.retryCount || 0) + 1,
-                lastError: errMsg,
-              });
-            }
-          }
 
-          await saveCloudConfig({
-            lastStatus: 'failed',
-            lastError: errMsg,
-          });
-
-          return {
-            success: false,
-            offline: false,
-            processedCount: 0,
-            pendingCount,
-            failedCount: pendingCount,
-            lastError: errMsg,
-          };
+            await markChunkSynced(chunk);
+            processedCount += chunk.length;
+          } catch (err: any) {
+            return handlePushFailure(chunk, processedCount, err?.message || 'Sync network error');
+          }
         }
       }
     }
@@ -947,18 +1007,23 @@ export async function runSyncCycle(options?: {
     }
     await syncApprovalRequests(config, cloudShopUuid).catch(() => {});
 
+    const [remainingPendingCount, totalFailedCount] = await Promise.all([
+      db.syncOutbox.where('status').equals('pending').count(),
+      db.syncOutbox.where('status').equals('failed').count(),
+    ]);
+
     await saveCloudConfig({
       lastCloudSyncAt: Date.now(),
-      lastStatus: 'synced',
-      lastError: null,
+      lastStatus: totalFailedCount > 0 ? 'failed' : 'synced',
+      lastError: totalFailedCount > 0 ? config.lastError || 'Sync failed for one or more items' : null,
     });
 
     return {
       success: true,
       offline: false,
-      processedCount: pendingCount,
-      pendingCount: 0,
-      failedCount: 0,
+      processedCount,
+      pendingCount: remainingPendingCount,
+      failedCount: totalFailedCount,
       lastError: null,
     };
   } finally {
@@ -1139,6 +1204,7 @@ export async function getHomeSyncState(): Promise<HomeSyncState> {
       cloudEnabled: false,
       status: 'local',
       pendingCount: 0,
+      failedCount: 0,
       lastSyncedAt: null,
       lastError: null,
       chipLabel: 'Local mode',
@@ -1148,12 +1214,17 @@ export async function getHomeSyncState(): Promise<HomeSyncState> {
     };
   }
 
-  const pendingCount = await db.syncOutbox.where('status').equals('pending').count();
+  const [pendingCount, failedCount] = await Promise.all([
+    db.syncOutbox.where('status').equals('pending').count(),
+    db.syncOutbox.where('status').equals('failed').count(),
+  ]);
+
   if (config.lastStatus === 'failed') {
     return {
       cloudEnabled: true,
       status: 'failed',
       pendingCount,
+      failedCount,
       lastSyncedAt: config.lastCloudSyncAt,
       lastError: config.lastError,
       chipLabel: 'Sync nahi hua',
@@ -1172,6 +1243,7 @@ export async function getHomeSyncState(): Promise<HomeSyncState> {
       cloudEnabled: true,
       status: 'offline',
       pendingCount,
+      failedCount,
       lastSyncedAt: config.lastCloudSyncAt,
       lastError: 'Device is offline',
       chipLabel: `Offline · ${pendingCount} pending`,
@@ -1181,11 +1253,27 @@ export async function getHomeSyncState(): Promise<HomeSyncState> {
     };
   }
 
+  if (failedCount > 0) {
+    return {
+      cloudEnabled: true,
+      status: 'failed',
+      pendingCount,
+      failedCount,
+      lastSyncedAt: config.lastCloudSyncAt,
+      lastError: config.lastError,
+      chipLabel: 'Sync nahi hua',
+      chipColorClass: 'bg-[#FEF3F2] text-[#D92D20] border-[#FCA5A5]',
+      bannerVisible: true,
+      bannerType: 'failed',
+    };
+  }
+
   const timeStr = config.lastCloudSyncAt ? formatTimeHoursMinutes(config.lastCloudSyncAt) : '--:--';
   return {
     cloudEnabled: true,
     status: 'synced',
     pendingCount,
+    failedCount,
     lastSyncedAt: config.lastCloudSyncAt,
     lastError: null,
     chipLabel: `Cloud-enabled · Synced: ${timeStr}`,
@@ -1193,16 +1281,6 @@ export async function getHomeSyncState(): Promise<HomeSyncState> {
     bannerVisible: false,
     bannerType: null,
   };
-}
-
-// ---------------------------------------------------------------------------
-// BROWSER ONLINE EVENT LISTENER
-// ---------------------------------------------------------------------------
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    runSyncCycle().catch(() => {});
-  });
 }
 
 /**

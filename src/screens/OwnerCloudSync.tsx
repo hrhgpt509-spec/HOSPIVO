@@ -6,11 +6,14 @@ import { useShop } from '../logic/useShop';
 import { db, type DBUser } from '../db';
 import {
   getCloudConfig,
+  getHomeSyncState,
   saveCloudConfig,
   runSyncCycle,
+  retryFailedSyncItems,
   backfillLocalDataToCloud,
   formatTimeHoursMinutes,
   type CloudConfig,
+  type HomeSyncState,
 } from '../logic/cloudSync';
 import { triggerFeedback } from '../logic/feedback';
 import { CloudAccountAuth } from './CloudAccountAuth';
@@ -36,6 +39,7 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
 
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<CloudConfig | null>(null);
+  const [syncState, setSyncState] = useState<HomeSyncState | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isBackfilling, setIsBackfilling] = useState(false);
@@ -59,20 +63,35 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
   const btnLinkDevice = tButton('cloud_sync.btn_link_device');
   const btnSignOut = tButton('cloud_sync.btn_sign_out');
   const btnConnect = tButton('cloud_sync.btn_sign_in_connect');
+  const btnRetry = tButton('cloud_sync.btn_retry');
+
+  const refreshSyncStatus = useCallback(async () => {
+    const [updatedConfig, updatedState, remaining] = await Promise.all([
+      getCloudConfig(),
+      getHomeSyncState(),
+      db.syncOutbox.where('status').equals('pending').count(),
+    ]);
+    setConfig(updatedConfig);
+    setSyncState(updatedState);
+    setPendingCount(remaining);
+    return { updatedConfig, updatedState, remaining };
+  }, []);
 
   const loadData = useCallback(async () => {
     try {
-      const cfg = await getCloudConfig();
+      const [cfg, state, session, count] = await Promise.all([
+        getCloudConfig(),
+        getHomeSyncState(),
+        getCurrentCloudSession(),
+        db.syncOutbox.where('status').equals('pending').count(),
+      ]);
       setConfig(cfg);
+      setSyncState(state);
       setCloudEnabled(cfg.cloudEnabled);
       setDeviceName(cfg.deviceName);
       setShopSyncId(cfg.shopSyncId);
-
-      const session = await getCurrentCloudSession();
       setOwnerEmail(session.ownerEmail || '');
       setCloudShopUuid(session.cloudShopUuid || '');
-
-      const count = await db.syncOutbox.where('status').equals('pending').count();
       setPendingCount(count);
     } catch (err) {
       console.error('Failed to load cloud config:', err);
@@ -90,6 +109,8 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     try {
       const updated = await saveCloudConfig({ cloudEnabled: enabled });
       setConfig(updated);
+      const updatedState = await getHomeSyncState();
+      setSyncState(updatedState);
       triggerFeedback(
         'success',
         enabled ? t('cloud_sync.cloud_mode_title') : t('cloud_sync.local_mode_title')
@@ -129,10 +150,7 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     setIsSyncing(true);
     try {
       const res = await runSyncCycle({ force: true });
-      const updatedConfig = await getCloudConfig();
-      setConfig(updatedConfig);
-      const remaining = await db.syncOutbox.where('status').equals('pending').count();
-      setPendingCount(remaining);
+      const { remaining } = await refreshSyncStatus();
 
       if (res.success) {
         triggerFeedback('success', t('cloud_sync.toast_synced'));
@@ -151,15 +169,38 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     }
   };
 
+  const handleRetryFailed = async () => {
+    if (isSyncing || isBackfilling) return;
+    setIsSyncing(true);
+    try {
+      await retryFailedSyncItems();
+      const res = await runSyncCycle();
+      const { remaining } = await refreshSyncStatus();
+
+      if (res.success) {
+        triggerFeedback('success', t('cloud_sync.toast_synced'));
+      } else {
+        triggerFeedback(
+          'error',
+          res.offline
+            ? t('cloud_sync.status_offline', { count: remaining })
+            : t('cloud_sync.toast_failed', { error: res.lastError || 'Network Error' })
+        );
+      }
+    } catch (err: any) {
+      await refreshSyncStatus().catch(() => {});
+      triggerFeedback('error', t('cloud_sync.toast_failed', { error: err?.message || 'Error' }));
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handlePushLocalData = async () => {
     if (isBackfilling || isSyncing) return;
     setIsBackfilling(true);
     try {
       const res = await backfillLocalDataToCloud();
-      const updatedConfig = await getCloudConfig();
-      setConfig(updatedConfig);
-      const remaining = await db.syncOutbox.where('status').equals('pending').count();
-      setPendingCount(remaining);
+      await refreshSyncStatus();
 
       if (res.success) {
         triggerFeedback(
@@ -610,6 +651,14 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
               <span className="text-base font-bold text-on-surface">
                 {t('cloud_sync.pending_outbox', { count: pendingCount })}
               </span>
+              {syncState && syncState.failedCount > 0 && (
+                <span className="text-sm font-bold text-error flex items-center gap-1.5 mt-0.5">
+                  <Icon name="error" className="text-[16px]" />
+                  <span>
+                    {t('cloud_sync.status_failed')} ({syncState.failedCount})
+                  </span>
+                </span>
+              )}
               <span className="text-xs text-outline">
                 {config?.lastStatus === 'failed' && config.lastError
                   ? t('cloud_sync.toast_failed', { error: config.lastError })
@@ -619,6 +668,25 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 self-stretch sm:self-auto">
+            {syncState && syncState.failedCount > 0 && (
+              <button
+                type="button"
+                onClick={handleRetryFailed}
+                disabled={isSyncing || isBackfilling}
+                className="flex-1 sm:flex-none h-14 min-h-[56px] px-5 rounded-2xl bg-[#D92D20] hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed text-white border border-[#B91C1C] font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
+              >
+                <Icon name="refresh" className={`text-[20px] ${isSyncing ? 'animate-spin' : ''}`} />
+                <div className="flex flex-col text-left">
+                  <span className="text-sm sm:text-base font-bold leading-tight">{btnRetry.main}</span>
+                  {btnRetry.sub && (
+                    <span className="text-xs font-normal text-white/80 leading-none">
+                      {btnRetry.sub}
+                    </span>
+                  )}
+                </div>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handlePushLocalData}

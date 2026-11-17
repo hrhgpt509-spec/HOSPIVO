@@ -199,8 +199,9 @@ describe('cloudAuth unit tests', () => {
       error: null,
     });
 
-    const res = await sendEmailOtp('Owner.Store@Pharma.COM ');
+    const res = await sendEmailOtp('Owner.Store@Pharma.COM ', { createUser: true });
     expect(res.error).toBeNull();
+    expect(res.success).toBe(true);
 
     expect(signInWithOtpSpy).toHaveBeenCalledWith({
       email: 'owner.store@pharma.com',
@@ -213,6 +214,26 @@ describe('cloudAuth unit tests', () => {
     expect(savedEmail?.value).toBe('owner.store@pharma.com');
     const cloudEnabled = await db.settings.get('cloud_enabled');
     expect(cloudEnabled?.value).toBe(true);
+  });
+
+  it('sendEmailOtp (sign-in) never creates users and returns a clear error when no account exists', async () => {
+    const signInWithOtpSpy = vi.spyOn(supabase.auth, 'signInWithOtp').mockResolvedValueOnce({
+      data: {} as any,
+      error: { message: 'Signups not allowed for otp', code: 'otp_disabled' } as any,
+    });
+
+    const res = await sendEmailOtp('Gone@Test.com');
+    expect(signInWithOtpSpy).toHaveBeenCalledWith({
+      email: 'gone@test.com',
+      options: { shouldCreateUser: false },
+    });
+    expect(res.success).toBe(false);
+    expect(res.errorCode).toBe('account_not_found');
+    expect(res.error).toBe('No account found for this email. Please set up your account.');
+
+    // Nothing is saved when no OTP was sent
+    const cloudEnabled = await db.settings.get('cloud_enabled');
+    expect(cloudEnabled).toBeUndefined();
   });
 
   it('verifyEmailOtp validates 6-digit length and returns error if invalid', async () => {

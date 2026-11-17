@@ -805,3 +805,181 @@ export async function toggleRegularReminderActive(id: number, active: boolean): 
   await db.regularReminders.update(id, { active });
 }
 
+
+// -------------------------------------------------------------
+// Customer ledger statement & reminder message
+// -------------------------------------------------------------
+
+export interface LedgerStatementTransaction {
+  date: string; // YYYY-MM-DD
+  type: 'bill' | 'payment';
+  reference: string; // bill no, return no, or payment reference
+  amountPaise: number; // always a positive whole-paise amount; `type` tells the direction
+  note?: string;
+}
+
+export interface CustomerLedgerStatement {
+  customer: Customer;
+  openingBalancePaise: number;
+  totalCreditPaise: number; // Udhaar given (bills) inside the period
+  totalPaidPaise: number; // payments + udhaar_adjust sales returns inside the period
+  closingBalancePaise: number; // opening + credit - paid (can be negative if customer overpaid)
+  transactions: LedgerStatementTransaction[];
+}
+
+interface StatementRow extends LedgerStatementTransaction {
+  sortTime: string;
+  sortId: number;
+}
+
+function dateOnly(value: string | undefined): string {
+  return (value || '').split('T')[0];
+}
+
+/**
+ * Builds a dated statement for one customer from append-only records:
+ *   bills with Udhaar (type 'bill'), Paisa Mila payments (type 'payment') and
+ *   'udhaar_adjust' sales returns (type 'payment', reduces what the customer owes).
+ * Dates are YYYY-MM-DD and inclusive. Everything before startDate rolls into openingBalancePaise.
+ * All amounts are whole paise. Transactions are sorted by date (oldest first); on the same
+ * day, bills come before payments.
+ */
+export async function getCustomerLedgerStatement(
+  customerId: number,
+  startDate?: string,
+  endDate?: string
+): Promise<CustomerLedgerStatement> {
+  const customer = await db.customers.get(customerId);
+  if (!customer) {
+    throw new Error('Customer not found');
+  }
+
+  const key = makeCustomerKey(customer.phone, customer.name);
+  const [allBills, allReturns, allPayments] = await Promise.all([
+    db.bills.toArray(),
+    db.billReturns.toArray(),
+    db.udhaarPayments.toArray(),
+  ]);
+
+  const rows: StatementRow[] = [];
+  const billIds = new Set<number>();
+
+  for (const bill of allBills) {
+    if (!bill.customerName.trim() && !bill.customerPhone.trim()) continue;
+    if (makeCustomerKey(bill.customerPhone, bill.customerName) !== key) continue;
+    if (bill.id !== undefined) billIds.add(bill.id);
+    const udhaarPaise = getBillUdhaarPaise(bill);
+    if (udhaarPaise <= 0) continue;
+    rows.push({
+      date: dateOnly(bill.date || bill.createdAt),
+      type: 'bill',
+      reference: bill.billNo,
+      amountPaise: Math.round(udhaarPaise),
+      sortTime: bill.createdAt || '',
+      sortId: bill.id || 0,
+    });
+  }
+
+  for (const ret of allReturns) {
+    if (ret.refundMode !== 'udhaar_adjust' || !billIds.has(ret.originalBillId)) continue;
+    const amount = Math.round(Math.max(0, ret.totalRefundPaise || 0));
+    if (amount <= 0) continue;
+    rows.push({
+      date: dateOnly(ret.createdAt),
+      type: 'payment',
+      reference: ret.returnNo,
+      amountPaise: amount,
+      note: 'sales_return_adjust',
+      sortTime: ret.createdAt || '',
+      sortId: ret.id || 0,
+    });
+  }
+
+  for (const pay of allPayments) {
+    const matches =
+      pay.customerId !== undefined
+        ? pay.customerId === customerId
+        : (pay.customerName.trim() !== '' || pay.customerPhone.trim() !== '') &&
+          makeCustomerKey(pay.customerPhone, pay.customerName) === key;
+    if (!matches) continue;
+    const amount = Math.round(Math.max(0, pay.amountPaise || 0));
+    if (amount <= 0) continue;
+    rows.push({
+      date: dateOnly(pay.createdAt),
+      type: 'payment',
+      reference: pay.id !== undefined ? `PAY-${pay.id}` : 'PAY',
+      amountPaise: amount,
+      note: pay.note || undefined,
+      sortTime: pay.createdAt || '',
+      sortId: pay.id || 0,
+    });
+  }
+
+  rows.sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    if (a.type !== b.type) return a.type === 'bill' ? -1 : 1;
+    if (a.sortTime !== b.sortTime) return a.sortTime.localeCompare(b.sortTime);
+    return a.sortId - b.sortId;
+  });
+
+  let openingBalancePaise = 0;
+  let totalCreditPaise = 0;
+  let totalPaidPaise = 0;
+  const transactions: LedgerStatementTransaction[] = [];
+
+  for (const r of rows) {
+    const signed = r.type === 'bill' ? r.amountPaise : -r.amountPaise;
+    if (startDate && r.date < startDate) {
+      openingBalancePaise += signed;
+      continue;
+    }
+    if (endDate && r.date > endDate) continue;
+
+    if (r.type === 'bill') totalCreditPaise += r.amountPaise;
+    else totalPaidPaise += r.amountPaise;
+
+    const tx: LedgerStatementTransaction = {
+      date: r.date,
+      type: r.type,
+      reference: r.reference,
+      amountPaise: r.amountPaise,
+    };
+    if (r.note) tx.note = r.note;
+    transactions.push(tx);
+  }
+
+  return {
+    customer,
+    openingBalancePaise,
+    totalCreditPaise,
+    totalPaidPaise,
+    closingBalancePaise: openingBalancePaise + totalCreditPaise - totalPaidPaise,
+    transactions,
+  };
+}
+
+/**
+ * Bilingual (Hindi + English) Udhaar reminder text for WhatsApp / SMS.
+ * Returns an empty string when nothing is due (balance is zero or less).
+ */
+export function formatUdhaarReminderMessage(
+  shopName: string,
+  customerName: string,
+  balancePaise: number
+): string {
+  const due = Math.round(balancePaise);
+  if (!Number.isFinite(due) || due <= 0) return '';
+
+  const shop = (shopName || '').trim();
+  const customer = (customerName || '').trim();
+  const amount = formatRupees(due);
+
+  const hindi =
+    `नमस्ते ${customer} जी,\n` +
+    `${shop} में आपका ${amount} उधार बाकी है। कृपया जल्द भुगतान करें। धन्यवाद।`;
+  const english =
+    `Hello ${customer},\n` +
+    `This is a friendly reminder from ${shop}: ${amount} is pending. Please pay at your earliest convenience. Thank you.`;
+
+  return `${hindi}\n\n${english}`;
+}

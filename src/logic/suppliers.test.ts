@@ -10,6 +10,13 @@ import {
   togglePurchaseVerified,
   saveSupplier,
 } from './suppliers';
+import {
+  createSupplierReturn,
+  updateSupplierReturnStatus,
+  getSupplierReturnsSummary,
+  debitNotePaise,
+} from './supplierReturns';
+import { batchStock } from './stock';
 
 describe('suppliers.ts logic & tests', () => {
   beforeEach(async () => {
@@ -258,5 +265,123 @@ describe('suppliers.ts logic & tests', () => {
     logs = await db.auditLog.toArray();
     expect(logs).toHaveLength(2);
     expect(logs[1].action).toBe('supplier_updated');
+  });
+});
+
+describe('supplierReturns.ts logic & tests', () => {
+  let medicineId: number;
+  let batchId: number;
+
+  beforeEach(async () => {
+    db.close();
+    await db.delete();
+    await db.open();
+
+    medicineId = (await db.medicines.add({
+      name: 'Test Med',
+      strength: '500mg',
+      form: 'tablet',
+      salt: 'Salt',
+      company: 'Co',
+      gstPercent: 12,
+      hsn: '3004',
+      mrpPaise: 5000,
+      unitsPerPack: 10,
+      shortCode: 'T1',
+      barcode: '',
+      shelf: '',
+      scheduleType: 'none',
+      minStockUnits: 0,
+      active: true,
+    } as Medicine)) as number;
+
+    batchId = (await db.batches.add({
+      medicineId,
+      batchNo: 'B1',
+      expiry: '2027-08-31',
+      purchaseRatePaise: 3333,
+      mrpPaise: 5000,
+      shelf: '',
+    })) as number;
+
+    await db.stockMovements.add({
+      batchId,
+      medicineId,
+      type: 'purchase',
+      qtyUnits: 100,
+      reference: 'INV1',
+      who: 'owner',
+      at: new Date().toISOString(),
+    });
+  });
+
+  const make = (qtyUnits: number) =>
+    createSupplierReturn({
+      supplierId: 1,
+      supplierName: 'Sharma Agencies',
+      medicineId,
+      medicineName: 'Test Med',
+      batchId,
+      batchNo: 'B1',
+      expiry: '2027-08-31',
+      qtyUnits,
+      purchaseRatePaise: 3333,
+      note: 'damaged',
+      who: 'owner',
+    });
+
+  it('creates a pending return, reduces stock, appends movement and audit', async () => {
+    const id = await make(25);
+    const rec = await db.supplierReturns.get(id);
+    expect(rec?.status).toBe('pending');
+    expect(await batchStock(batchId)).toBe(75);
+
+    const movs = await db.stockMovements.where('batchId').equals(batchId).toArray();
+    expect(movs).toHaveLength(2);
+    const m = movs.find((x) => x.type === 'supplier_return')!;
+    expect(m.qtyUnits).toBe(-25);
+
+    const audits = await db.auditLog.toArray();
+    expect(audits.some((a) => a.action === 'supplier_return_created')).toBe(true);
+  });
+
+  it('rejects over-stock, zero and fractional quantities without changing stock', async () => {
+    await expect(make(101)).rejects.toThrow();
+    await expect(make(0)).rejects.toThrow();
+    await expect(make(1.5)).rejects.toThrow();
+    expect(await batchStock(batchId)).toBe(100);
+    expect(await db.supplierReturns.count()).toBe(0);
+  });
+
+  it('calculates debit note in whole paise', async () => {
+    expect(debitNotePaise(25, 3333, 10)).toBe(8333); // 8332.5 rounds to 8333
+    expect(Number.isInteger(debitNotePaise(7, 3333, 3))).toBe(true);
+    await make(25);
+    const s = await getSupplierReturnsSummary(1);
+    expect(s.totalPendingPaise).toBe(8333);
+    expect(s.totalCreditReceivedPaise).toBe(0);
+    expect(s.count).toBe(1);
+  });
+
+  it('updates status, moves totals, and does not touch stock', async () => {
+    const id = await make(20);
+    await updateSupplierReturnStatus(id, 'sent', 'owner');
+    expect((await db.supplierReturns.get(id))?.status).toBe('sent');
+    expect((await getSupplierReturnsSummary()).totalPendingPaise).toBe(6666);
+
+    await updateSupplierReturnStatus(id, 'credit_received', 'owner');
+    const s = await getSupplierReturnsSummary(1);
+    expect(s.totalPendingPaise).toBe(0);
+    expect(s.totalCreditReceivedPaise).toBe(6666);
+    expect(await batchStock(batchId)).toBe(80);
+    expect(await db.stockMovements.count()).toBe(2);
+
+    await expect(updateSupplierReturnStatus(9999, 'sent', 'owner')).rejects.toThrow();
+  });
+
+  it('filters summary by supplier', async () => {
+    await make(10);
+    const s = await getSupplierReturnsSummary(2);
+    expect(s).toEqual({ totalPendingPaise: 0, totalCreditReceivedPaise: 0, count: 0 });
   });
 });

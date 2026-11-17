@@ -29,6 +29,7 @@ export interface CloudAccountAuthProps {
 export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
   onSuccess,
   onCancel,
+  initialTab,
   shopName,
   shopSyncId,
   theme = 'light',
@@ -121,9 +122,9 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
 
     setIsLoading(true);
     try {
-      const res = await sendEmailOtp(cleanEmail);
+      const res = await sendEmailOtp(cleanEmail, { createUser: initialTab !== 'signin' });
       if (res.error) {
-        setError(res.error);
+        setError(res.errorCode === 'account_not_found' ? t('cloud_auth.err_account_not_found') : res.error);
         setIsLoading(false);
         return;
       }
@@ -191,9 +192,9 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
     const cleanEmail = email.trim().toLowerCase();
     setIsLoading(true);
     try {
-      const res = await sendEmailOtp(cleanEmail);
+      const res = await sendEmailOtp(cleanEmail, { createUser: initialTab !== 'signin' });
       if (res.error) {
-        setError(res.error);
+        setError(res.errorCode === 'account_not_found' ? t('cloud_auth.err_account_not_found') : res.error);
         return;
       }
       triggerFeedback('success', t('cloud_auth.toast_otp_sent'));

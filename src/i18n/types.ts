@@ -1767,6 +1767,7 @@ export interface TranslationSchema {
     waiting_verification: string;
     btn_continue_offline: ButtonLabel;
     err_email_invalid: string;
+    err_account_not_found: string;
     err_password_short: string;
     err_password_mismatch: string;
     err_auth_failed: string;

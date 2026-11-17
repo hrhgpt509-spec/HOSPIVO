@@ -3,7 +3,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { db, resetDatabase, type DBUser } from '../db';
 import {
   createBackup,
+  createBackupJson,
+  computeSha256,
+  computeSha256Sync,
   verifyBackup,
+  verifyBackupPayload,
   recordVerifiedBackup,
   getBackupStatus,
   getBackupHistory,
@@ -459,6 +463,91 @@ describe('Backup, Staff PIN & Settings Logic', () => {
       expect(mockWritable.close).toHaveBeenCalled();
       expect(closed).toBe(true);
       expect(writtenContent).toContain('"app": "Hospivo"');
+
+      // Written JSON must include checksum inside metadata manifest and pass verifyBackupPayload
+      const parsedWritten = JSON.parse(writtenContent);
+      expect(parsedWritten.meta.checksum).toMatch(/^[a-f0-9]{64}$/);
+      const verifyWritten = verifyBackupPayload(writtenContent);
+      expect(verifyWritten.isValid).toBe(true);
+      expect(verifyWritten.metadata?.shopName).toBe('Test Shop');
+      expect(verifyWritten.metadata?.checksum).toBe(parsedWritten.meta.checksum);
+    });
+  });
+
+  describe('Cryptographic Checksum & verifyBackupPayload (JSON String Verification)', () => {
+    it('embeds SHA-256 checksum in metadata manifest via createBackupJson and passes verifyBackupPayload', async () => {
+      await db.shop.add({
+        name: 'Arogya Medical Store',
+        ownerName: 'Vikram',
+        address: 'MG Road',
+        phone: '9988776655',
+        gstNo: '27AAAAA1111A1Z5',
+        drugLicenceNos: 'DL-9988',
+        mode: 'local',
+      });
+
+      const jsonStr = await createBackupJson('Arogya Medical Store');
+      const parsed = JSON.parse(jsonStr);
+
+      expect(parsed.meta).toBeDefined();
+      expect(parsed.meta.checksum).toMatch(/^[a-f0-9]{64}$/);
+      expect(parsed.checksum).toBe(parsed.meta.checksum);
+
+      // Web Crypto digest and synchronous digest must match identically
+      const webCryptoDigest = await computeSha256('hospivo-integrity-check');
+      const syncDigest = computeSha256Sync('hospivo-integrity-check');
+      expect(syncDigest).toBe(webCryptoDigest);
+
+      const verification = verifyBackupPayload(jsonStr);
+      expect(verification.isValid).toBe(true);
+      expect(verification.error).toBeUndefined();
+      expect(verification.metadata).toBeDefined();
+      expect(verification.metadata?.shopName).toBe('Arogya Medical Store');
+      expect(verification.metadata?.checksum).toBe(parsed.meta.checksum);
+    });
+
+    it('fails verifyBackupPayload gracefully with descriptive errors when JSON is corrupted or tampered', async () => {
+      const validJson = await createBackupJson('Integrity Test Shop');
+
+      // 1. Empty or malformed JSON string
+      const emptyRes = verifyBackupPayload('');
+      expect(emptyRes.isValid).toBe(false);
+      expect(emptyRes.error).toMatch(/non-empty/i);
+
+      const corruptedRes = verifyBackupPayload('{ "meta": { "app": "Hospivo"');
+      expect(corruptedRes.isValid).toBe(false);
+      expect(corruptedRes.error).toMatch(/corrupted|parse/i);
+
+      // 2. Tampered table contents inside JSON string
+      const tamperedTableObj = JSON.parse(validJson);
+      tamperedTableObj.tables.medicines = [{ id: 1, name: 'Tampered Medicine', mrpPaise: 100 }];
+      const tamperedTableRes = verifyBackupPayload(JSON.stringify(tamperedTableObj));
+      expect(tamperedTableRes.isValid).toBe(false);
+      expect(tamperedTableRes.error).toMatch(/checksum mismatch|corrupted|tampered/i);
+
+      // 3. Tampered metadata field (shopName changed without updating hash)
+      const tamperedMetaObj = JSON.parse(validJson);
+      tamperedMetaObj.meta.shopName = 'Hacked Shop Name';
+      const tamperedMetaRes = verifyBackupPayload(JSON.stringify(tamperedMetaObj));
+      expect(tamperedMetaRes.isValid).toBe(false);
+      expect(tamperedMetaRes.error).toMatch(/checksum mismatch|corrupted|tampered/i);
+
+      // 4. Tampered manifest checksum directly
+      const tamperedHashObj = JSON.parse(validJson);
+      const fakeHash = 'a'.repeat(64);
+      tamperedHashObj.meta.checksum = fakeHash;
+      tamperedHashObj.checksum = fakeHash;
+      const tamperedHashRes = verifyBackupPayload(JSON.stringify(tamperedHashObj));
+      expect(tamperedHashRes.isValid).toBe(false);
+      expect(tamperedHashRes.error).toMatch(/checksum mismatch/i);
+
+      // 5. Missing checksum in manifest
+      const missingChecksumObj = JSON.parse(validJson);
+      delete missingChecksumObj.meta.checksum;
+      delete missingChecksumObj.checksum;
+      const missingChecksumRes = verifyBackupPayload(JSON.stringify(missingChecksumObj));
+      expect(missingChecksumRes.isValid).toBe(false);
+      expect(missingChecksumRes.error).toMatch(/missing or invalid sha-256 checksum/i);
     });
   });
 });

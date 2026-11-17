@@ -184,33 +184,48 @@ async function hydrateOrFindExistingShop(
   return { shop: null, isNewShop: true };
 }
 
+export const ACCOUNT_NOT_FOUND_MESSAGE =
+  'No account found for this email. Please set up your account.';
+
 /**
  * Sends a 6-digit OTP code to the given email address.
  * Does NOT pass emailRedirectTo so Supabase delivers the 6-digit OTP numeric code.
+ *
+ * Sign-in (default): shouldCreateUser is false, so Supabase refuses to send an OTP for an
+ * email that has no account (e.g. after all cloud data was wiped). That refusal is returned as
+ * { success: false, errorCode: 'account_not_found' } and no OTP is sent.
+ * New-shop setup passes { createUser: true } to allow creating the account.
  */
 export async function sendEmailOtp(
-  email: string
-): Promise<{ error: string | null }> {
+  email: string,
+  options: { createUser?: boolean } = {}
+): Promise<{ success: boolean; error: string | null; errorCode?: 'account_not_found' }> {
   if (!isBackendConfigured()) {
-    return { error: 'Backend is not configured' };
+    return { success: false, error: 'Backend is not configured' };
   }
 
+  const createUser = options.createUser === true;
   const cleanEmail = email.trim().toLowerCase();
   const { error } = await supabase.auth.signInWithOtp({
     email: cleanEmail,
     options: {
-      shouldCreateUser: true,
+      shouldCreateUser: createUser,
     },
   });
 
   if (error) {
-    return { error: error.message };
+    const code = (error as { code?: string }).code;
+    const msg = error.message || '';
+    if (!createUser && (code === 'otp_disabled' || /signups? not allowed|user not found/i.test(msg))) {
+      return { success: false, error: ACCOUNT_NOT_FOUND_MESSAGE, errorCode: 'account_not_found' };
+    }
+    return { success: false, error: msg };
   }
 
   await db.settings.put({ key: 'owner_email', value: cleanEmail });
   await db.settings.put({ key: 'cloud_enabled', value: true });
 
-  return { error: null };
+  return { success: true, error: null };
 }
 
 /**

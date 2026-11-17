@@ -4,6 +4,7 @@ import { Login } from './screens/Login';
 import { Setup } from './screens/Setup';
 import { FeedbackOverlay } from './components/FeedbackOverlay';
 import { db, type DBUser } from './db';
+import { runSyncCycle } from './logic/cloudSync';
 
 // Default 5 minutes of inactivity triggers auto-lock
 export const DEFAULT_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
@@ -38,6 +39,25 @@ export function App() {
     }
 
     initApp();
+  }, []);
+
+  // Automatic reconnect & 60-second background sync heartbeat
+  useEffect(() => {
+    const handleOnline = () => {
+      void runSyncCycle();
+    };
+
+    window.addEventListener('online', handleOnline);
+    const intervalId = setInterval(() => {
+      if (navigator.onLine) {
+        void runSyncCycle();
+      }
+    }, 60_000);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Inactivity / auto-lock timer:

@@ -9,6 +9,13 @@ export interface BackupMetadata {
   shopName: string;
   shopId?: number;
   tablesCount: Record<string, number>;
+  checksum?: string;
+}
+
+export interface BackupVerificationResult {
+  isValid: boolean;
+  error?: string;
+  metadata?: BackupMetadata;
 }
 
 export interface BackupPayload {
@@ -58,27 +65,124 @@ export const BACKUP_TABLE_NAMES = [
   'approvalRequests',
 ] as const;
 
+const SHA256_K = new Uint32Array([
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+]);
+
+function rotr(n: number, x: number): number {
+  return (x >>> n) | (x << (32 - n));
+}
+
 /**
- * Computes SHA-256 digest of given string using Web Crypto API.
+ * Synchronous FIPS 180-4 SHA-256 hex digest helper (produces identical output to Web Crypto SHA-256).
+ */
+export function computeSha256Sync(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  const bitLen = bytes.length * 8;
+  const totalLen = (((bytes.length + 9 + 63) >> 6) << 6);
+  const padded = new Uint8Array(totalLen);
+  padded.set(bytes);
+  padded[bytes.length] = 0x80;
+  const view = new DataView(padded.buffer);
+  view.setUint32(totalLen - 8, Math.floor(bitLen / 0x100000000), false);
+  view.setUint32(totalLen - 4, bitLen >>> 0, false);
+
+  let h0 = 0x6a09e667;
+  let h1 = 0xbb67ae85;
+  let h2 = 0x3c6ef372;
+  let h3 = 0xa54ff53a;
+  let h4 = 0x510e527f;
+  let h5 = 0x9b05688c;
+  let h6 = 0x1f83d9ab;
+  let h7 = 0x5be0cd19;
+
+  const w = new Uint32Array(64);
+
+  for (let offset = 0; offset < totalLen; offset += 64) {
+    for (let i = 0; i < 16; i++) {
+      w[i] = view.getUint32(offset + i * 4, false);
+    }
+    for (let i = 16; i < 64; i++) {
+      const s0 = rotr(7, w[i - 15]) ^ rotr(18, w[i - 15]) ^ (w[i - 15] >>> 3);
+      const s1 = rotr(17, w[i - 2]) ^ rotr(19, w[i - 2]) ^ (w[i - 2] >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+    }
+
+    let a = h0;
+    let b = h1;
+    let c = h2;
+    let d = h3;
+    let e = h4;
+    let f = h5;
+    let g = h6;
+    let h = h7;
+
+    for (let i = 0; i < 64; i++) {
+      const S1 = rotr(6, e) ^ rotr(11, e) ^ rotr(25, e);
+      const ch = (e & f) ^ (~e & g);
+      const temp1 = (h + S1 + ch + SHA256_K[i] + w[i]) >>> 0;
+      const S0 = rotr(2, a) ^ rotr(13, a) ^ rotr(22, a);
+      const maj = (a & b) ^ (a & c) ^ (b & c);
+      const temp2 = (S0 + maj) >>> 0;
+
+      h = g;
+      g = f;
+      f = e;
+      e = (d + temp1) >>> 0;
+      d = c;
+      c = b;
+      b = a;
+      a = (temp1 + temp2) >>> 0;
+    }
+
+    h0 = (h0 + a) >>> 0;
+    h1 = (h1 + b) >>> 0;
+    h2 = (h2 + c) >>> 0;
+    h3 = (h3 + d) >>> 0;
+    h4 = (h4 + e) >>> 0;
+    h5 = (h5 + f) >>> 0;
+    h6 = (h6 + g) >>> 0;
+    h7 = (h7 + h) >>> 0;
+  }
+
+  return [h0, h1, h2, h3, h4, h5, h6, h7]
+    .map((v) => v.toString(16).padStart(8, '0'))
+    .join('');
+}
+
+/**
+ * Computes SHA-256 digest of given string using Web Crypto API (with synchronous SHA-256 fallback).
  */
 export async function computeSha256(text: string): Promise<string> {
-  const enc = new TextEncoder();
-  const data = enc.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  if (typeof crypto !== 'undefined' && crypto.subtle && typeof crypto.subtle.digest === 'function') {
+    const enc = new TextEncoder();
+    const data = enc.encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  return computeSha256Sync(text);
 }
 
 /**
  * Canonical serializer for backup payload content (meta + tables) to ensure
- * deterministic hashing across platforms.
+ * deterministic hashing across platforms. Strips `checksum` from `meta` before serializing.
  */
 export function serializeBackupContent(meta: BackupMetadata, tables: Record<string, unknown[]>): string {
-  return JSON.stringify({ meta, tables });
+  const { checksum: _ignored, ...cleanMeta } = meta;
+  return JSON.stringify({ meta: cleanMeta, tables });
 }
 
 /**
- * Exports all database tables and generates a signed backup payload with SHA-256 checksum.
+ * Exports all database tables and generates a signed backup payload with SHA-256 checksum
+ * stored both at the top-level and inside the metadata manifest (`meta.checksum`).
  */
 export async function createBackup(customShopName?: string): Promise<BackupPayload> {
   let shopName = customShopName || 'Hospivo Pharmacy';
@@ -108,7 +212,7 @@ export async function createBackup(customShopName?: string): Promise<BackupPaylo
     }
   }
 
-  const meta: BackupMetadata = {
+  const baseMeta: BackupMetadata = {
     version: 1,
     app: 'Hospivo',
     appVersion: '1.0.0',
@@ -118,13 +222,97 @@ export async function createBackup(customShopName?: string): Promise<BackupPaylo
     tablesCount,
   };
 
-  const contentStr = serializeBackupContent(meta, tables);
+  const contentStr = serializeBackupContent(baseMeta, tables);
   const checksum = await computeSha256(contentStr);
+  const meta: BackupMetadata = {
+    ...baseMeta,
+    checksum,
+  };
 
   return {
     meta,
     tables,
     checksum,
+  };
+}
+
+/**
+ * Exports all database tables as a formatted JSON string with `checksum` included in the metadata manifest.
+ */
+export async function createBackupJson(customShopName?: string): Promise<string> {
+  const payload = await createBackup(customShopName);
+  return JSON.stringify(payload, null, 2);
+}
+
+/**
+ * Parses a backup JSON string, re-computes the SHA-256 hash of its payload,
+ * and compares it against the stored manifest checksum to catch corruption or tampering before restore.
+ */
+export function verifyBackupPayload(jsonString: string): BackupVerificationResult {
+  if (typeof jsonString !== 'string' || jsonString.trim().length === 0) {
+    return { isValid: false, error: 'Backup payload must be a non-empty JSON string' };
+  }
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonString);
+  } catch {
+    return { isValid: false, error: 'Corrupted backup JSON: unable to parse payload' };
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { isValid: false, error: 'Invalid backup format: root must be a JSON object' };
+  }
+
+  const meta: BackupMetadata | undefined = parsed.meta || parsed.metadata;
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) {
+    return { isValid: false, error: 'Missing backup metadata manifest' };
+  }
+
+  if (meta.app !== 'Hospivo' || typeof meta.version !== 'number') {
+    return { isValid: false, error: 'Invalid backup metadata: unrecognized application signature or version' };
+  }
+
+  if (!parsed.tables || typeof parsed.tables !== 'object' || Array.isArray(parsed.tables)) {
+    return { isValid: false, error: 'Missing backup tables data' };
+  }
+
+  const manifestChecksum = meta.checksum;
+  const rootChecksum = parsed.checksum;
+  const storedChecksum = manifestChecksum ?? rootChecksum;
+
+  if (
+    !storedChecksum ||
+    typeof storedChecksum !== 'string' ||
+    !/^[a-f0-9]{64}$/i.test(storedChecksum)
+  ) {
+    return { isValid: false, error: 'Missing or invalid SHA-256 checksum in backup manifest' };
+  }
+
+  if (
+    manifestChecksum !== undefined &&
+    rootChecksum !== undefined &&
+    manifestChecksum !== rootChecksum
+  ) {
+    return { isValid: false, error: 'Checksum mismatch between metadata manifest and backup payload' };
+  }
+
+  const contentStr = serializeBackupContent(meta, parsed.tables);
+  const computedChecksum = computeSha256Sync(contentStr);
+
+  if (computedChecksum !== storedChecksum.toLowerCase()) {
+    return {
+      isValid: false,
+      error: 'Checksum mismatch: backup payload has been corrupted or tampered with',
+    };
+  }
+
+  return {
+    isValid: true,
+    metadata: {
+      ...meta,
+      checksum: computedChecksum,
+    },
   };
 }
 
@@ -150,18 +338,33 @@ export async function verifyBackup(
   if (!candidate.tables || typeof candidate.tables !== 'object') {
     return { valid: false, error: 'missing_tables' };
   }
-  if (!candidate.checksum || typeof candidate.checksum !== 'string' || candidate.checksum.length !== 64) {
+
+  const effectiveChecksum = candidate.checksum ?? candidate.meta.checksum;
+  if (!effectiveChecksum || typeof effectiveChecksum !== 'string' || effectiveChecksum.length !== 64) {
     return { valid: false, error: 'invalid_checksum_format' };
   }
 
   const contentStr = serializeBackupContent(candidate.meta, candidate.tables);
   const expectedHash = await computeSha256(contentStr);
 
-  if (expectedHash !== candidate.checksum) {
+  if (
+    expectedHash !== effectiveChecksum ||
+    (candidate.checksum !== undefined && expectedHash !== candidate.checksum) ||
+    (candidate.meta.checksum !== undefined && expectedHash !== candidate.meta.checksum)
+  ) {
     return { valid: false, error: 'checksum_mismatch' };
   }
 
-  return { valid: true, payload: candidate as BackupPayload };
+  const normalizedPayload: BackupPayload = {
+    ...(candidate as BackupPayload),
+    meta: {
+      ...candidate.meta,
+      checksum: expectedHash,
+    },
+    checksum: expectedHash,
+  };
+
+  return { valid: true, payload: normalizedPayload };
 }
 
 /**
@@ -267,7 +470,8 @@ export async function getSavedBackupDirectoryHandle(): Promise<any | null> {
 }
 
 /**
- * Writes a verified backup JSON file directly into a FileSystemDirectoryHandle.
+ * Writes a verified backup JSON file directly into a FileSystemDirectoryHandle,
+ * ensuring the SHA-256 checksum is embedded inside the metadata manifest.
  */
 export async function writeBackupToDirectoryHandle(
   dirHandle: any,
@@ -277,11 +481,23 @@ export async function writeBackupToDirectoryHandle(
   if (!dirHandle || typeof dirHandle.getFileHandle !== 'function') {
     throw new Error('Invalid directory handle');
   }
-  const fallbackDate = payload.meta?.exportedAt ? new Date(payload.meta.exportedAt) : new Date();
+  const contentStr = serializeBackupContent(payload.meta, payload.tables);
+  const checksum = payload.checksum || payload.meta?.checksum || (await computeSha256(contentStr));
+  const payloadWithManifestChecksum: BackupPayload = {
+    ...payload,
+    meta: {
+      ...payload.meta,
+      checksum,
+    },
+    checksum,
+  };
+  const fallbackDate = payloadWithManifestChecksum.meta?.exportedAt
+    ? new Date(payloadWithManifestChecksum.meta.exportedAt)
+    : new Date();
   const name = filename || getBackupFilename(fallbackDate);
   const fileHandle = await dirHandle.getFileHandle(name, { create: true });
   const writable = await fileHandle.createWritable();
-  const jsonStr = JSON.stringify(payload, null, 2);
+  const jsonStr = JSON.stringify(payloadWithManifestChecksum, null, 2);
   await writable.write(jsonStr);
   await writable.close();
   return { success: true, filename: name };

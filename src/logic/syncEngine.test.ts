@@ -9,6 +9,11 @@ import {
   toClientCreatedAtEpochMs,
   parseEventCreatedAt,
   backfillLocalDataToCloud,
+  buildSyncEventId,
+  retryFailedSyncItems,
+  getHomeSyncState,
+  SYNC_BATCH_SIZE,
+  MAX_SYNC_RETRIES,
 } from './syncEngine';
 
 function createMockQueryChain(resolvedData: any[] = []) {
@@ -264,6 +269,292 @@ describe('syncEngine - hospivo_sync_events schema alignment', () => {
       expect(pendingAfter).toBe(0);
       const syncedAfter = await db.syncOutbox.where('status').equals('synced').count();
       expect(syncedAfter).toBeGreaterThanOrEqual(4);
+    });
+  });
+
+  describe('buildSyncEventId - globally unique idempotent event IDs', () => {
+    it('formats event ID deterministically and avoids collisions across devices and entities', () => {
+      const idDeviceA = buildSyncEventId('HOSP-AAAA-1111', {
+        id: 1,
+        entityType: 'bill',
+        entityId: '101',
+      });
+      const idDeviceB = buildSyncEventId('HOSP-BBBB-2222', {
+        id: 1,
+        entityType: 'bill',
+        entityId: '101',
+      });
+      const idDifferentEntity = buildSyncEventId('HOSP-AAAA-1111', {
+        id: 1,
+        entityType: 'medicine',
+        entityId: '101',
+      });
+      const idDifferentEntityId = buildSyncEventId('HOSP-AAAA-1111', {
+        id: 1,
+        entityType: 'bill',
+        entityId: '102',
+      });
+      const idDifferentOutboxId = buildSyncEventId('HOSP-AAAA-1111', {
+        id: 2,
+        entityType: 'bill',
+        entityId: '101',
+      });
+
+      expect(idDeviceA).toBe('HOSP-AAAA-1111:bill:101:1');
+      expect(idDeviceB).toBe('HOSP-BBBB-2222:bill:101:1');
+      expect(idDeviceA).not.toBe(idDeviceB);
+      expect(idDeviceA).not.toBe(idDifferentEntity);
+      expect(idDeviceA).not.toBe(idDifferentEntityId);
+      expect(idDeviceA).not.toBe(idDifferentOutboxId);
+
+      // Idempotent when called repeatedly for the same shop and outbox row
+      expect(
+        buildSyncEventId('HOSP-AAAA-1111', { id: 1, entityType: 'bill', entityId: '101' })
+      ).toBe(idDeviceA);
+
+      // Fallback suffix when item.id is missing
+      const fallbackId = buildSyncEventId('HOSP-AAAA-1111', {
+        entityType: 'bill',
+        entityId: '101',
+      });
+      expect(fallbackId).toMatch(/^HOSP-AAAA-1111:bill:101:\d+$/);
+    });
+  });
+
+  describe('chunked outbox batching (SYNC_BATCH_SIZE = 50)', () => {
+    it('slices > 50 queued items into sequential chunks of 50 via Supabase push', async () => {
+      expect(SYNC_BATCH_SIZE).toBe(50);
+
+      const pushedBatches: any[][] = [];
+      const mockFrom = vi.fn().mockImplementation((table: string) => {
+        if (table === 'hospivo_sync_events') {
+          return {
+            upsert: vi.fn().mockImplementation((events: any[]) => {
+              pushedBatches.push(events);
+              return Promise.resolve({ error: null });
+            }),
+            insert: vi.fn().mockImplementation((events: any[]) => {
+              pushedBatches.push(events);
+              return Promise.resolve({ error: null });
+            }),
+            select: vi.fn().mockReturnValue(createMockQueryChain([])),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnValue(createMockQueryChain([])),
+        };
+      });
+      vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
+
+      // Queue 120 items directly into db.syncOutbox
+      const nowIso = new Date().toISOString();
+      const rows = Array.from({ length: 120 }, (_, i) => ({
+        entityType: 'medicine' as const,
+        entityId: String(i + 1),
+        payloadJson: JSON.stringify({ id: i + 1, name: `Medicine ${i + 1}` }),
+        status: 'pending' as const,
+        retryCount: 0,
+        createdAt: nowIso,
+      }));
+      await db.syncOutbox.bulkAdd(rows);
+
+      const result = await runSyncCycle({ force: true });
+      expect(result.success).toBe(true);
+      expect(result.processedCount).toBe(120);
+      expect(result.pendingCount).toBe(0);
+      expect(result.failedCount).toBe(0);
+
+      // Must push sequentially in chunks of [50, 50, 20]
+      expect(pushedBatches.map((b) => b.length)).toEqual([50, 50, 20]);
+
+      // All 120 event IDs must be unique and use buildSyncEventId
+      const allIds = pushedBatches.flat().map((e) => e.id);
+      expect(new Set(allIds).size).toBe(120);
+      expect(allIds[0]).toMatch(/^HOSP-TEST-SYNC:medicine:1:\d+$/);
+
+      const syncedCount = await db.syncOutbox.where('status').equals('synced').count();
+      expect(syncedCount).toBe(120);
+    });
+
+    it('slices > 50 items in fallback REST push and preserves synced progress on partial batch failure', async () => {
+      // Clear cloud_shop_uuid so runSyncCycle uses fallback REST transport
+      await db.settings.delete('cloud_shop_uuid');
+      await saveCloudConfig({
+        cloudEnabled: true,
+        cloudUrl: 'https://rest-fallback.example.supabase.co',
+        cloudAnonKey: 'rest-anon-key',
+        shopSyncId: 'HOSP-REST-9999',
+      });
+
+      const restBatches: any[][] = [];
+      let callCount = 0;
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = vi.fn().mockImplementation(async (_url: any, init?: RequestInit) => {
+        callCount++;
+        const parsed = JSON.parse(String(init?.body || '[]'));
+        restBatches.push(parsed);
+        if (callCount === 2) {
+          return { ok: false, status: 503 } as Response;
+        }
+        return { ok: true, status: 201, json: async () => [] } as Response;
+      }) as any;
+
+      try {
+        const nowIso = new Date().toISOString();
+        const rows = Array.from({ length: 110 }, (_, i) => ({
+          entityType: 'bill' as const,
+          entityId: String(i + 1),
+          payloadJson: JSON.stringify({ billNo: `B-${i + 1}` }),
+          status: 'pending' as const,
+          retryCount: 0,
+          createdAt: nowIso,
+        }));
+        await db.syncOutbox.bulkAdd(rows);
+
+        const result = await runSyncCycle({ force: true });
+        expect(result.success).toBe(false);
+        expect(result.processedCount).toBe(50);
+        expect(result.pendingCount).toBe(60);
+        expect(result.lastError).toContain('503');
+
+        // Chunk 1 (50) succeeded, Chunk 2 (50) attempted & failed, Chunk 3 (10) not attempted yet
+        expect(restBatches.map((b) => b.length)).toEqual([50, 50]);
+        expect(restBatches[0][0].id).toMatch(/^HOSP-REST-9999:bill:1:\d+$/);
+
+        const synced = await db.syncOutbox.where('status').equals('synced').count();
+        expect(synced).toBe(50);
+
+        const pendingRows = await db.syncOutbox.where('status').equals('pending').sortBy('id');
+        expect(pendingRows.length).toBe(60);
+        expect(pendingRows[0].retryCount).toBe(1);
+        expect(pendingRows[49].retryCount).toBe(1);
+        expect(pendingRows[50].retryCount).toBe(0);
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+  });
+
+  describe('dead-letter transition and retryFailedSyncItems recovery', () => {
+    it('transitions poisoned items to failed after MAX_SYNC_RETRIES and recovers via retryFailedSyncItems()', async () => {
+      expect(MAX_SYNC_RETRIES).toBe(10);
+
+      let shouldFail = true;
+      const pushedBatches: any[][] = [];
+
+      const mockFrom = vi.fn().mockImplementation((table: string) => {
+        if (table === 'hospivo_sync_events') {
+          return {
+            upsert: vi.fn().mockImplementation((events: any[]) => {
+              pushedBatches.push(events);
+              if (shouldFail) {
+                return Promise.resolve({ error: { message: '400 Poisoned Payload' } });
+              }
+              return Promise.resolve({ error: null });
+            }),
+            insert: vi.fn().mockImplementation((events: any[]) => {
+              if (shouldFail) {
+                return Promise.resolve({ error: { message: '400 Poisoned Payload' } });
+              }
+              pushedBatches.push(events);
+              return Promise.resolve({ error: null });
+            }),
+            select: vi.fn().mockReturnValue(createMockQueryChain([])),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnValue(createMockQueryChain([])),
+        };
+      });
+      vi.spyOn(supabase, 'from').mockImplementation(mockFrom as any);
+
+      const poisonedId = await db.syncOutbox.add({
+        entityType: 'bill',
+        entityId: 'poison-1',
+        payloadJson: JSON.stringify({ corrupt: true }),
+        status: 'pending',
+        retryCount: 0,
+        createdAt: new Date().toISOString(),
+      });
+
+      // Attempts 1 through MAX_SYNC_RETRIES - 1 keep item as 'pending'
+      for (let attempt = 1; attempt < MAX_SYNC_RETRIES; attempt++) {
+        const res = await runSyncCycle({ force: true });
+        expect(res.success).toBe(false);
+        expect(res.pendingCount).toBe(1);
+        expect(res.failedCount).toBe(0);
+
+        const item = await db.syncOutbox.get(poisonedId);
+        expect(item?.status).toBe('pending');
+        expect(item?.retryCount).toBe(attempt);
+        expect(item?.lastError).toBe('400 Poisoned Payload');
+      }
+
+      // Attempt MAX_SYNC_RETRIES transitions item to 'failed' (dead-lettered)
+      const deadLetterRes = await runSyncCycle({ force: true });
+      expect(deadLetterRes.success).toBe(false);
+      expect(deadLetterRes.pendingCount).toBe(0);
+      expect(deadLetterRes.failedCount).toBe(1);
+
+      const deadItem = await db.syncOutbox.get(poisonedId);
+      expect(deadItem?.status).toBe('failed');
+      expect(deadItem?.retryCount).toBe(MAX_SYNC_RETRIES);
+      expect(deadItem?.lastError).toBe('400 Poisoned Payload');
+
+      const stateBeforeRetry = await getHomeSyncState();
+      expect(stateBeforeRetry.failedCount).toBe(1);
+      expect(stateBeforeRetry.status).toBe('failed');
+
+      // Healthy new item syncs cleanly without being stalled by the dead-lettered item
+      shouldFail = false;
+      pushedBatches.length = 0;
+
+      const healthyId = await db.syncOutbox.add({
+        entityType: 'medicine',
+        entityId: 'healthy-2',
+        payloadJson: JSON.stringify({ name: 'Dolo 650' }),
+        status: 'pending',
+        retryCount: 0,
+        createdAt: new Date().toISOString(),
+      });
+
+      const healthyRes = await runSyncCycle({ force: true });
+      expect(healthyRes.success).toBe(true);
+      expect(healthyRes.processedCount).toBe(1);
+      expect(healthyRes.pendingCount).toBe(0);
+      expect(healthyRes.failedCount).toBe(1);
+      expect(pushedBatches.flat().map((e) => e.entity_id)).toEqual(['healthy-2']);
+
+      const healthyItem = await db.syncOutbox.get(healthyId);
+      expect(healthyItem?.status).toBe('synced');
+
+      // Recover dead-lettered items via retryFailedSyncItems()
+      const resetCount = await retryFailedSyncItems();
+      expect(resetCount).toBe(1);
+
+      const resetItem = await db.syncOutbox.get(poisonedId);
+      expect(resetItem?.status).toBe('pending');
+      expect(resetItem?.retryCount).toBe(0);
+      expect(resetItem?.lastError).toBeUndefined();
+
+      // Calling retryFailedSyncItems again when none are failed returns 0
+      expect(await retryFailedSyncItems()).toBe(0);
+
+      // Re-run sync cycle to complete recovery
+      pushedBatches.length = 0;
+      const recoveredRes = await runSyncCycle({ force: true });
+      expect(recoveredRes.success).toBe(true);
+      expect(recoveredRes.processedCount).toBe(1);
+      expect(recoveredRes.pendingCount).toBe(0);
+      expect(recoveredRes.failedCount).toBe(0);
+      expect(pushedBatches.flat().map((e) => e.entity_id)).toEqual(['poison-1']);
+
+      const finalItem = await db.syncOutbox.get(poisonedId);
+      expect(finalItem?.status).toBe('synced');
+
+      const stateAfterRecovery = await getHomeSyncState();
+      expect(stateAfterRecovery.failedCount).toBe(0);
+      expect(stateAfterRecovery.status).toBe('synced');
     });
   });
 });

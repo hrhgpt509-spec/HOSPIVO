@@ -1748,6 +1748,7 @@ export const en: TranslationSchema = {
     waiting_verification: 'Waiting for email verification...',
     btn_continue_offline: { main: 'Continue Offline', sub: 'Local-only mode' },
     err_email_invalid: 'Please enter a valid email address',
+    err_account_not_found: 'No account found for this email. Please set up your account.',
     err_password_short: 'Password must be at least 6 characters',
     err_password_mismatch: 'Passwords do not match',
     err_auth_failed: 'Authentication failed. Please check your credentials.',
