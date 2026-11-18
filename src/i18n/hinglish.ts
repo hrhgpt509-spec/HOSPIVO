@@ -1756,6 +1756,8 @@ export const hinglish: TranslationSchema = {
     btn_continue_offline: { main: 'Offline Jari Rakhein', sub: 'Local-only mode' },
     err_email_invalid: 'Sahi email address dalein',
     err_account_not_found: 'Is email ka koi account nahi mila. Pehle apna account set up karein.',
+    err_network: 'Server se jud nahi paaye. Internet check karke dobara koshish karein.',
+    err_rate_limited: 'Bahut baar koshish hui. Ek minute ruk kar dobara koshish karein.',
     err_password_short: 'Password kam se kam 6 akshar ka hona chahiye',
     err_password_mismatch: 'Dono password match nahi ho rahe',
     err_auth_failed: 'Login fail ho gaya. Sahi email aur password dalein.',

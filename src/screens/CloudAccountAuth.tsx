@@ -37,6 +37,14 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
 }) => {
   const { t } = useTranslation();
 
+  // Turns a sendEmailOtp error code into a short, translated message (never a raw exception)
+  const otpErrorText = (code: string | undefined, fallback: string): string => {
+    if (code === 'account_not_found') return t('cloud_auth.err_account_not_found');
+    if (code === 'network') return t('cloud_auth.err_network');
+    if (code === 'rate_limited') return t('cloud_auth.err_rate_limited');
+    return fallback || t('cloud_auth.err_auth_failed');
+  };
+
   const [step, setStep] = useState<'enter_email' | 'enter_otp'>('enter_email');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -124,7 +132,7 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
     try {
       const res = await sendEmailOtp(cleanEmail, { createUser: initialTab !== 'signin' });
       if (res.error) {
-        setError(res.errorCode === 'account_not_found' ? t('cloud_auth.err_account_not_found') : res.error);
+        setError(otpErrorText(res.errorCode, res.error));
         setIsLoading(false);
         return;
       }
@@ -133,8 +141,8 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
       setStep('enter_otp');
       setOtp('');
       setCooldown(30);
-    } catch (err: any) {
-      setError(err?.message || t('cloud_auth.err_auth_failed'));
+    } catch {
+      setError(t('cloud_auth.err_network'));
     } finally {
       setIsLoading(false);
     }
@@ -194,14 +202,14 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
     try {
       const res = await sendEmailOtp(cleanEmail, { createUser: initialTab !== 'signin' });
       if (res.error) {
-        setError(res.errorCode === 'account_not_found' ? t('cloud_auth.err_account_not_found') : res.error);
+        setError(otpErrorText(res.errorCode, res.error));
         return;
       }
       triggerFeedback('success', t('cloud_auth.toast_otp_sent'));
       setCooldown(30);
       otpInputRef.current?.focus();
-    } catch (err: any) {
-      setError(err?.message || t('cloud_auth.err_auth_failed'));
+    } catch {
+      setError(t('cloud_auth.err_network'));
     } finally {
       setIsLoading(false);
     }

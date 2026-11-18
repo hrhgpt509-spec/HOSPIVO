@@ -328,3 +328,7 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
 - Limit check counts item + bill discount together; above the owner limit (default 5%) the Approval PIN is needed.
 - Dawai Becho cart panel: new row above Subtotal/Total (Rs or %, Apply/Remove). Above limit it opens the Approval dialog before applying. Held bills keep the flat amount.
 - 6 new tests in billing.test.ts; 245 tests pass. Note: DawaiBecho.tsx is over 600 lines and still needs a split.
+
+- Cloud sign-in error handling: wrapped sendEmailOtp() in try/catch in src/logic/cloudAuth.ts to catch missing-account rejections and network/rate-limit errors cleanly.
+- Updated src/screens/CloudAccountAuth.tsx and i18n (en/hi/hinglish) to show clear red error messages and keep the user on screen without raw exceptions.
+- Added unit tests in src/logic/cloudAuth.test.ts for auth rejections, network failures, and rate limits; tests and build pass with 0 errors.

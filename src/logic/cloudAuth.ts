@@ -186,40 +186,88 @@ async function hydrateOrFindExistingShop(
 
 export const ACCOUNT_NOT_FOUND_MESSAGE =
   'No account found for this email. Please set up your account.';
+export const NETWORK_ERROR_MESSAGE =
+  'Could not reach the server. Please check your internet and try again.';
+export const RATE_LIMIT_MESSAGE = 'Too many tries. Please wait a minute and try again.';
+
+export type SendOtpErrorCode = 'account_not_found' | 'network' | 'rate_limited' | 'unknown';
+
+function isNetworkFailure(err: unknown): boolean {
+  const e = err as { name?: string; message?: string; status?: number } | null;
+  if (!e) return false;
+  if (e.name === 'AuthRetryableFetchError' || e.name === 'TypeError') return true;
+  if (e.status === 0) return true;
+  return /failed to fetch|fetch failed|network|load failed|timed? ?out/i.test(e.message || '');
+}
+
+function isRateLimited(err: unknown): boolean {
+  const e = err as { status?: number; code?: string; message?: string } | null;
+  if (!e) return false;
+  return (
+    e.status === 429 ||
+    e.code === 'over_email_send_rate_limit' ||
+    e.code === 'over_request_rate_limit' ||
+    /rate limit|too many requests/i.test(e.message || '')
+  );
+}
 
 /**
  * Sends a 6-digit OTP code to the given email address.
  * Does NOT pass emailRedirectTo so Supabase delivers the 6-digit OTP numeric code.
  *
  * Sign-in (default): shouldCreateUser is false, so Supabase refuses to send an OTP for an
- * email that has no account (e.g. after all cloud data was wiped). That refusal is returned as
+ * email that has no account (e.g. after all cloud data was wiped). Any such auth rejection
+ * (user not found, signups not allowed, invalid grant, ...) returns
  * { success: false, errorCode: 'account_not_found' } and no OTP is sent.
+ * Network failures and rate limits get their own clear messages. This function never throws.
  * New-shop setup passes { createUser: true } to allow creating the account.
  */
 export async function sendEmailOtp(
   email: string,
   options: { createUser?: boolean } = {}
-): Promise<{ success: boolean; error: string | null; errorCode?: 'account_not_found' }> {
+): Promise<{ success: boolean; error: string | null; errorCode?: SendOtpErrorCode }> {
   if (!isBackendConfigured()) {
     return { success: false, error: 'Backend is not configured' };
   }
 
   const createUser = options.createUser === true;
   const cleanEmail = email.trim().toLowerCase();
-  const { error } = await supabase.auth.signInWithOtp({
-    email: cleanEmail,
-    options: {
-      shouldCreateUser: createUser,
-    },
-  });
+
+  let error: unknown = null;
+  try {
+    const res = await supabase.auth.signInWithOtp({
+      email: cleanEmail,
+      options: {
+        shouldCreateUser: createUser,
+      },
+    });
+    error = res.error;
+  } catch (thrown) {
+    // fetch itself failed (offline, DNS, CORS) or the client threw
+    console.warn('sendEmailOtp exception:', thrown);
+    if (isRateLimited(thrown)) {
+      return { success: false, error: RATE_LIMIT_MESSAGE, errorCode: 'rate_limited' };
+    }
+    if (isNetworkFailure(thrown) || !createUser) {
+      return { success: false, error: NETWORK_ERROR_MESSAGE, errorCode: 'network' };
+    }
+    const msg = (thrown as { message?: string })?.message;
+    return { success: false, error: msg || NETWORK_ERROR_MESSAGE, errorCode: 'unknown' };
+  }
 
   if (error) {
-    const code = (error as { code?: string }).code;
-    const msg = error.message || '';
-    if (!createUser && (code === 'otp_disabled' || /signups? not allowed|user not found/i.test(msg))) {
+    if (isNetworkFailure(error)) {
+      return { success: false, error: NETWORK_ERROR_MESSAGE, errorCode: 'network' };
+    }
+    if (isRateLimited(error)) {
+      return { success: false, error: RATE_LIMIT_MESSAGE, errorCode: 'rate_limited' };
+    }
+    if (!createUser) {
+      // shouldCreateUser:false -> Supabase rejects emails that have no account
       return { success: false, error: ACCOUNT_NOT_FOUND_MESSAGE, errorCode: 'account_not_found' };
     }
-    return { success: false, error: msg };
+    const msg = (error as { message?: string }).message;
+    return { success: false, error: msg || 'Could not send OTP', errorCode: 'unknown' };
   }
 
   await db.settings.put({ key: 'owner_email', value: cleanEmail });

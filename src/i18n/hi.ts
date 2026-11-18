@@ -1756,6 +1756,8 @@ export const hi: TranslationSchema = {
     btn_continue_offline: { main: 'ऑफ़लाइन जारी रखें', sub: 'लोकल मोड' },
     err_email_invalid: 'कृपया सही ईमेल पता दर्ज करें',
     err_account_not_found: 'इस ईमेल का कोई खाता नहीं मिला। कृपया अपना खाता सेट करें।',
+    err_network: 'सर्वर से जुड़ नहीं पाए। इंटरनेट देखें और फिर कोशिश करें।',
+    err_rate_limited: 'बहुत बार कोशिश हुई। एक मिनट रुककर फिर कोशिश करें।',
     err_password_short: 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए',
     err_password_mismatch: 'दोनों पासवर्ड एक जैसे नहीं हैं',
     err_auth_failed: 'लॉगिन विफल रहा। कृपया सही जानकारी डालें।',

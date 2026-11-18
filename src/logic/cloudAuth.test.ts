@@ -236,6 +236,60 @@ describe('cloudAuth unit tests', () => {
     expect(cloudEnabled).toBeUndefined();
   });
 
+  it('sendEmailOtp (sign-in) maps any auth rejection (invalid grant, user not found) to the no-account message', async () => {
+    for (const rejection of [
+      { message: 'Invalid grant', status: 400, code: 'invalid_grant' },
+      { message: 'User not found', status: 400 },
+      { message: 'Signups not allowed for this instance', status: 422 },
+    ]) {
+      vi.spyOn(supabase.auth, 'signInWithOtp').mockResolvedValueOnce({
+        data: {} as any,
+        error: rejection as any,
+      });
+      const res = await sendEmailOtp('nobody@test.com');
+      expect(res).toMatchObject({
+        success: false,
+        errorCode: 'account_not_found',
+        error: 'No account found for this email. Please set up your account.',
+      });
+    }
+  });
+
+  it('sendEmailOtp never throws: network failures and rate limits return clear messages', async () => {
+    // fetch itself throws (offline)
+    vi.spyOn(supabase.auth, 'signInWithOtp').mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    const offline = await sendEmailOtp('owner@test.com');
+    expect(offline.success).toBe(false);
+    expect(offline.errorCode).toBe('network');
+    expect(offline.error).toMatch(/internet/i);
+
+    // Supabase returns a retryable fetch error object
+    vi.spyOn(supabase.auth, 'signInWithOtp').mockResolvedValueOnce({
+      data: {} as any,
+      error: { name: 'AuthRetryableFetchError', message: 'Failed to fetch', status: 0 } as any,
+    });
+    expect((await sendEmailOtp('owner@test.com')).errorCode).toBe('network');
+
+    // Rate limit must NOT be reported as "no account"
+    vi.spyOn(supabase.auth, 'signInWithOtp').mockResolvedValueOnce({
+      data: {} as any,
+      error: { message: 'Email rate limit exceeded', status: 429, code: 'over_email_send_rate_limit' } as any,
+    });
+    const limited = await sendEmailOtp('owner@test.com');
+    expect(limited.errorCode).toBe('rate_limited');
+
+    // Sign-up path keeps the real Supabase message (no "no account" mapping)
+    vi.spyOn(supabase.auth, 'signInWithOtp').mockResolvedValueOnce({
+      data: {} as any,
+      error: { message: 'Email address is invalid', status: 400 } as any,
+    });
+    const signup = await sendEmailOtp('bad@test', { createUser: true });
+    expect(signup.errorCode).toBe('unknown');
+    expect(signup.error).toBe('Email address is invalid');
+
+    expect(await db.settings.get('cloud_enabled')).toBeUndefined();
+  });
+
   it('verifyEmailOtp validates 6-digit length and returns error if invalid', async () => {
     const res = await verifyEmailOtp('owner@test.com', '123');
     expect(res.error).toBe('Please enter a valid 6-digit OTP');
