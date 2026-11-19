@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { db } from '../db';
-import { supabase, isBackendConfigured } from '../lib/supabase';
+import { supabase, isBackendConfigured, sanitizeEnvValue, resolveSupabaseUrl } from '../lib/supabase';
 import {
   signUpOwner,
   signInOwner,
@@ -48,6 +48,25 @@ describe('cloudAuth unit tests', () => {
   it('isBackendConfigured returns a boolean without throwing', () => {
     const configured = isBackendConfigured();
     expect(typeof configured).toBe('boolean');
+  });
+
+  it('sanitizeEnvValue and resolveSupabaseUrl handle quotes, brackets, https URLs, and /api/sb proxy', () => {
+    // Sanitize quotes, brackets, and whitespace
+    expect(sanitizeEnvValue('"https://example.supabase.co"')).toBe('https://example.supabase.co');
+    expect(sanitizeEnvValue("'https://example.supabase.co'")).toBe('https://example.supabase.co');
+    expect(sanitizeEnvValue('(https://example.supabase.co)')).toBe('https://example.supabase.co');
+    expect(sanitizeEnvValue('[https://example.supabase.co]')).toBe('https://example.supabase.co');
+    expect(sanitizeEnvValue('  (sb_secret_key_123)  ')).toBe('sb_secret_key_123');
+
+    // Valid https URL is used directly
+    expect(resolveSupabaseUrl('https://njsxgbslgzlzdprcngzw.supabase.co')).toBe('https://njsxgbslgzlzdprcngzw.supabase.co');
+    expect(resolveSupabaseUrl('"https://njsxgbslgzlzdprcngzw.supabase.co"')).toBe('https://njsxgbslgzlzdprcngzw.supabase.co');
+
+    // Unset or /api/sb resolves to origin + /api/sb
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+    expect(resolveSupabaseUrl('')).toBe(`${origin}/api/sb`);
+    expect(resolveSupabaseUrl('/api/sb')).toBe(`${origin}/api/sb`);
+    expect(resolveSupabaseUrl('/custom/sb')).toBe(`${origin}/custom/sb`);
   });
 
   it('getCurrentCloudSession returns safe defaults when unconfigured or offline', async () => {

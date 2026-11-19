@@ -336,3 +336,8 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
 - Cloud sign-in error discrimination: explicitly distinguished network/fetch/timeout errors from missing accounts (when shouldCreateUser is false) in src/logic/cloudAuth.ts.
 - Updated CloudAccountAuth.tsx and i18n catalogs (en/hi/hinglish) to present localized connection and account-not-found messages without raw exceptions.
 - Added tests verifying network timeout/fetch failures vs auth rejections in src/logic/cloudAuth.test.ts (248 tests pass, build 0 errors).
+
+- Supabase URL & Vercel rewrites: added env sanitization (stripping accidental quotes/brackets) and direct https:// URL resolution in src/lib/supabase.ts.
+- Fixed typo in Supabase project URL inside vercel.json (added missing 'z') and ensured clean rewrite proxying to /api/sb while preserving SPA routing.
+- Added tests for sanitizeEnvValue and resolveSupabaseUrl in src/logic/cloudAuth.test.ts; all 249 tests and build pass with 0 errors.
+
