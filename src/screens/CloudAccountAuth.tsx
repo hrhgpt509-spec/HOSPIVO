@@ -9,6 +9,9 @@ import {
   sendEmailOtp,
   verifyEmailOtp,
   provisionCloudShop,
+  ACCOUNT_NOT_FOUND_MESSAGE,
+  NETWORK_ERROR_MESSAGE,
+  RATE_LIMIT_MESSAGE,
 } from '../logic/cloudAuth';
 
 export interface CloudAccountAuthProps {
@@ -37,11 +40,25 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  // Turns a sendEmailOtp error code into a short, translated message (never a raw exception)
-  const otpErrorText = (code: string | undefined, fallback: string): string => {
-    if (code === 'account_not_found') return t('cloud_auth.err_account_not_found');
-    if (code === 'network') return t('cloud_auth.err_network');
-    if (code === 'rate_limited') return t('cloud_auth.err_rate_limited');
+  // Turns a sendEmailOtp / auth error code into a short, translated message (never a raw exception)
+  const otpErrorText = (code: string | undefined, fallback?: string | null): string => {
+    if (code === 'account_not_found' || fallback === ACCOUNT_NOT_FOUND_MESSAGE) {
+      return t('cloud_auth.err_account_not_found');
+    }
+    if (
+      code === 'network' ||
+      fallback === NETWORK_ERROR_MESSAGE ||
+      /failed to fetch|fetch failed|network|timed? ?out|abort|connection|offline/i.test(fallback || '')
+    ) {
+      return t('cloud_auth.err_network');
+    }
+    if (
+      code === 'rate_limited' ||
+      fallback === RATE_LIMIT_MESSAGE ||
+      /rate limit|too many/i.test(fallback || '')
+    ) {
+      return t('cloud_auth.err_rate_limited');
+    }
     return fallback || t('cloud_auth.err_auth_failed');
   };
 
@@ -141,8 +158,8 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
       setStep('enter_otp');
       setOtp('');
       setCooldown(30);
-    } catch {
-      setError(t('cloud_auth.err_network'));
+    } catch (err: any) {
+      setError(otpErrorText(undefined, err?.message));
     } finally {
       setIsLoading(false);
     }
@@ -167,7 +184,7 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
     try {
       const res = await verifyEmailOtp(cleanEmail, cleanOtp);
       if (res.error) {
-        setError(res.error);
+        setError(otpErrorText(res.errorCode, res.error));
         setIsLoading(false);
         return;
       }
@@ -188,7 +205,7 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
         });
       }
     } catch (err: any) {
-      setError(err?.message || t('cloud_auth.err_auth_failed'));
+      setError(otpErrorText(undefined, err?.message));
     } finally {
       setIsLoading(false);
     }
@@ -208,8 +225,8 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
       triggerFeedback('success', t('cloud_auth.toast_otp_sent'));
       setCooldown(30);
       otpInputRef.current?.focus();
-    } catch {
-      setError(t('cloud_auth.err_network'));
+    } catch (err: any) {
+      setError(otpErrorText(undefined, err?.message));
     } finally {
       setIsLoading(false);
     }

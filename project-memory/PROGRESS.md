@@ -332,3 +332,7 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
 - Cloud sign-in error handling: wrapped sendEmailOtp() in try/catch in src/logic/cloudAuth.ts to catch missing-account rejections and network/rate-limit errors cleanly.
 - Updated src/screens/CloudAccountAuth.tsx and i18n (en/hi/hinglish) to show clear red error messages and keep the user on screen without raw exceptions.
 - Added unit tests in src/logic/cloudAuth.test.ts for auth rejections, network failures, and rate limits; tests and build pass with 0 errors.
+
+- Cloud sign-in error discrimination: explicitly distinguished network/fetch/timeout errors from missing accounts (when shouldCreateUser is false) in src/logic/cloudAuth.ts.
+- Updated CloudAccountAuth.tsx and i18n catalogs (en/hi/hinglish) to present localized connection and account-not-found messages without raw exceptions.
+- Added tests verifying network timeout/fetch failures vs auth rejections in src/logic/cloudAuth.test.ts (248 tests pass, build 0 errors).

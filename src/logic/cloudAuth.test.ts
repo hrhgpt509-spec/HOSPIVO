@@ -268,7 +268,15 @@ describe('cloudAuth unit tests', () => {
       data: {} as any,
       error: { name: 'AuthRetryableFetchError', message: 'Failed to fetch', status: 0 } as any,
     });
-    expect((await sendEmailOtp('owner@test.com')).errorCode).toBe('network');
+    const retryable = await sendEmailOtp('owner@test.com');
+    expect(retryable.errorCode).toBe('network');
+    expect(retryable.error).toBe('Could not reach the server. Please check your internet and try again.');
+
+    // Timeout / abort error
+    vi.spyOn(supabase.auth, 'signInWithOtp').mockRejectedValueOnce(new DOMException('The user aborted a request.', 'AbortError'));
+    const timeout = await sendEmailOtp('owner@test.com');
+    expect(timeout.errorCode).toBe('network');
+    expect(timeout.error).toBe('Could not reach the server. Please check your internet and try again.');
 
     // Rate limit must NOT be reported as "no account"
     vi.spyOn(supabase.auth, 'signInWithOtp').mockResolvedValueOnce({
@@ -294,6 +302,16 @@ describe('cloudAuth unit tests', () => {
     const res = await verifyEmailOtp('owner@test.com', '123');
     expect(res.error).toBe('Please enter a valid 6-digit OTP');
     expect(res.user).toBeNull();
+  });
+
+  it('verifyEmailOtp returns network error code on connection failure', async () => {
+    vi.spyOn(supabase.auth, 'verifyOtp').mockResolvedValueOnce({
+      data: null as any,
+      error: { name: 'AuthRetryableFetchError', message: 'Failed to fetch', status: 0 } as any,
+    });
+    const res = await verifyEmailOtp('owner@test.com', '123456');
+    expect(res.errorCode).toBe('network');
+    expect(res.error).toBe('Could not reach the server. Please check your internet and try again.');
   });
 
   it('verifyEmailOtp verifies OTP for new shop user', async () => {

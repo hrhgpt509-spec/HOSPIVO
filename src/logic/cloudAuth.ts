@@ -193,11 +193,17 @@ export const RATE_LIMIT_MESSAGE = 'Too many tries. Please wait a minute and try 
 export type SendOtpErrorCode = 'account_not_found' | 'network' | 'rate_limited' | 'unknown';
 
 function isNetworkFailure(err: unknown): boolean {
-  const e = err as { name?: string; message?: string; status?: number } | null;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return true;
+  }
+  const e = err as { name?: string; message?: string; status?: number; code?: string } | null;
   if (!e) return false;
-  if (e.name === 'AuthRetryableFetchError' || e.name === 'TypeError') return true;
-  if (e.status === 0) return true;
-  return /failed to fetch|fetch failed|network|load failed|timed? ?out/i.test(e.message || '');
+  if (e.name === 'AuthRetryableFetchError' || e.name === 'TypeError' || e.name === 'AbortError') return true;
+  if (e.status === 0 || e.status === 502 || e.status === 503 || e.status === 504) return true;
+  if (e.code === 'ETIMEDOUT' || e.code === 'ECONNREFUSED' || e.code === 'ECONNRESET' || e.code === 'ENOTFOUND') return true;
+  return /failed to fetch|fetch failed|network|networkerror|load failed|timed? ?out|abort|connection|offline|econnrefused/i.test(
+    e.message || ''
+  );
 }
 
 function isRateLimited(err: unknown): boolean {
@@ -209,6 +215,29 @@ function isRateLimited(err: unknown): boolean {
     e.code === 'over_request_rate_limit' ||
     /rate limit|too many requests/i.test(e.message || '')
   );
+}
+
+function isUserNotFound(err: unknown): boolean {
+  const e = err as { name?: string; message?: string; status?: number; code?: string } | null;
+  if (!e) return false;
+  const msg = (e.message || '').toLowerCase();
+  const code = (e.code || '').toLowerCase();
+  if (
+    code === 'otp_disabled' ||
+    code === 'user_not_found' ||
+    code === 'signup_disabled' ||
+    code === 'invalid_grant'
+  ) {
+    return true;
+  }
+  if (
+    /signups? not allowed|user not found|invalid grant|no user|account not found|not registered/i.test(
+      msg
+    )
+  ) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -248,11 +277,14 @@ export async function sendEmailOtp(
     if (isRateLimited(thrown)) {
       return { success: false, error: RATE_LIMIT_MESSAGE, errorCode: 'rate_limited' };
     }
-    if (isNetworkFailure(thrown) || !createUser) {
+    if (isNetworkFailure(thrown)) {
       return { success: false, error: NETWORK_ERROR_MESSAGE, errorCode: 'network' };
     }
+    if (!createUser && isUserNotFound(thrown)) {
+      return { success: false, error: ACCOUNT_NOT_FOUND_MESSAGE, errorCode: 'account_not_found' };
+    }
     const msg = (thrown as { message?: string })?.message;
-    return { success: false, error: msg || NETWORK_ERROR_MESSAGE, errorCode: 'unknown' };
+    return { success: false, error: msg || NETWORK_ERROR_MESSAGE, errorCode: 'network' };
   }
 
   if (error) {
@@ -262,7 +294,7 @@ export async function sendEmailOtp(
     if (isRateLimited(error)) {
       return { success: false, error: RATE_LIMIT_MESSAGE, errorCode: 'rate_limited' };
     }
-    if (!createUser) {
+    if (!createUser && (isUserNotFound(error) || (error as any).status === 400 || (error as any).status === 422)) {
       // shouldCreateUser:false -> Supabase rejects emails that have no account
       return { success: false, error: ACCOUNT_NOT_FOUND_MESSAGE, errorCode: 'account_not_found' };
     }
@@ -288,6 +320,7 @@ export async function verifyEmailOtp(
   shop: ExistingShopInfo | null;
   isNewShop: boolean;
   error: string | null;
+  errorCode?: SendOtpErrorCode;
 }> {
   if (!isBackendConfigured()) {
     return { user: null, shop: null, isNewShop: false, error: 'Backend is not configured' };
@@ -308,6 +341,9 @@ export async function verifyEmailOtp(
     });
 
     if (error) {
+      if (isNetworkFailure(error)) {
+        return { user: null, shop: null, isNewShop: false, error: NETWORK_ERROR_MESSAGE, errorCode: 'network' };
+      }
       return { user: null, shop: null, isNewShop: false, error: error.message };
     }
 
@@ -328,6 +364,9 @@ export async function verifyEmailOtp(
     };
   } catch (err: any) {
     console.warn('verifyEmailOtp exception:', err);
+    if (isNetworkFailure(err)) {
+      return { user: null, shop: null, isNewShop: false, error: NETWORK_ERROR_MESSAGE, errorCode: 'network' };
+    }
     return { user: null, shop: null, isNewShop: false, error: err?.message || 'Failed to verify OTP' };
   }
 }
