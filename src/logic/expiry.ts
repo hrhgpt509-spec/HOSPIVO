@@ -487,16 +487,18 @@ export async function createSupplierReturn(
       };
 
       const returnId = (await db.supplierReturns.add(newReturn)) as number;
+      const savedReturn = { ...newReturn, id: returnId };
 
-      await db.stockMovements.add({
+      const movementRow = {
         batchId: batch.id,
         medicineId: medicine.id,
-        type: 'supplier_return',
+        type: 'supplier_return' as const,
         qtyUnits: -qtyUnits,
         reference: `SUP-RET-${returnId}`,
         who: actor,
         at: now,
-      });
+      };
+      const movementId = Number(await db.stockMovements.add(movementRow));
 
       await addAudit(
         actor,
@@ -505,9 +507,13 @@ export async function createSupplierReturn(
         `Created supplier return of ${qtyUnits} units for ${medicine.name} batch ${batch.batchNo} to ${supplier.name}`
       );
 
-      enqueueSyncItem('stock_movement', returnId, newReturn).catch(() => {});
+      enqueueSyncItem('stock_movement', movementId, {
+        ...movementRow,
+        id: movementId,
+        supplierReturn: savedReturn,
+      }).catch(() => {});
 
-      return { ...newReturn, id: returnId };
+      return savedReturn;
     }
   );
 }
@@ -547,11 +553,17 @@ export async function updateSupplierReturnStatus(params: {
       `Updated supplier return status for ${existing.medicineName} batch ${existing.batchNo} from ${existing.status} to ${status}`
     );
 
-    return {
+    const updatedReturn = {
       ...existing,
       status,
       updatedAt: now,
     };
+
+    enqueueSyncItem('stock_movement', `supplier_return_${returnId}`, {
+      supplierReturn: updatedReturn,
+    }).catch(() => {});
+
+    return updatedReturn;
   });
 }
 

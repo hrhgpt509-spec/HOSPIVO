@@ -382,6 +382,11 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
   - Fixed cross-device sync for bills, bill returns, purchases, stock movements, customers, and Udhaar (enqueued sale/return/purchase stock movements, collision-free per-device sync event IDs, idempotent replay respecting immutable bill/movement hooks).
   - Added silent Supabase Realtime (`postgres_changes`) subscriptions (`startRealtimeSync` / `ensureCloudSyncActive`) + silent live screen refreshes with zero background popups/toasts.
 
+- Offline-first queueing & silent reconnect auto-flush (`cloudSync.ts`, `App.tsx`, `OwnerSettings.tsx`, `udhaar.ts`, `expiry.ts`, `db/index.ts`):
+  - Wrapped `enqueueSyncItem` in `Dexie.ignoreTransaction()` so bills, FEFO stock movements, purchases, returns, and Udhaar payments written inside Dexie transactions always queue reliably into `db.syncOutbox` without blocking or failing offline.
+  - Added `'shop'` and `'settings'` sync support (`OwnerSettings.tsx` shop details, discount limit, auto-lock, approval rules, PIN length/Approval PIN) plus `ensureCustomerForUdhaarBill` and `expiry.ts` supplier-return sync.
+  - Added `initNetworkSyncListeners()` handling browser `online`/`offline`, `navigator.connection`, `visibilitychange`, Capacitor `Network`/`App` runtime listeners, and 30s pending-outbox silent flush with zero popup toasts.
+
 
 
 

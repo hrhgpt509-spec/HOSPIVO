@@ -335,7 +335,9 @@ export type SyncEntityType =
   | 'batch'
   | 'supplier'
   | 'customer'
-  | 'staff';
+  | 'staff'
+  | 'shop'
+  | 'settings';
 
 export type SyncStatus = 'pending' | 'synced' | 'failed';
 

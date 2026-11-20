@@ -732,14 +732,16 @@ export async function ensureCustomerForUdhaarBill(name: string, phone: string): 
     const matched = existingAll.find((c) => normalizePhoneKey(c.phone) === cleanPhone);
     if (!matched) {
       const now = new Date().toISOString();
-      await db.customers.add({
+      const newCustomer = {
         name: cleanName,
         phone: cleanPhone,
         address: '',
         creditLimitPaise: 0,
         createdAt: now,
         updatedAt: now,
-      });
+      };
+      const newId = Number(await db.customers.add(newCustomer));
+      enqueueSyncItem('customer', newId, { ...newCustomer, id: newId }).catch(() => {});
     }
   } catch {
     // Non-blocking upsert

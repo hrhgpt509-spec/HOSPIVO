@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { db } from '../db';
+import { db, runWithSyncWorkspaceBypass } from '../db';
 import { supabase } from '../lib/supabase';
 import {
   generateShopSyncId,
@@ -24,7 +24,11 @@ import {
   startRealtimeSync,
   stopRealtimeSync,
   subscribeToSyncUpdates,
+  initNetworkSyncListeners,
 } from './cloudSync';
+import { Capacitor } from '@capacitor/core';
+import { finalizeBill } from './billing';
+import { recordUdhaarPayment } from './udhaar';
 import { subscribeFeedback } from './feedback';
 import { signOutOwner } from './cloudAuth';
 
@@ -746,6 +750,209 @@ describe('cloudSync & remote approvals engine', () => {
         unsubFeedback();
         unsubSync();
         stopRealtimeSync();
+      }
+    });
+  });
+
+  describe('Offline-First Queueing & Silent Auto-Flush on Reconnect', () => {
+    it('queues bills, FEFO stock movements, Udhaar payments, and settings inside Dexie transactions while offline, then flushes silently when online returns', async () => {
+      await runWithSyncWorkspaceBypass(async () => {
+        await db.medicines.clear();
+        await db.batches.clear();
+        await db.stockMovements.clear();
+        await db.bills.clear();
+        await db.billItems.clear();
+        await db.udhaarPayments.clear();
+        await db.syncOutbox.clear();
+      });
+
+      await db.settings.put({ key: 'cloud_shop_uuid', value: 'shop-offline-1' });
+      await saveCloudConfig({
+        cloudEnabled: true,
+        shopSyncId: 'HOSP-OFFL-1111',
+      });
+
+      // Seed medicine + FEFO batch + stock
+      const medId = Number(
+        await db.medicines.add({
+          name: 'Offline Dolo 650',
+          strength: '650mg',
+          form: 'tablet',
+          salt: 'Paracetamol',
+          company: 'Micro Labs',
+          gstPercent: 12,
+          hsn: '3004',
+          mrpPaise: 3000,
+          unitsPerPack: 15,
+          shortCode: 'OD1',
+          barcode: '',
+          shelf: 'S-01',
+          scheduleType: 'none',
+          minStockUnits: 15,
+          active: true,
+        })
+      );
+      const batchId = Number(
+        await db.batches.add({
+          medicineId: medId,
+          batchNo: 'OFF-B1',
+          expiry: '2028-12-31',
+          purchaseRatePaise: 2000,
+          mrpPaise: 3000,
+          shelf: 'S-01',
+        })
+      );
+      await db.stockMovements.add({
+        batchId,
+        medicineId: medId,
+        type: 'purchase',
+        qtyUnits: 150,
+        reference: 'OPENING',
+        who: 'Owner',
+        at: '2026-11-20T09:00:00.000Z',
+      });
+
+      // Go OFFLINE
+      Object.defineProperty(navigator, 'onLine', {
+        value: false,
+        configurable: true,
+        writable: true,
+      });
+
+      const feedbackEvents: any[] = [];
+      const unsubFeedback = subscribeFeedback((ev) => {
+        if (ev) feedbackEvents.push(ev);
+      });
+
+      try {
+        // 1. Finalize a bill while offline (calls enqueueSyncItem INSIDE a Dexie transaction!)
+        const sale = await finalizeBill(
+          {
+            lines: [
+              {
+                medicineId: medId,
+                medicineName: 'Offline Dolo 650',
+                unitMode: 'pack',
+                qtyInput: 1,
+                unitsPerPack: 15,
+                mrpPaise: 3000,
+                gstPercent: 12,
+              },
+            ],
+            paymentMode: 'udhaar',
+            customerName: 'Offline Customer',
+            customerPhone: '9876543211',
+            doctorName: '',
+            cashReceivedPaise: 0,
+            discountPercent: 0,
+          },
+          { id: 'owner', name: 'Owner', role: 'owner' }
+        );
+        expect(sale.totalPaise).toBe(3000);
+
+        // 2. Record Udhaar payment while offline (also inside a Dexie transaction!)
+        await recordUdhaarPayment({
+          customerName: 'Offline Customer',
+          customerPhone: '9876543211',
+          amountPaise: 1000,
+          mode: 'cash',
+          note: 'Part payment offline',
+          receivedBy: 'Owner',
+        });
+
+        // 3. Queue a settings update while offline
+        await enqueueSyncItem('settings', 'discount_limit', {
+          key: 'discount_limit',
+          value: 12,
+        });
+
+        // Wait a tick for Dexie.ignoreTransaction outbox writes
+        await new Promise((r) => setTimeout(r, 40));
+
+        const queued = await db.syncOutbox.where('status').equals('pending').toArray();
+        const queuedTypes = queued.map((q) => q.entityType);
+        expect(queuedTypes).toContain('bill');
+        expect(queuedTypes).toContain('stock_movement');
+        expect(queuedTypes).toContain('udhaar_payment');
+        expect(queuedTypes).toContain('settings');
+
+        // Home status should report truthful offline + pending count
+        const offlineState = await getHomeSyncState();
+        expect(offlineState.status).toBe('offline');
+        expect(offlineState.pendingCount).toBe(queued.length);
+
+        // 4. Connectivity returns (simulate Capacitor Network plugin status change -> connected: true)
+        let networkCb: ((status: { connected?: boolean }) => void) | null = null;
+        const originalPlugins = (Capacitor as any).Plugins;
+        (Capacitor as any).Plugins = {
+          ...(originalPlugins || {}),
+          Network: {
+            addListener: vi.fn().mockImplementation((_ev: string, cb: any) => {
+              networkCb = cb;
+              return Promise.resolve({ remove: vi.fn() });
+            }),
+          },
+        };
+
+        const pushedEvents: any[] = [];
+        vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
+          data: { session: { user: { id: 'usr-off', email: 'off@test.com' } } as any },
+          error: null,
+        });
+        vi.spyOn(supabase, 'from').mockImplementation((table: string) => {
+          if (table === 'hospivo_sync_events') {
+            return {
+              upsert: vi.fn().mockImplementation((events: any[]) => {
+                pushedEvents.push(...events);
+                return Promise.resolve({ error: null });
+              }),
+              insert: vi.fn().mockResolvedValue({ error: null }),
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  gt: vi.fn().mockReturnValue({
+                    order: vi.fn().mockReturnValue({
+                      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+                    }),
+                  }),
+                }),
+              }),
+            } as any;
+          }
+          return {
+            upsert: vi.fn().mockResolvedValue({ error: null }),
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          } as any;
+        });
+
+        const cleanupListeners = initNetworkSyncListeners();
+        try {
+          Object.defineProperty(navigator, 'onLine', {
+            value: true,
+            configurable: true,
+            writable: true,
+          });
+          expect(networkCb).not.toBeNull();
+          networkCb!({ connected: true });
+
+          // Wait briefly for silent async flush
+          await new Promise((r) => setTimeout(r, 120));
+
+          const remainingPending = await db.syncOutbox.where('status').equals('pending').count();
+          expect(remainingPending).toBe(0);
+          expect(pushedEvents.map((e) => e.entity_type)).toEqual(
+            expect.arrayContaining(['bill', 'stock_movement', 'udhaar_payment', 'settings'])
+          );
+
+          // Must flush completely silently — zero popup toasts!
+          expect(feedbackEvents.length).toBe(0);
+        } finally {
+          cleanupListeners();
+          (Capacitor as any).Plugins = originalPlugins;
+        }
+      } finally {
+        unsubFeedback();
       }
     });
   });

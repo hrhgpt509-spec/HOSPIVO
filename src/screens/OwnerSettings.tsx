@@ -218,14 +218,16 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
     e.preventDefault();
     if (!shopDetails.id) return;
 
-    await db.shop.update(shopDetails.id, {
+    const updatedShopFields = {
       name: editShopName.trim(),
       ownerName: editOwnerName.trim(),
       address: editAddress.trim(),
       phone: editPhone.trim(),
       gstNo: editGstNo.trim(),
       drugLicenceNos: editDrugLicence.trim(),
-    });
+    };
+    await db.shop.update(shopDetails.id, updatedShopFields);
+    enqueueSyncItem('shop', shopDetails.id, { id: shopDetails.id, ...updatedShopFields }).catch(() => {});
 
     await addAudit(currentUser?.name || 'owner', 'shop_details_updated', 'shop', 'Shop details updated in Settings');
     triggerFeedback('success', t('owner_settings.toast_settings_saved'));
@@ -235,6 +237,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
   const handleSaveDiscountLimit = async (limit: number) => {
     await db.settings.put({ key: 'discount_limit', value: limit });
+    enqueueSyncItem('settings', 'discount_limit', { key: 'discount_limit', value: limit }).catch(() => {});
     setDiscountLimit(limit);
     await addAudit(
       currentUser?.name || 'owner',
@@ -248,6 +251,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
   const handleSaveAutoLock = async (minutes: number) => {
     await db.settings.put({ key: 'auto_lock_minutes', value: minutes });
+    enqueueSyncItem('settings', 'auto_lock_minutes', { key: 'auto_lock_minutes', value: minutes }).catch(() => {});
     setAutoLockMinutes(minutes);
     await addAudit(
       currentUser?.name || 'owner',
@@ -262,6 +266,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
   const handleToggleFullscreenOnLogin = async () => {
     const nextVal = !fullscreenOnLogin;
     await db.settings.put({ key: 'fullscreenOnLogin', value: nextVal });
+    enqueueSyncItem('settings', 'fullscreenOnLogin', { key: 'fullscreenOnLogin', value: nextVal }).catch(() => {});
     setFullscreenOnLogin(nextVal);
     await addAudit(
       currentUser?.name || 'owner',
@@ -275,6 +280,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
   const handleSelectLanguage = async (lang: 'en' | 'hi' | 'hinglish') => {
     setLanguage(lang);
     await db.settings.put({ key: 'language', value: lang });
+    enqueueSyncItem('settings', 'language', { key: 'language', value: lang }).catch(() => {});
     await addAudit(currentUser?.name || 'owner', 'language_updated', 'settings', `Language set to ${lang}`);
     setIsLanguageModalOpen(false);
   };
@@ -383,6 +389,17 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
         return;
       }
 
+      const ownerForSync = await db.users.where('role').equals('owner').first();
+      const updatedApprovalPin = (await db.settings.get('approval_pin'))?.value as
+        | { hash: string; salt: string }
+        | undefined;
+      if (ownerForSync && updatedApprovalPin) {
+        enqueueSyncItem('staff', ownerForSync.id, {
+          ...ownerForSync,
+          approvalPin: updatedApprovalPin,
+        }).catch(() => {});
+      }
+
       await addAudit(
         currentUser?.name || 'owner',
         'approval_pin_changed',
@@ -439,6 +456,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
       // 1. Update PIN length setting
       await db.settings.put({ key: 'pinLength', value: targetPinLength });
+      enqueueSyncItem('settings', 'pinLength', { key: 'pinLength', value: targetPinLength }).catch(() => {});
 
       // 2. Set new Owner PIN
       const { hash: oHash, salt: oSalt } = await hashPin(plOwnerPin);
@@ -450,11 +468,22 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
       // 3. Set new Approval PIN
       await setApprovalPin(plApprovalPin);
+      const updatedApprovalPin = (await db.settings.get('approval_pin'))?.value as
+        | { hash: string; salt: string }
+        | undefined;
+      enqueueSyncItem('staff', ownerUser.id, {
+        ...ownerUser,
+        pinHash: oHash,
+        pinSalt: oSalt,
+        pinLength: targetPinLength,
+        ...(updatedApprovalPin ? { approvalPin: updatedApprovalPin } : {}),
+      }).catch(() => {});
 
       // 4. Mark all other staff users active = false so old PINs cannot be used
       const staffUsers = await db.users.where('role').notEqual('owner').toArray();
       for (const su of staffUsers) {
         await db.users.update(su.id, { active: false });
+        enqueueSyncItem('staff', su.id, { ...su, active: false }).catch(() => {});
       }
 
       await addAudit(
@@ -473,6 +502,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
   // Save Approval Rules Matrix
   const handleSaveApprovalRules = async () => {
     await db.settings.put({ key: 'approval_rules', value: approvalRules });
+    enqueueSyncItem('settings', 'approval_rules', { key: 'approval_rules', value: approvalRules }).catch(() => {});
     await addAudit(
       currentUser?.name || 'owner',
       'approval_rules_updated',

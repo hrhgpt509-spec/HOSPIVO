@@ -1,3 +1,5 @@
+import Dexie from 'dexie';
+import { Capacitor } from '@capacitor/core';
 import {
   db,
   runWithSyncWorkspaceBypass,
@@ -15,6 +17,7 @@ import {
   type Purchase,
   type PurchaseLine,
   type StockMovement,
+  type SupplierReturn,
   type UdhaarPayment,
   type DailyClosing,
 } from '../db';
@@ -272,6 +275,9 @@ export async function retryFailedSyncItems(): Promise<number> {
 
 /**
  * Appends a record to the syncOutbox table whenever cloudEnabled is true.
+ * Uses Dexie.ignoreTransaction so calls made inside another Dexie transaction
+ * (e.g. finalizeBill, savePurchase, recordUdhaarPayment, createSupplierReturn)
+ * ALWAYS enqueue reliably without throwing NotFoundError or blocking offline writes.
  * Returns the created syncOutbox item ID, or null if cloud mode is disabled.
  */
 export async function enqueueSyncItem(
@@ -279,26 +285,35 @@ export async function enqueueSyncItem(
   entityId: string | number,
   payload: unknown
 ): Promise<number | null> {
-  const config = await getCloudConfig();
-  if (!config.cloudEnabled) {
-    return null;
-  }
+  return await Dexie.ignoreTransaction(async () => {
+    const config = await getCloudConfig();
+    if (!config.cloudEnabled) {
+      return null;
+    }
 
-  const id = await db.syncOutbox.add({
-    entityType,
-    entityId: String(entityId),
-    payloadJson: JSON.stringify(payload),
-    status: 'pending',
-    retryCount: 0,
-    createdAt: new Date().toISOString(),
+    const id = await db.syncOutbox.add({
+      entityType,
+      entityId: String(entityId),
+      payloadJson: JSON.stringify(payload),
+      status: 'pending',
+      retryCount: 0,
+      createdAt: new Date().toISOString(),
+    });
+
+    // When offline, stay 100% local-first: record offline status silently & wait for reconnect
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      await db.settings.put({ key: 'last_cloud_sync_status', value: 'offline' });
+      emitSyncApplied(['sync_status']);
+      return id as number;
+    }
+
+    // Non-blocking silent sync cycle trigger whenever backend or custom REST is configured
+    if (isBackendConfigured() || (config.cloudUrl && config.cloudAnonKey)) {
+      runSyncCycle().catch(() => {});
+    }
+
+    return id as number;
   });
-
-  // Non-blocking silent sync cycle trigger whenever backend or custom REST is configured
-  if (isBackendConfigured() || (config.cloudUrl && config.cloudAnonKey)) {
-    runSyncCycle().catch(() => {});
-  }
-
-  return id as number;
 }
 
 // ---------------------------------------------------------------------------
@@ -937,7 +952,29 @@ export async function applyRemoteEvent(event: any): Promise<void> {
 
     case 'stock_movement': {
       const movement = (payload.movement || payload) as StockMovement;
-      await applyRemoteStockMovement(movement);
+      if (movement && movement.at && movement.batchId) {
+        await applyRemoteStockMovement(movement);
+      }
+      const supRet = payload.supplierReturn as SupplierReturn | undefined;
+      if (supRet && supRet.batchId && supRet.medicineId) {
+        const existingRet = supRet.id !== undefined ? await db.supplierReturns.get(Number(supRet.id)) : undefined;
+        if (existingRet && existingRet.id !== undefined) {
+          await db.supplierReturns.update(existingRet.id, { ...supRet, id: existingRet.id });
+        } else {
+          const naturalRet = await db.supplierReturns
+            .where('batchId')
+            .equals(Number(supRet.batchId))
+            .filter((r) => r.createdAt === supRet.createdAt && r.qtyUnits === supRet.qtyUnits)
+            .first();
+          if (naturalRet && naturalRet.id !== undefined) {
+            await db.supplierReturns.update(naturalRet.id, { ...supRet, id: naturalRet.id });
+          } else if (supRet.id !== undefined) {
+            await db.supplierReturns.put({ ...supRet, id: Number(supRet.id) });
+          } else {
+            await db.supplierReturns.add(supRet);
+          }
+        }
+      }
       break;
     }
 
@@ -1026,6 +1063,42 @@ export async function applyRemoteEvent(event: any): Promise<void> {
         } else {
           await db.approvalRequests.put(req);
         }
+      }
+      break;
+    }
+
+    case 'shop': {
+      const incomingShop = payload.shop || payload;
+      if (incomingShop && incomingShop.name) {
+        const localShops = await db.shop.toArray();
+        const safeUpdates = {
+          name: incomingShop.name,
+          ...(incomingShop.ownerName !== undefined ? { ownerName: incomingShop.ownerName } : {}),
+          ...(incomingShop.address !== undefined ? { address: incomingShop.address } : {}),
+          ...(incomingShop.phone !== undefined ? { phone: incomingShop.phone } : {}),
+          ...(incomingShop.gstNo !== undefined ? { gstNo: incomingShop.gstNo } : {}),
+          ...(incomingShop.drugLicenceNos !== undefined ? { drugLicenceNos: incomingShop.drugLicenceNos } : {}),
+        };
+        if (localShops.length > 0 && localShops[0].id !== undefined) {
+          await db.shop.update(localShops[0].id, safeUpdates);
+        }
+      }
+      break;
+    }
+
+    case 'settings': {
+      // Allowlist only shared store settings (never overwrite device-local sync/snapshot/handle keys)
+      const SHARED_SETTING_KEYS = new Set([
+        'discount_limit',
+        'auto_lock_minutes',
+        'approval_rules',
+        'pinLength',
+        'fullscreenOnLogin',
+        'language',
+      ]);
+      const key = String(payload.key || event.entity_id || '');
+      if (SHARED_SETTING_KEYS.has(key) && payload.value !== undefined) {
+        await db.settings.put({ key, value: payload.value });
       }
       break;
     }
@@ -1331,6 +1404,7 @@ export async function runSyncCycle(options?: {
 
     if (isOffline) {
       await saveCloudConfig({ lastStatus: 'offline' });
+      emitSyncApplied(['sync_status']);
       return {
         success: false,
         offline: true,
@@ -1488,6 +1562,10 @@ export async function runSyncCycle(options?: {
       lastStatus: totalFailedCount > 0 ? 'failed' : 'synced',
       lastError: totalFailedCount > 0 ? config.lastError || 'Sync failed for one or more items' : null,
     });
+
+    if (processedCount > 0 || config.lastStatus === 'offline') {
+      emitSyncApplied(['sync_status']);
+    }
 
     return {
       success: true,
@@ -2268,7 +2346,7 @@ export async function startRealtimeSync(overrideShopUuid?: string): Promise<bool
  * Ensures Realtime sync is subscribed and runs a silent catch-up sync cycle
  * whenever Cloud Mode is enabled and the owner is authenticated.
  */
-export async function ensureCloudSyncActive(): Promise<void> {
+export async function ensureCloudSyncActive(options?: { reconnectRealtime?: boolean }): Promise<void> {
   try {
     const config = await getCloudConfig();
     if (!config.cloudEnabled) {
@@ -2280,15 +2358,196 @@ export async function ensureCloudSyncActive(): Promise<void> {
       stopRealtimeSync();
       return;
     }
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      await db.settings.put({ key: 'last_cloud_sync_status', value: 'offline' });
+      stopRealtimeSync();
+      emitSyncApplied(['sync_status']);
+      return;
+    }
     if (session.cloudShopUuid) {
+      if (options?.reconnectRealtime) {
+        stopRealtimeSync();
+      }
       await startRealtimeSync(session.cloudShopUuid);
     }
-    if (typeof navigator === 'undefined' || navigator.onLine !== false) {
-      await runSyncCycle();
-    }
+    await runSyncCycle();
   } catch {
     // Completely silent background check
   }
+}
+
+/**
+ * Registers silent offline/online connectivity listeners across:
+ *  - Browser / WebView `window` 'online' and 'offline' events
+ *  - Network Information API `navigator.connection` 'change' (Wi-Fi <-> 4G/5G switches)
+ *  - `document` 'visibilitychange' (tab / WebView foreground resume)
+ *  - Capacitor `Network` ('networkStatusChange') and `App` ('appStateChange') plugins if present
+ *  - Silent periodic retry timer so queued offline changes always flush when internet returns
+ * Never shows popup toasts or audio alerts.
+ */
+export function initNetworkSyncListeners(): () => void {
+  const cleanups: Array<() => void> = [];
+
+  const handleReconnect = () => {
+    void ensureCloudSyncActive({ reconnectRealtime: true });
+  };
+
+  const handleOffline = () => {
+    stopRealtimeSync();
+    void (async () => {
+      try {
+        const cfg = await getCloudConfig();
+        if (cfg.cloudEnabled) {
+          await db.settings.put({ key: 'last_cloud_sync_status', value: 'offline' });
+          emitSyncApplied(['sync_status']);
+        }
+      } catch {
+        // Silent
+      }
+    })();
+  };
+
+  // Kick off initial silent check
+  void ensureCloudSyncActive();
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', handleReconnect);
+    window.addEventListener('offline', handleOffline);
+    cleanups.push(() => {
+      window.removeEventListener('online', handleReconnect);
+      window.removeEventListener('offline', handleOffline);
+    });
+  }
+
+  if (typeof document !== 'undefined') {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && (typeof navigator === 'undefined' || navigator.onLine !== false)) {
+        void ensureCloudSyncActive();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    cleanups.push(() => document.removeEventListener('visibilitychange', handleVisibility));
+  }
+
+  // Network Information API (Chrome / Android WebView)
+  if (typeof navigator !== 'undefined') {
+    const connection = (navigator as unknown as {
+      connection?: {
+        addEventListener?: (type: string, listener: () => void) => void;
+        removeEventListener?: (type: string, listener: () => void) => void;
+      };
+    }).connection;
+    if (connection?.addEventListener) {
+      const handleConnectionChange = () => {
+        if (navigator.onLine !== false) {
+          handleReconnect();
+        } else {
+          handleOffline();
+        }
+      };
+      connection.addEventListener('change', handleConnectionChange);
+      cleanups.push(() => connection.removeEventListener?.('change', handleConnectionChange));
+    }
+  }
+
+  // Capacitor Network & App runtime plugins (if present in native shell)
+  try {
+    const plugins = (Capacitor as unknown as {
+      Plugins?: {
+        Network?: {
+          addListener?: (
+            event: 'networkStatusChange',
+            cb: (status: { connected?: boolean }) => void
+          ) => Promise<{ remove: () => void }> | { remove: () => void };
+        };
+        App?: {
+          addListener?: (
+            event: 'appStateChange',
+            cb: (state: { isActive?: boolean }) => void
+          ) => Promise<{ remove: () => void }> | { remove: () => void };
+        };
+      };
+    }).Plugins;
+
+    if (plugins?.Network?.addListener) {
+      let removed = false;
+      let handle: { remove: () => void } | null = null;
+      const result = plugins.Network.addListener('networkStatusChange', (status) => {
+        if (status?.connected) {
+          handleReconnect();
+        } else if (status?.connected === false) {
+          handleOffline();
+        }
+      });
+      Promise.resolve(result)
+        .then((h) => {
+          if (removed) {
+            h?.remove?.();
+          } else {
+            handle = h;
+          }
+        })
+        .catch(() => {});
+      cleanups.push(() => {
+        removed = true;
+        handle?.remove?.();
+      });
+    }
+
+    if (plugins?.App?.addListener) {
+      let removed = false;
+      let handle: { remove: () => void } | null = null;
+      const result = plugins.App.addListener('appStateChange', (state) => {
+        if (state?.isActive && (typeof navigator === 'undefined' || navigator.onLine !== false)) {
+          void ensureCloudSyncActive();
+        }
+      });
+      Promise.resolve(result)
+        .then((h) => {
+          if (removed) {
+            h?.remove?.();
+          } else {
+            handle = h;
+          }
+        })
+        .catch(() => {});
+      cleanups.push(() => {
+        removed = true;
+        handle?.remove?.();
+      });
+    }
+  } catch {
+    // Non-Capacitor environment
+  }
+
+  // Silent 30s pending-outbox retry & 60s full heartbeat
+  let tickCount = 0;
+  const intervalId = setInterval(() => {
+    tickCount++;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+    void (async () => {
+      try {
+        const pending = await db.syncOutbox.where('status').equals('pending').count();
+        if (pending > 0 || tickCount % 2 === 0) {
+          await runSyncCycle();
+        }
+      } catch {
+        // Silent
+      }
+    })();
+  }, 30_000);
+  cleanups.push(() => clearInterval(intervalId));
+
+  return () => {
+    for (const fn of cleanups) {
+      try {
+        fn();
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+    stopRealtimeSync();
+  };
 }
 
 // ---------------------------------------------------------------------------

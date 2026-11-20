@@ -4,7 +4,11 @@ import { Login } from './screens/Login';
 import { Setup } from './screens/Setup';
 import { FeedbackOverlay } from './components/FeedbackOverlay';
 import { db, type DBUser } from './db';
-import { ensureCloudSyncActive, runSyncCycle, stopRealtimeSync } from './logic/cloudSync';
+import {
+  ensureCloudSyncActive,
+  initNetworkSyncListeners,
+  stopRealtimeSync,
+} from './logic/cloudSync';
 import { supabase, isBackendConfigured } from './lib/supabase';
 import { initAndroidBackListener } from './logic/androidBack';
 
@@ -48,19 +52,9 @@ export function App() {
     return initAndroidBackListener();
   }, []);
 
-  // Silent automatic cloud sync, Realtime (postgres_changes) subscription, reconnect & 60s heartbeat
+  // Silent automatic cloud sync, offline/online & Capacitor Network listeners, and Realtime subscription
   useEffect(() => {
-    void ensureCloudSyncActive();
-
-    const handleOnline = () => {
-      void ensureCloudSyncActive();
-    };
-
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible' && navigator.onLine) {
-        void ensureCloudSyncActive();
-      }
-    };
+    const cleanupNetworkListeners = initNetworkSyncListeners();
 
     let authSubscription: { unsubscribe: () => void } | null = null;
     if (isBackendConfigured() && typeof supabase.auth?.onAuthStateChange === 'function') {
@@ -74,20 +68,9 @@ export function App() {
       authSubscription = data?.subscription || null;
     }
 
-    window.addEventListener('online', handleOnline);
-    document.addEventListener('visibilitychange', handleVisibility);
-    const intervalId = setInterval(() => {
-      if (navigator.onLine) {
-        void runSyncCycle();
-      }
-    }, 60_000);
-
     return () => {
-      window.removeEventListener('online', handleOnline);
-      document.removeEventListener('visibilitychange', handleVisibility);
-      clearInterval(intervalId);
+      cleanupNetworkListeners();
       authSubscription?.unsubscribe();
-      stopRealtimeSync();
     };
   }, []);
 
