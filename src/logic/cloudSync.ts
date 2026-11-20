@@ -28,6 +28,7 @@ export interface CloudConfig {
   cloudEnabled: boolean;
   cloudUrl: string;
   cloudAnonKey: string;
+  hasCustomRestConfig?: boolean;
   shopSyncId: string;
   deviceName: string;
   deviceId?: string;
@@ -40,6 +41,7 @@ export interface CloudConfig {
 export interface SyncCycleResult {
   success: boolean;
   offline: boolean;
+  authRequired?: boolean;
   processedCount: number;
   pendingCount: number;
   failedCount: number;
@@ -48,7 +50,8 @@ export interface SyncCycleResult {
 
 export interface HomeSyncState {
   cloudEnabled: boolean;
-  status: 'local' | 'synced' | 'syncing' | 'offline' | 'failed';
+  isConnected: boolean;
+  status: 'local' | 'not_connected' | 'synced' | 'syncing' | 'offline' | 'failed';
   pendingCount: number;
   failedCount: number;
   lastSyncedAt: number | null;
@@ -56,7 +59,7 @@ export interface HomeSyncState {
   chipLabel: string;
   chipColorClass: string;
   bannerVisible: boolean;
-  bannerType: 'offline' | 'failed' | null;
+  bannerType: 'offline' | 'failed' | 'not_connected' | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -122,8 +125,11 @@ export async function getCloudConfig(): Promise<CloudConfig> {
   const cloudEnabled = Boolean(enabledItem?.value ?? false);
   const envUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim();
   const envKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
-  const cloudUrl = (urlItem?.value as string) || envUrl;
-  const cloudAnonKey = (keyItem?.value as string) || envKey;
+  const savedUrl = ((urlItem?.value as string) || '').trim();
+  const savedKey = ((keyItem?.value as string) || '').trim();
+  const hasCustomRestConfig = Boolean(savedUrl && savedKey);
+  const cloudUrl = savedUrl || envUrl;
+  const cloudAnonKey = savedKey || envKey;
   const deviceName = (deviceItem?.value as string) || 'Counter PC 1 (Billing Desk)';
   const lastCloudSyncAt = (lastSyncItem?.value as number) || null;
   const lastStatus = (statusItem?.value as CloudConfig['lastStatus']) || 'never';
@@ -134,6 +140,7 @@ export async function getCloudConfig(): Promise<CloudConfig> {
     cloudEnabled,
     cloudUrl,
     cloudAnonKey,
+    hasCustomRestConfig,
     shopSyncId,
     deviceName,
     deviceId,
@@ -924,8 +931,25 @@ export async function runSyncCycle(options?: {
       };
     }
 
-    // Resolve cloud shop UUID
+    // Resolve cloud shop UUID & verify authenticated session / valid connection
     const session = await getCurrentCloudSession();
+    const hasValidConnection =
+      Boolean(session.isAuthenticated && session.user) ||
+      Boolean(session.cloudShopUuid) ||
+      Boolean(config.hasCustomRestConfig);
+
+    if (!hasValidConnection) {
+      return {
+        success: false,
+        offline: false,
+        authRequired: true,
+        processedCount: 0,
+        pendingCount,
+        failedCount: existingFailedCount,
+        lastError: 'Sign in required to sync with cloud',
+      };
+    }
+
     let cloudShopUuid = session.cloudShopUuid;
     if (!cloudShopUuid && session.user) {
       try {
@@ -968,7 +992,7 @@ export async function runSyncCycle(options?: {
             return handlePushFailure(chunk, processedCount, pushErr?.message || 'Sync push network error');
           }
         }
-      } else if (config.cloudUrl && config.cloudAnonKey) {
+      } else if (config.hasCustomRestConfig && config.cloudUrl && config.cloudAnonKey) {
         // Fallback REST fetch transport
         const cleanUrl = config.cloudUrl.replace(/\/+$/, '');
         const endpoint = `${cleanUrl}/rest/v1/hospivo_sync_events`;
@@ -1202,6 +1226,7 @@ export async function getHomeSyncState(): Promise<HomeSyncState> {
   if (!config.cloudEnabled) {
     return {
       cloudEnabled: false,
+      isConnected: false,
       status: 'local',
       pendingCount: 0,
       failedCount: 0,
@@ -1214,14 +1239,37 @@ export async function getHomeSyncState(): Promise<HomeSyncState> {
     };
   }
 
-  const [pendingCount, failedCount] = await Promise.all([
+  const [pendingCount, failedCount, session] = await Promise.all([
     db.syncOutbox.where('status').equals('pending').count(),
     db.syncOutbox.where('status').equals('failed').count(),
+    getCurrentCloudSession(),
   ]);
+
+  const isConnected =
+    Boolean(session.isAuthenticated && session.user) ||
+    Boolean(session.cloudShopUuid) ||
+    Boolean(config.hasCustomRestConfig);
+
+  if (!isConnected) {
+    return {
+      cloudEnabled: true,
+      isConnected: false,
+      status: 'not_connected',
+      pendingCount,
+      failedCount,
+      lastSyncedAt: null,
+      lastError: null,
+      chipLabel: 'Sign In Required',
+      chipColorClass: 'bg-[#FEF6EE] text-[#B54708] border-[#FEDF89]',
+      bannerVisible: false,
+      bannerType: 'not_connected',
+    };
+  }
 
   if (config.lastStatus === 'failed') {
     return {
       cloudEnabled: true,
+      isConnected: true,
       status: 'failed',
       pendingCount,
       failedCount,
@@ -1241,6 +1289,7 @@ export async function getHomeSyncState(): Promise<HomeSyncState> {
   if (isOffline) {
     return {
       cloudEnabled: true,
+      isConnected: true,
       status: 'offline',
       pendingCount,
       failedCount,
@@ -1256,6 +1305,7 @@ export async function getHomeSyncState(): Promise<HomeSyncState> {
   if (failedCount > 0) {
     return {
       cloudEnabled: true,
+      isConnected: true,
       status: 'failed',
       pendingCount,
       failedCount,
@@ -1271,6 +1321,7 @@ export async function getHomeSyncState(): Promise<HomeSyncState> {
   const timeStr = config.lastCloudSyncAt ? formatTimeHoursMinutes(config.lastCloudSyncAt) : '--:--';
   return {
     cloudEnabled: true,
+    isConnected: true,
     status: 'synced',
     pendingCount,
     failedCount,
@@ -1346,8 +1397,23 @@ export interface BackfillLocalResult {
  * and immediately triggers a sync cycle so they are pushed to Supabase hospivo_sync_events.
  */
 export async function backfillLocalDataToCloud(): Promise<BackfillLocalResult> {
-  // 1. Ensure cloud mode is enabled in config
+  // 1. Verify authenticated session / cloud connection before scanning & enqueuing
   let config = await getCloudConfig();
+  const session = await getCurrentCloudSession();
+  const hasValidConnection =
+    Boolean(session.isAuthenticated && session.user) ||
+    Boolean(session.cloudShopUuid) ||
+    Boolean(config.hasCustomRestConfig);
+
+  if (!hasValidConnection) {
+    return {
+      success: false,
+      enqueuedCount: 0,
+      syncedCount: 0,
+      lastError: 'Sign in required to sync with cloud',
+    };
+  }
+
   if (!config.cloudEnabled) {
     config = await saveCloudConfig({ cloudEnabled: true });
   }

@@ -16,6 +16,7 @@ export interface CloudSessionInfo {
   ownerEmail: string | null;
   shopSyncId: string | null;
   isConfigured: boolean;
+  isAuthenticated: boolean;
 }
 
 export interface ExistingShopInfo {
@@ -231,7 +232,7 @@ function isUserNotFound(err: unknown): boolean {
     return true;
   }
   if (
-    /signups? not allowed|user not found|invalid grant|no user|account not found|not registered/i.test(
+    /signups? not allowed|user not found|invalid grant|no user|account not found|not registered|does not exist|cannot create/i.test(
       msg
     )
   ) {
@@ -294,7 +295,13 @@ export async function sendEmailOtp(
     if (isRateLimited(error)) {
       return { success: false, error: RATE_LIMIT_MESSAGE, errorCode: 'rate_limited' };
     }
-    if (!createUser && (isUserNotFound(error) || (error as any).status === 400 || (error as any).status === 422)) {
+    if (
+      !createUser &&
+      (isUserNotFound(error) ||
+        (error as any).status === 400 ||
+        (error as any).status === 403 ||
+        (error as any).status === 422)
+    ) {
       // shouldCreateUser:false -> Supabase rejects emails that have no account
       return { success: false, error: ACCOUNT_NOT_FOUND_MESSAGE, errorCode: 'account_not_found' };
     }
@@ -459,6 +466,9 @@ export async function signOutOwner(): Promise<void> {
   }
 
   await db.settings.put({ key: 'owner_email', value: '' });
+  await db.settings.delete('cloud_shop_uuid');
+  await db.settings.put({ key: 'last_cloud_sync_status', value: 'never' });
+  await db.settings.delete('last_cloud_sync_at');
   await addAudit('Cloud', 'owner_sign_out', 'Owner', 'Signed out of cloud account');
 }
 
@@ -596,9 +606,10 @@ export async function getCurrentCloudSession(): Promise<CloudSessionInfo> {
     return {
       user: null,
       cloudShopUuid: shopUuid,
-      ownerEmail: savedEmail,
+      ownerEmail: null,
       shopSyncId: syncId,
       isConfigured: false,
+      isAuthenticated: false,
     };
   }
 
@@ -611,18 +622,20 @@ export async function getCurrentCloudSession(): Promise<CloudSessionInfo> {
     return {
       user,
       cloudShopUuid: shopUuid,
-      ownerEmail: user?.email || savedEmail,
+      ownerEmail: user ? user.email || savedEmail : null,
       shopSyncId: syncId,
       isConfigured: true,
+      isAuthenticated: Boolean(user),
     };
   } catch (err) {
     console.warn('getCurrentCloudSession error:', err);
     return {
       user: null,
       cloudShopUuid: shopUuid,
-      ownerEmail: savedEmail,
+      ownerEmail: null,
       shopSyncId: syncId,
       isConfigured: true,
+      isAuthenticated: false,
     };
   }
 }

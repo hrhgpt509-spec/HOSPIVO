@@ -695,7 +695,14 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
             {/* Right: Offline/Sync Status Pill + Theme Switch + User/Lock */}
             <div className="flex items-center gap-1.5 shrink-0">
               {syncState?.cloudEnabled ? (
-                syncState.status === 'offline' ? (
+                syncState.status === 'not_connected' ? (
+                  <StatusChip
+                    variant="pending_sync"
+                    label={t('cloud_sync.status_sign_in_required')}
+                    className="cursor-pointer text-xs max-w-[120px] truncate"
+                    onClick={handleOpenCloudSync}
+                  />
+                ) : syncState.status === 'offline' ? (
                   <StatusChip
                     variant="offline"
                     label={syncState.chipLabel}
@@ -1093,7 +1100,14 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
           <div className="flex items-center space-x-4">
             {/* StatusChip: Truthful Cloud / Local Mode */}
             {syncState?.cloudEnabled ? (
-              syncState.status === 'offline' ? (
+              syncState.status === 'not_connected' ? (
+                <StatusChip
+                  variant="pending_sync"
+                  label={t('cloud_sync.status_sign_in_required')}
+                  className="cursor-pointer"
+                  onClick={handleOpenCloudSync}
+                />
+              ) : syncState.status === 'offline' ? (
                 <StatusChip
                   variant="offline"
                   label={syncState.chipLabel}

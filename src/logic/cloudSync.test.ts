@@ -8,6 +8,7 @@ import {
   saveCloudConfig,
   enqueueSyncItem,
   runSyncCycle,
+  backfillLocalDataToCloud,
   createRemoteApprovalRequest,
   resolveRemoteApprovalRequest,
   getPendingApprovalRequests,
@@ -17,6 +18,7 @@ import {
   pullRemoteEvents,
   uploadShopPhoto,
 } from './cloudSync';
+import { signOutOwner } from './cloudAuth';
 
 describe('cloudSync & remote approvals engine', () => {
   beforeEach(async () => {
@@ -266,8 +268,35 @@ describe('cloudSync & remote approvals engine', () => {
       expect(state.bannerVisible).toBe(false);
     });
 
-    it('returns truthful "Cloud-enabled · Synced: HH:mm" when cloud mode is active and healthy', async () => {
+    it('returns truthful "Sign In Required" (not_connected) when cloudEnabled is true without authenticated session', async () => {
+      await saveCloudConfig({ cloudEnabled: true });
+
+      const state = await getHomeSyncState();
+      expect(state.cloudEnabled).toBe(true);
+      expect(state.isConnected).toBe(false);
+      expect(state.status).toBe('not_connected');
+      expect(state.chipLabel).toBe('Sign In Required');
+      expect(state.bannerType).toBe('not_connected');
+
+      // runSyncCycle must refuse to run or mark synced without auth/connection
+      const syncRes = await runSyncCycle({ force: true });
+      expect(syncRes.success).toBe(false);
+      expect(syncRes.authRequired).toBe(true);
+      expect(syncRes.processedCount).toBe(0);
+
+      const cfg = await getCloudConfig();
+      expect(cfg.lastStatus).toBe('never');
+      expect(cfg.lastCloudSyncAt).toBeNull();
+
+      // backfillLocalDataToCloud must also refuse without auth/connection
+      const backfillRes = await backfillLocalDataToCloud();
+      expect(backfillRes.success).toBe(false);
+      expect(backfillRes.enqueuedCount).toBe(0);
+    });
+
+    it('returns truthful "Cloud-enabled · Synced: HH:mm" when cloud mode is active, connected, and healthy', async () => {
       const now = new Date(2026, 9, 27, 10, 42).getTime();
+      await db.settings.put({ key: 'cloud_shop_uuid', value: 'shop-uuid-healthy' });
       await saveCloudConfig({
         cloudEnabled: true,
         lastCloudSyncAt: now,
@@ -276,12 +305,20 @@ describe('cloudSync & remote approvals engine', () => {
 
       const state = await getHomeSyncState();
       expect(state.cloudEnabled).toBe(true);
+      expect(state.isConnected).toBe(true);
       expect(state.status).toBe('synced');
       expect(state.chipLabel).toBe('Cloud-enabled · Synced: 10:42');
       expect(state.bannerVisible).toBe(false);
+
+      // After signing out, status flips back to not_connected cleanly
+      await signOutOwner();
+      const afterSignOut = await getHomeSyncState();
+      expect(afterSignOut.isConnected).toBe(false);
+      expect(afterSignOut.status).toBe('not_connected');
     });
 
     it('returns truthful "Sync nahi hua" with banner when last sync failed', async () => {
+      await db.settings.put({ key: 'cloud_shop_uuid', value: 'shop-uuid-failed' });
       await saveCloudConfig({
         cloudEnabled: true,
         lastStatus: 'failed',
@@ -297,6 +334,7 @@ describe('cloudSync & remote approvals engine', () => {
       });
 
       const state = await getHomeSyncState();
+      expect(state.isConnected).toBe(true);
       expect(state.status).toBe('failed');
       expect(state.chipLabel).toBe('Sync nahi hua');
       expect(state.bannerVisible).toBe(true);

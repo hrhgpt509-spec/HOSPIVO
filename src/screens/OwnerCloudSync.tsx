@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
 import { MobileTopBar } from '../components/MobileTopBar';
@@ -54,7 +54,10 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
   const [shopSyncId, setShopSyncId] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
   const [cloudShopUuid, setCloudShopUuid] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [highlightConnect, setHighlightConnect] = useState(false);
+  const ownerAccountRef = useRef<HTMLElement | null>(null);
 
   useBackHandler(isAuthModalOpen, () => setIsAuthModalOpen(false));
 
@@ -94,8 +97,9 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
       setCloudEnabled(cfg.cloudEnabled);
       setDeviceName(cfg.deviceName);
       setShopSyncId(cfg.shopSyncId);
-      setOwnerEmail(session.ownerEmail || '');
-      setCloudShopUuid(session.cloudShopUuid || '');
+      setIsAuthenticated(session.isAuthenticated);
+      setOwnerEmail(session.isAuthenticated ? session.ownerEmail || '' : '');
+      setCloudShopUuid(session.isAuthenticated ? session.cloudShopUuid || '' : '');
       setPendingCount(count);
     } catch (err) {
       console.error('Failed to load cloud config:', err);
@@ -113,12 +117,34 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     try {
       const updated = await saveCloudConfig({ cloudEnabled: enabled });
       setConfig(updated);
-      const updatedState = await getHomeSyncState();
+      const [session, updatedState] = await Promise.all([
+        getCurrentCloudSession(),
+        getHomeSyncState(),
+      ]);
+      const connected = session.isAuthenticated;
+      setIsAuthenticated(connected);
+      setOwnerEmail(connected ? session.ownerEmail || '' : '');
+      setCloudShopUuid(connected ? session.cloudShopUuid || '' : '');
       setSyncState(updatedState);
-      triggerFeedback(
-        'success',
-        enabled ? t('cloud_sync.cloud_mode_title') : t('cloud_sync.local_mode_title')
-      );
+
+      if (enabled && !connected) {
+        setHighlightConnect(true);
+        triggerFeedback(
+          'info',
+          t('cloud_sync.status_sign_in_required'),
+          t('cloud_sync.sign_in_required_sub')
+        );
+        setTimeout(() => {
+          ownerAccountRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 80);
+      } else if (enabled && connected) {
+        setHighlightConnect(false);
+        triggerFeedback('success', t('cloud_sync.cloud_mode_title'));
+        void runSyncCycle().then(() => refreshSyncStatus()).catch(() => {});
+      } else {
+        setHighlightConnect(false);
+        triggerFeedback('info', t('cloud_sync.local_mode_title'));
+      }
     } catch {
       triggerFeedback('error', t('common.error_occurred'));
     }
@@ -127,8 +153,10 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
   const handleSignOut = async () => {
     try {
       await signOutOwner();
+      setIsAuthenticated(false);
       setOwnerEmail('');
-      triggerFeedback('success', t('cloud_auth.toast_signout_success'));
+      setCloudShopUuid('');
+      triggerFeedback('info', t('cloud_auth.toast_signout_success'));
       await loadData();
     } catch {
       triggerFeedback('error', t('common.error_occurred'));
@@ -261,10 +289,12 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
         shopName={shopName}
         shopSyncId={shopSyncId}
         onSuccess={(sess) => {
+          setIsAuthenticated(true);
           setOwnerEmail(sess.email);
           if (sess.cloudShopUuid) setCloudShopUuid(sess.cloudShopUuid);
           if (sess.shopSyncId) setShopSyncId(sess.shopSyncId);
           setCloudEnabled(true);
+          setHighlightConnect(false);
           setIsAuthModalOpen(false);
           loadData();
         }}
@@ -281,20 +311,29 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     );
   }
 
+  const isCloudConnected = isAuthenticated;
+  const isAutoSyncActive = cloudEnabled && isCloudConnected;
+
   const lastSyncStr = config?.lastCloudSyncAt
     ? formatTimeHoursMinutes(config.lastCloudSyncAt)
     : '--:--';
+
+  const mobileSubtitle = !cloudEnabled
+    ? t('cloud_sync.local_mode_title')
+    : !isCloudConnected
+      ? t('cloud_sync.status_sign_in_required')
+      : syncState?.status === 'failed'
+        ? t('cloud_sync.status_failed')
+        : syncState?.status === 'offline'
+          ? t('cloud_sync.status_offline', { count: pendingCount })
+          : t('cloud_sync.status_synced', { time: lastSyncStr });
 
   return (
     <div className="w-full min-h-dvh bg-surface text-on-surface flex flex-col justify-between overflow-x-clip selection:bg-primary-fixed selection:text-on-primary-fixed">
       {/* Compact Mobile Header */}
       <MobileTopBar
         title={t('cloud_sync.title')}
-        subtitle={
-          cloudEnabled
-            ? t('cloud_sync.status_synced', { time: lastSyncStr })
-            : t('cloud_sync.local_mode_title')
-        }
+        subtitle={mobileSubtitle}
         onBack={onBack}
         backIcon="arrow_back"
         theme={theme}
@@ -319,15 +358,34 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
 
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Status chip */}
-          {cloudEnabled ? (
-            <div className="flex items-center gap-2 bg-[#E8F5E9] dark:bg-green-950/40 text-[#1B8F4A] dark:text-green-300 border border-[#A5D6A7] dark:border-green-800 px-3 sm:px-4 py-2 rounded-xl font-bold text-sm">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] inline-block animate-pulse" />
-              <span>{t('cloud_sync.status_synced', { time: lastSyncStr })}</span>
-            </div>
-          ) : (
+          {!cloudEnabled ? (
             <div className="flex items-center gap-2 bg-surface-container-low text-on-surface-variant border border-outline-variant px-3 sm:px-4 py-2 rounded-xl font-semibold text-sm">
               <span className="w-2.5 h-2.5 rounded-full bg-outline inline-block" />
               <span>{t('cloud_sync.local_mode_title')}</span>
+            </div>
+          ) : !isCloudConnected ? (
+            <button
+              type="button"
+              onClick={() => setIsAuthModalOpen(true)}
+              className="flex items-center gap-2 bg-[#FEF6EE] dark:bg-amber-950/40 text-[#B54708] dark:text-amber-300 border border-[#FEDF89] dark:border-amber-800 px-3 sm:px-4 py-2 rounded-xl font-bold text-sm cursor-pointer hover:brightness-95 transition-all"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F79009] inline-block" />
+              <span>{t('cloud_sync.status_sign_in_required')}</span>
+            </button>
+          ) : syncState?.status === 'failed' ? (
+            <div className="flex items-center gap-2 bg-[#FEF3F2] dark:bg-red-950/40 text-[#D92D20] dark:text-red-300 border border-[#FCA5A5] dark:border-red-800 px-3 sm:px-4 py-2 rounded-xl font-bold text-sm">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#D92D20] inline-block" />
+              <span>{t('cloud_sync.status_failed')}</span>
+            </div>
+          ) : syncState?.status === 'offline' ? (
+            <div className="flex items-center gap-2 bg-[#FEF6EE] dark:bg-amber-950/40 text-[#B54708] dark:text-amber-300 border border-[#FEDF89] dark:border-amber-800 px-3 sm:px-4 py-2 rounded-xl font-bold text-sm">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F79009] inline-block" />
+              <span>{t('cloud_sync.status_offline', { count: pendingCount })}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-[#E8F5E9] dark:bg-green-950/40 text-[#1B8F4A] dark:text-green-300 border border-[#A5D6A7] dark:border-green-800 px-3 sm:px-4 py-2 rounded-xl font-bold text-sm">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#1B8F4A] inline-block animate-pulse" />
+              <span>{t('cloud_sync.status_synced', { time: lastSyncStr })}</span>
             </div>
           )}
 
@@ -420,12 +478,24 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
                 <span className="text-xs text-outline">{t('cloud_sync.link_device_sub')}</span>
               </div>
             </div>
-            {cloudEnabled && (
+            {isAutoSyncActive ? (
               <span className="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full flex items-center gap-1.5">
                 <Icon name="check_circle" className="text-[16px]" />
                 {t('cloud_sync.auto_sync_active')}
               </span>
-            )}
+            ) : cloudEnabled ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setHighlightConnect(true);
+                  ownerAccountRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
+                className="text-xs font-bold text-[#B54708] dark:text-amber-300 bg-[#FEF6EE] dark:bg-amber-950/40 border border-[#FEDF89] dark:border-amber-800 px-3 py-1 rounded-full flex items-center gap-1.5 cursor-pointer"
+              >
+                <Icon name="warning" className="text-[16px]" />
+                {t('cloud_sync.status_sign_in_required')}
+              </button>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
@@ -495,7 +565,16 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
         </section>
 
         {/* SECTION 2: Owner Cloud Account */}
-        <section className="bg-surface-container-lowest rounded-2xl p-6 border border-outline-variant/40 shadow-sm flex flex-col gap-4">
+        <section
+          ref={ownerAccountRef}
+          className={`bg-surface-container-lowest rounded-2xl p-6 shadow-sm flex flex-col gap-4 transition-all ${
+            cloudEnabled && !isCloudConnected
+              ? highlightConnect
+                ? 'border-2 border-[#F79009] ring-4 ring-[#F79009]/20'
+                : 'border-2 border-[#FEDF89] dark:border-amber-700'
+              : 'border border-outline-variant/40'
+          }`}
+        >
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-3">
               <span className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex items-center justify-center border border-primary/20">
@@ -510,14 +589,35 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
             </div>
 
             <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${
-              ownerEmail
+              isCloudConnected
                 ? 'bg-green-500/10 text-green-700 dark:text-green-300 border-green-500/30'
-                : 'bg-surface-container text-on-surface-variant border-outline-variant'
+                : cloudEnabled
+                  ? 'bg-[#FEF6EE] dark:bg-amber-950/40 text-[#B54708] dark:text-amber-300 border-[#FEDF89] dark:border-amber-800'
+                  : 'bg-surface-container text-on-surface-variant border-outline-variant'
             }`}>
-              <span className={`w-2 h-2 rounded-full ${ownerEmail ? 'bg-green-600 animate-pulse' : 'bg-outline'}`} />
-              <span>{ownerEmail ? t('cloud_sync.status_connected') : t('cloud_sync.status_not_connected')}</span>
+              <span className={`w-2 h-2 rounded-full ${
+                isCloudConnected
+                  ? 'bg-green-600 animate-pulse'
+                  : cloudEnabled
+                    ? 'bg-[#F79009]'
+                    : 'bg-outline'
+              }`} />
+              <span>
+                {isCloudConnected
+                  ? t('cloud_sync.status_connected')
+                  : cloudEnabled
+                    ? t('cloud_sync.status_sign_in_required')
+                    : t('cloud_sync.status_not_connected')}
+              </span>
             </div>
           </div>
+
+          {cloudEnabled && !isCloudConnected && (
+            <div className="p-3.5 rounded-xl bg-[#FEF6EE] dark:bg-amber-950/30 border border-[#FEDF89] dark:border-amber-800 flex items-start gap-2.5 text-sm text-[#B54708] dark:text-amber-200 font-semibold">
+              <Icon name="info" className="text-[20px] shrink-0 mt-0.5 text-[#F79009]" />
+              <span>{t('cloud_sync.sign_in_required_banner')}</span>
+            </div>
+          )}
 
           <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -526,15 +626,15 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
               </div>
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-on-surface">
-                  {ownerEmail || t('cloud_sync.status_not_connected')}
+                  {isCloudConnected && ownerEmail ? ownerEmail : t('cloud_sync.status_not_connected')}
                 </span>
                 <span className="text-xs text-outline">
-                  {cloudShopUuid ? `ID: ${cloudShopUuid}` : t('cloud_auth.modal_sub')}
+                  {isCloudConnected && cloudShopUuid ? `ID: ${cloudShopUuid}` : t('cloud_auth.modal_sub')}
                 </span>
               </div>
             </div>
 
-            {ownerEmail ? (
+            {isCloudConnected ? (
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -547,7 +647,9 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAuthModalOpen(true)}
-                className="h-11 px-5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
+                className={`h-11 px-5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm ${
+                  highlightConnect ? 'ring-4 ring-primary/30 scale-[1.02]' : ''
+                }`}
               >
                 <Icon name="login" className="text-[18px]" />
                 <span>{btnConnect.main}</span>
@@ -678,9 +780,11 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
                 </span>
               )}
               <span className="text-xs text-outline">
-                {config?.lastStatus === 'failed' && config.lastError
-                  ? t('cloud_sync.toast_failed', { error: config.lastError })
-                  : `Last sync: ${lastSyncStr}`}
+                {!isCloudConnected
+                  ? t('cloud_sync.sign_in_required_sub')
+                  : config?.lastStatus === 'failed' && config.lastError
+                    ? t('cloud_sync.toast_failed', { error: config.lastError })
+                    : `Last sync: ${lastSyncStr}`}
               </span>
             </div>
           </div>
@@ -708,7 +812,7 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
             <button
               type="button"
               onClick={handlePushLocalData}
-              disabled={isBackfilling || isSyncing || !cloudEnabled}
+              disabled={isBackfilling || isSyncing || !isAutoSyncActive}
               className="flex-1 sm:flex-none h-14 min-h-[48px] px-5 rounded-2xl bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant disabled:opacity-50 disabled:cursor-not-allowed text-on-surface font-bold flex items-center justify-center gap-2 cursor-pointer transition-all"
             >
               <Icon name="cloud_upload" className={`text-[20px] ${isBackfilling ? 'animate-bounce' : ''}`} />
@@ -725,7 +829,7 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
             <button
               type="button"
               onClick={handleSyncNow}
-              disabled={isSyncing || isBackfilling || !cloudEnabled}
+              disabled={isSyncing || isBackfilling || !isAutoSyncActive}
               className="flex-1 sm:flex-none h-14 min-h-[56px] px-6 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed text-on-primary font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
             >
               <Icon name="sync" className={`text-[20px] ${isSyncing ? 'animate-spin' : ''}`} />

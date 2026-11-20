@@ -21,7 +21,7 @@ import { triggerFeedback } from '../logic/feedback';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { useBackHandler } from '../logic/androidBack';
 import { OwnerCloudSync } from './OwnerCloudSync';
-import { getCloudConfig, enqueueSyncItem, type CloudConfig } from '../logic/cloudSync';
+import { getCloudConfig, getHomeSyncState, enqueueSyncItem, type CloudConfig, type HomeSyncState } from '../logic/cloudSync';
 
 interface OwnerSettingsProps {
   currentUser?: DBUser | null;
@@ -53,6 +53,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
     DEFAULT_APPROVAL_RULES
   );
   const [cloudConfig, setCloudConfig] = useState<CloudConfig | null>(null);
+  const [cloudSyncState, setCloudSyncState] = useState<HomeSyncState | null>(null);
 
   // Modals
   const [isShopModalOpen, setIsShopModalOpen] = useState(false);
@@ -129,8 +130,9 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
         });
       }
 
-      const cfg = await getCloudConfig();
+      const [cfg, homeSync] = await Promise.all([getCloudConfig(), getHomeSyncState()]);
       setCloudConfig(cfg);
+      setCloudSyncState(homeSync);
     } catch (err) {
       console.error('Failed to load settings:', err);
     }
@@ -802,8 +804,16 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-body-md text-on-surface-variant font-medium">
-                    {cloudConfig?.cloudEnabled ? t('cloud_sync.cloud_mode_title') : t('cloud_sync.local_mode_title')}
+                  <span className={`font-body-md font-medium ${
+                    cloudConfig?.cloudEnabled && !cloudSyncState?.isConnected
+                      ? 'text-[#B54708] dark:text-amber-300 font-bold'
+                      : 'text-on-surface-variant'
+                  }`}>
+                    {!cloudConfig?.cloudEnabled
+                      ? t('cloud_sync.local_mode_title')
+                      : cloudSyncState?.isConnected
+                        ? t('cloud_sync.cloud_mode_title')
+                        : t('cloud_sync.status_sign_in_required')}
                   </span>
                   <Icon name="chevron_right" className="text-outline text-[24px]" />
                 </div>

@@ -62,11 +62,16 @@ describe('cloudAuth unit tests', () => {
     expect(resolveSupabaseUrl('https://njsxgbslgzlzdprcngzw.supabase.co')).toBe('https://njsxgbslgzlzdprcngzw.supabase.co');
     expect(resolveSupabaseUrl('"https://njsxgbslgzlzdprcngzw.supabase.co"')).toBe('https://njsxgbslgzlzdprcngzw.supabase.co');
 
-    // Unset or /api/sb resolves to origin + /api/sb
+    // Unset or /api/sb resolves to origin + /api/sb on web
     const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-    expect(resolveSupabaseUrl('')).toBe(`${origin}/api/sb`);
-    expect(resolveSupabaseUrl('/api/sb')).toBe(`${origin}/api/sb`);
-    expect(resolveSupabaseUrl('/custom/sb')).toBe(`${origin}/custom/sb`);
+    expect(resolveSupabaseUrl('', false)).toBe(`${origin}/api/sb`);
+    expect(resolveSupabaseUrl('/api/sb', false)).toBe(`${origin}/api/sb`);
+    expect(resolveSupabaseUrl('/custom/sb', false)).toBe(`${origin}/custom/sb`);
+
+    // On native Android/iOS (Capacitor), /api/sb or unset must resolve directly to HTTPS Supabase URL
+    expect(resolveSupabaseUrl('/api/sb', true)).toBe('https://njsxgbslgzlzdprcngzw.supabase.co');
+    expect(resolveSupabaseUrl('', true)).toBe('https://njsxgbslgzlzdprcngzw.supabase.co');
+    expect(resolveSupabaseUrl('https://custom.supabase.co', true)).toBe('https://custom.supabase.co');
   });
 
   it('getCurrentCloudSession returns safe defaults when unconfigured or offline', async () => {

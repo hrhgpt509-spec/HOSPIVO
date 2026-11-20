@@ -351,5 +351,15 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
 - Replaced on-screen numpads on phones with standard native `inputMode="numeric"` inputs across `Login`, `Setup`, `OwnerPinGate`, `ApprovalDialog`, `PaymentScreen`, `Step1CashCount`, `PaisaMilaModal`, `OwnerSettings`, `OwnerStaff`, and `OwnerBackup`, and hid remaining desktop-only `Enter ↵` shortcut hints on phones.
 - Preserved all Dexie tables, whole-paise math, FEFO, Udhaar, backup checksums, and Supabase sync logic untouched; production build and all 252 unit tests pass with 0 errors.
 
+- Cloud Sync truthful auth & connection state fix: added `isAuthenticated` to `getCurrentCloudSession()`, cleared `cloud_shop_uuid` & sync status on `signOutOwner()`, and guarded `runSyncCycle()`, `backfillLocalDataToCloud()`, and `getHomeSyncState()` so sync only runs and reports active when cloud mode is enabled AND an authenticated/connected session exists.
+- Updated `OwnerCloudSync.tsx`, `Home.tsx`, and `OwnerSettings.tsx` (plus en/hi/hinglish i18n keys) so toggling Cloud Enabled while signed out shows an amber "Sign In Required" / "Not Connected" notice and highlights "Sign In / Connect" instead of showing a fake green "Success" toast or "Auto Sync Active" badge.
+- Added unit tests in `src/logic/cloudSync.test.ts` verifying `not_connected` status, blocked sync/backfill without auth, and clean sign-out transition; production build and all tests pass with 0 errors.
+
+- Android OTP & Supabase direct connection fix: updated `resolveSupabaseUrl()` in `src/lib/supabase.ts` so native Capacitor Android/iOS builds connect directly to the HTTPS Supabase URL instead of `/api/sb`, configured `server.androidScheme: 'https'` in `capacitor.config.ts`, hardened `sendEmailOtp` unregistered-account checks in `src/logic/cloudAuth.ts`, and synced fresh `dist/` into Android via `npx cap sync android`.
+- Setup Wizard mobile overflow & Android storage UI fix (`src/screens/Setup.tsx` + en/hi/hinglish i18n): added safe-area top/bottom padding, `items-start sm:items-center`, `w-full min-w-0 overflow-x-clip` across all 8 steps; wrapped Step 4 labels, info callouts, and staff cards so "1 Added" and delete icons stay inside bounds; fixed PIN placeholder tracking so "PIN (4 digits)" and "Confirm PIN" never clip; stacked Step 6 storage cards vertically and showed native "Android App Storage Ready" inside Capacitor Android.
+- Verified with `npm run build`, `npm run test` (253 tests), and `npx cap sync android` with 0 errors.
+
+
+
 
 

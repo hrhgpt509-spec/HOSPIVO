@@ -244,6 +244,10 @@ export interface TranslationSchema {
     step6_status_denied: string;
     step6_status_denied_sub: string;
     step6_status_idle: string;
+    step6_android_storage_note: string;
+    step6_android_perm_sub: string;
+    step6_android_status_ready: string;
+    step6_android_status_ready_sub: string;
 
     step7_badge: string;
     step7_title: string;
@@ -1703,6 +1707,9 @@ export interface TranslationSchema {
     cloud_shop_uuid: string;
     status_connected: string;
     status_not_connected: string;
+    status_sign_in_required: string;
+    sign_in_required_sub: string;
+    sign_in_required_banner: string;
     btn_sign_in_connect: ButtonLabel;
     btn_sign_out: ButtonLabel;
   };
