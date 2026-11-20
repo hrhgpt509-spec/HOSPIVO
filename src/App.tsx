@@ -4,7 +4,8 @@ import { Login } from './screens/Login';
 import { Setup } from './screens/Setup';
 import { FeedbackOverlay } from './components/FeedbackOverlay';
 import { db, type DBUser } from './db';
-import { runSyncCycle } from './logic/cloudSync';
+import { ensureCloudSyncActive, runSyncCycle, stopRealtimeSync } from './logic/cloudSync';
+import { supabase, isBackendConfigured } from './lib/supabase';
 import { initAndroidBackListener } from './logic/androidBack';
 
 // Default 5 minutes of inactivity triggers auto-lock
@@ -47,13 +48,34 @@ export function App() {
     return initAndroidBackListener();
   }, []);
 
-  // Automatic reconnect & 60-second background sync heartbeat
+  // Silent automatic cloud sync, Realtime (postgres_changes) subscription, reconnect & 60s heartbeat
   useEffect(() => {
+    void ensureCloudSyncActive();
+
     const handleOnline = () => {
-      void runSyncCycle();
+      void ensureCloudSyncActive();
     };
 
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        void ensureCloudSyncActive();
+      }
+    };
+
+    let authSubscription: { unsubscribe: () => void } | null = null;
+    if (isBackendConfigured() && typeof supabase.auth?.onAuthStateChange === 'function') {
+      const { data } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_OUT') {
+          stopRealtimeSync();
+        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+          void ensureCloudSyncActive();
+        }
+      });
+      authSubscription = data?.subscription || null;
+    }
+
     window.addEventListener('online', handleOnline);
+    document.addEventListener('visibilitychange', handleVisibility);
     const intervalId = setInterval(() => {
       if (navigator.onLine) {
         void runSyncCycle();
@@ -62,7 +84,10 @@ export function App() {
 
     return () => {
       window.removeEventListener('online', handleOnline);
+      document.removeEventListener('visibilitychange', handleVisibility);
       clearInterval(intervalId);
+      authSubscription?.unsubscribe();
+      stopRealtimeSync();
     };
   }, []);
 

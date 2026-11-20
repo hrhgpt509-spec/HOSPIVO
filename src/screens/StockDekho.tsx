@@ -13,6 +13,7 @@ import {
 } from '../logic/stockDekho';
 import { lowStock, outOfStock, isOutOfStock, isLowStock } from '../logic/stock';
 import { useBackHandler } from '../logic/androidBack';
+import { subscribeToSyncUpdates } from '../logic/cloudSync';
 
 interface StockDekhoProps {
   onReturnHome: () => void;
@@ -82,6 +83,9 @@ export const StockDekho: React.FC<StockDekhoProps> = ({
 
   useEffect(() => {
     loadData();
+    return subscribeToSyncUpdates(() => {
+      void loadData();
+    }, ['medicine', 'batch', 'stock_movement', 'purchase', 'supplier', 'bill', 'bill_return']);
   }, [loadData]);
 
   // Calculate medicine stock summaries

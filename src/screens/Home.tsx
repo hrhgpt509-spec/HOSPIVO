@@ -35,7 +35,12 @@ import {
   type BackupStatus,
 } from '../logic/backup';
 import { triggerFeedback } from '../logic/feedback';
-import { getHomeSyncState, runSyncCycle, type HomeSyncState } from '../logic/cloudSync';
+import {
+  getHomeSyncState,
+  runSyncCycle,
+  subscribeToSyncUpdates,
+  type HomeSyncState,
+} from '../logic/cloudSync';
 import { OwnerCloudSync } from './OwnerCloudSync';
 import { RemoteApprovalInbox } from './RemoteApprovalInbox';
 import { useIsCompactViewport } from '../logic/useViewport';
@@ -107,21 +112,31 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
 
   useEffect(() => {
     if (activePage !== 'home') return;
-    loadHomeLiveCounters()
-      .then((res) => setLiveCounters(res))
-      .catch(() => {});
-    getBackupStatus()
-      .then((st) => setBackupStatus(st))
-      .catch(() => {});
-    getHomeSyncState()
-      .then((st) => setSyncState(st))
-      .catch(() => {});
+    const refreshHome = () => {
+      loadHomeLiveCounters()
+        .then((res) => setLiveCounters(res))
+        .catch(() => {});
+      getBackupStatus()
+        .then((st) => setBackupStatus(st))
+        .catch(() => {});
+      getHomeSyncState()
+        .then((st) => setSyncState(st))
+        .catch(() => {});
+    };
+
+    refreshHome();
+    const unsubSync = subscribeToSyncUpdates(() => {
+      refreshHome();
+    });
 
     const interval = setInterval(() => {
       getHomeSyncState().then(setSyncState).catch(() => {});
     }, 10000);
 
-    return () => clearInterval(interval);
+    return () => {
+      unsubSync();
+      clearInterval(interval);
+    };
   }, [activePage]);
 
   useEffect(() => {

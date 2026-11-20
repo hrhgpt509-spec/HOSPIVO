@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db, type Shop } from '../db';
+import { subscribeToSyncUpdates } from './cloudSync';
 
 export interface UseShopResult {
   shop: Shop | null;
@@ -40,6 +41,9 @@ export function useShop(): UseShopResult {
 
   useEffect(() => {
     fetchShop();
+    return subscribeToSyncUpdates(() => {
+      void fetchShop();
+    }, ['shop', 'staff']);
   }, [fetchShop]);
 
   return {

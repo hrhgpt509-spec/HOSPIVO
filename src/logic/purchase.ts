@@ -282,15 +282,17 @@ export async function savePurchase(
         const unitsPerPack = Math.max(1, line.unitsPerPack || 1);
         const qtyUnits = (line.packs + line.freePacks) * unitsPerPack;
 
-        await db.stockMovements.add({
+        const movementRow = {
           batchId,
           medicineId: line.medicineId,
-          type: 'purchase',
+          type: 'purchase' as const,
           qtyUnits,
           reference: `Purchase #${purchaseId} (${draft.invoiceNo})`,
           who: userName,
           at: new Date().toISOString(),
-        });
+        };
+        const movementId = Number(await db.stockMovements.add(movementRow));
+        enqueueSyncItem('stock_movement', movementId, { id: movementId, ...movementRow }).catch(() => {});
 
         totalPacksAdded += line.packs + line.freePacks;
         totalPaise += line.packs * line.purchaseRatePaise; // free packs cost nothing
@@ -309,11 +311,19 @@ export async function savePurchase(
         }),
       });
 
+      const savedPurchase = await db.purchases.get(purchaseId);
+      const savedLines = await db.purchaseLines.where('purchaseId').equals(purchaseId).toArray();
       enqueueSyncItem('purchase', purchaseId, {
-        purchaseId,
-        supplierId: draft.supplierId,
-        invoiceNo: draft.invoiceNo,
-        linesCount: draft.lines.length,
+        purchase: savedPurchase || {
+          id: purchaseId,
+          supplierId: draft.supplierId,
+          invoiceNo: draft.invoiceNo.trim(),
+          date: draft.invoiceDate.trim(),
+          invoicePhoto: draft.invoicePhoto,
+          verified: false,
+          createdAt: new Date().toISOString(),
+        },
+        lines: savedLines,
       }).catch(() => {});
 
       return {

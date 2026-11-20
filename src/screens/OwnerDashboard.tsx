@@ -13,6 +13,7 @@ import {
   type OwnerDashboardMetrics,
   type ReportPreset,
 } from '../logic/reports';
+import { subscribeToSyncUpdates } from '../logic/cloudSync';
 
 interface OwnerDashboardProps {
   onReturnHome: () => void;
@@ -101,6 +102,9 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
 
   useEffect(() => {
     void refreshMetrics();
+    return subscribeToSyncUpdates(() => {
+      void refreshMetrics();
+    }, ['bill', 'bill_return', 'medicine', 'batch', 'stock_movement', 'purchase', 'customer', 'udhaar_payment', 'daily_closing']);
   }, [refreshMetrics]);
 
   const splitPercentages = useMemo(() => {

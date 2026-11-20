@@ -1,5 +1,6 @@
 import {
   db,
+  runWithSyncWorkspaceBypass,
   type SyncOutboxItem,
   type SyncEntityType,
   type ApprovalRequest,
@@ -12,6 +13,7 @@ import {
   type BillItem,
   type BillReturn,
   type Purchase,
+  type PurchaseLine,
   type StockMovement,
   type UdhaarPayment,
   type DailyClosing,
@@ -158,6 +160,13 @@ export async function saveCloudConfig(updates: Partial<CloudConfig>): Promise<Cl
   if (updates.cloudEnabled !== undefined) {
     await db.settings.put({ key: 'cloud_enabled', value: updates.cloudEnabled });
 
+    if (!updates.cloudEnabled) {
+      stopRealtimeSync();
+      await switchToLocalWorkspace().catch((err) => {
+        console.warn('Could not restore local workspace:', err);
+      });
+    }
+
     // Update shop mode in db.shop
     try {
       const shops = await db.shop.toArray();
@@ -209,14 +218,31 @@ export const MAX_SYNC_RETRIES = 10;
 let isSyncRunning = false;
 
 /**
+ * Deterministic 6-digit numeric device hash so two devices sharing the same shopSyncId
+ * never produce colliding sync event IDs when both have local auto-increment outbox ID 1.
+ */
+function numericDeviceHash(deviceId: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < deviceId.length; i++) {
+    hash ^= deviceId.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  const sixDigit = (Math.abs(hash) % 900000) + 100000;
+  return String(sixDigit);
+}
+
+/**
  * Builds a globally unique, deterministic, idempotent event ID for hospivo_sync_events
  * so multiple devices with local auto-increment IDs never collide or overwrite each other.
  */
 export function buildSyncEventId(
   shopSyncId: string,
-  item: Pick<SyncOutboxItem, 'id' | 'entityType' | 'entityId'>
+  item: Pick<SyncOutboxItem, 'id' | 'entityType' | 'entityId'>,
+  deviceId?: string
 ): string {
-  return `${shopSyncId}:${item.entityType}:${item.entityId}:${item.id ?? Date.now()}`;
+  const baseSuffix = String(item.id ?? Date.now());
+  const suffix = deviceId ? `${numericDeviceHash(deviceId)}${baseSuffix}` : baseSuffix;
+  return `${shopSyncId}:${item.entityType}:${item.entityId}:${suffix}`;
 }
 
 /**
@@ -267,8 +293,8 @@ export async function enqueueSyncItem(
     createdAt: new Date().toISOString(),
   });
 
-  // Non-blocking sync cycle trigger only if credentials configured
-  if (config.cloudUrl && config.cloudAnonKey) {
+  // Non-blocking silent sync cycle trigger whenever backend or custom REST is configured
+  if (isBackendConfigured() || (config.cloudUrl && config.cloudAnonKey)) {
     runSyncCycle().catch(() => {});
   }
 
@@ -373,6 +399,94 @@ export function parseEventCreatedAt(val: unknown): string {
 }
 
 /**
+ * Helper to idempotently insert a single StockMovement without duplicating or
+ * colliding on local auto-increment IDs across devices.
+ */
+async function applyRemoteStockMovement(movement: StockMovement): Promise<void> {
+  if (!movement || !movement.at || !movement.batchId) return;
+
+  const naturalDup = await db.stockMovements
+    .where('batchId')
+    .equals(Number(movement.batchId))
+    .filter(
+      (m) =>
+        m.at === movement.at &&
+        m.qtyUnits === movement.qtyUnits &&
+        m.type === movement.type &&
+        (m.reference || '') === (movement.reference || '')
+    )
+    .first();
+  if (naturalDup) return;
+
+  if (movement.id !== undefined && movement.id !== null) {
+    const byId = await db.stockMovements.get(Number(movement.id));
+    if (byId) {
+      // Different movement already holds this local auto-increment ID -> insert without conflicting id
+      const { id: _ignored, ...rest } = movement;
+      await db.stockMovements.add(rest);
+      return;
+    }
+    await db.stockMovements.put({ ...movement, id: Number(movement.id) });
+  } else {
+    await db.stockMovements.add(movement);
+  }
+}
+
+/**
+ * Deduplicates local db.users rows so switching modes or syncing across devices
+ * never leaves duplicate staff/owner profiles (e.g. duplicate "Suraj Dev").
+ */
+export async function deduplicateLocalUsers(): Promise<number> {
+  const allUsers = await db.users.toArray();
+  if (allUsers.length <= 1) return 0;
+
+  const groups = new Map<string, DBUser[]>();
+  for (const user of allUsers) {
+    const normName = (user.name || '').trim().toLowerCase();
+    const key =
+      user.role === 'owner'
+        ? 'owner'
+        : normName
+          ? `${user.role}:${normName}`
+          : `id:${user.id}`;
+    const list = groups.get(key) || [];
+    list.push(user);
+    groups.set(key, list);
+  }
+
+  let removedCount = 0;
+  for (const [, list] of groups) {
+    if (list.length <= 1) continue;
+
+    // Pick canonical row: prefer 'owner' id for owner, then authUserId, then active, then newest createdAt
+    list.sort((a, b) => {
+      if (a.role === 'owner') {
+        if (a.id === 'owner' && b.id !== 'owner') return -1;
+        if (b.id === 'owner' && a.id !== 'owner') return 1;
+      }
+      const aAuth = a.authUserId ? 1 : 0;
+      const bAuth = b.authUserId ? 1 : 0;
+      if (aAuth !== bAuth) return bAuth - aAuth;
+      const aActive = a.active !== false ? 1 : 0;
+      const bActive = b.active !== false ? 1 : 0;
+      if (aActive !== bActive) return bActive - aActive;
+      const aTime = Date.parse(a.createdAt || '') || 0;
+      const bTime = Date.parse(b.createdAt || '') || 0;
+      if (aTime !== bTime) return bTime - aTime;
+      return b.id.localeCompare(a.id);
+    });
+
+    const duplicates = list.slice(1);
+    for (const dup of duplicates) {
+      await db.users.delete(dup.id);
+      removedCount++;
+    }
+  }
+
+  return removedCount;
+}
+
+/**
  * Applies a single delta event pulled from hospivo_sync_events to local Dexie tables idempotently.
  */
 export async function applyRemoteEvent(event: any): Promise<void> {
@@ -394,22 +508,53 @@ export async function applyRemoteEvent(event: any): Promise<void> {
     case 'medicine': {
       const med = (payload.medicine || payload) as Medicine;
       if (med && (med.name || med.id)) {
-        const existing = med.id ? await db.medicines.get(Number(med.id)) : null;
-        if (existing) {
-          await db.medicines.update(Number(med.id), { ...med, id: Number(med.id) });
-        } else {
-          let matched = null;
-          if (med.shortCode) {
-            matched = await db.medicines.where('shortCode').equals(med.shortCode).first();
+        let matched: Medicine | undefined;
+        if (med.shortCode) {
+          matched = await db.medicines.where('shortCode').equals(med.shortCode).first();
+        }
+        if (!matched && med.barcode) {
+          matched = await db.medicines.where('barcode').equals(med.barcode).first();
+        }
+        if (!matched && med.id !== undefined && med.id !== null) {
+          const byId = await db.medicines.get(Number(med.id));
+          if (byId) {
+            const sameIdentity =
+              !med.name ||
+              byId.name.trim().toLowerCase() === med.name.trim().toLowerCase() ||
+              (med.shortCode && byId.shortCode === med.shortCode) ||
+              (med.barcode && byId.barcode === med.barcode) ||
+              (med.name && byId.name && (med.name.toLowerCase().includes(byId.name.toLowerCase()) || byId.name.toLowerCase().includes(med.name.toLowerCase())));
+            if (sameIdentity) {
+              matched = byId;
+            }
           }
-          if (!matched && med.barcode) {
-            matched = await db.medicines.where('barcode').equals(med.barcode).first();
-          }
-          if (matched && matched.id) {
-            await db.medicines.update(matched.id, { ...med, id: matched.id });
+        }
+        if (!matched && med.name) {
+          const normName = med.name.trim().toLowerCase();
+          const normStrength = (med.strength || '').trim().toLowerCase();
+          const normForm = (med.form || '').trim().toLowerCase();
+          matched = await db.medicines
+            .filter(
+              (m) =>
+                m.name.trim().toLowerCase() === normName &&
+                (m.strength || '').trim().toLowerCase() === normStrength &&
+                (m.form || '').trim().toLowerCase() === normForm
+            )
+            .first();
+        }
+
+        if (matched && matched.id !== undefined) {
+          await db.medicines.update(matched.id, { ...med, id: matched.id });
+        } else if (med.id !== undefined && med.id !== null) {
+          const occupied = await db.medicines.get(Number(med.id));
+          if (occupied) {
+            const { id: _ignored, ...rest } = med;
+            await db.medicines.add(rest);
           } else {
-            await db.medicines.put(med);
+            await db.medicines.put({ ...med, id: Number(med.id) });
           }
+        } else {
+          await db.medicines.add(med);
         }
       }
       break;
@@ -423,10 +568,18 @@ export async function applyRemoteEvent(event: any): Promise<void> {
           .equals(batch.batchNo)
           .filter((b) => b.medicineId === Number(batch.medicineId))
           .first();
-        if (existing && existing.id) {
+        if (existing && existing.id !== undefined) {
           await db.batches.update(existing.id, { ...batch, id: existing.id });
+        } else if (batch.id !== undefined && batch.id !== null) {
+          const occupied = await db.batches.get(Number(batch.id));
+          if (occupied) {
+            const { id: _ignored, ...rest } = batch;
+            await db.batches.add(rest);
+          } else {
+            await db.batches.put({ ...batch, id: Number(batch.id) });
+          }
         } else {
-          await db.batches.put(batch);
+          await db.batches.add(batch);
         }
       }
       break;
@@ -435,11 +588,28 @@ export async function applyRemoteEvent(event: any): Promise<void> {
     case 'supplier': {
       const supp = (payload.supplier || payload) as Supplier;
       if (supp && supp.name) {
-        const existing = supp.id ? await db.suppliers.get(Number(supp.id)) : null;
-        if (existing) {
-          await db.suppliers.update(Number(supp.id), supp);
+        const normName = supp.name.trim().toLowerCase();
+        let matched = supp.id !== undefined && supp.id !== null ? await db.suppliers.get(Number(supp.id)) : undefined;
+        if (matched && matched.name.trim().toLowerCase() !== normName) {
+          matched = undefined;
+        }
+        if (!matched) {
+          matched = await db.suppliers
+            .filter((s) => s.name.trim().toLowerCase() === normName)
+            .first();
+        }
+        if (matched && matched.id !== undefined) {
+          await db.suppliers.update(matched.id, { ...supp, id: matched.id });
+        } else if (supp.id !== undefined && supp.id !== null) {
+          const occupied = await db.suppliers.get(Number(supp.id));
+          if (occupied) {
+            const { id: _ignored, ...rest } = supp;
+            await db.suppliers.add(rest);
+          } else {
+            await db.suppliers.put({ ...supp, id: Number(supp.id) });
+          }
         } else {
-          await db.suppliers.put(supp);
+          await db.suppliers.add(supp);
         }
       }
       break;
@@ -448,11 +618,29 @@ export async function applyRemoteEvent(event: any): Promise<void> {
     case 'customer': {
       const cust = (payload.customer || payload) as Customer;
       if (cust && cust.name) {
-        const existing = cust.id ? await db.customers.get(Number(cust.id)) : null;
-        if (existing) {
-          await db.customers.update(Number(cust.id), cust);
+        const cleanPhone = (cust.phone || '').trim();
+        let matched: Customer | undefined;
+        if (cleanPhone) {
+          matched = await db.customers.where('phone').equals(cleanPhone).first();
+        }
+        if (!matched && cust.id !== undefined && cust.id !== null) {
+          const byId = await db.customers.get(Number(cust.id));
+          if (byId && (!cleanPhone || !byId.phone || byId.phone.trim() === cleanPhone)) {
+            matched = byId;
+          }
+        }
+        if (matched && matched.id !== undefined) {
+          await db.customers.update(matched.id, { ...cust, id: matched.id });
+        } else if (cust.id !== undefined && cust.id !== null) {
+          const occupied = await db.customers.get(Number(cust.id));
+          if (occupied) {
+            const { id: _ignored, ...rest } = cust;
+            await db.customers.add(rest);
+          } else {
+            await db.customers.put({ ...cust, id: Number(cust.id) });
+          }
         } else {
-          await db.customers.put(cust);
+          await db.customers.add(cust);
         }
       }
       break;
@@ -461,23 +649,58 @@ export async function applyRemoteEvent(event: any): Promise<void> {
     case 'staff': {
       const user = (payload.user || payload) as DBUser & { approvalPin?: { hash: string; salt: string } };
       if (user && user.id) {
-        const existing = await db.users.get(String(user.id));
+        const incomingId = String(user.id);
+        const existing = await db.users.get(incomingId);
+        const role = user.role || (incomingId === 'owner' ? 'owner' : 'cashier');
+        const name = (user.name || (incomingId === 'owner' ? 'Owner' : 'Staff')).trim();
+        const normName = name.toLowerCase();
+
+        // Deduplicate against any existing user with a different ID representing the same person
+        const allUsers = await db.users.toArray();
+        const duplicatesToMerge = allUsers.filter((other) => {
+          if (other.id === incomingId) return false;
+          if (role === 'owner' && other.role === 'owner') return true;
+          if (user.authUserId && other.authUserId && other.authUserId === user.authUserId) return true;
+          if (normName && other.role === role && other.name.trim().toLowerCase() === normName) return true;
+          return false;
+        });
+
+        const mergedAuthUserId =
+          user.authUserId ||
+          existing?.authUserId ||
+          duplicatesToMerge.find((d) => d.authUserId)?.authUserId;
+
         const userData: DBUser = {
-          id: String(user.id),
-          name: user.name || (user.id === 'owner' ? 'Owner' : 'Staff'),
-          role: user.role || (user.id === 'owner' ? 'owner' : 'cashier'),
-          pinHash: user.pinHash,
-          pinSalt: user.pinSalt,
-          pinLength: user.pinLength || 4,
+          id: incomingId,
+          name,
+          role,
+          pinHash: user.pinHash || existing?.pinHash || duplicatesToMerge[0]?.pinHash || '',
+          pinSalt: user.pinSalt || existing?.pinSalt || duplicatesToMerge[0]?.pinSalt || '',
+          pinLength: user.pinLength || existing?.pinLength || 4,
           active: user.active !== false,
-          createdAt: user.createdAt || (event.client_created_at ? parseEventCreatedAt(event.client_created_at) : new Date().toISOString()),
-          ...(user.authUserId ? { authUserId: user.authUserId } : existing?.authUserId ? { authUserId: existing.authUserId } : {}),
+          createdAt:
+            user.createdAt ||
+            existing?.createdAt ||
+            (event.client_created_at ? parseEventCreatedAt(event.client_created_at) : new Date().toISOString()),
+          ...(mergedAuthUserId ? { authUserId: mergedAuthUserId } : {}),
         };
 
+        for (const dup of duplicatesToMerge) {
+          await db.users.delete(dup.id);
+        }
+
         if (existing) {
-          await db.users.update(String(user.id), userData);
+          await db.users.update(incomingId, userData);
         } else {
           await db.users.put(userData);
+        }
+
+        // Update placeholder shop ownerName when real owner user arrives
+        if (role === 'owner' && name && name !== 'Owner') {
+          const shops = await db.shop.toArray();
+          if (shops.length > 0 && shops[0].id && (!shops[0].ownerName || shops[0].ownerName === 'Owner')) {
+            await db.shop.update(shops[0].id, { ownerName: name });
+          }
         }
 
         // Restore approval PIN if bundled with owner user and local approval PIN is not yet set
@@ -493,20 +716,75 @@ export async function applyRemoteEvent(event: any): Promise<void> {
 
     case 'bill': {
       const bill = (payload.bill || payload) as Bill;
-      const items = payload.items as BillItem[];
+      const items = payload.items as BillItem[] | undefined;
+      const movements = payload.movements as StockMovement[] | undefined;
       if (bill && (bill.id || bill.billNo)) {
-        const existing = bill.id ? await db.bills.get(Number(bill.id)) : null;
-        if (existing) {
-          await db.bills.update(Number(bill.id), bill);
-        } else {
-          await db.bills.put(bill);
+        let existing: Bill | undefined;
+        if (bill.billNo) {
+          existing = await db.bills.where('billNo').equals(bill.billNo).first();
         }
-        if (Array.isArray(items)) {
-          for (const itm of items) {
-            const ex = itm.id ? await db.billItems.get(Number(itm.id)) : null;
-            if (!ex) {
-              await db.billItems.put(itm);
+        if (!existing && bill.id !== undefined && bill.id !== null) {
+          const byId = await db.bills.get(Number(bill.id));
+          if (byId && (!bill.billNo || byId.billNo === bill.billNo)) {
+            existing = byId;
+          }
+        }
+
+        let targetBillId: number | undefined;
+        if (existing && existing.id !== undefined) {
+          targetBillId = existing.id;
+          // Bills are immutable once finalized except status transitions to returned_partial / returned_full
+          if (
+            bill.status &&
+            bill.status !== existing.status &&
+            (bill.status === 'returned_partial' || bill.status === 'returned_full')
+          ) {
+            await db.bills.update(existing.id, { status: bill.status });
+          }
+        } else {
+          if (bill.id !== undefined && bill.id !== null) {
+            const occupied = await db.bills.get(Number(bill.id));
+            if (occupied) {
+              const { id: _ignored, ...billWithoutId } = bill;
+              targetBillId = Number(await db.bills.add(billWithoutId));
+            } else {
+              targetBillId = Number(await db.bills.put({ ...bill, id: Number(bill.id) }));
             }
+          } else {
+            targetBillId = Number(await db.bills.add(bill));
+          }
+        }
+
+        if (Array.isArray(items) && targetBillId !== undefined) {
+          const existingItems = await db.billItems.where('billId').equals(targetBillId).toArray();
+          for (const itm of items) {
+            const remapped: BillItem = { ...itm, billId: targetBillId };
+            const dupItem = existingItems.find(
+              (ei) =>
+                ei.medicineId === remapped.medicineId &&
+                ei.batchId === remapped.batchId &&
+                ei.qtyUnits === remapped.qtyUnits &&
+                ei.lineTotalPaise === remapped.lineTotalPaise
+            );
+            if (dupItem) continue;
+
+            if (remapped.id !== undefined && remapped.id !== null) {
+              const occupiedItem = await db.billItems.get(Number(remapped.id));
+              if (occupiedItem) {
+                const { id: _ignored, ...itemWithoutId } = remapped;
+                await db.billItems.add(itemWithoutId);
+              } else {
+                await db.billItems.put({ ...remapped, id: Number(remapped.id) });
+              }
+            } else {
+              await db.billItems.add(remapped);
+            }
+          }
+        }
+
+        if (Array.isArray(movements)) {
+          for (const mv of movements) {
+            await applyRemoteStockMovement(mv);
           }
         }
       }
@@ -515,44 +793,179 @@ export async function applyRemoteEvent(event: any): Promise<void> {
 
     case 'bill_return': {
       const ret = (payload.billReturn || payload) as BillReturn;
+      const movements = payload.movements as StockMovement[] | undefined;
       if (ret && (ret.id || ret.returnNo)) {
-        await db.billReturns.put(ret);
-      }
-      break;
-    }
+        let existing: BillReturn | undefined;
+        if (ret.returnNo) {
+          existing = await db.billReturns.where('returnNo').equals(ret.returnNo).first();
+        }
+        if (!existing && ret.id !== undefined && ret.id !== null) {
+          const byId = await db.billReturns.get(Number(ret.id));
+          if (byId && (!ret.returnNo || byId.returnNo === ret.returnNo)) {
+            existing = byId;
+          }
+        }
 
-    case 'purchase': {
-      const purchase = (payload.purchase || payload) as Purchase;
-      if (purchase && purchase.id) {
-        await db.purchases.put(purchase);
-      }
-      break;
-    }
-
-    case 'stock_movement': {
-      const movement = (payload.movement || payload) as StockMovement;
-      if (movement && movement.at && movement.batchId) {
-        const existing = movement.id ? await db.stockMovements.get(Number(movement.id)) : null;
         if (!existing) {
-          const dup = await db.stockMovements
-            .where('batchId')
-            .equals(Number(movement.batchId))
-            .filter((m) => m.at === movement.at && m.qtyUnits === movement.qtyUnits && m.type === movement.type)
-            .first();
-          if (!dup) {
-            await db.stockMovements.put(movement);
+          const recordToSave: BillReturn = {
+            ...ret,
+            originalBillNo: ret.originalBillNo || '',
+            itemsJson: ret.itemsJson || '[]',
+            reason: ret.reason || 'Customer return',
+            approvedBy: ret.approvedBy || 'Owner',
+            createdAt: ret.createdAt || new Date().toISOString(),
+          };
+          if (recordToSave.id !== undefined && recordToSave.id !== null) {
+            const occupied = await db.billReturns.get(Number(recordToSave.id));
+            if (occupied) {
+              const { id: _ignored, ...rest } = recordToSave;
+              await db.billReturns.add(rest);
+            } else {
+              await db.billReturns.put({ ...recordToSave, id: Number(recordToSave.id) });
+            }
+          } else {
+            await db.billReturns.add(recordToSave);
+          }
+        }
+
+        // Update original bill status if provided
+        const newBillStatus = payload.newBillStatus as Bill['status'] | undefined;
+        if (newBillStatus === 'returned_partial' || newBillStatus === 'returned_full') {
+          let origBill: Bill | undefined;
+          if (ret.originalBillNo) {
+            origBill = await db.bills.where('billNo').equals(ret.originalBillNo).first();
+          }
+          if (!origBill && ret.originalBillId) {
+            origBill = await db.bills.get(Number(ret.originalBillId));
+          }
+          if (origBill && origBill.id !== undefined && origBill.status !== newBillStatus) {
+            await db.bills.update(origBill.id, { status: newBillStatus });
+          }
+        }
+
+        if (Array.isArray(movements)) {
+          for (const mv of movements) {
+            await applyRemoteStockMovement(mv);
           }
         }
       }
       break;
     }
 
+    case 'purchase': {
+      const rawPurchase = (payload.purchase || payload) as Purchase & { purchaseId?: number };
+      const lines = payload.lines as PurchaseLine[] | undefined;
+      const movements = payload.movements as StockMovement[] | undefined;
+      const resolvedId = rawPurchase?.id ?? rawPurchase?.purchaseId;
+      if (rawPurchase && (resolvedId || rawPurchase.invoiceNo)) {
+        const purchaseRecord: Purchase = {
+          ...(resolvedId !== undefined ? { id: Number(resolvedId) } : {}),
+          supplierId: Number(rawPurchase.supplierId || 0),
+          invoiceNo: rawPurchase.invoiceNo || '',
+          date: rawPurchase.date || new Date().toISOString().slice(0, 10),
+          invoicePhoto: rawPurchase.invoicePhoto || '',
+          verified: Boolean(rawPurchase.verified),
+          createdAt: rawPurchase.createdAt || new Date().toISOString(),
+        };
+
+        let existing: Purchase | undefined;
+        if (purchaseRecord.invoiceNo) {
+          existing = await db.purchases
+            .where('invoiceNo')
+            .equals(purchaseRecord.invoiceNo)
+            .filter((p) => p.supplierId === purchaseRecord.supplierId && p.date === purchaseRecord.date)
+            .first();
+        }
+        if (!existing && purchaseRecord.id !== undefined) {
+          const byId = await db.purchases.get(purchaseRecord.id);
+          if (byId && (!purchaseRecord.invoiceNo || byId.invoiceNo === purchaseRecord.invoiceNo)) {
+            existing = byId;
+          }
+        }
+
+        let targetPurchaseId: number | undefined;
+        if (existing && existing.id !== undefined) {
+          targetPurchaseId = existing.id;
+          await db.purchases.update(existing.id, { ...purchaseRecord, id: existing.id });
+        } else if (purchaseRecord.id !== undefined) {
+          const occupied = await db.purchases.get(purchaseRecord.id);
+          if (occupied) {
+            const { id: _ignored, ...rest } = purchaseRecord;
+            targetPurchaseId = Number(await db.purchases.add(rest));
+          } else {
+            targetPurchaseId = Number(await db.purchases.put(purchaseRecord));
+          }
+        } else {
+          targetPurchaseId = Number(await db.purchases.add(purchaseRecord));
+        }
+
+        if (Array.isArray(lines) && targetPurchaseId !== undefined) {
+          const existingLines = await db.purchaseLines.where('purchaseId').equals(targetPurchaseId).toArray();
+          for (const line of lines) {
+            const remapped: PurchaseLine = { ...line, purchaseId: targetPurchaseId };
+            const dupLine = existingLines.find(
+              (el) =>
+                el.medicineId === remapped.medicineId &&
+                el.batchNo === remapped.batchNo &&
+                el.packs === remapped.packs &&
+                el.freePacks === remapped.freePacks
+            );
+            if (dupLine) continue;
+
+            if (remapped.id !== undefined && remapped.id !== null) {
+              const occupiedLine = await db.purchaseLines.get(Number(remapped.id));
+              if (occupiedLine) {
+                const { id: _ignored, ...rest } = remapped;
+                await db.purchaseLines.add(rest);
+              } else {
+                await db.purchaseLines.put({ ...remapped, id: Number(remapped.id) });
+              }
+            } else {
+              await db.purchaseLines.add(remapped);
+            }
+          }
+        }
+
+        if (Array.isArray(movements)) {
+          for (const mv of movements) {
+            await applyRemoteStockMovement(mv);
+          }
+        }
+      }
+      break;
+    }
+
+    case 'stock_movement': {
+      const movement = (payload.movement || payload) as StockMovement;
+      await applyRemoteStockMovement(movement);
+      break;
+    }
+
     case 'udhaar_payment': {
       const payment = (payload.payment || payload) as UdhaarPayment;
-      if (payment && payment.id) {
-        const existing = await db.udhaarPayments.get(Number(payment.id));
-        if (!existing) {
-          await db.udhaarPayments.put(payment);
+      if (payment && (payment.id || payment.createdAt)) {
+        const naturalDup = await db.udhaarPayments
+          .where('customerPhone')
+          .equals(payment.customerPhone || '')
+          .filter(
+            (p) =>
+              p.amountPaise === payment.amountPaise &&
+              p.createdAt === payment.createdAt &&
+              p.mode === payment.mode
+          )
+          .first();
+        if (!naturalDup) {
+          if (payment.id !== undefined && payment.id !== null) {
+            const occupied = await db.udhaarPayments.get(Number(payment.id));
+            if (occupied) {
+              const { id: _ignored, ...rest } = payment;
+              await db.udhaarPayments.add(rest);
+            } else {
+              await db.udhaarPayments.put({ ...payment, id: Number(payment.id) });
+            }
+          } else {
+            await db.udhaarPayments.add(payment);
+          }
         }
       }
       break;
@@ -561,11 +974,19 @@ export async function applyRemoteEvent(event: any): Promise<void> {
     case 'daily_closing': {
       const closing = (payload.closing || payload) as DailyClosing;
       if (closing && (closing.id || closing.date)) {
-        const existing = closing.id ? await db.dailyClosings.get(Number(closing.id)) : null;
-        if (existing) {
-          await db.dailyClosings.update(Number(closing.id), closing);
+        let existing: DailyClosing | undefined;
+        if (closing.date) {
+          existing = await db.dailyClosings.where('date').equals(closing.date).first();
+        }
+        if (!existing && closing.id !== undefined && closing.id !== null) {
+          existing = await db.dailyClosings.get(Number(closing.id));
+        }
+        if (existing && existing.id !== undefined) {
+          await db.dailyClosings.update(existing.id, { ...closing, id: existing.id });
+        } else if (closing.id !== undefined && closing.id !== null) {
+          await db.dailyClosings.put({ ...closing, id: Number(closing.id) });
         } else {
-          await db.dailyClosings.put(closing);
+          await db.dailyClosings.add(closing);
         }
       }
       break;
@@ -574,9 +995,23 @@ export async function applyRemoteEvent(event: any): Promise<void> {
     case 'audit': {
       const audit = payload.audit || payload;
       if (audit && audit.timestamp && audit.action) {
-        const existing = audit.id ? await db.auditLog.get(Number(audit.id)) : null;
-        if (!existing) {
-          await db.auditLog.put(audit);
+        const naturalDup = await db.auditLog
+          .where('timestamp')
+          .equals(audit.timestamp)
+          .filter((a) => a.action === audit.action && a.who === audit.who && a.record === audit.record)
+          .first();
+        if (!naturalDup) {
+          if (audit.id !== undefined && audit.id !== null) {
+            const occupied = await db.auditLog.get(Number(audit.id));
+            if (occupied) {
+              const { id: _ignored, ...rest } = audit;
+              await db.auditLog.add(rest);
+            } else {
+              await db.auditLog.put({ ...audit, id: Number(audit.id) });
+            }
+          } else {
+            await db.auditLog.add(audit);
+          }
         }
       }
       break;
@@ -640,6 +1075,7 @@ export async function pullRemoteEvents(
       break;
     }
 
+    const appliedTypes = new Set<string>();
     for (const event of data) {
       const isSameDevice =
         Boolean(config.deviceId && event.device_id && event.device_id === config.deviceId);
@@ -657,6 +1093,9 @@ export async function pullRemoteEvents(
       if (shouldApply) {
         try {
           await applyRemoteEvent(event);
+          if (event.entity_type) {
+            appliedTypes.add(String(event.entity_type));
+          }
         } catch (applyErr) {
           console.warn('Failed to apply remote event:', applyErr);
         }
@@ -665,6 +1104,13 @@ export async function pullRemoteEvents(
       if (typeof event.seq === 'number' && event.seq > currentSeq) {
         currentSeq = event.seq;
       }
+    }
+
+    if (appliedTypes.has('staff')) {
+      await deduplicateLocalUsers().catch(() => {});
+    }
+    if (appliedTypes.size > 0) {
+      emitSyncApplied(Array.from(appliedTypes));
     }
 
     totalPulled += data.length;
@@ -773,10 +1219,11 @@ function chunkOutboxItems<T>(items: T[], batchSize: number): T[][] {
 function buildSyncEventRows(
   chunk: SyncOutboxItem[],
   cloudShopUuid: string | null,
-  shopSyncId: string
+  shopSyncId: string,
+  deviceId?: string
 ) {
   return chunk.map((item) => ({
-    id: buildSyncEventId(shopSyncId, item),
+    id: buildSyncEventId(shopSyncId, item, deviceId),
     shop_id: cloudShopUuid,
     shop_sync_id: shopSyncId,
     entity_type: item.entityType,
@@ -967,7 +1414,7 @@ export async function runSyncCycle(options?: {
       if (isBackendConfigured() && cloudShopUuid) {
         for (const chunk of chunks) {
           try {
-            const events = buildSyncEventRows(chunk, cloudShopUuid, config.shopSyncId);
+            const events = buildSyncEventRows(chunk, cloudShopUuid, config.shopSyncId, config.deviceId);
 
             let pushError: any = null;
             try {
@@ -999,7 +1446,7 @@ export async function runSyncCycle(options?: {
 
         for (const chunk of chunks) {
           try {
-            const events = buildSyncEventRows(chunk, cloudShopUuid, config.shopSyncId);
+            const events = buildSyncEventRows(chunk, cloudShopUuid, config.shopSyncId, config.deviceId);
 
             const resp = await fetch(endpoint, {
               method: 'POST',
@@ -1351,16 +1798,21 @@ export async function syncAllUsersToCloud(): Promise<void> {
 
 /**
  * Directly pulls all staff / user events for a given cloud shop from Supabase
- * and upserts them into local Dexie IndexedDB.
+ * in chronological order (seq ASC) and upserts them idempotently into local Dexie IndexedDB.
  */
 export async function pullAndHydrateStaffAccounts(cloudShopUuid: string): Promise<number> {
   if (!isBackendConfigured() || !cloudShopUuid) return 0;
   try {
-    const { data: staffEvents, error } = await supabase
+    const query = supabase
       .from('hospivo_sync_events')
       .select('*')
       .eq('shop_id', cloudShopUuid)
       .eq('entity_type', 'staff');
+
+    const { data: staffEvents, error } =
+      typeof (query as any).order === 'function'
+        ? await (query as any).order('seq', { ascending: true })
+        : await query;
 
     if (error) {
       console.warn('pullAndHydrateStaffAccounts query error:', error);
@@ -1371,12 +1823,472 @@ export async function pullAndHydrateStaffAccounts(cloudShopUuid: string): Promis
       for (const evt of staffEvents) {
         await applyRemoteEvent(evt);
       }
+      await deduplicateLocalUsers().catch(() => {});
+      if (staffEvents.length > 0) {
+        emitSyncApplied(['staff']);
+      }
       return staffEvents.length;
     }
   } catch (err) {
     console.warn('pullAndHydrateStaffAccounts exception:', err);
   }
   return 0;
+}
+
+// ---------------------------------------------------------------------------
+// WORKSPACE ISOLATION (LOCAL-ONLY VS CLOUD ACCOUNT)
+// ---------------------------------------------------------------------------
+
+interface WorkspaceSnapshot {
+  savedAt: string;
+  shop: any[];
+  users: any[];
+  medicines: any[];
+  batches: any[];
+  stockMovements: any[];
+  suppliers: any[];
+  purchases: any[];
+  purchaseLines: any[];
+  productTypes: any[];
+  bills: any[];
+  billItems: any[];
+  heldBills: any[];
+  billReturns: any[];
+  supplierReturns: any[];
+  customers: any[];
+  udhaarPayments: any[];
+  regularReminders: any[];
+  dailyClosings: any[];
+  approvalRequests: any[];
+}
+
+async function captureWorkspaceSnapshot(): Promise<WorkspaceSnapshot> {
+  const [
+    shop,
+    users,
+    medicines,
+    batches,
+    stockMovements,
+    suppliers,
+    purchases,
+    purchaseLines,
+    productTypes,
+    bills,
+    billItems,
+    heldBills,
+    billReturns,
+    supplierReturns,
+    customers,
+    udhaarPayments,
+    regularReminders,
+    dailyClosings,
+    approvalRequests,
+  ] = await Promise.all([
+    db.shop.toArray(),
+    db.users.toArray(),
+    db.medicines.toArray(),
+    db.batches.toArray(),
+    db.stockMovements.toArray(),
+    db.suppliers.toArray(),
+    db.purchases.toArray(),
+    db.purchaseLines.toArray(),
+    db.productTypes.toArray(),
+    db.bills.toArray(),
+    db.billItems.toArray(),
+    db.heldBills.toArray(),
+    db.billReturns.toArray(),
+    db.supplierReturns.toArray(),
+    db.customers.toArray(),
+    db.udhaarPayments.toArray(),
+    db.regularReminders.toArray(),
+    db.dailyClosings.toArray(),
+    db.approvalRequests.toArray(),
+  ]);
+
+  return {
+    savedAt: new Date().toISOString(),
+    shop,
+    users,
+    medicines,
+    batches,
+    stockMovements,
+    suppliers,
+    purchases,
+    purchaseLines,
+    productTypes,
+    bills,
+    billItems,
+    heldBills,
+    billReturns,
+    supplierReturns,
+    customers,
+    udhaarPayments,
+    regularReminders,
+    dailyClosings,
+    approvalRequests,
+  };
+}
+
+async function clearWorkspaceTables(): Promise<void> {
+  await runWithSyncWorkspaceBypass(async () => {
+    await Promise.all([
+      db.shop.clear(),
+      db.users.clear(),
+      db.medicines.clear(),
+      db.batches.clear(),
+      db.stockMovements.clear(),
+      db.suppliers.clear(),
+      db.purchases.clear(),
+      db.purchaseLines.clear(),
+      db.productTypes.clear(),
+      db.bills.clear(),
+      db.billItems.clear(),
+      db.heldBills.clear(),
+      db.billReturns.clear(),
+      db.supplierReturns.clear(),
+      db.customers.clear(),
+      db.udhaarPayments.clear(),
+      db.regularReminders.clear(),
+      db.dailyClosings.clear(),
+      db.approvalRequests.clear(),
+    ]);
+  });
+}
+
+async function restoreWorkspaceSnapshot(snapshot: WorkspaceSnapshot): Promise<void> {
+  await runWithSyncWorkspaceBypass(async () => {
+    await clearWorkspaceTables();
+    if (snapshot.shop?.length) await db.shop.bulkPut(snapshot.shop);
+    if (snapshot.users?.length) await db.users.bulkPut(snapshot.users);
+    if (snapshot.medicines?.length) await db.medicines.bulkPut(snapshot.medicines);
+    if (snapshot.batches?.length) await db.batches.bulkPut(snapshot.batches);
+    if (snapshot.stockMovements?.length) await db.stockMovements.bulkPut(snapshot.stockMovements);
+    if (snapshot.suppliers?.length) await db.suppliers.bulkPut(snapshot.suppliers);
+    if (snapshot.purchases?.length) await db.purchases.bulkPut(snapshot.purchases);
+    if (snapshot.purchaseLines?.length) await db.purchaseLines.bulkPut(snapshot.purchaseLines);
+    if (snapshot.productTypes?.length) await db.productTypes.bulkPut(snapshot.productTypes);
+    if (snapshot.bills?.length) await db.bills.bulkPut(snapshot.bills);
+    if (snapshot.billItems?.length) await db.billItems.bulkPut(snapshot.billItems);
+    if (snapshot.heldBills?.length) await db.heldBills.bulkPut(snapshot.heldBills);
+    if (snapshot.billReturns?.length) await db.billReturns.bulkPut(snapshot.billReturns);
+    if (snapshot.supplierReturns?.length) await db.supplierReturns.bulkPut(snapshot.supplierReturns);
+    if (snapshot.customers?.length) await db.customers.bulkPut(snapshot.customers);
+    if (snapshot.udhaarPayments?.length) await db.udhaarPayments.bulkPut(snapshot.udhaarPayments);
+    if (snapshot.regularReminders?.length) await db.regularReminders.bulkPut(snapshot.regularReminders);
+    if (snapshot.dailyClosings?.length) await db.dailyClosings.bulkPut(snapshot.dailyClosings);
+    if (snapshot.approvalRequests?.length) await db.approvalRequests.bulkPut(snapshot.approvalRequests);
+  });
+}
+
+/**
+ * Cleanly switches Dexie into an existing cloud shop workspace without mixing
+ * local-only records (bills, staff, inventory) into the cloud shop.
+ * Preserves local-only data inside `local_mode_snapshot` so switching back to Local Mode restores it cleanly.
+ */
+export async function switchToCloudWorkspace(
+  cloudShopUuid: string,
+  shopMeta: { name: string; syncId: string; ownerEmail: string }
+): Promise<{ switched: boolean }> {
+  const currentScope = (await db.settings.get('active_data_scope'))?.value as string | undefined;
+  const targetScope = `cloud:${cloudShopUuid}`;
+
+  if (currentScope === targetScope) {
+    // Already operating on this exact cloud shop — preserve offline bills/outbox and just update metadata
+    const localShops = await db.shop.toArray();
+    if (localShops.length > 0 && localShops[0].id) {
+      await db.shop.update(localShops[0].id, {
+        name: shopMeta.name || localShops[0].name,
+        cloudShopUuid,
+        shopSyncId: shopMeta.syncId,
+        ownerEmail: shopMeta.ownerEmail,
+        mode: 'cloud',
+      });
+    } else {
+      await db.shop.add({
+        name: shopMeta.name,
+        ownerName: 'Owner',
+        address: '',
+        phone: '',
+        gstNo: '',
+        drugLicenceNos: '',
+        mode: 'cloud',
+        cloudShopUuid,
+        shopSyncId: shopMeta.syncId,
+        ownerEmail: shopMeta.ownerEmail,
+        lastPulledSeq: 0,
+      });
+    }
+    return { switched: false };
+  }
+
+  // Save local-only data snapshot before switching from local mode to an existing cloud shop
+  if (!currentScope || currentScope === 'local') {
+    const localSnap = await captureWorkspaceSnapshot();
+    const hasAnyLocalData =
+      localSnap.shop.length > 0 ||
+      localSnap.users.length > 0 ||
+      localSnap.bills.length > 0 ||
+      localSnap.medicines.length > 0 ||
+      localSnap.customers.length > 0;
+    if (hasAnyLocalData) {
+      await db.settings.put({ key: 'local_mode_snapshot', value: localSnap });
+    }
+  }
+
+  // Clear local operational tables & outbox so local-only records never duplicate or leak into cloud shop
+  await clearWorkspaceTables();
+  await db.syncOutbox.clear();
+  await db.settings.put({ key: 'last_pulled_seq', value: 0 });
+  await db.settings.put({ key: 'active_data_scope', value: targetScope });
+
+  await db.shop.add({
+    name: shopMeta.name,
+    ownerName: 'Owner',
+    address: '',
+    phone: '',
+    gstNo: '',
+    drugLicenceNos: '',
+    mode: 'cloud',
+    cloudShopUuid,
+    shopSyncId: shopMeta.syncId,
+    ownerEmail: shopMeta.ownerEmail,
+    lastPulledSeq: 0,
+  });
+
+  emitSyncApplied(['shop', 'staff', 'bill', 'medicine', 'batch', 'customer', 'udhaar_payment']);
+  return { switched: true };
+}
+
+/**
+ * Restores previously saved local-only data when switching back from a Cloud Account to Local Mode.
+ */
+export async function switchToLocalWorkspace(): Promise<{ restored: boolean }> {
+  const currentScope = (await db.settings.get('active_data_scope'))?.value as string | undefined;
+  const snapItem = await db.settings.get('local_mode_snapshot');
+  const snapshot = snapItem?.value as WorkspaceSnapshot | undefined;
+
+  if (currentScope && currentScope.startsWith('cloud:') && snapshot) {
+    await restoreWorkspaceSnapshot(snapshot);
+    await db.syncOutbox.clear();
+    await db.settings.put({ key: 'last_pulled_seq', value: 0 });
+    await db.settings.put({ key: 'active_data_scope', value: 'local' });
+
+    const shops = await db.shop.toArray();
+    if (shops.length > 0 && shops[0].id) {
+      await db.shop.update(shops[0].id, { mode: 'local' });
+    }
+    await deduplicateLocalUsers().catch(() => {});
+    emitSyncApplied(['shop', 'staff', 'bill', 'medicine', 'batch', 'customer', 'udhaar_payment']);
+    return { restored: true };
+  }
+
+  await db.settings.put({ key: 'active_data_scope', value: 'local' });
+  return { restored: false };
+}
+
+// ---------------------------------------------------------------------------
+// SILENT REALTIME UPDATES (SUPABASE POSTGRES_CHANGES)
+// ---------------------------------------------------------------------------
+
+export const SYNC_APPLIED_EVENT = 'hospivo:sync-applied';
+
+type SyncAppliedListener = (entityTypes: string[]) => void;
+const syncAppliedListeners = new Set<SyncAppliedListener>();
+
+let activeRealtimeChannel: any = null;
+let activeRealtimeShopUuid: string | null = null;
+
+/**
+ * Broadcasts a silent UI refresh signal whenever remote sync events or workspace
+ * transitions update local Dexie tables. Never triggers popups, toasts, or audio.
+ */
+export function emitSyncApplied(entityTypes: string[]): void {
+  if (entityTypes.length === 0) return;
+  syncAppliedListeners.forEach((listener) => {
+    try {
+      listener(entityTypes);
+    } catch {
+      // Never let a listener error interrupt silent sync
+    }
+  });
+  if (typeof window !== 'undefined' && typeof CustomEvent !== 'undefined') {
+    try {
+      window.dispatchEvent(
+        new CustomEvent(SYNC_APPLIED_EVENT, {
+          detail: { entityTypes },
+        })
+      );
+    } catch {
+      // Non-DOM environment
+    }
+  }
+}
+
+/**
+ * Subscribes a screen or component to silent sync updates from background pulls
+ * or incoming Supabase Realtime postgres_changes events.
+ */
+export function subscribeToSyncUpdates(
+  listener: (entityTypes: string[]) => void,
+  filterTypes?: string[]
+): () => void {
+  const wrapped: SyncAppliedListener = (types) => {
+    if (filterTypes && filterTypes.length > 0) {
+      const hasMatch = types.some((t) => filterTypes.includes(t));
+      if (!hasMatch) return;
+    }
+    listener(types);
+  };
+
+  syncAppliedListeners.add(wrapped);
+  return () => {
+    syncAppliedListeners.delete(wrapped);
+  };
+}
+
+/**
+ * Stops any active Supabase Realtime channel subscription cleanly.
+ */
+export function stopRealtimeSync(): void {
+  if (activeRealtimeChannel) {
+    try {
+      if (typeof (supabase as any).removeChannel === 'function') {
+        void (supabase as any).removeChannel(activeRealtimeChannel);
+      } else if (typeof activeRealtimeChannel.unsubscribe === 'function') {
+        void activeRealtimeChannel.unsubscribe();
+      }
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+  activeRealtimeChannel = null;
+  activeRealtimeShopUuid = null;
+}
+
+/**
+ * Starts a silent Supabase Realtime subscription (postgres_changes) scoped to the
+ * signed-in shop UUID so bills, inventory/batches, staff, and Udhaar updates from
+ * other devices are applied automatically to Dexie without popups or toasts.
+ */
+export async function startRealtimeSync(overrideShopUuid?: string): Promise<boolean> {
+  if (!isBackendConfigured()) return false;
+  if (typeof (supabase as any).channel !== 'function') return false;
+
+  const config = await getCloudConfig();
+  if (!config.cloudEnabled) {
+    stopRealtimeSync();
+    return false;
+  }
+
+  const session = await getCurrentCloudSession();
+  const cloudShopUuid = overrideShopUuid || session.cloudShopUuid;
+  if (!session.isAuthenticated || !cloudShopUuid) {
+    stopRealtimeSync();
+    return false;
+  }
+
+  if (activeRealtimeChannel && activeRealtimeShopUuid === cloudShopUuid) {
+    return true;
+  }
+
+  stopRealtimeSync();
+
+  try {
+    const channel = (supabase as any)
+      .channel(`hospivo-sync-${cloudShopUuid}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'hospivo_sync_events',
+          filter: `shop_id=eq.${cloudShopUuid}`,
+        },
+        async (payload: any) => {
+          const event = payload?.new;
+          if (!event) return;
+          try {
+            await applyRemoteEvent(event);
+            if (event.entity_type === 'staff') {
+              await deduplicateLocalUsers().catch(() => {});
+            }
+
+            if (typeof event.seq === 'number') {
+              const seqItem = await db.settings.get('last_pulled_seq');
+              const currentSeq = typeof seqItem?.value === 'number' ? seqItem.value : 0;
+              if (event.seq > currentSeq) {
+                await db.settings.put({ key: 'last_pulled_seq', value: event.seq });
+                const shops = await db.shop.toArray();
+                if (shops.length > 0 && shops[0].id) {
+                  await db.shop.update(shops[0].id, { lastPulledSeq: event.seq });
+                }
+              }
+            }
+
+            await db.settings.put({ key: 'last_cloud_sync_at', value: Date.now() });
+            await db.settings.put({ key: 'last_cloud_sync_status', value: 'synced' });
+
+            // Silent UI refresh — zero popups, zero toasts, zero audio
+            emitSyncApplied([String(event.entity_type || 'sync')]);
+          } catch (err) {
+            console.warn('Realtime event apply warning:', err);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'hospivo_approval_requests',
+          filter: `shop_id=eq.${cloudShopUuid}`,
+        },
+        async () => {
+          try {
+            const latestCfg = await getCloudConfig();
+            await syncApprovalRequests(latestCfg, cloudShopUuid);
+            emitSyncApplied(['approval_request']);
+          } catch {
+            // Silent ignore
+          }
+        }
+      )
+      .subscribe();
+
+    activeRealtimeChannel = channel;
+    activeRealtimeShopUuid = cloudShopUuid;
+    return true;
+  } catch (err) {
+    console.warn('startRealtimeSync warning:', err);
+    return false;
+  }
+}
+
+/**
+ * Ensures Realtime sync is subscribed and runs a silent catch-up sync cycle
+ * whenever Cloud Mode is enabled and the owner is authenticated.
+ */
+export async function ensureCloudSyncActive(): Promise<void> {
+  try {
+    const config = await getCloudConfig();
+    if (!config.cloudEnabled) {
+      stopRealtimeSync();
+      return;
+    }
+    const session = await getCurrentCloudSession();
+    if (!session.isAuthenticated || !session.user) {
+      stopRealtimeSync();
+      return;
+    }
+    if (session.cloudShopUuid) {
+      await startRealtimeSync(session.cloudShopUuid);
+    }
+    if (typeof navigator === 'undefined' || navigator.onLine !== false) {
+      await runSyncCycle();
+    }
+  } catch {
+    // Completely silent background check
+  }
 }
 
 // ---------------------------------------------------------------------------

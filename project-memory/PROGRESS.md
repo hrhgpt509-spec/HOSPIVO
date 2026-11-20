@@ -377,6 +377,11 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
   - Staff (`OwnerStaff.tsx`, `Setup.tsx`): fixed left-edge clipping on "PIN Badlo / Reset PIN" via full-width 3-column mobile action grid (`>= 52px` targets), wrapped staff summary text, and added case-insensitive duplicate staff name + double-submit guards.
   - Shelf, Bottom Nav & Settings (`OwnerShelfMap.tsx`, `MobileBottomNav.tsx`, `OwnerDashboard.tsx`, `OwnerSettings.tsx` + en/hi/hinglish i18n): prevented shelf code (`S-09-COLD`) multi-line breaks, replaced truncated bottom-nav labels with concise 1-word localized labels (`Home/Sell/Stock/Credit/Owner`) with safe-area padding, and fixed right-edge clipping on Settings rows ("Dukaan ki jaankari", Language, Cloud Sync).
 
+- Cloud sync deduplication, workspace isolation & silent Realtime (`cloudSync.ts`, `cloudAuth.ts`, `db/index.ts`, `billing.ts`, `purchase.ts`, `App.tsx`, live screens):
+  - Prevented duplicate staff accounts (e.g. duplicate "Suraj Dev") via ID + normalized name/role deduplication in `applyRemoteEvent` & `deduplicateLocalUsers()`, and separated local-only Dexie data from signed-in cloud shop workspaces via `switchToCloudWorkspace` / `switchToLocalWorkspace`.
+  - Fixed cross-device sync for bills, bill returns, purchases, stock movements, customers, and Udhaar (enqueued sale/return/purchase stock movements, collision-free per-device sync event IDs, idempotent replay respecting immutable bill/movement hooks).
+  - Added silent Supabase Realtime (`postgres_changes`) subscriptions (`startRealtimeSync` / `ensureCloudSyncActive`) + silent live screen refreshes with zero background popups/toasts.
+
 
 
 

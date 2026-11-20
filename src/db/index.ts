@@ -557,7 +557,9 @@ export class HospivoDatabase extends Dexie {
       throw new Error('Audit log is append-only and cannot be updated.');
     });
     this.auditLog.hook('deleting', () => {
-      throw new Error('Audit log is append-only and cannot be deleted.');
+      if (!allowWorkspaceClear) {
+        throw new Error('Audit log is append-only and cannot be deleted.');
+      }
     });
 
     // Make stock movements strictly append-only at database level
@@ -565,7 +567,9 @@ export class HospivoDatabase extends Dexie {
       throw new Error('Stock movements are append-only and cannot be updated.');
     });
     this.stockMovements.hook('deleting', () => {
-      throw new Error('Stock movements are append-only and cannot be deleted.');
+      if (!allowWorkspaceClear) {
+        throw new Error('Stock movements are append-only and cannot be deleted.');
+      }
     });
 
     // Make bills immutable once completed (except updating status during return) and prevent deletion
@@ -581,7 +585,9 @@ export class HospivoDatabase extends Dexie {
       }
     });
     this.bills.hook('deleting', () => {
-      throw new Error('Finished bills cannot be deleted.');
+      if (!allowWorkspaceClear) {
+        throw new Error('Finished bills cannot be deleted.');
+      }
     });
 
     // Make bill items strictly immutable and non-deletable
@@ -589,7 +595,9 @@ export class HospivoDatabase extends Dexie {
       throw new Error('Bill items cannot be edited after finalization.');
     });
     this.billItems.hook('deleting', () => {
-      throw new Error('Bill items cannot be deleted.');
+      if (!allowWorkspaceClear) {
+        throw new Error('Bill items cannot be deleted.');
+      }
     });
 
     // Make Udhaar payments strictly append-only at database level
@@ -597,8 +605,26 @@ export class HospivoDatabase extends Dexie {
       throw new Error('Udhaar payments are append-only and cannot be updated.');
     });
     this.udhaarPayments.hook('deleting', () => {
-      throw new Error('Udhaar payments are append-only and cannot be deleted.');
+      if (!allowWorkspaceClear) {
+        throw new Error('Udhaar payments are append-only and cannot be deleted.');
+      }
     });
+  }
+}
+
+let allowWorkspaceClear = false;
+
+/**
+ * Internal helper used ONLY when switching between isolated Local Mode and
+ * Cloud Account workspaces so local-only data never mixes with cloud data.
+ */
+export async function runWithSyncWorkspaceBypass<T>(fn: () => Promise<T>): Promise<T> {
+  const prev = allowWorkspaceClear;
+  allowWorkspaceClear = true;
+  try {
+    return await fn();
+  } finally {
+    allowWorkspaceClear = prev;
   }
 }
 

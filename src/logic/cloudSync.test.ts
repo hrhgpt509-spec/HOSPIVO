@@ -17,7 +17,15 @@ import {
   applyRemoteEvent,
   pullRemoteEvents,
   uploadShopPhoto,
+  deduplicateLocalUsers,
+  switchToCloudWorkspace,
+  switchToLocalWorkspace,
+  buildSyncEventId,
+  startRealtimeSync,
+  stopRealtimeSync,
+  subscribeToSyncUpdates,
 } from './cloudSync';
+import { subscribeFeedback } from './feedback';
 import { signOutOwner } from './cloudAuth';
 
 describe('cloudSync & remote approvals engine', () => {
@@ -491,6 +499,254 @@ describe('cloudSync & remote approvals engine', () => {
     it('returns null gracefully when unconfigured or offline', async () => {
       const res = await uploadShopPhoto('counter/invoice-1.jpg', 'data:image/jpeg;base64,/9j/4AAQSkZJRg==');
       expect(res === null || typeof res === 'string').toBe(true);
+    });
+  });
+
+  describe('Staff Deduplication, Workspace Separation & Silent Realtime Sync', () => {
+    it('deduplicates staff by ID and matching name+role so Suraj Dev never duplicates across syncs', async () => {
+      await db.users.clear();
+      await db.users.put({
+        id: 'staff_local_100',
+        name: 'Suraj Dev',
+        role: 'cashier',
+        pinHash: 'local-hash',
+        pinSalt: 'local-salt',
+        pinLength: 4,
+        active: true,
+        createdAt: '2026-11-01T10:00:00.000Z',
+      });
+
+      // Incoming cloud event for same staff with a different device-generated ID
+      await applyRemoteEvent({
+        entity_type: 'staff',
+        entity_id: 'staff_cloud_200',
+        payload: {
+          id: 'staff_cloud_200',
+          name: 'Suraj Dev',
+          role: 'cashier',
+          pinHash: 'cloud-hash',
+          pinSalt: 'cloud-salt',
+          pinLength: 4,
+          active: true,
+          createdAt: '2026-11-02T10:00:00.000Z',
+        },
+      });
+
+      let users = await db.users.toArray();
+      expect(users.length).toBe(1);
+      expect(users[0].id).toBe('staff_cloud_200');
+      expect(users[0].name).toBe('Suraj Dev');
+
+      // Even if pre-existing duplicate rows exist, deduplicateLocalUsers merges them down to 1
+      await db.users.put({
+        id: 'staff_dup_300',
+        name: 'suraj dev ',
+        role: 'cashier',
+        pinHash: 'old-hash',
+        pinSalt: 'old-salt',
+        pinLength: 4,
+        active: true,
+        createdAt: '2026-10-01T10:00:00.000Z',
+      });
+      expect(await db.users.count()).toBe(2);
+
+      const removed = await deduplicateLocalUsers();
+      expect(removed).toBe(1);
+      users = await db.users.toArray();
+      expect(users.length).toBe(1);
+      expect(users[0].id).toBe('staff_cloud_200');
+    });
+
+    it('separates local-only bills and staff from cloud workspace and restores local workspace cleanly', async () => {
+      await db.users.clear();
+      await db.bills.clear();
+      await db.settings.delete('active_data_scope');
+      await db.settings.delete('local_mode_snapshot');
+
+      // Local-only staff and bill
+      await db.users.put({
+        id: 'staff_local_suraj',
+        name: 'Suraj Dev',
+        role: 'cashier',
+        pinHash: 'h',
+        pinSalt: 's',
+        active: true,
+      });
+      await db.bills.add({
+        billNo: 'LOCAL-2026/0001',
+        financialYear: '2026-27',
+        date: '2026-11-20',
+        customerName: 'Local Walk-in',
+        customerPhone: '',
+        doctorName: '',
+        subtotalPaise: 10000,
+        discountPaise: 0,
+        discountPercent: 0,
+        roundOffPaise: 0,
+        totalPaise: 10000,
+        taxablePaise: 8929,
+        gstPaise: 1071,
+        paymentMode: 'cash',
+        cashReceivedPaise: 10000,
+        changePaise: 0,
+        status: 'completed',
+        cashierId: 'staff_local_suraj',
+        cashierName: 'Suraj Dev',
+        createdAt: '2026-11-20T10:00:00.000Z',
+      });
+
+      // Switch to existing cloud shop -> local bills & local staff must be isolated out
+      const switched = await switchToCloudWorkspace('shop-cloud-abc', {
+        name: 'Cloud Pharmacy',
+        syncId: 'HOSP-CLD1-2222',
+        ownerEmail: 'owner@cloud.com',
+      });
+      expect(switched.switched).toBe(true);
+      expect(await db.bills.count()).toBe(0);
+      expect(await db.users.count()).toBe(0);
+      expect((await db.shop.toArray())[0]?.name).toBe('Cloud Pharmacy');
+
+      // Apply cloud bill + cloud stock movement idempotently (even replayed twice without hook errors)
+      const cloudBillEvt = {
+        entity_type: 'bill',
+        entity_id: '1',
+        payload: {
+          bill: {
+            id: 1,
+            billNo: 'CLOUD-2026/0001',
+            financialYear: '2026-27',
+            date: '2026-11-20',
+            customerName: 'Laptop Customer',
+            customerPhone: '9999999999',
+            doctorName: '',
+            subtotalPaise: 25000,
+            discountPaise: 0,
+            discountPercent: 0,
+            roundOffPaise: 0,
+            totalPaise: 25000,
+            taxablePaise: 22321,
+            gstPaise: 2679,
+            paymentMode: 'udhaar',
+            cashReceivedPaise: 0,
+            changePaise: 0,
+            status: 'completed',
+            cashierId: 'owner',
+            cashierName: 'Sunil Kumar',
+            createdAt: '2026-11-20T11:00:00.000Z',
+          },
+          items: [],
+          movements: [
+            {
+              id: 10,
+              batchId: 5,
+              medicineId: 2,
+              type: 'sale',
+              qtyUnits: -10,
+              reference: 'CLOUD-2026/0001',
+              who: 'Sunil Kumar',
+              at: '2026-11-20T11:00:00.000Z',
+            },
+          ],
+        },
+      };
+      await applyRemoteEvent(cloudBillEvt);
+      await applyRemoteEvent(cloudBillEvt); // replay must not throw or duplicate
+
+      const cloudBills = await db.bills.toArray();
+      expect(cloudBills.length).toBe(1);
+      expect(cloudBills[0].billNo).toBe('CLOUD-2026/0001');
+      const cloudMovements = await db.stockMovements.filter((m) => m.reference === 'CLOUD-2026/0001').toArray();
+      expect(cloudMovements.length).toBe(1);
+
+      // Switching back to Local Mode restores local-only data cleanly
+      const restored = await switchToLocalWorkspace();
+      expect(restored.restored).toBe(true);
+      const localBills = await db.bills.toArray();
+      expect(localBills.length).toBe(1);
+      expect(localBills[0].billNo).toBe('LOCAL-2026/0001');
+    });
+
+    it('generates collision-free sync event IDs for two devices sharing the same shopSyncId', () => {
+      const idLaptop = buildSyncEventId('HOSP-SAME-SHOP', { id: 1, entityType: 'bill', entityId: '1' }, 'DEV-LAPTOP1');
+      const idAndroid = buildSyncEventId('HOSP-SAME-SHOP', { id: 1, entityType: 'bill', entityId: '1' }, 'DEV-ANDROID');
+      expect(idLaptop).not.toBe(idAndroid);
+      expect(idLaptop).toMatch(/^HOSP-SAME-SHOP:bill:1:\d+$/);
+      expect(idAndroid).toMatch(/^HOSP-SAME-SHOP:bill:1:\d+$/);
+    });
+
+    it('applies incoming Supabase Realtime postgres_changes silently with zero popup feedback', async () => {
+      await db.medicines.clear();
+      await db.settings.put({ key: 'cloud_enabled', value: true });
+      await db.settings.put({ key: 'cloud_shop_uuid', value: 'shop-rt-999' });
+
+      vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
+        data: { session: { user: { id: 'usr-rt', email: 'rt@test.com' } } as any },
+        error: null,
+      });
+
+      let capturedCallback: ((payload: any) => Promise<void>) | null = null;
+      const mockChannel: any = {
+        on: vi.fn().mockImplementation((_type: string, filter: any, cb: any) => {
+          if (filter?.table === 'hospivo_sync_events') {
+            capturedCallback = cb;
+          }
+          return mockChannel;
+        }),
+        subscribe: vi.fn().mockReturnValue({}),
+      };
+      vi.spyOn(supabase, 'channel').mockReturnValue(mockChannel);
+      vi.spyOn(supabase, 'removeChannel').mockResolvedValue('ok' as any);
+
+      const feedbackEvents: any[] = [];
+      const unsubFeedback = subscribeFeedback((ev) => {
+        if (ev) feedbackEvents.push(ev);
+      });
+      const syncNotified: string[][] = [];
+      const unsubSync = subscribeToSyncUpdates((types) => syncNotified.push(types));
+
+      try {
+        const started = await startRealtimeSync('shop-rt-999');
+        expect(started).toBe(true);
+        expect(capturedCallback).not.toBeNull();
+
+        await capturedCallback!({
+          new: {
+            seq: 42,
+            shop_id: 'shop-rt-999',
+            entity_type: 'medicine',
+            entity_id: '777',
+            payload_json: JSON.stringify({
+              id: 777,
+              name: 'Realtime Crocin 500',
+              strength: '500mg',
+              form: 'tablet',
+              salt: 'Paracetamol',
+              company: 'GSK',
+              gstPercent: 12,
+              hsn: '3004',
+              mrpPaise: 2000,
+              unitsPerPack: 15,
+              shortCode: 'RC1',
+              barcode: '',
+              shelf: 'S-02',
+              scheduleType: 'none',
+              minStockUnits: 15,
+              active: true,
+            }),
+          },
+        });
+
+        const med = await db.medicines.get(777);
+        expect(med?.name).toBe('Realtime Crocin 500');
+        expect((await db.settings.get('last_pulled_seq'))?.value).toBe(42);
+        expect(syncNotified.some((t) => t.includes('medicine'))).toBe(true);
+        // Must be completely silent: zero toast/popup feedback events!
+        expect(feedbackEvents.length).toBe(0);
+      } finally {
+        unsubFeedback();
+        unsubSync();
+        stopRealtimeSync();
+      }
     });
   });
 });

@@ -16,6 +16,7 @@ import {
 } from '../logic/udhaar';
 import { useIsCompactViewport } from '../logic/useViewport';
 import { useBackHandler } from '../logic/androidBack';
+import { subscribeToSyncUpdates } from '../logic/cloudSync';
 import { PaisaMilaModal } from './udhaar/PaisaMilaModal';
 import { YaadDilaoModal } from './udhaar/YaadDilaoModal';
 import { CustomerDetailScreen } from './udhaar/CustomerDetailScreen';
@@ -82,6 +83,9 @@ export const Udhaar: React.FC<UdhaarProps> = ({
 
   useEffect(() => {
     void refreshData();
+    return subscribeToSyncUpdates(() => {
+      void refreshData();
+    }, ['customer', 'udhaar_payment', 'bill', 'bill_return']);
   }, [refreshData]);
 
   const selectedCustomer = useMemo(

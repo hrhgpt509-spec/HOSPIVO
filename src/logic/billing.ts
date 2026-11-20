@@ -777,16 +777,19 @@ export async function finalizeBill(
         savedBillItems.push({ ...fullItem, id: itemId });
       }
 
+      const savedMovements = [];
       for (const mv of pendingMovements) {
-        await db.stockMovements.add({
+        const movementRow = {
           batchId: mv.batchId,
           medicineId: mv.medicineId,
-          type: 'sale',
+          type: 'sale' as const,
           qtyUnits: mv.qtyUnits,
           reference: billNo,
           who: cashierName,
           at: nowIso,
-        });
+        };
+        const movementId = Number(await db.stockMovements.add(movementRow));
+        savedMovements.push({ ...movementRow, id: movementId });
       }
 
       await addAudit(
@@ -796,7 +799,14 @@ export async function finalizeBill(
         `Bill ${billNo} finalized (${savedBillItems.length} items, mode: ${draft.paymentMode})`
       );
 
-      enqueueSyncItem('bill', billId, { bill: billToSave, items: savedBillItems }).catch(() => {});
+      enqueueSyncItem('bill', billId, {
+        bill: billToSave,
+        items: savedBillItems,
+        movements: savedMovements,
+      }).catch(() => {});
+      for (const mv of savedMovements) {
+        enqueueSyncItem('stock_movement', mv.id, mv).catch(() => {});
+      }
 
       return {
         billId,
@@ -968,30 +978,33 @@ export async function processBillReturn(
       const returnNo = await generateNextReturnNo(originalBill.date);
       const nowIso = new Date().toISOString();
 
-      const billReturnId = Number(
-        await db.billReturns.add({
-          returnNo,
-          originalBillId: originalBill.id!,
-          originalBillNo: originalBill.billNo,
-          refundMode: draft.refundMode,
-          totalRefundPaise,
-          itemsJson: JSON.stringify(storedItems),
-          reason: (draft.reason || '').trim() || 'Customer return',
-          approvedBy,
-          createdAt: nowIso,
-        } satisfies BillReturn)
-      );
+      const billReturnRecord: BillReturn = {
+        returnNo,
+        originalBillId: originalBill.id!,
+        originalBillNo: originalBill.billNo,
+        refundMode: draft.refundMode,
+        totalRefundPaise,
+        itemsJson: JSON.stringify(storedItems),
+        reason: (draft.reason || '').trim() || 'Customer return',
+        approvedBy,
+        createdAt: nowIso,
+      };
+      const billReturnId = Number(await db.billReturns.add(billReturnRecord));
+      billReturnRecord.id = billReturnId;
 
+      const savedReturnMovements = [];
       for (const mv of movementsToWrite) {
-        await db.stockMovements.add({
+        const movementRow = {
           batchId: mv.batchId,
           medicineId: mv.medicineId,
-          type: 'customer_return',
+          type: 'customer_return' as const,
           qtyUnits: mv.qtyUnits,
           reference: returnNo,
           who: whoName,
           at: nowIso,
-        });
+        };
+        const movementId = Number(await db.stockMovements.add(movementRow));
+        savedReturnMovements.push({ ...movementRow, id: movementId });
       }
 
       // Allowed update by Dexie hook: status only -> 'returned_partial' | 'returned_full'
@@ -1005,11 +1018,13 @@ export async function processBillReturn(
       );
 
       enqueueSyncItem('bill_return', billReturnId, {
-        returnNo,
-        originalBillId: originalBill.id,
-        refundMode: draft.refundMode,
-        totalRefundPaise,
+        billReturn: billReturnRecord,
+        newBillStatus,
+        movements: savedReturnMovements,
       }).catch(() => {});
+      for (const mv of savedReturnMovements) {
+        enqueueSyncItem('stock_movement', mv.id, mv).catch(() => {});
+      }
 
       return {
         billReturnId,

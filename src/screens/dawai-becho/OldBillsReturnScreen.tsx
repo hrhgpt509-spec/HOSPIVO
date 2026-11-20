@@ -18,6 +18,7 @@ import { textFieldProps } from '../../logic/format';
 import { triggerFeedback } from '../../logic/feedback';
 import { parseDateOnly } from '../../logic/stock';
 import { processBillReturn } from '../../logic/billing';
+import { subscribeToSyncUpdates } from '../../logic/cloudSync';
 import {
   buildWhatsAppBillText,
   buildWhatsAppBillUrl,
@@ -83,6 +84,9 @@ export const OldBillsReturnScreen: React.FC<OldBillsReturnScreenProps> = ({
 
   useEffect(() => {
     loadBills();
+    return subscribeToSyncUpdates(() => {
+      void loadBills();
+    }, ['bill', 'bill_return']);
   }, [loadBills]);
 
   const loadSelectedBillDetails = useCallback(async (billId: number | null) => {

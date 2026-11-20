@@ -14,7 +14,7 @@ import { addAudit } from '../db/audit';
 import { triggerFeedback } from '../logic/feedback';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { useBackHandler } from '../logic/androidBack';
-import { enqueueSyncItem } from '../logic/cloudSync';
+import { enqueueSyncItem, deduplicateLocalUsers, subscribeToSyncUpdates } from '../logic/cloudSync';
 
 interface OwnerStaffProps {
   currentUser?: DBUser | null;
@@ -85,6 +85,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
       const len = await getPinLengthSetting();
       setPinLength(len);
 
+      await deduplicateLocalUsers().catch(() => {});
       const allUsers = await db.users.toArray();
       setUsers(allUsers);
 
@@ -122,6 +123,9 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
 
   useEffect(() => {
     loadData();
+    return subscribeToSyncUpdates(() => {
+      void loadData();
+    }, ['staff', 'bill', 'shop']);
   }, [loadData]);
 
   // Physical keyboard support for Reset PIN modal

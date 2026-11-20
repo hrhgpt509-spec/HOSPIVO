@@ -7,7 +7,12 @@ import {
   runSyncCycle,
   pullAndHydrateStaffAccounts,
   syncAllUsersToCloud,
+  backfillLocalDataToCloud,
   enqueueSyncItem,
+  switchToCloudWorkspace,
+  deduplicateLocalUsers,
+  startRealtimeSync,
+  stopRealtimeSync,
 } from './cloudSync';
 
 export interface CloudSessionInfo {
@@ -137,44 +142,30 @@ async function hydrateOrFindExistingShop(
       await db.settings.put({ key: 'cloud_enabled', value: true });
       await db.settings.put({ key: 'owner_email', value: cleanEmail });
 
-      const localShops = await db.shop.toArray();
-      if (localShops.length > 0 && localShops[0].id) {
-        await db.shop.update(localShops[0].id, {
-          name: existingShop.name || localShops[0].name,
-          cloudShopUuid: existingShop.id,
-          shopSyncId: existingShop.syncId,
-          ownerEmail: cleanEmail,
-          mode: 'cloud',
-        });
-      } else {
-        await db.shop.add({
-          name: existingShop.name,
-          ownerName: 'Owner',
-          address: '',
-          phone: '',
-          gstNo: '',
-          drugLicenceNos: '',
-          mode: 'cloud',
-          cloudShopUuid: existingShop.id,
-          shopSyncId: existingShop.syncId,
-          ownerEmail: cleanEmail,
-          lastPulledSeq: 0,
-        });
-      }
+      // Isolate local-only workspace from cloud shop data so local staff/bills never duplicate or mix
+      await switchToCloudWorkspace(existingShop.id, {
+        name: existingShop.name,
+        syncId: existingShop.syncId,
+        ownerEmail: cleanEmail,
+      });
 
-      // 1. Direct pull and hydration of all staff / user accounts into local Dexie
+      // 1. Direct pull and hydration of all staff / user accounts into local Dexie (ordered & deduplicated)
       try {
         await pullAndHydrateStaffAccounts(existingShop.id);
       } catch (staffHydrateErr) {
         console.warn('Initial staff hydration warning:', staffHydrateErr);
       }
 
-      // 2. Auto-trigger sync cycle to hydrate remote catalog & remaining deltas
+      // 2. Auto-trigger sync cycle to hydrate remote catalog, bills, inventory, batches, and Udhaar
       try {
         await runSyncCycle({ force: true });
       } catch (syncErr) {
         console.warn('Initial shop hydration warning:', syncErr);
       }
+
+      // 3. Final deduplication pass and start silent Realtime subscription
+      await deduplicateLocalUsers().catch(() => {});
+      void startRealtimeSync(existingShop.id).catch(() => {});
 
       return { shop: existingShop, isNewShop: false };
     }
@@ -457,6 +448,7 @@ export async function completeCloudSignInFromSession(): Promise<{
  * Signs out the current cloud owner session and updates local settings.
  */
 export async function signOutOwner(): Promise<void> {
+  stopRealtimeSync();
   if (isBackendConfigured()) {
     try {
       await supabase.auth.signOut();
@@ -555,10 +547,11 @@ export async function provisionCloudShop(
         });
       }
 
-      // Persist in local Dexie
+      // Persist in local Dexie & mark active workspace scope to this cloud shop
       await db.settings.put({ key: 'cloud_shop_uuid', value: shopUuid });
       await db.settings.put({ key: 'owner_email', value: user.email || '' });
       await db.settings.put({ key: 'cloud_enabled', value: true });
+      await db.settings.put({ key: 'active_data_scope', value: `cloud:${shopUuid}` });
 
       const localShops = await db.shop.toArray();
       if (localShops.length > 0 && localShops[0].id) {
@@ -570,13 +563,19 @@ export async function provisionCloudShop(
         });
       }
 
-      // Back up all local users to cloud and trigger sync push
-      await syncAllUsersToCloud();
+      // Deduplicate users and backfill all existing local shop records (staff, medicines, batches, bills, Udhaar) to cloud
+      await deduplicateLocalUsers().catch(() => {});
       try {
-        await runSyncCycle({ force: true });
+        const backfillRes = await backfillLocalDataToCloud();
+        if (!backfillRes.success) {
+          await syncAllUsersToCloud();
+          await runSyncCycle({ force: true });
+        }
       } catch (syncErr) {
-        console.warn('Post-provisioning user sync warning:', syncErr);
+        console.warn('Post-provisioning sync warning:', syncErr);
       }
+
+      void startRealtimeSync(shopUuid).catch(() => {});
 
       await addAudit(
         'Cloud',

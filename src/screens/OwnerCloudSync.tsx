@@ -13,6 +13,9 @@ import {
   retryFailedSyncItems,
   backfillLocalDataToCloud,
   formatTimeHoursMinutes,
+  startRealtimeSync,
+  stopRealtimeSync,
+  subscribeToSyncUpdates,
   type CloudConfig,
   type HomeSyncState,
 } from '../logic/cloudSync';
@@ -110,7 +113,10 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    return subscribeToSyncUpdates(() => {
+      void refreshSyncStatus().catch(() => {});
+    });
+  }, [loadData, refreshSyncStatus]);
 
   const handleToggleMode = async (enabled: boolean) => {
     setCloudEnabled(enabled);
@@ -129,21 +135,16 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
 
       if (enabled && !connected) {
         setHighlightConnect(true);
-        triggerFeedback(
-          'info',
-          t('cloud_sync.status_sign_in_required'),
-          t('cloud_sync.sign_in_required_sub')
-        );
         setTimeout(() => {
           ownerAccountRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 80);
       } else if (enabled && connected) {
         setHighlightConnect(false);
-        triggerFeedback('success', t('cloud_sync.cloud_mode_title'));
+        void startRealtimeSync(session.cloudShopUuid || undefined).catch(() => {});
         void runSyncCycle().then(() => refreshSyncStatus()).catch(() => {});
       } else {
         setHighlightConnect(false);
-        triggerFeedback('info', t('cloud_sync.local_mode_title'));
+        stopRealtimeSync();
       }
     } catch {
       triggerFeedback('error', t('common.error_occurred'));
@@ -296,6 +297,7 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
           setCloudEnabled(true);
           setHighlightConnect(false);
           setIsAuthModalOpen(false);
+          void startRealtimeSync(sess.cloudShopUuid).catch(() => {});
           loadData();
         }}
         onCancel={() => setIsAuthModalOpen(false)}

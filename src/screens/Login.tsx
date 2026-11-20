@@ -11,7 +11,12 @@ import { useShop } from '../logic/useShop';
 import { Icon } from '../components/Icon';
 import { useIsCompactViewport } from '../logic/useViewport';
 import { useBackHandler } from '../logic/androidBack';
-import { pullAndHydrateStaffAccounts, runSyncCycle } from '../logic/cloudSync';
+import {
+  pullAndHydrateStaffAccounts,
+  runSyncCycle,
+  deduplicateLocalUsers,
+  subscribeToSyncUpdates,
+} from '../logic/cloudSync';
 import { getCurrentCloudSession, createRecoveryOwnerPin } from '../logic/cloudAuth';
 
 interface LoginProps {
@@ -75,6 +80,7 @@ export const Login: React.FC<LoginProps> = ({
 
   const loadData = useCallback(async () => {
     try {
+      await deduplicateLocalUsers().catch(() => {});
       const allUsers = await db.users.filter((u) => u.active !== false).toArray();
       allUsers.sort((a, b) => (a.role === 'owner' ? -1 : b.role === 'owner' ? 1 : 0));
       setUsers(allUsers);
@@ -113,9 +119,12 @@ export const Login: React.FC<LoginProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Load real users from database
+  // Load real users from database and refresh silently on incoming staff sync updates
   useEffect(() => {
     loadData();
+    return subscribeToSyncUpdates(() => {
+      void loadData();
+    }, ['staff', 'shop']);
   }, [loadData]);
 
   // Timer countdown for lockout

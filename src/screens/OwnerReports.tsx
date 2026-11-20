@@ -19,6 +19,7 @@ import { EmptyState } from '../components/EmptyState';
 import { formatRupees } from '../logic/money';
 import { isOwner } from '../logic/roles';
 import { triggerFeedback } from '../logic/feedback';
+import { subscribeToSyncUpdates } from '../logic/cloudSync';
 import {
   buildGstSummaryCsv,
   buildGstSummaryReport,
@@ -76,25 +77,32 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
       setIsLoading(false);
       return;
     }
+    const fetchReportsData = () => {
+      Promise.all([
+        db.bills.toArray(),
+        db.billItems.toArray(),
+        db.billReturns.toArray(),
+        db.purchases.toArray(),
+        db.purchaseLines.toArray(),
+        db.suppliers.toArray(),
+      ])
+        .then(([b, bi, br, p, pl, sup]) => {
+          setBills(b);
+          setBillItems(bi);
+          setBillReturns(br);
+          setPurchases(p);
+          setPurchaseLines(pl);
+          setSuppliers(sup);
+        })
+        .catch(() => {})
+        .finally(() => setIsLoading(false));
+    };
+
     setIsLoading(true);
-    Promise.all([
-      db.bills.toArray(),
-      db.billItems.toArray(),
-      db.billReturns.toArray(),
-      db.purchases.toArray(),
-      db.purchaseLines.toArray(),
-      db.suppliers.toArray(),
-    ])
-      .then(([b, bi, br, p, pl, sup]) => {
-        setBills(b);
-        setBillItems(bi);
-        setBillReturns(br);
-        setPurchases(p);
-        setPurchaseLines(pl);
-        setSuppliers(sup);
-      })
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
+    fetchReportsData();
+    return subscribeToSyncUpdates(() => {
+      fetchReportsData();
+    }, ['bill', 'bill_return', 'purchase', 'supplier']);
   }, [ownerAllowed]);
 
   const dateRange = useMemo(
