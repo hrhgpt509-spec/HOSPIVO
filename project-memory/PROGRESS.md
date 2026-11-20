@@ -371,6 +371,13 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
 - Upgraded staff/owner profile cards (`min-h-[72px]`, `min-w-0 flex-1`) with inline `OWNER` badge beside the name, full readable wrapped role subtitles, and crisp circular chevron tap affordances, plus clean separated footer security note & Local mode pill.
 - Verified with `npm run build`, `npm run test` (253 tests), and `npx cap sync android` with 0 errors.
 
+- Mobile layout, overlap & bottom-bar truncation polish across Android UI:
+  - Checkout (`PaymentScreen.tsx`): unified Cash Received state (initialized cleanly to exact bill total with single mobile input), split Change to Return vs Cash Short into non-overlapping exclusive state cards, and fixed bottom Confirm & Save Bill button height/padding so zero text clips.
+  - Audit Log (`AuditLogScreen.tsx`): fixed flexbox vertical row-shrinking overlap by using block list flow and clean stacked mobile cards with `shrink-0` timestamps/icons and `min-w-0` wrapping.
+  - Staff (`OwnerStaff.tsx`, `Setup.tsx`): fixed left-edge clipping on "PIN Badlo / Reset PIN" via full-width 3-column mobile action grid (`>= 52px` targets), wrapped staff summary text, and added case-insensitive duplicate staff name + double-submit guards.
+  - Shelf, Bottom Nav & Settings (`OwnerShelfMap.tsx`, `MobileBottomNav.tsx`, `OwnerDashboard.tsx`, `OwnerSettings.tsx` + en/hi/hinglish i18n): prevented shelf code (`S-09-COLD`) multi-line breaks, replaced truncated bottom-nav labels with concise 1-word localized labels (`Home/Sell/Stock/Credit/Owner`) with safe-area padding, and fixed right-edge clipping on Settings rows ("Dukaan ki jaankari", Language, Cloud Sync).
+
+
 
 
 

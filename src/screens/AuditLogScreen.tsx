@@ -299,38 +299,80 @@ export const AuditLogScreen: React.FC<AuditLogScreenProps> = ({
                     />
                   </div>
                 ) : (
-                  <div className="flex flex-col divide-y divide-outline-variant/20 max-h-[520px] overflow-y-auto">
+                  <div className="divide-y divide-outline-variant/20 lg:max-h-[560px] lg:overflow-y-auto">
                     {filteredEntries.map((entry) => {
                       const meta = actionIcon(entry.action || '');
                       return (
                         <div
                           key={entry.id}
-                          className="min-h-[64px] grid grid-cols-1 md:grid-cols-12 px-4 md:px-space-lg py-3 items-center gap-2 hover:bg-surface-container-low/50 transition-colors"
+                          className="w-full min-w-0 hover:bg-surface-container-low/50 transition-colors"
                         >
-                          <div className="md:col-span-2 text-sm font-bold text-on-surface-variant">
-                            {formatTimestamp(entry.timestamp)}
-                          </div>
-                          <div className="md:col-span-2 flex items-center gap-2 min-w-0">
-                            <span className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center font-bold text-xs text-on-surface shrink-0">
-                              {(entry.who || 'U').charAt(0).toUpperCase()}
-                            </span>
-                            <span className="font-bold text-on-surface truncate">{entry.who}</span>
-                          </div>
-                          <div className="md:col-span-5 flex items-start gap-2 min-w-0">
-                            <Icon name={meta.icon} className={`text-xl shrink-0 mt-0.5 ${meta.color}`} />
-                            <div className="flex flex-col min-w-0">
-                              <span className="font-bold text-sm text-on-surface">
-                                {entry.action}
-                              </span>
-                              <span className="text-xs sm:text-sm text-on-surface-variant break-words">
-                                {entry.details}
+                          {/* Mobile Clean Stacked Card (zero overlapping rows/timestamps) */}
+                          <div className="md:hidden p-3.5 flex flex-col gap-2 min-w-0">
+                            <div className="flex items-center justify-between gap-2 min-w-0">
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <span className="w-7 h-7 rounded-full bg-surface-container-high flex items-center justify-center font-bold text-xs text-on-surface shrink-0">
+                                  {(entry.who || 'U').charAt(0).toUpperCase()}
+                                </span>
+                                <span className="text-sm font-bold text-on-surface truncate min-w-0">
+                                  {entry.who}
+                                </span>
+                              </div>
+                              <span className="text-xs font-semibold text-on-surface-variant shrink-0 whitespace-nowrap">
+                                {formatTimestamp(entry.timestamp)}
                               </span>
                             </div>
+
+                            <div className="flex items-start gap-2 min-w-0">
+                              <Icon name={meta.icon} className={`text-[18px] shrink-0 mt-0.5 ${meta.color}`} />
+                              <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                                <span className="font-bold text-sm text-on-surface leading-snug break-words">
+                                  {entry.action}
+                                </span>
+                                {entry.details && (
+                                  <span className="text-xs text-on-surface-variant leading-relaxed break-words">
+                                    {entry.details}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {entry.record && (
+                              <div className="flex items-center pl-6 min-w-0">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg bg-surface-container text-on-surface text-xs font-bold break-all max-w-full">
+                                  {entry.record}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                          <div className="md:col-span-3">
-                            <span className="inline-flex items-center px-3 py-1 rounded-lg bg-surface-container text-on-surface text-xs sm:text-sm font-bold">
-                              {entry.record || '—'}
-                            </span>
+
+                          {/* Desktop 12-Column Table Row */}
+                          <div className="hidden md:grid grid-cols-12 px-space-lg py-3 min-h-[64px] items-center gap-3 min-w-0">
+                            <div className="col-span-2 text-sm font-bold text-on-surface-variant whitespace-nowrap shrink-0">
+                              {formatTimestamp(entry.timestamp)}
+                            </div>
+                            <div className="col-span-2 flex items-center gap-2 min-w-0">
+                              <span className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center font-bold text-xs text-on-surface shrink-0">
+                                {(entry.who || 'U').charAt(0).toUpperCase()}
+                              </span>
+                              <span className="font-bold text-on-surface truncate min-w-0">{entry.who}</span>
+                            </div>
+                            <div className="col-span-5 flex items-start gap-2 min-w-0">
+                              <Icon name={meta.icon} className={`text-xl shrink-0 mt-0.5 ${meta.color}`} />
+                              <div className="flex flex-col min-w-0 flex-1">
+                                <span className="font-bold text-sm text-on-surface break-words">
+                                  {entry.action}
+                                </span>
+                                <span className="text-xs sm:text-sm text-on-surface-variant break-words">
+                                  {entry.details}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="col-span-3 min-w-0">
+                              <span className="inline-flex items-center px-3 py-1 rounded-lg bg-surface-container text-on-surface text-xs sm:text-sm font-bold break-all max-w-full">
+                                {entry.record || '—'}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       );

@@ -55,9 +55,9 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const { name: shopName, mode } = useShop();
 
   const [paymentMode, setPaymentMode] = useState<PaymentMode>(draft.paymentMode || 'cash');
-  // Cash tendered input as rupee string (default to exact rupees of total)
+  // Cash tendered input as rupee string (default to exact rupees of total so display & input match)
   const totalRupeesInt = Math.round(totals.totalPaise / 100);
-  const [cashStr, setCashStr] = useState<string>('0');
+  const [cashStr, setCashStr] = useState<string>(() => String(totalRupeesInt));
 
   // Udhaar customer fields
   const [udhaarSearch, setUdhaarSearch] = useState<string>('');
@@ -573,8 +573,8 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               {/* MODE 1: CASH CALCULATOR */}
               {paymentMode === 'cash' && (
                 <div className="flex flex-col gap-space-sm flex-1 min-h-0">
-                  {/* Diye gaye paise display */}
-                  <div className="h-16 px-space-md rounded-xl bg-surface-container-low flex items-center justify-between shadow-inner shrink-0 border border-outline-variant/40">
+                  {/* Desktop Cash Received Summary Bar (hidden on mobile to prevent conflicting duplicate display) */}
+                  <div className="hidden lg:flex h-16 px-space-md rounded-xl bg-surface-container-low items-center justify-between shadow-inner shrink-0 border border-outline-variant/40">
                     <div className="flex flex-col">
                       <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
                         {t('billing_flow.cash_tendered_label')}
@@ -597,22 +597,36 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                     </div>
                   </div>
 
-                  {/* Mobile Native Numeric Cash Input + Quick Denominations (no on-screen numpad on phones) */}
-                  <div className="lg:hidden flex flex-col gap-2.5">
-                    <div className="w-full h-16 px-4 rounded-2xl bg-surface-container-lowest border-2 border-primary flex items-center justify-between gap-2 shadow-xs">
-                      <Icon name="currency_rupee" className="text-primary text-[26px] shrink-0" />
+                  {/* Mobile Native Numeric Cash Input + Quick Denominations (single unified source of truth) */}
+                  <div className="lg:hidden flex flex-col gap-2.5 min-w-0">
+                    <div className="flex items-center justify-between gap-2 px-1">
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-bold text-on-surface leading-tight">
+                          {t('billing_flow.cash_tendered_label')}
+                        </span>
+                        <span className="text-xs text-on-surface-variant leading-tight">
+                          {t('billing_flow.cash_tendered_sub')}
+                        </span>
+                      </div>
+                      <span className="text-sm font-extrabold text-primary shrink-0 whitespace-nowrap">
+                        {formatRupees(cashReceivedPaise)}
+                      </span>
+                    </div>
+
+                    <div className="w-full h-15 px-3.5 rounded-2xl bg-surface-container-lowest border-2 border-primary flex items-center justify-between gap-2 shadow-xs min-w-0">
+                      <Icon name="currency_rupee" className="text-primary text-[24px] shrink-0" />
                       <input
                         type="text"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         value={cashStr === '0' ? '' : cashStr}
-                        placeholder={String(totalRupeesInt)}
+                        placeholder="0"
                         onChange={(e) => {
                           const clean = e.target.value.replace(/\D/g, '').slice(0, 7);
                           setCashStr(clean || '0');
                         }}
                         aria-label={t('billing_flow.cash_tendered_label')}
-                        className="w-full min-w-0 bg-transparent text-2xl font-extrabold text-primary outline-none"
+                        className="w-full min-w-0 bg-transparent text-2xl font-extrabold text-primary outline-none placeholder:text-outline/50"
                       />
                       {cashStr !== '0' && (
                         <button
@@ -630,7 +644,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                       <button
                         type="button"
                         onClick={() => setCashStr(String(totalRupeesInt))}
-                        className="min-h-[48px] px-2 rounded-xl bg-primary-fixed text-on-primary-fixed font-bold text-xs flex items-center justify-center active:scale-95 transition-all cursor-pointer"
+                        className="min-h-[48px] px-1.5 rounded-xl bg-primary-fixed text-on-primary-fixed font-bold text-xs flex items-center justify-center text-center leading-tight active:scale-95 transition-all cursor-pointer"
                       >
                         {t('billing_flow.btn_exact_cash')}
                       </button>
@@ -639,7 +653,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                           key={amt}
                           type="button"
                           onClick={() => setCashStr(String((Number(cashStr) || 0) + amt))}
-                          className="min-h-[48px] px-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm flex items-center justify-center active:scale-95 transition-all cursor-pointer border border-outline-variant/40"
+                          className="min-h-[48px] px-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm flex items-center justify-center active:scale-95 transition-all cursor-pointer border border-outline-variant/40"
                         >
                           +₹{amt}
                         </button>
@@ -669,43 +683,46 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                     </button>
                   </div>
 
-                  {/* Bold Return Change Highlight */}
-                  <div
-                    className={`h-16 px-space-md rounded-xl flex items-center justify-between shadow-sm shrink-0 border ${
-                      cashChange.valid
-                        ? 'bg-surface-container-low border-primary/30'
-                        : 'bg-error-container/50 border-error/40'
-                    }`}
-                  >
-                    <div className="flex items-center gap-space-sm">
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          cashChange.valid
-                            ? 'bg-primary text-on-primary'
-                            : 'bg-error text-on-error'
-                        }`}
-                      >
-                        <Icon name="currency_exchange" className="text-2xl" />
+                  {/* Active State Card: ONLY Change to Return OR Cash Short (never overlapping) */}
+                  {cashChange.valid ? (
+                    <div className="min-h-[68px] py-3 px-4 rounded-xl flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 shadow-sm shrink-0 border bg-surface-container-low border-primary/30 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0">
+                          <Icon name="currency_exchange" className="text-2xl" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm sm:text-base text-on-surface font-bold leading-snug break-words">
+                            {t('billing_flow.change_to_return')}
+                          </span>
+                          <span className="text-xs text-on-surface-variant leading-snug break-words">
+                            {t('billing_flow.change_to_return_sub')}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
-                          {t('billing_flow.change_to_return')}
-                        </span>
-                        <span className="font-label-sub-english text-xs text-on-surface-variant">
-                          {t('billing_flow.change_to_return_sub')}
-                        </span>
-                      </div>
+                      <span className="text-xl sm:text-2xl font-extrabold text-primary shrink-0 whitespace-nowrap">
+                        {formatRupees(cashChange.changePaise)}
+                      </span>
                     </div>
-                    <span
-                      className={`font-headline-lg text-headline-lg font-extrabold ${
-                        cashChange.valid ? 'text-primary' : 'text-error'
-                      }`}
-                    >
-                      {cashChange.valid
-                        ? `${t('billing_flow.change_return_prefix')} ${formatRupees(cashChange.changePaise)}`
-                        : `${t('billing_flow.cash_short_prefix')} ${formatRupees(cashChange.shortagePaise)}`}
-                    </span>
-                  </div>
+                  ) : (
+                    <div className="min-h-[68px] py-3 px-4 rounded-xl flex flex-wrap sm:flex-nowrap items-center justify-between gap-2.5 shadow-sm shrink-0 border bg-error-container/50 border-error/40 min-w-0">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-10 h-10 rounded-full bg-error text-on-error flex items-center justify-center shrink-0">
+                          <Icon name="error" className="text-2xl" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm sm:text-base text-error font-extrabold leading-snug break-words">
+                            {t('billing_flow.cash_short_prefix')}
+                          </span>
+                          <span className="text-xs text-on-error-container leading-snug break-words">
+                            {t('billing_flow.cash_tendered_sub')}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-xl sm:text-2xl font-extrabold text-error shrink-0 whitespace-nowrap">
+                        {formatRupees(cashChange.shortagePaise)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -920,21 +937,21 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
             </div>
           </div>
 
-          {/* PERSISTENT COUNTER ACTION BAR (64px Tall Buttons >= 56px) */}
-          <div className="flex items-center justify-between pt-space-xs shrink-0 gap-4">
+          {/* PERSISTENT COUNTER ACTION BAR (zero vertical text clipping on phones) */}
+          <div className="flex items-stretch justify-between pt-2 shrink-0 gap-2.5 sm:gap-4 w-full min-w-0">
             <button
               type="button"
               onClick={onBackToCart}
               disabled={isSubmitting}
-              className="h-16 min-h-[56px] px-space-lg sm:px-space-xl rounded-xl bg-surface-container-highest hover:bg-surface-dim text-on-surface shadow-md flex items-center gap-space-sm active:translate-y-0.5 transition-all cursor-pointer"
+              className="min-h-[56px] py-2.5 px-4 sm:px-6 rounded-xl bg-surface-container-highest hover:bg-surface-dim text-on-surface shadow-md flex items-center justify-center gap-2 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
             >
-              <Icon name="arrow_back" className="text-2xl" />
-              <div className="flex flex-col text-left leading-tight">
-                <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
+              <Icon name="arrow_back" className="text-2xl shrink-0" />
+              <div className="flex flex-col text-left leading-snug">
+                <span className="text-sm sm:text-base text-on-surface font-bold">
                   {backBtn.main}
                 </span>
                 {backBtn.sub && (
-                  <span className="font-label-sub-english text-xs text-on-surface-variant">
+                  <span className="text-[11px] sm:text-xs text-on-surface-variant">
                     {backBtn.sub}
                   </span>
                 )}
@@ -945,15 +962,15 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               type="button"
               onClick={handleConfirmBill}
               disabled={isSubmitting}
-              className="h-16 min-h-[56px] px-space-lg sm:px-space-xl rounded-xl bg-primary hover:bg-surface-tint text-on-primary shadow-xl flex items-center gap-space-md active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
+              className="flex-1 sm:flex-initial min-h-[56px] py-2.5 px-4 sm:px-7 rounded-xl bg-primary hover:bg-surface-tint text-on-primary shadow-xl flex items-center justify-center gap-2.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50 min-w-0"
             >
-              <Icon name="check_circle" className="text-[36px] leading-none" />
-              <div className="flex flex-col text-left leading-tight">
-                <span className="font-button-text text-button-text text-on-primary font-bold">
+              <Icon name="check_circle" className="text-[26px] sm:text-[32px] leading-none shrink-0" />
+              <div className="flex flex-col text-left leading-snug min-w-0">
+                <span className="text-base sm:text-xl text-on-primary font-extrabold break-words">
                   {confirmBtn.main}
                 </span>
                 {confirmBtn.sub && (
-                  <span className="font-label-sub-english text-xs text-primary-fixed">
+                  <span className="text-[11px] sm:text-xs text-primary-fixed leading-snug break-words">
                     {confirmBtn.sub}
                   </span>
                 )}

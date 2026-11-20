@@ -57,6 +57,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
   const [staffActive, setStaffActive] = useState(true);
   const [staffPin, setStaffPin] = useState('');
   const [formError, setFormError] = useState('');
+  const [isSavingStaff, setIsSavingStaff] = useState(false);
   const [pinLength, setPinLength] = useState(4);
 
   // PIN modal state
@@ -177,6 +178,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
 
   const handleSaveStaff = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSavingStaff) return;
     setFormError('');
 
     const cleanName = staffName.trim();
@@ -185,70 +187,87 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
       return;
     }
 
-    if (!editingUserId) {
-      // Adding new staff requires valid PIN
-      const val = await validateStaffPin(staffPin, undefined, undefined, pinLength);
-      if (!val.ok) {
-        if (val.error === 'staff_pin_same_as_owner') {
-          setFormError(t('owner_staff.err_pin_same_as_owner'));
-        } else if (val.error === 'staff_pin_same_as_approval') {
-          setFormError(t('owner_staff.err_pin_same_as_approval'));
-        } else if (val.error === 'staff_pin_duplicate') {
-          setFormError(t('owner_staff.err_pin_duplicate'));
-        } else {
-          setFormError(t('owner_staff.err_pin_invalid'));
-        }
-        return;
-      }
-
-      const { hash, salt } = await hashPin(staffPin);
-      const newStaffId = `staff_${Date.now()}`;
-
-      const newStaff: DBUser = {
-        id: newStaffId,
-        name: cleanName,
-        role: staffRole,
-        pinHash: hash,
-        pinSalt: salt,
-        pinLength,
-        active: staffActive,
-        createdAt: new Date().toISOString(),
-      };
-
-      await db.users.add(newStaff);
-      enqueueSyncItem('staff', newStaffId, newStaff).catch(() => {});
-      await addAudit(
-        currentUser?.name || 'owner',
-        'staff_created',
-        newStaffId,
-        `Staff ${cleanName} created with role ${staffRole}`
-      );
-      triggerFeedback('success', t('owner_staff.toast_staff_saved'));
-    } else {
-      // Editing existing staff
-      await db.users.update(editingUserId, {
-        name: cleanName,
-        active: staffActive,
-      });
-      const existingUser = users.find((s) => s.id === editingUserId);
-      if (existingUser) {
-        enqueueSyncItem('staff', editingUserId, {
-          ...existingUser,
-          name: cleanName,
-          active: staffActive,
-        }).catch(() => {});
-      }
-      await addAudit(
-        currentUser?.name || 'owner',
-        'staff_updated',
-        editingUserId,
-        `Staff ${cleanName} updated: active=${staffActive}`
-      );
-      triggerFeedback('success', t('owner_staff.toast_staff_saved'));
+    // Prevent accidental duplicate staff entries (case-insensitive check against DB users)
+    const existingUsers = await db.users.toArray();
+    const duplicateUser = existingUsers.find(
+      (u) =>
+        u.id !== editingUserId &&
+        u.name.trim().toLowerCase() === cleanName.toLowerCase()
+    );
+    if (duplicateUser) {
+      setFormError(t('owner_staff.err_name_duplicate'));
+      return;
     }
 
-    setIsAddModalOpen(false);
-    await loadData();
+    setIsSavingStaff(true);
+    try {
+      if (!editingUserId) {
+        // Adding new staff requires valid PIN
+        const val = await validateStaffPin(staffPin, undefined, undefined, pinLength);
+        if (!val.ok) {
+          if (val.error === 'staff_pin_same_as_owner') {
+            setFormError(t('owner_staff.err_pin_same_as_owner'));
+          } else if (val.error === 'staff_pin_same_as_approval') {
+            setFormError(t('owner_staff.err_pin_same_as_approval'));
+          } else if (val.error === 'staff_pin_duplicate') {
+            setFormError(t('owner_staff.err_pin_duplicate'));
+          } else {
+            setFormError(t('owner_staff.err_pin_invalid'));
+          }
+          return;
+        }
+
+        const { hash, salt } = await hashPin(staffPin);
+        const newStaffId = `staff_${Date.now()}`;
+
+        const newStaff: DBUser = {
+          id: newStaffId,
+          name: cleanName,
+          role: staffRole,
+          pinHash: hash,
+          pinSalt: salt,
+          pinLength,
+          active: staffActive,
+          createdAt: new Date().toISOString(),
+        };
+
+        await db.users.add(newStaff);
+        enqueueSyncItem('staff', newStaffId, newStaff).catch(() => {});
+        await addAudit(
+          currentUser?.name || 'owner',
+          'staff_created',
+          newStaffId,
+          `Staff ${cleanName} created with role ${staffRole}`
+        );
+        triggerFeedback('success', t('owner_staff.toast_staff_saved'));
+      } else {
+        // Editing existing staff
+        await db.users.update(editingUserId, {
+          name: cleanName,
+          active: staffActive,
+        });
+        const existingUser = existingUsers.find((s) => s.id === editingUserId);
+        if (existingUser) {
+          enqueueSyncItem('staff', editingUserId, {
+            ...existingUser,
+            name: cleanName,
+            active: staffActive,
+          }).catch(() => {});
+        }
+        await addAudit(
+          currentUser?.name || 'owner',
+          'staff_updated',
+          editingUserId,
+          `Staff ${cleanName} updated: active=${staffActive}`
+        );
+        triggerFeedback('success', t('owner_staff.toast_staff_saved'));
+      }
+
+      setIsAddModalOpen(false);
+      await loadData();
+    } finally {
+      setIsSavingStaff(false);
+    }
   };
 
   const handleToggleActive = async (user: DBUser) => {
@@ -441,27 +460,27 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
                 return (
                   <div
                     key={u.id}
-                    className="min-h-[108px] bg-surface-container-lowest rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:shadow-md border border-outline-variant/30"
+                    className="w-full min-w-0 bg-surface-container-lowest rounded-2xl p-3.5 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 transition-all hover:shadow-md border border-outline-variant/30 overflow-hidden"
                   >
                     {/* Left: Clickable Info (Avatar + Details) */}
                     <div
-                      className="flex items-center gap-4 cursor-pointer flex-1 min-w-0"
+                      className="flex items-start sm:items-center gap-3 sm:gap-4 cursor-pointer flex-1 min-w-0"
                       onClick={() => !isOwnerUser && setSelectedStaff(u)}
                     >
-                      <div className="w-16 h-16 rounded-full bg-primary-container/20 text-primary flex items-center justify-center font-headline-md text-headline-md font-extrabold shrink-0">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary-container/20 text-primary flex items-center justify-center text-lg sm:text-2xl font-extrabold shrink-0">
                         {initials}
                       </div>
 
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold truncate">
+                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-wrap min-w-0">
+                          <span className="font-title-hinglish text-base sm:text-title-hinglish text-on-surface font-bold break-words">
                             {u.name}
                           </span>
-                          <span className="px-3 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sub-english text-sm font-semibold">
+                          <span className="px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-xs font-semibold whitespace-nowrap">
                             {isOwnerUser ? t('owner_staff.badge_owner') : t('owner_staff.badge_counter_staff')}
                           </span>
                           <span
-                            className={`px-3 py-0.5 rounded-full font-label-sub-english text-xs font-bold ${
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${
                               u.active
                                 ? 'bg-primary-fixed text-on-primary-fixed'
                                 : 'bg-surface-container-high text-on-surface-variant'
@@ -471,7 +490,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
                           </span>
                         </div>
 
-                        <div className="font-body-md text-body-md text-on-surface-variant truncate">
+                        <div className="text-xs sm:text-sm text-on-surface-variant leading-snug break-words">
                           {t('owner_staff.activity_today')
                             .replace('{bills}', String(stats.bills))
                             .replace('{discount}', String(stats.discounts))
@@ -481,22 +500,22 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
                       </div>
                     </div>
 
-                    {/* Right: Actions (Staff only) */}
+                    {/* Right: Actions (Staff only, full-width 3-col grid on phones to prevent left/right clipping) */}
                     {!isOwnerUser && (
-                      <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
+                      <div className="w-full sm:w-auto grid grid-cols-3 sm:flex sm:items-center gap-2 shrink-0 min-w-0">
                         {/* PIN Badlo */}
                         <button
                           type="button"
                           onClick={() => handleOpenResetPin(u)}
-                          className="h-14 min-w-[130px] max-sm:min-w-0 max-sm:flex-1 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center gap-2 cursor-pointer transition-all active:translate-y-0.5"
+                          className="min-h-[52px] sm:h-14 py-2 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 cursor-pointer transition-all active:translate-y-0.5 min-w-0"
                         >
-                          <Icon name="key" className="text-[24px] text-on-surface-variant" />
-                          <div className="flex flex-col text-left">
-                            <span className="font-title-hinglish text-sm font-bold leading-tight">
+                          <Icon name="key" className="text-[20px] sm:text-[24px] text-on-surface-variant shrink-0" />
+                          <div className="flex flex-col text-center sm:text-left min-w-0">
+                            <span className="text-xs sm:text-sm font-bold leading-tight break-words">
                               {btnResetPin.main}
                             </span>
                             {btnResetPin.sub ? (
-                              <span className="font-label-sub-english text-xs text-on-surface-variant leading-none">
+                              <span className="hidden sm:block text-xs text-on-surface-variant leading-none mt-0.5">
                                 {btnResetPin.sub}
                               </span>
                             ) : null}
@@ -507,7 +526,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
                         <button
                           type="button"
                           onClick={() => handleToggleActive(u)}
-                          className={`h-14 min-w-[110px] max-sm:min-w-0 max-sm:flex-1 px-4 rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all active:translate-y-0.5 ${
+                          className={`min-h-[52px] sm:h-14 py-2 px-2 sm:px-4 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 cursor-pointer transition-all active:translate-y-0.5 min-w-0 ${
                             u.active
                               ? 'bg-tertiary-fixed hover:bg-tertiary-fixed-dim text-on-tertiary-fixed'
                               : 'bg-primary-fixed hover:bg-primary-fixed-dim text-on-primary-fixed'
@@ -515,14 +534,14 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
                         >
                           <Icon
                             name={u.active ? 'pause_circle' : 'play_circle'}
-                            className={`text-[24px] ${u.active ? 'text-tertiary' : 'text-primary'}`}
+                            className={`text-[20px] sm:text-[24px] shrink-0 ${u.active ? 'text-tertiary' : 'text-primary'}`}
                           />
-                          <div className="flex flex-col text-left">
-                            <span className="font-title-hinglish text-sm font-bold leading-tight">
+                          <div className="flex flex-col text-center sm:text-left min-w-0">
+                            <span className="text-xs sm:text-sm font-bold leading-tight break-words">
                               {u.active ? btnPause.main : btnActivate.main}
                             </span>
                             {u.active && btnPause.sub ? (
-                              <span className="font-label-sub-english text-xs leading-none">{btnPause.sub}</span>
+                              <span className="hidden sm:block text-xs leading-none mt-0.5">{btnPause.sub}</span>
                             ) : null}
                           </div>
                         </button>
@@ -531,15 +550,15 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
                         <button
                           type="button"
                           onClick={() => setUserToRemove(u)}
-                          className="h-14 min-w-[110px] max-sm:min-w-0 max-sm:flex-1 px-4 rounded-2xl bg-error-container hover:bg-error-container/80 text-on-error-container flex items-center justify-center gap-2 cursor-pointer transition-all active:translate-y-0.5"
+                          className="min-h-[52px] sm:h-14 py-2 px-2 sm:px-4 rounded-xl sm:rounded-2xl bg-error-container hover:bg-error-container/80 text-on-error-container flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 cursor-pointer transition-all active:translate-y-0.5 min-w-0"
                         >
-                          <Icon name="delete" className="text-[24px] text-error" />
-                          <div className="flex flex-col text-left">
-                            <span className="font-title-hinglish text-sm font-bold leading-tight text-error">
+                          <Icon name="delete" className="text-[20px] sm:text-[24px] text-error shrink-0" />
+                          <div className="flex flex-col text-center sm:text-left min-w-0">
+                            <span className="text-xs sm:text-sm font-bold leading-tight text-error break-words">
                               {btnRemove.main}
                             </span>
                             {btnRemove.sub ? (
-                              <span className="font-label-sub-english text-xs text-error leading-none">
+                              <span className="hidden sm:block text-xs text-error leading-none mt-0.5">
                                 {btnRemove.sub}
                               </span>
                             ) : null}
@@ -574,18 +593,18 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
           /* ============================================================ */
           <div className="flex flex-col flex-1 gap-4 justify-between">
             {/* Top Profile Card */}
-            <div className="w-full bg-surface-container-lowest rounded-2xl p-6 shadow-sm flex items-center justify-between border border-outline-variant/30">
-              <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-2xl bg-surface-container flex items-center justify-center text-primary font-headline-md font-extrabold">
+            <div className="w-full min-w-0 bg-surface-container-lowest rounded-2xl p-4 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-outline-variant/30">
+              <div className="flex items-center gap-3.5 sm:gap-5 min-w-0 flex-1">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-surface-container flex items-center justify-center text-primary text-xl sm:text-2xl font-extrabold shrink-0">
                   {getInitials(selectedStaff.name)}
                 </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-3">
-                    <span className="font-headline-lg text-headline-lg font-bold text-on-surface">
+                <div className="flex flex-col min-w-0 flex-1">
+                  <div className="flex items-center flex-wrap gap-2 min-w-0">
+                    <span className="font-headline-lg text-xl sm:text-headline-lg font-bold text-on-surface break-words">
                       {selectedStaff.name}
                     </span>
                     <span
-                      className={`px-3 py-0.5 rounded-full font-label-sub-english text-xs font-bold ${
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${
                         selectedStaff.active
                           ? 'bg-primary-fixed text-on-primary-fixed'
                           : 'bg-surface-container-high text-on-surface-variant'
@@ -594,13 +613,13 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
                       {selectedStaff.active ? t('owner_staff.badge_active') : t('owner_staff.badge_paused')}
                     </span>
                   </div>
-                  <span className="font-body-md text-outline">{t('owner_staff.badge_counter_staff')}</span>
+                  <span className="text-sm text-outline">{t('owner_staff.badge_counter_staff')}</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-container-low text-on-surface-variant font-label-sub-english">
-                <span className="w-3 h-3 rounded-full bg-primary animate-pulse" />
-                <span className="font-bold">{t('owner_staff.detail_active_shift')}</span>
+              <div className="self-start sm:self-center flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-surface-container-low text-on-surface-variant text-xs sm:text-sm shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse shrink-0" />
+                <span className="font-bold whitespace-nowrap">{t('owner_staff.detail_active_shift')}</span>
               </div>
             </div>
 

@@ -187,7 +187,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="w-full pt-3 lg:pt-20 flex-1 bg-surface px-3 sm:px-gutter py-3 sm:py-space-md">
+      <main className="w-full pt-3 lg:pt-20 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex-1 bg-surface px-3 sm:px-gutter py-3 sm:py-space-md">
         <div className="flex flex-col w-full max-w-[1440px] mx-auto gap-3 sm:gap-space-md min-w-0">
           {!ownerAllowed ? (
             <div className="py-12">
@@ -531,13 +531,13 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                     <button
                       type="button"
                       onClick={onOpenAuditLog}
-                      className="h-14 min-h-[56px] px-5 rounded-2xl bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/40 text-on-surface font-bold flex items-center gap-2 shadow-sm cursor-pointer"
+                      className="min-h-[56px] py-2 px-3 sm:px-5 rounded-2xl bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/40 text-on-surface font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer min-w-0"
                     >
-                      <Icon name="verified_user" className="text-2xl text-primary" />
-                      <div className="flex flex-col text-left leading-none">
-                        <span>{auditBtn.main}</span>
+                      <Icon name="verified_user" className="text-xl sm:text-2xl text-primary shrink-0" />
+                      <div className="flex flex-col text-left leading-tight min-w-0">
+                        <span className="text-sm sm:text-base truncate">{auditBtn.main}</span>
                         {auditBtn.sub && (
-                          <span className="text-xs text-on-surface-variant pt-0.5">
+                          <span className="text-[11px] sm:text-xs text-on-surface-variant pt-0.5 truncate">
                             {auditBtn.sub}
                           </span>
                         )}
@@ -549,13 +549,13 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                     <button
                       type="button"
                       onClick={onOpenReports}
-                      className="h-14 min-h-[56px] px-6 rounded-2xl bg-primary hover:bg-primary-container text-on-primary font-bold flex items-center gap-2 shadow-md cursor-pointer"
+                      className="min-h-[56px] py-2 px-3 sm:px-6 rounded-2xl bg-primary hover:bg-primary-container text-on-primary font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer min-w-0"
                     >
-                      <Icon name="analytics" className="text-2xl" />
-                      <div className="flex flex-col text-left leading-none">
-                        <span>{reportsBtn.main}</span>
+                      <Icon name="analytics" className="text-xl sm:text-2xl shrink-0" />
+                      <div className="flex flex-col text-left leading-tight min-w-0">
+                        <span className="text-sm sm:text-base truncate">{reportsBtn.main}</span>
                         {reportsBtn.sub && (
-                          <span className="text-xs text-primary-fixed pt-0.5">
+                          <span className="text-[11px] sm:text-xs text-primary-fixed pt-0.5 truncate">
                             {reportsBtn.sub}
                           </span>
                         )}

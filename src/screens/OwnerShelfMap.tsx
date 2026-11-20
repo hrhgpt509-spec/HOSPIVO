@@ -280,42 +280,43 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
                       <article
                         key={group.shelf}
                         onClick={() => setSelectedShelfKey(group.shelf)}
-                        className={`flex flex-col justify-between p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs min-h-[140px] ${
+                        className={`flex flex-col justify-between p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer shadow-xs min-h-[140px] min-w-0 overflow-hidden ${
                           isSelected
                             ? 'bg-surface-container-lowest border-primary ring-2 ring-primary/20 shadow-md translate-y-[-2px]'
                             : 'bg-surface-container-lowest border-outline-variant/70 hover:border-primary/50 hover:bg-surface-container-high/40'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-1.5 min-w-0">
                           <span
-                            className={`font-black text-xl leading-none tracking-tight ${
+                            className={`font-black text-base sm:text-xl leading-tight tracking-tight whitespace-nowrap truncate min-w-0 flex-1 ${
                               isSelected ? 'text-primary' : 'text-on-surface'
                             }`}
+                            title={group.isUnassigned ? t('shelf_map.unassigned_shelf') : group.displayShelf}
                           >
                             {group.isUnassigned ? t('shelf_map.unassigned_shelf') : group.displayShelf}
                           </span>
-                          <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant font-bold">
+                          <span className="text-[10px] sm:text-xs font-mono px-1.5 sm:px-2 py-0.5 rounded-md bg-surface-container-high text-on-surface-variant font-bold shrink-0">
                             {group.isUnassigned ? 'NONE' : 'QR'}
                           </span>
                         </div>
 
                         {/* Middle Rack Preview Block */}
-                        <div className="w-full flex-1 my-2 rounded-xl bg-surface-container-low flex flex-col items-center justify-center p-2 text-center border border-outline-variant/40">
+                        <div className="w-full min-w-0 flex-1 my-2 rounded-xl bg-surface-container-low flex flex-col items-center justify-center p-2 text-center border border-outline-variant/40">
                           <Icon
                             name={group.isUnassigned ? 'help_outline' : 'shelves'}
-                            className={`text-[28px] ${isSelected ? 'text-primary' : 'text-on-surface-variant'}`}
+                            className={`text-[26px] sm:text-[28px] shrink-0 ${isSelected ? 'text-primary' : 'text-on-surface-variant'}`}
                           />
-                          <span className="text-xs font-bold text-on-surface-variant mt-1 truncate max-w-full">
+                          <span className="text-xs font-bold text-on-surface-variant mt-1 truncate w-full">
                             {group.medicines[0]?.name || t('shelf_map.stat_total_medicines')}
                           </span>
                         </div>
 
                         {/* Footer counts */}
-                        <div className="flex items-center justify-between text-xs font-bold text-on-surface-variant pt-1 border-t border-outline-variant/30">
-                          <span className={isSelected ? 'text-primary' : 'text-on-surface'}>
+                        <div className="flex items-center justify-between flex-wrap gap-1 text-[11px] sm:text-xs font-bold text-on-surface-variant pt-1 border-t border-outline-variant/30 min-w-0">
+                          <span className={`whitespace-nowrap ${isSelected ? 'text-primary' : 'text-on-surface'}`}>
                             {group.totalMedicines} {t('shelf_map.unit_dawai')}
                           </span>
-                          <span>
+                          <span className="whitespace-nowrap">
                             {group.totalStockPacks} {t('shelf_map.unit_packs')}
                           </span>
                         </div>
@@ -331,9 +332,9 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
               {selectedGroup ? (
                 <>
                   {/* Top Header of Inspector */}
-                  <div className="flex items-center justify-between shrink-0 pb-3 border-b border-outline-variant/40">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-2xl sm:text-3xl font-black text-on-surface tracking-tight leading-none">
+                  <div className="flex items-center justify-between flex-wrap gap-2 shrink-0 pb-3 border-b border-outline-variant/40 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <span className="text-xl sm:text-3xl font-black text-on-surface tracking-tight leading-tight whitespace-nowrap truncate">
                         {selectedGroup.isUnassigned
                           ? t('shelf_map.unassigned_shelf')
                           : selectedGroup.displayShelf}
@@ -343,11 +344,11 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
                           dangerouslySetInnerHTML={{
                             __html: generateShelfQrSvg(selectedGroup.shelf, { size: 28 }),
                           }}
-                          className="text-primary flex items-center"
+                          className="text-primary flex items-center shrink-0"
                         />
                       )}
                     </div>
-                    <div className="bg-primary/10 px-3 py-1 rounded-full text-xs font-extrabold text-primary">
+                    <div className="bg-primary/10 px-3 py-1 rounded-full text-xs font-extrabold text-primary shrink-0 whitespace-nowrap">
                       {selectedGroup.totalMedicines} {t('shelf_map.unit_dawai')}
                     </div>
                   </div>

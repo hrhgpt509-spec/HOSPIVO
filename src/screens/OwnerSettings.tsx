@@ -551,30 +551,35 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               </span>
             </div>
 
-            <div className="w-full bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden flex flex-col">
+            <div className="w-full min-w-0 bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 overflow-hidden flex flex-col">
               {/* Row 1: Dukaan ki jaankari */}
               <div
                 onClick={() => setIsShopModalOpen(true)}
-                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+                className="min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
-                    <Icon name="storefront" className="text-[28px]" />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="storefront" className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="font-title-hinglish font-bold text-on-surface">
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words">
                       {t('owner_settings.row_shop_details')}
                     </span>
-                    <span className="font-label-sub-english text-xs text-on-surface-variant">
+                    <span className="font-label-sub-english text-xs text-on-surface-variant leading-snug break-words">
                       {t('owner_settings.row_shop_sub')}
                     </span>
+                    {(shopDetails.name || shopDetails.ownerName) && (
+                      <span className="sm:hidden text-xs font-semibold text-primary truncate mt-0.5">
+                        {[shopDetails.name, shopDetails.ownerName].filter(Boolean).join(' • ')}
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-body-md text-on-surface-variant font-medium truncate max-w-[280px]">
-                    {shopDetails.name} • {shopDetails.ownerName}
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                  <span className="hidden sm:inline font-body-md text-sm text-on-surface-variant font-medium truncate max-w-[240px]">
+                    {[shopDetails.name, shopDetails.ownerName].filter(Boolean).join(' • ')}
                   </span>
-                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                  <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
               <div className="h-[1px] w-full bg-surface-container-high" />
@@ -582,21 +587,21 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               {/* Row 2: Discount limit */}
               <div
                 onClick={() => setIsDiscountModalOpen(true)}
-                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+                className="min-h-[68px] sm:min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
-                    <Icon name="percent" className="text-[28px]" />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="percent" className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <span className="font-title-hinglish font-bold text-on-surface">
+                  <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words min-w-0">
                     {t('owner_settings.row_discount_limit')}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-body-md font-bold text-on-surface bg-surface-container px-3 py-1 rounded-lg">
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                  <span className="text-xs sm:text-sm font-bold text-on-surface bg-surface-container px-2.5 sm:px-3 py-1 rounded-lg whitespace-nowrap">
                     {discountLimit}%
                   </span>
-                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                  <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
               <div className="h-[1px] w-full bg-surface-container-high" />
@@ -604,21 +609,21 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               {/* Row 3: Auto-lock */}
               <div
                 onClick={() => setIsAutoLockModalOpen(true)}
-                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+                className="min-h-[68px] sm:min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
-                    <Icon name="timer" className="text-[28px]" />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="timer" className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <span className="font-title-hinglish font-bold text-on-surface">
+                  <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words min-w-0">
                     {t('owner_settings.row_auto_lock')}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-body-md text-on-surface-variant bg-surface-container px-3 py-1 rounded-lg font-medium">
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                  <span className="text-xs sm:text-sm text-on-surface-variant bg-surface-container px-2.5 sm:px-3 py-1 rounded-lg font-medium whitespace-nowrap">
                     {autoLockMinutes} min
                   </span>
-                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                  <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
               <div className="h-[1px] w-full bg-surface-container-high" />
@@ -626,21 +631,21 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               {/* Row 4: Light / Dark Toggle */}
               <div
                 onClick={onToggleTheme}
-                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+                className="min-h-[68px] sm:min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
-                    <Icon name="contrast" className="text-[28px]" />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="contrast" className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <span className="font-title-hinglish font-bold text-on-surface">
+                  <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words min-w-0">
                     {t('owner_settings.row_theme')}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-body-md text-on-surface-variant bg-surface-container px-3 py-1 rounded-lg capitalize font-medium">
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                  <span className="text-xs sm:text-sm text-on-surface-variant bg-surface-container px-2.5 sm:px-3 py-1 rounded-lg capitalize font-medium whitespace-nowrap">
                     {theme}
                   </span>
-                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                  <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
               <div className="h-[1px] w-full bg-surface-container-high" />
@@ -648,21 +653,21 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               {/* Row 5: Language selector */}
               <div
                 onClick={() => setIsLanguageModalOpen(true)}
-                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+                className="min-h-[68px] sm:min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
-                    <Icon name="translate" className="text-[28px]" />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="translate" className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <span className="font-title-hinglish font-bold text-on-surface">
+                  <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words min-w-0">
                     {t('owner_settings.row_bhasha')}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-body-md text-on-surface-variant bg-surface-container px-3 py-1 rounded-lg font-medium">
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 max-w-[48%] sm:max-w-none">
+                  <span className="text-xs sm:text-sm text-on-surface-variant bg-surface-container px-2.5 sm:px-3 py-1 rounded-lg font-medium truncate max-w-full">
                     {getLanguageLabel(language)}
                   </span>
-                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                  <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
               <div className="h-[1px] w-full bg-surface-container-high" />
@@ -670,19 +675,19 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               {/* Row 6: Fullscreen on login */}
               <div
                 onClick={handleToggleFullscreenOnLogin}
-                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+                className="min-h-[68px] sm:min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
-                    <Icon name="fullscreen" className="text-[28px]" />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="fullscreen" className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <span className="font-title-hinglish font-bold text-on-surface">
+                  <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words min-w-0">
                     {t('owner_settings.row_fullscreen')}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
                   <span
-                    className={`font-body-md font-bold px-3 py-1 rounded-lg ${
+                    className={`text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 rounded-lg whitespace-nowrap ${
                       fullscreenOnLogin
                         ? 'bg-primary-fixed text-on-primary-fixed'
                         : 'bg-surface-container text-on-surface-variant'
@@ -690,7 +695,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
                   >
                     {fullscreenOnLogin ? 'ON' : 'OFF'}
                   </span>
-                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                  <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
               <div className="h-[1px] w-full bg-surface-container-high" />
@@ -698,21 +703,21 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               {/* Row 7: PIN length */}
               <div
                 onClick={handleOpenPinLengthModal}
-                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+                className="min-h-[68px] sm:min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
-                    <Icon name="pin" className="text-[28px]" />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="pin" className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <span className="font-title-hinglish font-bold text-on-surface">
+                  <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words min-w-0">
                     {t('owner_settings.row_pin_length')}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-body-md text-on-surface-variant bg-surface-container px-3 py-1 rounded-lg font-bold">
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                  <span className="text-xs sm:text-sm text-on-surface-variant bg-surface-container px-2.5 sm:px-3 py-1 rounded-lg font-bold whitespace-nowrap">
                     {pinLength} Digits
                   </span>
-                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                  <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
               <div className="h-[1px] w-full bg-surface-container-high" />
@@ -720,19 +725,19 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               {/* Row 8: Change Owner Login PIN */}
               <div
                 onClick={handleOpenChangeOwnerPin}
-                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+                className="min-h-[68px] sm:min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
-                    <Icon name="lock_reset" className="text-[28px]" />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="lock_reset" className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <span className="font-title-hinglish font-bold text-on-surface">
+                  <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words min-w-0">
                     {t('owner_settings.row_change_owner_pin')}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-body-md text-on-surface-variant font-bold tracking-widest">••••</span>
-                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                  <span className="text-xs sm:text-sm text-on-surface-variant font-bold tracking-widest">••••</span>
+                  <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
               <div className="h-[1px] w-full bg-surface-container-high" />
@@ -740,19 +745,19 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               {/* Row 9: Change Approval (Ijazat) PIN */}
               <div
                 onClick={handleOpenChangeApprovalPin}
-                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+                className="min-h-[68px] sm:min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
-                    <Icon name="security" className="text-[28px]" />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="security" className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <span className="font-title-hinglish font-bold text-on-surface">
+                  <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words min-w-0">
                     {t('owner_settings.row_change_approval_pin')}
                   </span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-body-md text-on-surface-variant font-bold tracking-widest">••••</span>
-                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                  <span className="text-xs sm:text-sm text-on-surface-variant font-bold tracking-widest">••••</span>
+                  <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
               <div className="h-[1px] w-full bg-surface-container-high" />
@@ -760,26 +765,26 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               {/* Row 10: Special kaam ki ijazat (Approval Rules Matrix) */}
               <div
                 onClick={() => setCurrentView('approval_rules')}
-                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+                className="min-h-[68px] sm:min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
-                    <Icon name="verified_user" className="text-[28px]" />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="verified_user" className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="font-title-hinglish font-bold text-on-surface leading-tight">
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words">
                       {t('owner_settings.row_approval_rules')}
                     </span>
-                    <span className="font-label-sub-english text-xs text-outline leading-tight">
+                    <span className="font-label-sub-english text-xs text-outline leading-snug break-words">
                       {t('owner_settings.row_approval_rules_sub')}
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-body-md text-on-surface-variant font-medium">
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 max-w-[38%] sm:max-w-none">
+                  <span className="text-xs sm:text-sm text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-lg font-medium truncate max-w-full">
                     {t('owner_settings.rule_option_local')}
                   </span>
-                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                  <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
 
@@ -788,26 +793,26 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               {/* Row 11: Cloud Sync aur Pairing */}
               <div
                 onClick={() => setCurrentView('cloud_sync')}
-                className="min-h-[72px] px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-surface-container-low transition-colors"
+                className="min-h-[68px] sm:min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary">
-                    <Icon name="cloud_sync" className="text-[28px]" />
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="cloud_sync" className="text-[24px] sm:text-[28px]" />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="font-title-hinglish font-bold text-on-surface leading-tight">
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words">
                       {t('cloud_sync.title')}
                     </span>
-                    <span className="font-label-sub-english text-xs text-outline leading-tight">
+                    <span className="font-label-sub-english text-xs text-outline leading-snug break-words">
                       {t('cloud_sync.sub')}
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={`font-body-md font-medium ${
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 max-w-[42%] sm:max-w-none">
+                  <span className={`text-xs sm:text-sm px-2.5 py-1 rounded-lg truncate max-w-full ${
                     cloudConfig?.cloudEnabled && !cloudSyncState?.isConnected
-                      ? 'text-[#B54708] dark:text-amber-300 font-bold'
-                      : 'text-on-surface-variant'
+                      ? 'bg-[#FEF6EE] dark:bg-amber-950/40 text-[#B54708] dark:text-amber-300 font-bold'
+                      : 'bg-surface-container text-on-surface-variant font-medium'
                   }`}>
                     {!cloudConfig?.cloudEnabled
                       ? t('cloud_sync.local_mode_title')
@@ -815,7 +820,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
                         ? t('cloud_sync.cloud_mode_title')
                         : t('cloud_sync.status_sign_in_required')}
                   </span>
-                  <Icon name="chevron_right" className="text-outline text-[24px]" />
+                  <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
             </div>

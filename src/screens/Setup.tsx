@@ -203,8 +203,17 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   // STEP 4 (STAFF) HANDLERS
   // --------------------------------------------------------------------------
   const handleAddStaff = async () => {
-    if (!staffName.trim()) {
+    const trimmedName = staffName.trim();
+    if (!trimmedName) {
       setStaffError(t('setup.staff_err_name'));
+      return;
+    }
+    const lowerName = trimmedName.toLowerCase();
+    const isDupName =
+      (ownerName.trim() && ownerName.trim().toLowerCase() === lowerName) ||
+      staffList.some((s) => s.name.trim().toLowerCase() === lowerName);
+    if (isDupName) {
+      setStaffError(t('owner_staff.err_name_duplicate'));
       return;
     }
     const val = await validateStaffPin(staffPin, ownerPin1, staffList.map((s) => s.plainPin));

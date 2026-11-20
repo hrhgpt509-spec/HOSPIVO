@@ -11,6 +11,11 @@ export interface TranslationSchema {
   common: {
     app_name: string;
     local_mode: string;
+    nav_home: string;
+    nav_sell: string;
+    nav_stock: string;
+    nav_udhaar: string;
+    nav_owner: string;
     cloud_mode: string;
     offline_active: string;
     counter_pos: string;
@@ -1354,6 +1359,7 @@ export interface TranslationSchema {
     btn_save: ButtonLabel;
     btn_cancel: ButtonLabel;
     err_name_required: string;
+    err_name_duplicate: string;
     err_pin_invalid: string;
     err_pin_same_as_owner: string;
     err_pin_same_as_approval: string;
