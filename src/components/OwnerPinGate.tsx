@@ -4,6 +4,7 @@ import { attemptUserLogin, getLoginLock } from '../logic/auth';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { triggerFeedback } from '../logic/feedback';
 import { useTranslation, tButton } from '../i18n';
+import { useBackHandler } from '../logic/androidBack';
 
 export interface OwnerPinGateProps {
   isOpen: boolean;
@@ -133,15 +134,28 @@ export const OwnerPinGate: React.FC<OwnerPinGateProps> = ({
     onClear: isOpen ? handleClear : () => {},
   });
 
+  useBackHandler(isOpen, onClose);
+
+  const handleMobilePinChange = (raw: string) => {
+    if (lockCountdown > 0) return;
+    const digits = raw.replace(/\D/g, '').slice(0, 4);
+    setPin(digits);
+    setHasError(false);
+    setErrorMessage('');
+    if (digits.length === 4) {
+      setTimeout(() => handleVerify(digits), 60);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none animate-fadeIn"
+      className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 select-none animate-fadeIn"
     >
-      <div className="bg-surface-container-lowest rounded-3xl shadow-2xl p-6 sm:p-8 max-w-[540px] w-full flex flex-col items-center z-20 border border-outline-variant">
+      <div className="bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] max-w-[540px] w-full max-h-[92dvh] overflow-y-auto flex flex-col items-center z-20 border-t sm:border border-outline-variant">
         
         {/* 1. Lock and Key Icon */}
         <div className="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center text-primary shadow-sm mb-3">
@@ -197,8 +211,35 @@ export const OwnerPinGate: React.FC<OwnerPinGateProps> = ({
           </div>
         )}
 
-        {/* 4. Very Large Number Pad (3x4 grid, 88px tall keys) */}
-        <div className="grid grid-cols-3 gap-3 w-full mt-3 mb-5">
+        {/* 4a. Mobile Native Numeric PIN Input (no on-screen numpad on phones) */}
+        <div className="lg:hidden w-full flex flex-col gap-3 mt-2 mb-4">
+          <input
+            type="password"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="one-time-code"
+            autoFocus
+            maxLength={4}
+            disabled={lockCountdown > 0}
+            value={pin}
+            onChange={(e) => handleMobilePinChange(e.target.value)}
+            placeholder="••••"
+            aria-label={t('dialogs.owner_pin_title')}
+            className="w-full h-14 px-4 rounded-2xl bg-surface-container-low border-2 border-primary/50 focus:border-primary text-center text-3xl font-extrabold tracking-[0.6em] text-on-surface outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+          />
+          {pin.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="h-12 min-h-[48px] w-full rounded-xl bg-surface-container text-on-surface-variant font-bold text-sm cursor-pointer active:scale-95 transition-all"
+            >
+              {clearBtn.main}
+            </button>
+          )}
+        </div>
+
+        {/* 4b. Desktop Large Number Pad (3x4 grid, 88px tall keys) */}
+        <div className="hidden lg:grid grid-cols-3 gap-3 w-full mt-3 mb-5">
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
             <button
               key={digit}

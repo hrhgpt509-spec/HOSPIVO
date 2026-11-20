@@ -341,3 +341,15 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
 - Fixed typo in Supabase project URL inside vercel.json (added missing 'z') and ensured clean rewrite proxying to /api/sb while preserving SPA routing.
 - Added tests for sanitizeEnvValue and resolveSupabaseUrl in src/logic/cloudAuth.test.ts; all 249 tests and build pass with 0 errors.
 
+- Phone-first Android (Capacitor) UI redesign: added viewport-fit=cover, overflow-x-clip, safe-area spacing, reusable MobileTopBar and localized 5-tab MobileBottomNav, and hid desktop-only controls (FullscreenButton, keyboard shortcut bars, hover-only overlays) on phones.
+- Billing / POS (DawaiBecho): added quick-browse medicine cards, bottom cart summary bar, and a slide-up Cart/Customer/Discount bottom sheet (with full bill-discount + Approval PIN support) so forms are never covered.
+- Inventory, FEFO, Udhaar, Reports, Sync & Backup: replaced wide multi-column tables on phones with stacked summary cards (OwnerReports, InvoiceDetailModal, ReferralReport), upgraded action modals to bottom sheets, and added safe humanized i18n fallback.
+- Preserved all Dexie schemas, whole-paise calculations, FEFO logic, supplier returns, Udhaar ledgers, backup checksums, and sync logic; build and all 249 tests pass with 0 errors.
+
+- Android (Capacitor) native back-button & phone-first numeric inputs: added LIFO back-handler manager (`src/logic/androidBack.ts`, 3 unit tests) listening to Capacitor `App` `'backButton'` events and wired native Android `OnBackPressedCallback` in `MainActivity.java`.
+- Connected back-button handling across all modals, bottom sheets, dialogs, wizards, and nested views (`Home`, `DawaiBecho`, `FastBill`, `StockDekho`, `StockJodo`, `Expiry`, `Udhaar`, `DinBand`, `Suppliers`, `OwnerSettings`, `OwnerStaff`, `OwnerBackup`, `OwnerCloudSync`, `Login`, `Setup`, `ApprovalDialog`, `OwnerPinGate`, `ConfirmDialog`) so back closes overlays/sub-views before minimizing the app.
+- Replaced on-screen numpads on phones with standard native `inputMode="numeric"` inputs across `Login`, `Setup`, `OwnerPinGate`, `ApprovalDialog`, `PaymentScreen`, `Step1CashCount`, `PaisaMilaModal`, `OwnerSettings`, `OwnerStaff`, and `OwnerBackup`, and hid remaining desktop-only `Enter ↵` shortcut hints on phones.
+- Preserved all Dexie tables, whole-paise math, FEFO, Udhaar, backup checksums, and Supabase sync logic untouched; production build and all 252 unit tests pass with 0 errors.
+
+
+

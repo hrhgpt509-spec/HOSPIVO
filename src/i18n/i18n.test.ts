@@ -94,6 +94,9 @@ describe('i18n language catalogs and fallback tests', () => {
     delete (en.errors as any).test_only_key;
     delete (hi.errors as any).test_only_key;
     delete (hinglish.errors as any).test_only_key;
+
+    // Missing everywhere produces a clean humanized fallback rather than a raw dotted key
+    expect(t('unknown_section.btn_quick_save')).toBe('Quick Save');
   });
 
   it('interpolates parameters correctly across all languages', async () => {

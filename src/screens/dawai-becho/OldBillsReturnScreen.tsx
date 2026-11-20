@@ -10,6 +10,7 @@ import {
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
 import { FullscreenButton } from '../../components/FullscreenButton';
+import { MobileTopBar } from '../../components/MobileTopBar';
 import { ApprovalDialog } from '../../components/ApprovalDialog';
 import { useShop } from '../../logic/useShop';
 import { formatRupees } from '../../logic/money';
@@ -271,9 +272,29 @@ export const OldBillsReturnScreen: React.FC<OldBillsReturnScreenProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-background text-on-surface flex flex-col antialiased select-none transition-colors">
-      {/* Top Header (Matching 15_Sell_OldBills_Return.html) */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/30">
+    <div className="w-full min-h-dvh bg-background text-on-surface flex flex-col antialiased select-none overflow-x-clip transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('billing_flow.old_bills_title')}
+        subtitle={shopName || undefined}
+        onBack={onBackToBilling}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        rightSlot={
+          <button
+            type="button"
+            onClick={onReturnHome}
+            aria-label={returnHomeBtn.main}
+            className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container flex items-center justify-center text-primary cursor-pointer"
+          >
+            <Icon name="home" className="text-[22px]" />
+          </button>
+        }
+      />
+
+      {/* Desktop Top Header (Matching 15_Sell_OldBills_Return.html) */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-40 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/30">
         <div className="h-16 w-full px-gutter flex items-center justify-between gap-3">
           <div className="flex items-center gap-space-md min-w-0">
             <div className="flex items-center gap-space-sm shrink-0">
@@ -359,7 +380,7 @@ export const OldBillsReturnScreen: React.FC<OldBillsReturnScreenProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="w-full pt-16 bg-background flex-1 flex flex-col min-h-0">
+      <main className="w-full pt-2 lg:pt-16 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background flex-1 flex flex-col min-h-0">
         <div className="flex-1 w-full max-w-[1440px] mx-auto px-gutter py-space-md grid grid-cols-1 lg:grid-cols-12 gap-space-lg lg:h-[calc(100vh-4rem)] min-h-0">
           {/* LEFT COLUMN: Past Bills List (5 cols) */}
           <section className="lg:col-span-5 flex flex-col justify-between gap-space-sm min-h-0 h-full">

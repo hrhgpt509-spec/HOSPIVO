@@ -4,6 +4,7 @@ import { useTranslation, tButton } from '../i18n';
 import { useShop } from '../logic/useShop';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { MobileTopBar } from '../components/MobileTopBar';
 import { EmptyState } from '../components/EmptyState';
 import { textFieldProps } from '../logic/format';
 import { isOwner } from '../logic/roles';
@@ -94,9 +95,19 @@ export const AuditLogScreen: React.FC<AuditLogScreenProps> = ({
   const weekBtn = tButton('audit_log.filter_week');
 
   return (
-    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col overflow-x-clip antialiased select-none transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('audit_log.page_title')}
+        subtitle={shopName || t('audit_log.page_sub')}
+        onBack={onBackToOwnerMenu}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* Desktop Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-space-md">
           <div className="flex items-center gap-space-md min-w-0">
             <span className="font-headline-lg text-headline-lg text-primary tracking-tight font-extrabold">
@@ -152,7 +163,7 @@ export const AuditLogScreen: React.FC<AuditLogScreenProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="w-full pt-20 flex-1 bg-background p-gutter">
+      <main className="w-full pt-3 lg:pt-20 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex-1 bg-background px-3 sm:px-gutter py-3 sm:py-space-md">
         <div className="flex flex-col w-full max-w-[1440px] mx-auto gap-space-md">
           {!ownerAllowed ? (
             <div className="py-12">

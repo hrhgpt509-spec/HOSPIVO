@@ -4,6 +4,7 @@ import { useTranslation, tButton } from '../i18n';
 import { useShop } from '../logic/useShop';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { MobileTopBar } from '../components/MobileTopBar';
 import { EmptyState } from '../components/EmptyState';
 import { formatRupees } from '../logic/money';
 import { isOwner } from '../logic/roles';
@@ -118,9 +119,19 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
   const auditBtn = tButton('owner_dashboard.btn_open_audit');
 
   return (
-    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
-      {/* Top Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col overflow-x-clip antialiased select-none transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('owner_dashboard.page_title')}
+        subtitle={shopName || t('owner_dashboard.page_sub')}
+        onBack={onBackToOwnerMenu}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* Desktop Top Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-space-md">
           <div className="flex items-center gap-space-md min-w-0">
             <span className="text-primary font-headline-md text-2xl font-extrabold tracking-tight uppercase">
@@ -176,8 +187,8 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="w-full pt-20 flex-1 bg-surface p-gutter">
-        <div className="flex flex-col w-full max-w-[1440px] mx-auto gap-space-md">
+      <main className="w-full pt-3 lg:pt-20 flex-1 bg-surface px-3 sm:px-gutter py-3 sm:py-space-md">
+        <div className="flex flex-col w-full max-w-[1440px] mx-auto gap-3 sm:gap-space-md min-w-0">
           {!ownerAllowed ? (
             <div className="py-12">
               <EmptyState
@@ -505,17 +516,17 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
               )}
 
               {/* Bottom Action Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 max-lg:sticky max-lg:bottom-0 max-lg:z-30 max-lg:bg-surface/95 max-lg:backdrop-blur max-lg:border-t max-lg:border-outline-variant/40 max-lg:py-3 max-lg:-mx-gutter max-lg:px-gutter">
+              <div className="grid grid-cols-1 sm:flex sm:flex-wrap sm:items-center sm:justify-between gap-2.5 pt-2">
                 <button
                   type="button"
                   onClick={onBackToOwnerMenu}
-                  className="h-14 min-h-[56px] px-space-lg rounded-2xl bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/40 text-on-surface font-bold flex items-center gap-2 shadow-sm cursor-pointer"
+                  className="hidden lg:flex h-14 min-h-[56px] px-space-lg rounded-2xl bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/40 text-on-surface font-bold items-center gap-2 shadow-sm cursor-pointer"
                 >
                   <Icon name="arrow_back" className="text-2xl" />
                   <span>{backBtn.main}</span>
                 </button>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 w-full sm:w-auto">
                   {onOpenAuditLog && (
                     <button
                       type="button"

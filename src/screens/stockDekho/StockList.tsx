@@ -96,9 +96,9 @@ export const StockList: React.FC<StockListProps> = ({
 
   if (isCompactViewport) {
     return (
-      <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased flex flex-col overflow-x-hidden select-none">
+      <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased flex flex-col overflow-x-clip select-none">
         {/* Sticky Top Header */}
-        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] flex items-center justify-between gap-2 shadow-xs">
           <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={onReturnHome}

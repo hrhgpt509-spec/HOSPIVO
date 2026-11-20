@@ -7,6 +7,7 @@ import { useTranslation, tButton } from '../i18n';
 import { EmptyState } from '../components/EmptyState';
 import { StatusChip } from '../components/StatusChip';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { MobileTopBar } from '../components/MobileTopBar';
 import { Icon } from '../components/Icon';
 import { textFieldProps } from '../logic/format';
 import { useShop } from '../logic/useShop';
@@ -123,9 +124,17 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
   const filteredMedicines = searchMedicines(medicines, searchQuery);
 
   return (
-    <div className="w-full min-h-dvh bg-canvas text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
-      {/* 1. Fixed Top Header (Matching 38a) */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
+    <div className="w-full min-h-dvh bg-canvas text-on-surface flex flex-col justify-between overflow-x-clip antialiased select-none transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={tButton('owner_menu.tile_dawai_list').main}
+        subtitle={shopName || modeLabel}
+        onBack={onBackToOwnerMenu || onReturnHome}
+        backIcon="arrow_back"
+      />
+
+      {/* 1. Desktop Fixed Top Header (Matching 38a) */}
+      <header className="hidden lg:block fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-16 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
           {/* Left: Brand + Shop + Local mode */}
           <div className="flex items-center gap-2 sm:gap-4">
@@ -184,7 +193,7 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
       </header>
 
       {/* 2. Main Content Area */}
-      <main className="w-full pt-20 pb-14 px-6 md:px-8 max-w-[1440px] mx-auto flex-1 flex flex-col justify-between">
+      <main className="w-full pt-3 lg:pt-20 pb-[max(2rem,env(safe-area-inset-bottom))] px-3 sm:px-6 md:px-8 max-w-[1440px] mx-auto flex-1 flex flex-col justify-between">
         <div className="flex flex-col w-full flex-1">
           {/* Controls Row: Heading + Action Buttons */}
           <div className="flex flex-wrap items-center justify-between w-full min-h-[56px] gap-4 mb-4">

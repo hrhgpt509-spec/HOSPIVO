@@ -4,11 +4,13 @@ import { useTranslation } from '../../i18n';
 import { useShop } from '../../logic/useShop';
 import { Icon } from '../../components/Icon';
 import { FullscreenButton } from '../../components/FullscreenButton';
+import { MobileTopBar } from '../../components/MobileTopBar';
 import { canSeePurchasePrice } from '../../logic/roles';
 import { formatRupees } from '../../logic/money';
 import { formatMedicineStock } from '../../logic/medicineSearch';
 import type { BatchStockDetail } from '../../logic/stockDekho';
 import { triggerFeedback } from '../../logic/feedback';
+import { useBackHandler } from '../../logic/androidBack';
 import {
   getStockCorrectionApprovalRule,
   evaluateStockCorrectionRule,
@@ -47,6 +49,8 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [blockedErrorMsg, setBlockedErrorMsg] = useState<string | null>(null);
   const [correctingBatch, setCorrectingBatch] = useState<BatchStockDetail | null>(null);
+
+  useBackHandler(correctingBatch !== null, () => setCorrectingBatch(null));
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -102,23 +106,33 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-surface font-body-md text-on-surface antialiased flex flex-col select-none">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased flex flex-col overflow-x-clip select-none">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={`${medicine.name}${medicine.strength ? ` ${medicine.strength}` : ''}`}
+        subtitle={t('stock_dekho.total_stock_value', { stock: formattedTotalStock })}
+        onBack={onBack}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 transition-all duration-300">
-          <div className="bg-inverse-surface text-inverse-on-surface px-space-lg py-space-sm rounded-2xl shadow-xl flex items-center gap-space-md">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary">
+        <div className="fixed top-20 lg:top-24 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 max-w-[92%]">
+          <div className="bg-inverse-surface text-inverse-on-surface px-4 sm:px-space-lg py-space-sm rounded-2xl shadow-xl flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary shrink-0">
               <Icon name="info" className="text-[18px]" />
             </div>
-            <span className="font-title-hinglish text-title-hinglish font-bold">
+            <span className="font-title-hinglish text-sm sm:text-title-hinglish font-bold">
               {toastMessage}
             </span>
           </div>
         </div>
       )}
 
-      {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/30">
+      {/* Desktop Fixed Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/30">
         <div className="h-20 w-full max-w-[1440px] mx-auto px-gutter flex items-center justify-between">
           <div className="flex items-center gap-space-lg">
             <div className="flex items-center gap-space-sm cursor-pointer" onClick={onBack}>
@@ -185,10 +199,10 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="w-full pt-20 bg-surface flex-1">
-        <div className="max-w-[1440px] mx-auto px-gutter py-space-sm flex flex-col gap-space-md select-none">
+      <main className="w-full pt-3 lg:pt-20 bg-surface flex-1">
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-gutter py-space-sm flex flex-col gap-space-md select-none">
           {/* Top Medicine Header Card */}
-          <div className="w-full bg-surface-container-lowest rounded-xl p-space-lg shadow-sm border border-outline-variant/30 flex flex-wrap items-center justify-between gap-4">
+          <div className="w-full bg-surface-container-lowest rounded-2xl p-4 sm:p-space-lg shadow-sm border border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-space-lg min-w-0">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shadow-sm shrink-0">
                 <Icon name="medication" className="text-[36px] sm:text-[44px]" />
@@ -498,10 +512,10 @@ export const BatchDetail: React.FC<BatchDetailProps> = ({
           </div>
 
           {/* Bottom Action Bar */}
-          <div className="w-full bg-surface-container-lowest rounded-xl p-space-md shadow-sm border border-outline-variant/30 flex flex-wrap items-center justify-between gap-4 mt-space-sm">
+          <div className="w-full bg-surface-container-lowest rounded-2xl p-4 sm:p-space-md shadow-sm border border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-space-sm">
             {/* Left: Wapas Button */}
             <button
-              className="min-h-[56px] min-w-[200px] px-space-lg py-space-sm rounded-[16px] bg-surface-container hover:bg-surface-container-high text-on-surface shadow-sm active:translate-y-0.5 transition-all flex items-center gap-space-md cursor-pointer"
+              className="w-full sm:w-auto min-h-[56px] sm:min-w-[200px] px-space-lg py-space-sm rounded-[16px] bg-surface-container hover:bg-surface-container-high text-on-surface shadow-sm active:translate-y-0.5 transition-all flex items-center justify-center sm:justify-start gap-space-md cursor-pointer"
               onClick={onBack}
               type="button"
             >

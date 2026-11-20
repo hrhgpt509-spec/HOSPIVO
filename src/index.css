@@ -33,6 +33,11 @@
 * {
   box-sizing: border-box;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, [role="button"] {
+  touch-action: manipulation;
 }
 
 input, textarea, select {
@@ -40,9 +45,10 @@ input, textarea, select {
   -webkit-user-select: text;
 }
 
-html, body {
+html, body, #root {
+  width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
@@ -50,7 +56,29 @@ body {
   background-color: #F4F6F5;
   color: #101828;
   margin: 0;
-  min-height: 100vh;
+  min-height: 100dvh;
+  overscroll-behavior-x: none;
+}
+
+/* Safe-area utilities for Capacitor Android / edge-to-edge displays */
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.pb-mobile-nav {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 html[lang="hi"] body {

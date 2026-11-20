@@ -122,9 +122,9 @@ export const SupplierReturnModal: React.FC<SupplierReturnModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 bg-[#0f172a]/65 backdrop-blur-md flex items-center justify-center p-4 select-none"
+      className="fixed inset-0 z-50 bg-[#0f172a]/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 select-none"
     >
-      <div className="w-full max-w-xl bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="w-full max-w-xl bg-surface-container-lowest rounded-t-3xl sm:rounded-2xl shadow-2xl border-t sm:border border-outline-variant overflow-hidden flex flex-col max-h-[92dvh]">
         {/* Modal Header */}
         <div className="px-6 py-4 bg-surface-container-low border-b border-outline-variant/50 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -328,7 +328,7 @@ export const SupplierReturnModal: React.FC<SupplierReturnModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 bg-surface-container-low border-t border-outline-variant/50 flex items-center justify-between gap-3 shrink-0">
+        <div className="px-4 sm:px-6 pt-3.5 pb-[max(1rem,env(safe-area-inset-bottom))] bg-surface-container-low border-t border-outline-variant/50 flex items-center justify-between gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}

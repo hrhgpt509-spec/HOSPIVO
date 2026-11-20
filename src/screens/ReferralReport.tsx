@@ -4,6 +4,7 @@ import { useTranslation, tButton } from '../i18n';
 import { useShop } from '../logic/useShop';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { MobileTopBar } from '../components/MobileTopBar';
 import { EmptyState } from '../components/EmptyState';
 import { formatRupees } from '../logic/money';
 import { triggerFeedback } from '../logic/feedback';
@@ -100,9 +101,19 @@ export const ReferralReport: React.FC<ReferralReportProps> = ({
   const barOpacities = ['bg-primary', 'bg-primary/80', 'bg-primary/60', 'bg-primary/45', 'bg-primary/30'];
 
   return (
-    <div className="w-full min-h-dvh bg-background font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/30">
+    <div className="w-full min-h-dvh bg-background font-body-md text-on-surface flex flex-col overflow-x-clip antialiased select-none transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('referral_report.page_title')}
+        subtitle={shopName || t('referral_report.page_sub')}
+        onBack={onBack || onReturnHome}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* Desktop Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/30">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-space-md">
           <div className="flex items-center gap-space-lg min-w-0">
             <div className="flex items-center gap-space-xs shrink-0">
@@ -161,7 +172,7 @@ export const ReferralReport: React.FC<ReferralReportProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="w-full pt-20 flex-1 bg-background p-gutter">
+      <main className="w-full pt-3 lg:pt-20 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex-1 bg-background px-3 sm:px-gutter py-3 sm:py-space-md">
         <div className="flex flex-col w-full max-w-[1440px] mx-auto justify-between gap-space-md">
           {/* Top Bar: Title & Segmented Period Filters */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-surface-container-lowest px-space-lg py-space-md rounded-xl shadow-sm border border-outline-variant/30">
@@ -216,9 +227,9 @@ export const ReferralReport: React.FC<ReferralReportProps> = ({
           </div>
 
           {/* Main Card: Doctors Table & Proportion Bar */}
-          <div className="flex flex-col bg-surface-container-lowest rounded-xl shadow-sm p-space-lg gap-space-md border border-outline-variant/30">
-            {/* Table Header */}
-            <div className="grid grid-cols-12 px-4 sm:px-space-lg py-space-sm bg-surface-container rounded-lg text-on-surface-variant font-bold text-sm sm:text-base uppercase tracking-wide">
+          <div className="flex flex-col bg-surface-container-lowest rounded-2xl shadow-sm p-3.5 sm:p-space-lg gap-space-md border border-outline-variant/30">
+            {/* Desktop Table Header */}
+            <div className="hidden sm:grid grid-cols-12 px-4 sm:px-space-lg py-space-sm bg-surface-container rounded-lg text-on-surface-variant font-bold text-sm sm:text-base uppercase tracking-wide">
               <div className="col-span-6 flex items-center gap-2">
                 <Icon name="stethoscope" className="text-primary text-[22px]" />
                 <span>{t('referral_report.col_doctor')}</span>
@@ -247,13 +258,13 @@ export const ReferralReport: React.FC<ReferralReportProps> = ({
               </div>
             ) : (
               <>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-2 sm:gap-1">
                   {summary.doctors.map((doc) => (
                     <div
                       key={doc.doctorName}
-                      className="grid grid-cols-12 px-4 sm:px-space-lg min-h-[64px] items-center rounded-lg hover:bg-surface-container-low transition-colors border-b border-outline-variant/20 last:border-b-0"
+                      className="flex flex-col sm:grid sm:grid-cols-12 px-3 sm:px-space-lg py-2.5 sm:py-0 sm:min-h-[64px] sm:items-center gap-1.5 sm:gap-0 rounded-xl sm:rounded-lg bg-surface-container-low sm:bg-transparent hover:bg-surface-container-low transition-colors sm:border-b border-outline-variant/20 last:border-b-0"
                     >
-                      <div className="col-span-6 flex items-center gap-3 min-w-0">
+                      <div className="sm:col-span-6 flex items-center gap-3 min-w-0">
                         <div className="w-10 h-10 rounded-full bg-primary-container/15 flex items-center justify-center text-primary font-headline-md text-lg font-extrabold shrink-0">
                           {doc.doctorName.charAt(0).toUpperCase()}
                         </div>
@@ -262,16 +273,18 @@ export const ReferralReport: React.FC<ReferralReportProps> = ({
                         </span>
                       </div>
 
-                      <div className="col-span-3 flex items-center justify-center">
-                        <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-surface-container font-headline-md text-lg font-bold text-on-surface">
-                          {doc.billCount}
-                        </span>
-                      </div>
+                      <div className="flex items-center justify-between sm:contents pl-13 sm:pl-0">
+                        <div className="sm:col-span-3 flex items-center sm:justify-center">
+                          <span className="inline-flex items-center px-3 py-0.5 rounded-full bg-surface-container font-headline-md text-sm sm:text-lg font-bold text-on-surface">
+                            {doc.billCount} {t('referral_report.col_bills')}
+                          </span>
+                        </div>
 
-                      <div className="col-span-3 flex items-center justify-end">
-                        <span className="font-headline-md text-lg sm:text-xl text-primary font-extrabold tracking-tight">
-                          {formatRupees(doc.totalSalesPaise)}
-                        </span>
+                        <div className="sm:col-span-3 flex items-center justify-end">
+                          <span className="font-headline-md text-lg sm:text-xl text-primary font-extrabold tracking-tight">
+                            {formatRupees(doc.totalSalesPaise)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))}

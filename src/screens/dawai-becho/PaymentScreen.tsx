@@ -3,12 +3,14 @@ import type { DBUser, PaymentMode } from '../../db';
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
 import { FullscreenButton } from '../../components/FullscreenButton';
+import { MobileTopBar } from '../../components/MobileTopBar';
 import { ApprovalDialog } from '../../components/ApprovalDialog';
 import { useShop } from '../../logic/useShop';
 import { formatRupees, rupeesToPaise } from '../../logic/money';
 import { textFieldProps } from '../../logic/format';
 import { triggerFeedback } from '../../logic/feedback';
 import { useNumpadKeyboard } from '../../logic/useNumpadKeyboard';
+import { useBackHandler } from '../../logic/androidBack';
 import { ensureCustomerForUdhaarBill, normalizePhoneKey } from '../../logic/udhaar';
 import {
   finalizeBill,
@@ -282,6 +284,8 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
     disabled: paymentMode !== 'cash' || isSubmitting,
   });
 
+  useBackHandler(true, onBackToCart);
+
   const returnHomeBtn = tButton('home.return_home_btn');
   const modeCashBtn = tButton('billing_flow.mode_cash');
   const modeUpiBtn = tButton('billing_flow.mode_upi');
@@ -291,9 +295,19 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const confirmBtn = tButton('billing_flow.btn_confirm_bill');
 
   return (
-    <div className="w-full min-h-screen bg-surface text-on-surface flex flex-col antialiased select-none transition-colors">
-      {/* Top Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
+    <div className="w-full min-h-dvh bg-surface text-on-surface flex flex-col antialiased select-none overflow-x-clip transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('billing_flow.pay_items_title')}
+        subtitle={`${t('dawai_becho.items_count', { count: cart.length })} · ${formatRupees(totals.totalPaise)}`}
+        onBack={onBackToCart}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* Desktop Top Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-3">
           <div className="flex items-center gap-space-lg min-w-0">
             <span className="font-headline-lg text-headline-lg font-extrabold text-primary tracking-tight">
@@ -357,7 +371,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="w-full pt-20 flex-1 bg-background flex flex-col min-h-0">
+      <main className="w-full pt-2 lg:pt-20 pb-[max(1rem,env(safe-area-inset-bottom))] flex-1 bg-background flex flex-col min-h-0">
         <div className="flex-1 w-full max-w-[1440px] mx-auto p-gutter-compact flex flex-col justify-between gap-space-sm lg:h-[calc(100vh-5rem)] min-h-0">
           {/* Two Columns: Left 42% (5 cols) Bill Summary, Right 58% (7 cols) Payment */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md flex-1 min-h-0">
@@ -583,8 +597,58 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                     </div>
                   </div>
 
-                  {/* Touch Numpad */}
-                  <div className="grid grid-cols-3 gap-space-xs flex-1 min-h-[240px]">
+                  {/* Mobile Native Numeric Cash Input + Quick Denominations (no on-screen numpad on phones) */}
+                  <div className="lg:hidden flex flex-col gap-2.5">
+                    <div className="w-full h-16 px-4 rounded-2xl bg-surface-container-lowest border-2 border-primary flex items-center justify-between gap-2 shadow-xs">
+                      <Icon name="currency_rupee" className="text-primary text-[26px] shrink-0" />
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={cashStr === '0' ? '' : cashStr}
+                        placeholder={String(totalRupeesInt)}
+                        onChange={(e) => {
+                          const clean = e.target.value.replace(/\D/g, '').slice(0, 7);
+                          setCashStr(clean || '0');
+                        }}
+                        aria-label={t('billing_flow.cash_tendered_label')}
+                        className="w-full min-w-0 bg-transparent text-2xl font-extrabold text-primary outline-none"
+                      />
+                      {cashStr !== '0' && (
+                        <button
+                          type="button"
+                          onClick={() => handleNumpadPress('clear')}
+                          aria-label={tButton('common.btn_clear').main}
+                          className="w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 cursor-pointer"
+                        >
+                          <Icon name="close" className="text-[20px]" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCashStr(String(totalRupeesInt))}
+                        className="min-h-[48px] px-2 rounded-xl bg-primary-fixed text-on-primary-fixed font-bold text-xs flex items-center justify-center active:scale-95 transition-all cursor-pointer"
+                      >
+                        {t('billing_flow.btn_exact_cash')}
+                      </button>
+                      {[100, 200, 500].map((amt) => (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => setCashStr(String((Number(cashStr) || 0) + amt))}
+                          className="min-h-[48px] px-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm flex items-center justify-center active:scale-95 transition-all cursor-pointer border border-outline-variant/40"
+                        >
+                          +₹{amt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Desktop Touch Numpad */}
+                  <div className="hidden lg:grid grid-cols-3 gap-space-xs flex-1 min-h-[240px]">
                     {['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0'].map((digit) => (
                       <button
                         key={digit}

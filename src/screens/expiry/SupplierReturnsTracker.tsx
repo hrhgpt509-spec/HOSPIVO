@@ -4,8 +4,10 @@ import { useTranslation, tButton } from '../../i18n';
 import { useShop } from '../../logic/useShop';
 import { Icon } from '../../components/Icon';
 import { FullscreenButton } from '../../components/FullscreenButton';
+import { MobileTopBar } from '../../components/MobileTopBar';
 import { EmptyState } from '../../components/EmptyState';
 import { triggerFeedback } from '../../logic/feedback';
+import { useBackHandler } from '../../logic/androidBack';
 import { formatMedicineStock } from '../../logic/medicineSearch';
 import {
   updateSupplierReturnStatus,
@@ -45,6 +47,8 @@ export const SupplierReturnsTracker: React.FC<SupplierReturnsTrackerProps> = ({
   const [statusFilter, setStatusFilter] = useState<'all' | SupplierReturnStatus>('all');
   const [editingReturn, setEditingReturn] = useState<SupplierReturnView | null>(null);
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
+
+  useBackHandler(editingReturn !== null, () => setEditingReturn(null));
 
   const modeLabel = mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
   const userName =
@@ -115,9 +119,19 @@ export const SupplierReturnsTracker: React.FC<SupplierReturnsTrackerProps> = ({
   const backBtn = tButton('suppliers.btn_back');
 
   return (
-    <div className="w-full min-h-screen bg-background font-body-md text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
-      {/* Top Header */}
-      <header className="fixed top-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
+    <div className="w-full min-h-dvh bg-background font-body-md text-on-surface flex flex-col justify-between overflow-x-clip antialiased select-none transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('expiry.tracker_title')}
+        subtitle={t('expiry.tracker_sub')}
+        onBack={onBack}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* Desktop Top Header */}
+      <header className="hidden lg:block fixed top-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-space-md">
           <div className="flex items-center gap-space-lg min-w-0">
             <div className="flex items-center gap-space-sm shrink-0">
@@ -191,12 +205,12 @@ export const SupplierReturnsTracker: React.FC<SupplierReturnsTrackerProps> = ({
       </header>
 
       {/* Main Content (26c_Expiry_SupplierReturns.html) */}
-      <main className="w-full pt-20 flex-1 px-gutter py-space-lg">
-        <div className="flex flex-col w-full max-w-[1440px] mx-auto min-h-[calc(100vh-140px)] justify-between gap-space-md">
+      <main className="w-full pt-3 lg:pt-20 flex-1 px-3 sm:px-gutter py-space-sm sm:py-space-lg">
+        <div className="flex flex-col w-full max-w-[1440px] mx-auto min-h-[calc(100dvh-140px)] justify-between gap-space-md">
           <div className="flex flex-col gap-space-md">
             {/* Title + Filter Pills */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-              <div className="flex flex-col gap-space-xs">
+              <div className="hidden lg:flex flex-col gap-space-xs">
                 <div className="flex items-baseline gap-space-sm flex-wrap">
                   <h1 className="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight">
                     {t('expiry.tracker_title')}
@@ -209,7 +223,7 @@ export const SupplierReturnsTracker: React.FC<SupplierReturnsTrackerProps> = ({
               </div>
 
               {/* Filter Chips */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-nowrap overflow-x-auto no-scrollbar sm:flex-wrap gap-2 pb-1">
                 {(['all', ...STATUS_ORDER] as const).map((st) => {
                   const active = statusFilter === st;
                   const label =
@@ -225,7 +239,7 @@ export const SupplierReturnsTracker: React.FC<SupplierReturnsTrackerProps> = ({
                       key={st}
                       type="button"
                       onClick={() => setStatusFilter(st)}
-                      className={`h-12 px-4 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer transition-all ${
+                      className={`h-12 min-h-[48px] px-4 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer transition-all shrink-0 ${
                         active
                           ? 'bg-primary text-on-primary shadow-sm'
                           : 'bg-surface-container-lowest text-on-surface hover:bg-surface-container border border-outline-variant/40'
@@ -309,7 +323,7 @@ export const SupplierReturnsTracker: React.FC<SupplierReturnsTrackerProps> = ({
                         <button
                           type="button"
                           onClick={() => setEditingReturn(rec)}
-                          className="h-14 min-h-[56px] px-space-md bg-surface-container hover:bg-surface-container-high active:translate-y-0.5 text-on-surface rounded-2xl flex items-center gap-space-sm transition-all shadow-sm cursor-pointer"
+                          className="w-full sm:w-auto h-14 min-h-[52px] px-space-md bg-surface-container hover:bg-surface-container-high active:translate-y-0.5 text-on-surface rounded-2xl flex items-center justify-center gap-space-sm transition-all shadow-sm cursor-pointer"
                         >
                           <Icon name="sync" className="text-[26px] text-primary" />
                           <div className="flex flex-col items-start leading-none text-left">
@@ -354,14 +368,14 @@ export const SupplierReturnsTracker: React.FC<SupplierReturnsTrackerProps> = ({
         </div>
       </main>
 
-      {/* Status Picker Modal */}
+      {/* Status Picker Modal / Mobile Bottom Sheet */}
       {editingReturn && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-[#0f172a]/65 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[#0f172a]/65 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4"
         >
-          <div className="w-full max-w-md bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant p-6 flex flex-col gap-4">
+          <div className="w-full sm:max-w-md bg-surface-container-lowest rounded-t-3xl sm:rounded-2xl shadow-2xl border-t sm:border border-outline-variant p-5 sm:p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col gap-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex flex-col min-w-0">
                 <h2 className="font-headline-md text-headline-md text-on-surface font-bold">

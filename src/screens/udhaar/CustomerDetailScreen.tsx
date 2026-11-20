@@ -4,7 +4,9 @@ import { useTranslation, tButton } from '../../i18n';
 import { useShop } from '../../logic/useShop';
 import { Icon } from '../../components/Icon';
 import { FullscreenButton } from '../../components/FullscreenButton';
+import { MobileTopBar } from '../../components/MobileTopBar';
 import { OwnerPinGate } from '../../components/OwnerPinGate';
+import { useBackHandler } from '../../logic/androidBack';
 import { formatRupees } from '../../logic/money';
 import { isOwner } from '../../logic/roles';
 import {
@@ -54,6 +56,10 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
   const [isReminderModalOpen, setIsReminderModalOpen] = useState<boolean>(false);
   const [editingReminder, setEditingReminder] = useState<RegularReminder | null>(null);
   const [isPaisaMilaOpen, setIsPaisaMilaOpen] = useState<boolean>(false);
+
+  useBackHandler(isEditCustomerOpen, () => setIsEditCustomerOpen(false));
+  useBackHandler(isReminderModalOpen, () => setIsReminderModalOpen(false));
+  useBackHandler(isPaisaMilaOpen, () => setIsPaisaMilaOpen(false));
 
   const modeLabel = mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
   const userName =
@@ -183,9 +189,29 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
   const quickBillBtn = tButton('customers.btn_quick_bill');
 
   return (
-    <div className="w-full min-h-screen bg-background font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
+    <div className="w-full min-h-dvh bg-background font-body-md text-on-surface flex flex-col overflow-x-clip antialiased select-none transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={customer.customerName}
+        subtitle={`${customer.customerPhone || '—'} · ${formatRupees(customer.pendingBalancePaise)}`}
+        onBack={onBack}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        rightSlot={
+          <button
+            type="button"
+            onClick={() => setIsEditCustomerOpen(true)}
+            aria-label="Edit profile"
+            className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container flex items-center justify-center text-primary cursor-pointer"
+          >
+            <Icon name="edit" className="text-[20px]" />
+          </button>
+        }
+      />
+
+      {/* Desktop Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-space-md">
           <div className="flex items-center gap-space-lg min-w-0">
             <div className="flex items-center gap-space-sm shrink-0">
@@ -243,10 +269,10 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
       </header>
 
       {/* Main Split Content (29a + 29b) */}
-      <main className="w-full pt-20 flex-1 bg-background p-gutter">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md w-full max-w-[1440px] mx-auto">
+      <main className="w-full pt-3 lg:pt-20 flex-1 bg-background px-3 sm:px-gutter py-space-sm sm:py-space-md">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-space-md w-full max-w-[1440px] mx-auto">
           {/* LEFT COLUMN: Profile & Credit Limit */}
-          <div className="lg:col-span-4 flex flex-col justify-between bg-surface-container-lowest rounded-2xl shadow-sm p-space-lg gap-space-md border border-outline-variant/30">
+          <div className="lg:col-span-4 flex flex-col justify-between bg-surface-container-lowest rounded-2xl shadow-sm p-4 sm:p-space-lg gap-3 sm:gap-space-md border border-outline-variant/30 min-w-0">
             <div className="flex flex-col gap-space-md">
               {/* Identity */}
               <div className="flex items-center justify-between gap-3">
@@ -347,7 +373,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
           </div>
 
           {/* RIGHT COLUMN: Tab Switcher + Ledger (29a) / Regular Medicines (29b) */}
-          <div className="lg:col-span-8 flex flex-col justify-between bg-surface-container-lowest rounded-2xl shadow-sm p-space-lg gap-space-md border border-outline-variant/30">
+          <div className="lg:col-span-8 flex flex-col justify-between bg-surface-container-lowest rounded-2xl shadow-sm p-4 sm:p-space-lg gap-3 sm:gap-space-md border border-outline-variant/30 min-w-0">
             {/* Top Tabs */}
             <div className="grid grid-cols-2 gap-3 shrink-0">
               <button
@@ -434,11 +460,11 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                     ledgerTimeline.map((row) => (
                       <div
                         key={row.id}
-                        className="min-h-[64px] px-4 py-2.5 rounded-2xl bg-surface-container-low flex items-center justify-between gap-3 shadow-sm"
+                        className="min-h-[64px] px-3 sm:px-4 py-2.5 rounded-2xl bg-surface-container-low flex items-center justify-between gap-2.5 shadow-sm min-w-0"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                           <div
-                            className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
+                            className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 ${
                               row.kind === 'bill'
                                 ? 'bg-error-container text-error'
                                 : 'bg-primary-fixed text-on-primary-fixed-variant'
@@ -446,11 +472,11 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                           >
                             <Icon
                               name={row.kind === 'bill' ? 'receipt_long' : 'payments'}
-                              className="text-2xl"
+                              className="text-xl sm:text-2xl"
                             />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-title-hinglish text-base sm:text-lg text-on-surface font-bold truncate">
+                            <span className="font-title-hinglish text-sm sm:text-lg text-on-surface font-bold truncate">
                               {row.title}
                             </span>
                             <span className="text-xs sm:text-sm text-on-surface-variant truncate">
@@ -459,16 +485,16 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 shrink-0">
+                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-3 shrink-0">
                           <span
-                            className={`font-title-hinglish text-lg font-extrabold ${
+                            className={`font-title-hinglish text-base sm:text-lg font-extrabold tabular-nums ${
                               row.kind === 'bill' ? 'text-error' : 'text-primary'
                             }`}
                           >
                             {formatRupees(row.amountPaise)}
                           </span>
                           <span
-                            className={`px-3 py-1 rounded-xl text-xs sm:text-sm font-bold ${
+                            className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-xl text-[11px] sm:text-sm font-bold ${
                               row.kind === 'bill'
                                 ? 'bg-error-container text-error'
                                 : 'bg-primary-container text-on-primary-container'
@@ -485,12 +511,12 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                 </div>
 
                 {/* Bottom Action Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-outline-variant/30">
+                <div className="grid grid-cols-1 sm:grid-cols-2 items-center gap-2.5 pt-2 border-t border-outline-variant/30">
                   <button
                     type="button"
                     onClick={handleSendWhatsAppLedger}
                     disabled={customer.pendingBalancePaise <= 0}
-                    className="h-14 min-h-[56px] px-5 bg-surface-container-low hover:bg-surface-container-high text-primary rounded-2xl flex items-center gap-2 shadow-sm cursor-pointer disabled:opacity-40"
+                    className="w-full h-14 min-h-[56px] px-4 bg-surface-container-low hover:bg-surface-container-high text-primary rounded-2xl flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-40"
                   >
                     <Icon name="chat" className="text-2xl" />
                     <div className="flex flex-col text-left leading-none">
@@ -509,7 +535,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                     type="button"
                     onClick={() => setIsPaisaMilaOpen(true)}
                     disabled={customer.pendingBalancePaise <= 0}
-                    className="h-14 min-h-[56px] flex-1 max-w-sm bg-primary hover:bg-primary-container text-on-primary rounded-2xl flex items-center justify-center gap-3 shadow-md cursor-pointer disabled:opacity-40"
+                    className="w-full h-14 min-h-[56px] bg-primary hover:bg-primary-container text-on-primary rounded-2xl flex items-center justify-center gap-3 shadow-md cursor-pointer disabled:opacity-40"
                   >
                     <Icon name="currency_rupee" className="text-[28px]" />
                     <div className="flex flex-col text-left leading-none">

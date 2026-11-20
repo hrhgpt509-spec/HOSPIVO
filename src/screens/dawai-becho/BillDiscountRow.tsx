@@ -92,7 +92,7 @@ export const BillDiscountRow: React.FC<BillDiscountRowProps> = ({
   );
 
   return (
-    <div className="flex items-center gap-2 px-2 pb-1">
+    <div className="flex flex-wrap items-center gap-1.5 px-1 sm:px-2 pb-1 min-w-0">
       <span className="text-xs font-bold text-on-surface-variant shrink-0">
         {t('dawai_becho.bill_disc_row_label')}
       </span>
@@ -111,12 +111,12 @@ export const BillDiscountRow: React.FC<BillDiscountRowProps> = ({
             handleApply();
           }
         }}
-        className="h-11 min-w-0 flex-1 px-3 text-right rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface font-bold text-base focus:outline-none focus:ring-2 focus:ring-primary"
+        className="h-11 min-w-[68px] flex-1 px-2.5 text-right rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface font-bold text-base focus:outline-none focus:ring-2 focus:ring-primary"
       />
       <button
         type="button"
         onClick={handleApply}
-        className="h-11 px-3 rounded-lg bg-primary text-on-primary text-sm font-bold cursor-pointer active:scale-95 transition-all shrink-0"
+        className="h-11 min-h-[44px] px-3 rounded-lg bg-primary text-on-primary text-sm font-bold cursor-pointer active:scale-95 transition-all shrink-0"
       >
         {t('dawai_becho.bill_disc_apply')}
       </button>
@@ -124,7 +124,7 @@ export const BillDiscountRow: React.FC<BillDiscountRowProps> = ({
         <button
           type="button"
           onClick={onRemove}
-          className="h-11 px-3 rounded-lg bg-surface-container text-on-surface-variant text-sm font-bold cursor-pointer hover:bg-surface-container-high shrink-0"
+          className="h-11 min-h-[44px] px-3 rounded-lg bg-surface-container text-on-surface-variant text-sm font-bold cursor-pointer hover:bg-surface-container-high shrink-0"
         >
           {t('dawai_becho.bill_disc_remove')}
         </button>

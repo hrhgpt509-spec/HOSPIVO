@@ -44,16 +44,17 @@ export const FullscreenButton: React.FC<FullscreenButtonProps> = ({ className })
 
   const label = isFullscreen ? t('common.fullscreen_exit') : t('common.fullscreen_enter');
 
+  const baseClasses =
+    className ||
+    'w-11 h-11 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant';
+
   return (
     <button
       type="button"
       aria-label={label}
       title={label}
       onClick={toggleFullscreen}
-      className={
-        className ||
-        'w-11 h-11 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant'
-      }
+      className={`max-lg:hidden ${baseClasses}`}
     >
       <Icon name={isFullscreen ? 'fullscreen_exit' : 'fullscreen'} className="text-[24px]" />
     </button>

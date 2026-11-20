@@ -35,16 +35,7 @@ import { BillDoneScreen } from './dawai-becho/BillDoneScreen';
 import { OldBillsReturnScreen } from './dawai-becho/OldBillsReturnScreen';
 import type { CartItem, SerializedHeldCartItem } from './dawai-becho/types';
 import { useIsCompactViewport } from '../logic/useViewport';
-import { textFieldProps } from '../logic/format';
-
-function formatShortExpiry(isoExpiry: string): string {
-  if (!isoExpiry) return '';
-  const parts = isoExpiry.split('-');
-  if (parts.length >= 2) {
-    return `${parts[1]}/${parts[0].slice(-2)}`;
-  }
-  return isoExpiry;
-}
+import { useBackHandler } from '../logic/androidBack';
 
 export interface DawaiBechoProps {
   onReturnHome: () => void;
@@ -99,10 +90,19 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
   const [isApprovalOpen, setIsApprovalOpen] = useState<boolean>(false);
   const [isMobileBillSheetOpen, setIsMobileBillSheetOpen] = useState<boolean>(false);
   const isCompactViewport = useIsCompactViewport();
-  const [showCompactMeta, setShowCompactMeta] = useState<boolean>(false);
   const [activeScreen, setActiveScreen] = useState<
     'billing' | 'payment' | 'bill_done' | 'old_bills'
   >('billing');
+
+  // Android back press closes open sheets & dialogs in DawaiBecho before navigating back
+  useBackHandler(isMobileBillSheetOpen, () => setIsMobileBillSheetOpen(false));
+  useBackHandler(isHeldModalOpen, () => setIsHeldModalOpen(false));
+  useBackHandler(Boolean(scheduleHMedicine), () => setScheduleHMedicine(null));
+  useBackHandler(Boolean(outOfStockMedicine), () => setOutOfStockMedicine(null));
+  useBackHandler(activeScreen === 'old_bills', () => {
+    setActiveScreen('billing');
+    loadCatalogAndSettings();
+  });
   const [activePaymentDraft, setActivePaymentDraft] = useState<{
     draft: BillDraft;
     approvalVerified: boolean;
@@ -854,83 +854,75 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
     );
   }
 
-  // Dedicated Mobile & Portrait-Tablet Layout (< 1024px)
+  // Dedicated Phone-First Mobile & Portrait-Tablet POS Layout (< 1024px)
   if (isCompactViewport && activeScreen === 'billing') {
+    const displayedCatalog = searchQuery.trim().length > 0
+      ? filteredMedicines.slice(0, 25)
+      : [...medicines]
+          .sort((a, b) => (validStockMap[b.id || 0] || 0) - (validStockMap[a.id || 0] || 0))
+          .slice(0, 20);
+
     return (
-      <div className="w-full min-h-dvh bg-surface text-on-surface flex flex-col antialiased select-none overflow-x-hidden transition-colors pb-36">
-        {/* Sticky Compact Top Header */}
-        <header className="sticky top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-xs px-3 py-2 flex items-center justify-between gap-2">
-          {/* Left: Home / Back */}
+      <div className="w-full min-h-dvh bg-surface text-on-surface flex flex-col antialiased select-none overflow-x-clip transition-colors pb-[calc(9rem+env(safe-area-inset-bottom))]">
+        {/* Sticky Compact Top Header (zero desktop clutter, >= 48px touch targets) */}
+        <header className="sticky top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-xs px-3 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={onReturnHome}
-            className="h-12 min-h-[48px] px-3.5 bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 rounded-2xl shadow-xs text-on-surface active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-            aria-label="Home"
+            className="w-12 h-12 min-w-[48px] min-h-[48px] bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 rounded-xl text-on-surface active:scale-95 transition-all flex items-center justify-center cursor-pointer shrink-0"
+            aria-label={returnHomeBtn.main}
           >
             <Icon name="home" className="text-primary text-[22px]" />
-            <span className="text-sm font-bold">{returnHomeBtn.main}</span>
           </button>
 
-          {/* Center Title */}
-          <div className="flex flex-col items-center min-w-0 flex-1 px-1">
-            <h1 className="text-base sm:text-lg font-extrabold text-on-surface tracking-tight truncate">
+          <div className="flex flex-col min-w-0 flex-1">
+            <h1 className="text-base font-extrabold text-on-surface tracking-tight truncate leading-tight">
               {t('home.tile_dawai_becho.main')}
             </h1>
-            {shopName && (
-              <span className="text-[11px] text-on-surface-variant font-medium truncate max-w-[150px]">
-                {shopName}
-              </span>
-            )}
+            <span className="text-xs text-on-surface-variant font-semibold truncate leading-tight mt-0.5">
+              {t('dawai_becho.bill_header_prefix')} #{nextBillNo}
+              {shopName ? ` · ${shopName}` : ''}
+            </span>
           </div>
 
-          {/* Right Controls */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Search Focus Button */}
-            <button
-              type="button"
-              onClick={() => {
-                searchInputRef.current?.focus();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 flex items-center justify-center text-primary transition-colors cursor-pointer"
-              aria-label="Search medicine"
-              title="Search medicine"
-            >
-              <Icon name="search" className="text-[20px]" />
-            </button>
-
-            {/* Held Bills Counter */}
             {heldBills.length > 0 && (
               <button
                 type="button"
                 onClick={() => setIsHeldModalOpen(true)}
-                className="h-11 min-h-[44px] px-2.5 rounded-2xl bg-tertiary-fixed text-on-tertiary-fixed text-xs font-bold flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
-                aria-label={`Held bills: ${heldBills.length}`}
+                className="h-12 min-h-[48px] px-3 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed text-xs font-extrabold flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
+                aria-label={t('dawai_becho.btn_held_list', { count: heldBills.length })}
               >
-                <Icon name="pause_circle" className="text-[18px]" />
+                <Icon name="pause_circle" className="text-[20px]" />
                 <span>{heldBills.length}</span>
               </button>
             )}
 
-            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={() => (onOpenOldBills ? onOpenOldBills() : setActiveScreen('old_bills'))}
+              className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer"
+              aria-label={tButton('dawai_becho.btn_old_bills').main}
+            >
+              <Icon name="history" className="text-[22px]" />
+            </button>
+
             {onToggleTheme && (
               <button
                 type="button"
                 onClick={onToggleTheme}
                 aria-label={t('common.toggle_theme')}
-                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer"
+                className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer"
               >
-                <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[20px]" />
+                <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[22px]" />
               </button>
             )}
-
-            <FullscreenButton className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" />
           </div>
         </header>
 
-        {/* Full-width Search Bar (min-h-[52px]) */}
-        <div className="w-full px-3 sm:px-4 pt-3 pb-2 shrink-0">
-          <div className="flex items-center w-full bg-surface-container-lowest border-2 border-primary rounded-2xl shadow-xs px-3.5 h-13 min-h-[52px] focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+        {/* Sticky Full-Width Search & Barcode Bar */}
+        <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-30 w-full bg-surface/95 backdrop-blur-md px-3 pt-2.5 pb-2 border-b border-outline-variant/20 shrink-0">
+          <div className="flex items-center w-full bg-surface-container-lowest border-2 border-primary rounded-2xl shadow-xs px-3 h-13 min-h-[52px] focus-within:ring-2 focus-within:ring-primary/30 transition-all">
             <Icon name="search" className="text-primary text-[24px] shrink-0 mr-2" />
             <input
               ref={searchInputRef}
@@ -939,7 +931,7 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearchKeyDown}
               placeholder={t('dawai_becho.search_placeholder')}
-              className="w-full bg-transparent text-sm sm:text-base font-medium text-on-surface placeholder-on-surface-variant/60 outline-none"
+              className="w-full min-w-0 bg-transparent text-sm sm:text-base font-medium text-on-surface placeholder-on-surface-variant/60 outline-none"
             />
             {searchQuery ? (
               <button
@@ -948,361 +940,258 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
                   setSearchQuery('');
                   searchInputRef.current?.focus();
                 }}
-                className="w-9 h-9 flex items-center justify-center text-on-surface-variant hover:text-on-surface rounded-xl shrink-0 cursor-pointer"
-                aria-label="Clear search"
+                className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface rounded-xl shrink-0 cursor-pointer"
+                aria-label={t('common.btn_clear.main')}
               >
                 <Icon name="close" className="text-[20px]" />
               </button>
             ) : (
-              <div className="w-9 h-9 flex items-center justify-center bg-primary-fixed text-primary rounded-xl shrink-0">
+              <div className="w-10 h-10 flex items-center justify-center bg-primary-fixed text-primary rounded-xl shrink-0">
                 <Icon name="barcode_scanner" className="text-[20px]" />
               </div>
             )}
           </div>
         </div>
 
-        {/* Scrollable Body: Instant Search Results OR Cart */}
-        <div className="flex-1 w-full px-3 sm:px-4 py-2 flex flex-col gap-3">
-          {/* Instant Search Results when search has query */}
-          {searchQuery.trim().length > 0 && (
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
-                  Search Results ({filteredMedicines.length})
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="text-xs font-bold text-primary hover:underline cursor-pointer"
-                >
-                  Clear
-                </button>
-              </div>
-
-              {filteredMedicines.length === 0 ? (
-                <div className="p-6 bg-surface-container-lowest rounded-2xl border border-outline-variant/40 text-center text-on-surface-variant text-sm">
-                  {t('dawai_becho.no_search_results')}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2 max-h-[360px] overflow-y-auto">
-                  {filteredMedicines.slice(0, 15).map((med) => {
-                    const validStock = validStockMap[med.id || 0] || 0;
-                    const isOos = validStock <= 0;
-                    return (
-                      <div
-                        key={med.id}
-                        className="w-full min-h-[72px] bg-surface-container-lowest border border-outline-variant/50 rounded-2xl px-3.5 py-2 flex items-center justify-between shadow-xs transition-all gap-2"
-                      >
-                        <div className="flex flex-col justify-center min-w-0 flex-1 pr-2">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-base font-bold text-on-surface leading-tight truncate">
-                              {med.name}
-                            </span>
-                            {med.strength && (
-                              <span className="text-xs font-semibold px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant">
-                                {med.strength}
-                              </span>
-                            )}
-                            {(med.scheduleType === 'H' || med.scheduleType === 'H1') && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-error-container text-on-error-container">
-                                Sch {med.scheduleType}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs font-medium text-on-surface-variant leading-tight mt-1 truncate">
-                            {med.shelf ? `Shelf: ${med.shelf} · ` : ''}
-                            <span className={isOos ? 'text-error font-bold' : 'text-primary font-bold'}>
-                              {validStock > 0 ? `${validStock} units` : t('dawai_becho.out_of_stock_badge')}
-                            </span>
-                            {` · ${formatRupees(med.mrpPaise)}`}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleSelectMedicine(med)}
-                          aria-label={`Add ${med.name}`}
-                          className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-2xl bg-primary-fixed hover:bg-primary hover:text-on-primary text-primary flex items-center justify-center font-bold active:scale-95 transition-all cursor-pointer shrink-0"
-                        >
-                          <Icon name="add" className="text-[26px]" />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Cart Header Bar */}
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-outline-variant/30">
-            <div className="flex items-center gap-2">
-              <span className="text-base sm:text-lg font-extrabold text-on-surface tracking-tight">
-                {t('dawai_becho.bill_header_prefix')} #{nextBillNo}
-              </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">
-                {t('dawai_becho.items_count', { count: cart.length })}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              {/* Customer / Discount Toggle */}
+        {/* Scrollable Body: Fast Medicine Cards + Quick Actions */}
+        <div className="flex-1 w-full px-3 py-2.5 flex flex-col gap-3 min-w-0">
+          {/* Quick Cart Strip when items are in cart */}
+          {cart.length > 0 && (
+            <div className="w-full bg-primary-fixed/35 border border-primary/30 rounded-2xl px-3 py-2.5 flex items-center justify-between gap-2 min-w-0">
               <button
                 type="button"
-                onClick={() => setShowCompactMeta((prev) => !prev)}
-                aria-label="Customer & Discount info"
-                className={`h-10 px-2.5 rounded-xl font-bold text-xs flex items-center gap-1 transition-colors cursor-pointer ${
-                  showCompactMeta || customerName || doctorName || wholeBillDiscountPercent > 0
-                    ? 'bg-primary-fixed text-on-primary-fixed'
-                    : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant'
-                }`}
+                onClick={() => setIsMobileBillSheetOpen(true)}
+                className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer"
               >
-                <Icon name="person_add" className="text-[18px]" />
-                <span>%</span>
+                <div className="w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0">
+                  <Icon name="shopping_cart" className="text-[20px]" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-extrabold text-on-surface truncate">
+                    {t('dawai_becho.items_count', { count: cart.length })} · {formatRupees(totals.totalPaise)}
+                  </span>
+                  <span className="text-xs text-primary font-bold truncate">
+                    {cart.map((c) => `${c.medicine.name} (${c.qtyInput})`).join(', ')}
+                  </span>
+                </div>
               </button>
-
-              {/* Hold Bill */}
-              {cart.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleHoldBill}
-                  className="h-10 px-2.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface font-bold text-xs flex items-center gap-1 transition-all cursor-pointer active:scale-95"
-                  title={btnHold.main}
-                >
-                  <Icon name="pause_circle" className="text-[18px] text-tertiary" />
-                  <span>{btnHold.main}</span>
-                </button>
-              )}
-
-              {/* Undo Last */}
-              {cart.length > 0 && (
+              <div className="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
                   onClick={handleUndoLastItem}
-                  className="h-10 px-2.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface font-bold text-xs flex items-center gap-1 transition-all cursor-pointer active:scale-95"
-                  title={btnUndo.main}
+                  aria-label={btnUndo.main}
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-surface-container-lowest border border-outline-variant/40 text-on-surface flex items-center justify-center cursor-pointer active:scale-95"
                 >
-                  <Icon name="undo" className="text-[18px]" />
-                  <span>{btnUndo.main}</span>
+                  <Icon name="undo" className="text-[20px]" />
                 </button>
-              )}
+                <button
+                  type="button"
+                  onClick={handleHoldBill}
+                  aria-label={btnHold.main}
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-surface-container-lowest border border-outline-variant/40 text-tertiary flex items-center justify-center cursor-pointer active:scale-95"
+                >
+                  <Icon name="pause_circle" className="text-[20px]" />
+                </button>
+              </div>
+            </div>
+          )}
 
-              {/* New Bill */}
+          {/* Medicine Catalog / Search Results Cards */}
+          <div className="flex flex-col gap-2 min-w-0">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider truncate">
+                {searchQuery.trim().length > 0
+                  ? `${t('dawai_becho.page_title')} (${filteredMedicines.length})`
+                  : `${t('dawai_becho.page_title')} (${medicines.length})`}
+              </span>
               {cart.length > 0 && (
                 <button
                   type="button"
                   onClick={handleNewBill}
-                  className="h-10 px-2 rounded-xl text-on-surface-variant hover:text-error transition-colors cursor-pointer"
-                  title={btnNewBill.main}
+                  className="text-xs font-bold text-error flex items-center gap-1 cursor-pointer py-1 px-2 rounded-lg active:scale-95"
                 >
-                  <Icon name="refresh" className="text-[20px]" />
+                  <Icon name="refresh" className="text-[16px]" />
+                  <span>{btnNewBill.main}</span>
                 </button>
               )}
             </div>
-          </div>
 
-          {/* Collapsible Customer / Doctor / Discount bar */}
-          {showCompactMeta && (
-            <div className="p-3 rounded-2xl bg-surface-container-low border border-outline-variant/50 flex flex-col gap-2">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input
-                  {...textFieldProps('name', customerName, setCustomerName)}
-                  type="text"
-                  placeholder={t('dawai_becho.customer_name_placeholder')}
-                  className="h-11 px-3 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <input
-                  {...textFieldProps('phone', customerPhone, setCustomerPhone)}
-                  type="text"
-                  placeholder={t('dawai_becho.customer_phone_placeholder')}
-                  className="h-11 px-3 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+            {displayedCatalog.length === 0 ? (
+              <div className="p-8 bg-surface-container-lowest rounded-2xl border border-outline-variant/40 text-center text-on-surface-variant text-sm flex flex-col items-center gap-2">
+                <Icon name="search_off" className="text-[36px] text-outline/60" />
+                <span className="font-bold text-on-surface">
+                  {searchQuery.trim().length > 0
+                    ? t('dawai_becho.no_search_results')
+                    : t('dawai_becho.empty_cart_sub')}
+                </span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input
-                  {...textFieldProps('name', doctorName, setDoctorName)}
-                  type="text"
-                  placeholder={t('dawai_becho.doctor_name_placeholder')}
-                  className="h-11 px-3 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <div className="h-11 px-3 rounded-xl bg-surface-container-lowest border border-outline-variant flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-on-surface-variant shrink-0">
-                    {t('dawai_becho.bill_discount_label')}
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={wholeBillDiscountPercent || ''}
-                    placeholder="0"
-                    onChange={(e) => {
-                      const val = Math.max(0, Math.min(100, Number(e.target.value) || 0));
-                      handleWholeBillDiscountChange(val);
-                    }}
-                    className="w-16 text-right bg-transparent font-bold text-on-surface text-base focus:outline-none"
-                  />
-                  <span className="text-xs font-bold text-on-surface-variant">%</span>
-                </div>
-              </div>
-            </div>
-          )}
+            ) : (
+              <div className="flex flex-col gap-2">
+                {displayedCatalog.map((med) => {
+                  const validStock = validStockMap[med.id || 0] || 0;
+                  const isOos = validStock <= 0;
+                  const inCartCount = cart
+                    .filter((c) => c.medicine.id === med.id)
+                    .reduce((s, c) => s + c.qtyInput, 0);
 
-          {/* Cart Items List */}
-          {cart.length === 0 ? (
-            <div className="p-8 bg-surface-container-lowest rounded-2xl border border-outline-variant/40 flex flex-col items-center justify-center text-center text-on-surface-variant gap-2 my-2">
-              <Icon name="shopping_cart" className="text-[44px] text-outline/50" />
-              <span className="font-bold text-base text-on-surface">
-                {t('dawai_becho.empty_cart_title')}
-              </span>
-              <span className="text-xs max-w-xs">
-                {t('dawai_becho.empty_cart_sub')}
-              </span>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2.5">
-              {cart.map((item, idx) => {
-                const computed = totals.lines[idx];
-                const upp = Math.max(1, item.medicine.unitsPerPack || 1);
-                const batchText = item.allocations
-                  .map((a) => `${a.batchNo} (${formatShortExpiry(a.expiry)})`)
-                  .join(', ');
-                const lineTotal = computed ? computed.lineTotalPaise : item.medicine.mrpPaise * item.qtyInput;
-
-                return (
-                  <div
-                    key={item.id}
-                    className={`w-full bg-surface-container-lowest border rounded-2xl p-3 flex flex-col gap-2 shadow-xs transition-all ${
-                      item.isHighlighted
-                        ? 'border-primary bg-primary-fixed/20'
-                        : 'border-outline-variant/60'
-                    }`}
-                  >
-                    {/* Top Row: Name, details & line total */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
+                  return (
+                    <div
+                      key={med.id}
+                      onClick={() => handleSelectMedicine(med)}
+                      className={`w-full min-h-[76px] bg-surface-container-lowest border rounded-2xl px-3.5 py-2.5 flex items-center justify-between shadow-xs active:scale-[0.99] transition-all gap-2.5 cursor-pointer min-w-0 ${
+                        inCartCount > 0
+                          ? 'border-primary bg-primary-fixed/15'
+                          : isOos
+                            ? 'border-error/30 opacity-75'
+                            : 'border-outline-variant/40'
+                      }`}
+                    >
+                      <div className="flex flex-col justify-center min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <h3 className="text-base font-bold text-on-surface leading-tight truncate">
-                            {item.medicine.name}
-                          </h3>
-                          {item.medicine.strength && (
-                            <span className="text-xs font-semibold px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant">
-                              {item.medicine.strength}
+                          <span className="text-base font-bold text-on-surface leading-tight truncate max-w-full">
+                            {med.name}
+                          </span>
+                          {med.strength && (
+                            <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant shrink-0">
+                              {med.strength}
+                            </span>
+                          )}
+                          {(med.scheduleType === 'H' || med.scheduleType === 'H1') && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-error-container text-on-error-container shrink-0">
+                              Sch {med.scheduleType}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs font-medium text-on-surface-variant mt-0.5">
-                          {formatRupees(item.medicine.mrpPaise)} / {item.unitMode === 'pack' ? 'pack' : 'loose'}
-                          {batchText ? ` · Batch: ${batchText}` : ''}
-                          {item.medicine.shelf ? ` · Shelf: ${item.medicine.shelf}` : ''}
-                        </p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-base font-extrabold text-primary">
-                          {formatRupees(lineTotal)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Bottom Row: Unit Mode Toggle + Quantity Stepper + Remove */}
-                    <div className="flex items-center justify-between pt-2 border-t border-outline-variant/30 gap-2 flex-wrap sm:flex-nowrap">
-                      {upp > 1 ? (
-                        <div className="flex bg-surface-container-low rounded-xl p-1 border border-outline-variant/50 h-11 items-center shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleUnitMode(item.id, 'pack')}
-                            className={`h-full px-3 rounded-lg text-xs font-bold flex items-center justify-center cursor-pointer transition-colors ${
-                              item.unitMode === 'pack'
-                                ? 'bg-primary text-on-primary shadow-xs'
-                                : 'text-on-surface-variant hover:text-on-surface'
-                            }`}
-                          >
-                            Pack ({upp})
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleUnitMode(item.id, 'loose')}
-                            className={`h-full px-3 rounded-lg text-xs font-bold flex items-center justify-center cursor-pointer transition-colors ${
-                              item.unitMode === 'loose'
-                                ? 'bg-primary text-on-primary shadow-xs'
-                                : 'text-on-surface-variant hover:text-on-surface'
-                            }`}
-                          >
-                            Loose
-                          </button>
+                        <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 text-xs font-medium text-on-surface-variant mt-1">
+                          <span className="font-extrabold text-on-surface">
+                            {formatRupees(med.mrpPaise)}
+                          </span>
+                          <span>·</span>
+                          <span className={isOos ? 'text-error font-bold' : 'text-primary font-bold'}>
+                            {validStock > 0
+                              ? `${Math.floor(validStock / Math.max(1, med.unitsPerPack || 1))} ${t('medicine.packs_unit')} (${validStock})`
+                              : t('dawai_becho.out_of_stock_badge')}
+                          </span>
+                          {med.shelf && (
+                            <>
+                              <span>·</span>
+                              <span className="px-1.5 py-0.2 rounded bg-surface-container font-bold">
+                                {med.shelf}
+                              </span>
+                            </>
+                          )}
                         </div>
-                      ) : (
-                        <div className="text-xs font-semibold text-on-surface-variant px-2 py-1 bg-surface-container-low rounded-lg">
-                          1 unit/pack
-                        </div>
-                      )}
+                      </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {inCartCount > 0 && (
+                          <span className="px-2 py-1 rounded-xl bg-primary text-on-primary text-xs font-extrabold">
+                            ×{inCartCount}
+                          </span>
+                        )}
                         <button
                           type="button"
-                          aria-label="Decrease quantity"
-                          onClick={() => handleChangeQty(item.id, -1)}
-                          className="w-11 h-11 min-w-[44px] min-h-[44px] bg-surface-container-low hover:bg-surface-container border border-outline-variant/60 text-on-surface rounded-xl flex items-center justify-center font-bold text-xl active:scale-95 transition-all cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleSelectMedicine(med);
+                          }}
+                          aria-label={`Add ${med.name}`}
+                          className={`w-12 h-12 min-w-[48px] min-h-[48px] rounded-2xl flex items-center justify-center font-bold active:scale-95 transition-all cursor-pointer shrink-0 ${
+                            isOos
+                              ? 'bg-error-container text-error'
+                              : 'bg-primary-fixed hover:bg-primary hover:text-on-primary text-primary'
+                          }`}
                         >
-                          −
-                        </button>
-                        <span className="text-base font-bold text-on-surface w-7 text-center">
-                          {item.qtyInput}
-                        </span>
-                        <button
-                          type="button"
-                          aria-label="Increase quantity"
-                          onClick={() => handleChangeQty(item.id, 1)}
-                          className="w-11 h-11 min-w-[44px] min-h-[44px] bg-primary-fixed border border-primary/30 text-on-primary-fixed rounded-xl flex items-center justify-center font-bold text-xl active:bg-primary active:text-on-primary active:scale-95 transition-all cursor-pointer"
-                        >
-                          +
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Remove item"
-                          onClick={() => handleChangeQty(item.id, -item.qtyInput)}
-                          className="w-11 h-11 min-w-[44px] min-h-[44px] text-error hover:bg-error-container/20 rounded-xl flex items-center justify-center cursor-pointer ml-1"
-                        >
-                          <Icon name="delete" className="text-[20px]" />
+                          <Icon name={isOos ? 'swap_horiz' : 'add'} className="text-[26px]" />
                         </button>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Sticky Bottom Checkout Bar (pb-[env(safe-area-inset-bottom)]) */}
-        <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/50 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex flex-col gap-2.5">
-          <div className="flex items-center justify-between gap-2.5 w-full">
-            <div className="text-base sm:text-lg font-bold text-on-surface tracking-tight truncate">
-              {t('dawai_becho.bill_header_prefix')} #{nextBillNo} ·{' '}
-              <span className="text-on-surface-variant font-medium">
-                {t('dawai_becho.items_count', { count: cart.length })}
-              </span>
-            </div>
-            <span className="font-display-total-mobile text-[32px] sm:text-[36px] leading-none font-extrabold text-primary shrink-0">
-              {formatRupees(totals.totalPaise)}
-            </span>
-          </div>
-
+        {/* Sticky Bottom Cart Summary Bar (opens Cart Sheet on tap, never covers form inputs) */}
+        <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-3.5 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex flex-col gap-2">
+          {/* Expandable summary row */}
           <button
             type="button"
-            onClick={handleProceedToPayment}
-            className="w-full h-[56px] min-h-[56px] bg-primary hover:bg-primary-container text-on-primary rounded-2xl px-5 flex items-center justify-center gap-3 shadow-md active:scale-[0.98] transition-all cursor-pointer"
+            onClick={() => setIsMobileBillSheetOpen(true)}
+            className="flex items-center justify-between gap-2 w-full cursor-pointer text-left min-w-0"
           >
-            <Icon name="receipt_long" className="text-[26px]" />
-            <div className="flex flex-col items-start justify-center text-left leading-tight">
-              <span className="text-lg sm:text-xl font-extrabold tracking-tight">
-                {btnMakeBill.main}
-              </span>
-              {btnMakeBill.sub && (
-                <span className="text-xs text-primary-fixed leading-none">{btnMakeBill.sub}</span>
-              )}
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="w-9 h-9 rounded-full bg-surface-container border border-outline-variant/60 flex items-center justify-center text-on-surface shrink-0">
+                <Icon name="expand_less" className="text-[22px]" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-extrabold text-on-surface truncate">
+                  {t('dawai_becho.bill_header_prefix')} #{nextBillNo} ·{' '}
+                  {t('dawai_becho.items_count', { count: cart.length })}
+                </span>
+                {totals.discountPaise > 0 && (
+                  <span className="text-[11px] font-bold text-primary truncate">
+                    {t('dawai_becho.summary_discount')}: -{formatRupees(totals.discountPaise)}
+                  </span>
+                )}
+              </div>
             </div>
+            <span className="font-display-total-mobile text-[30px] sm:text-[36px] leading-none font-extrabold text-primary shrink-0">
+              {formatRupees(totals.totalPaise)}
+            </span>
           </button>
+
+          {/* Action Row: Open Cart Sheet + Proceed to Payment */}
+          <div className="flex items-center gap-2 w-full">
+            <button
+              type="button"
+              onClick={() => setIsMobileBillSheetOpen(true)}
+              className="h-[54px] min-h-[54px] px-4 bg-surface-container hover:bg-surface-container-high border border-outline-variant/50 text-on-surface rounded-2xl flex items-center justify-center gap-1.5 font-bold text-sm active:scale-95 transition-all cursor-pointer shrink-0"
+            >
+              <Icon name="shopping_cart" className="text-[22px] text-primary" />
+              <span>{cart.length}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleProceedToPayment}
+              className="flex-1 h-[54px] min-h-[54px] bg-primary hover:bg-primary-container text-on-primary rounded-2xl px-4 flex items-center justify-center gap-2.5 shadow-md active:scale-[0.98] transition-all cursor-pointer min-w-0"
+            >
+              <Icon name="receipt_long" className="text-[24px] shrink-0" />
+              <div className="flex flex-col items-start justify-center text-left leading-tight min-w-0">
+                <span className="text-base sm:text-lg font-extrabold tracking-tight truncate max-w-full">
+                  {btnMakeBill.main}
+                </span>
+                {btnMakeBill.sub && (
+                  <span className="text-[11px] text-primary-fixed leading-none truncate max-w-full">
+                    {btnMakeBill.sub}
+                  </span>
+                )}
+              </div>
+            </button>
+          </div>
         </footer>
+
+        {/* Mobile Slide-Up Full Cart, Customer & Discount Bottom Sheet */}
+        {isMobileBillSheetOpen && (
+          <div
+            className="fixed inset-0 z-50 bg-inverse-surface/50 backdrop-blur-[2px] flex flex-col justify-end"
+            onClick={() => setIsMobileBillSheetOpen(false)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="h-[88dvh] w-full bg-surface-container-lowest rounded-t-3xl shadow-2xl p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex flex-col overflow-hidden"
+            >
+              <div className="w-12 h-1.5 rounded-full bg-outline-variant/60 mx-auto mb-2 shrink-0" />
+              <BillPanel
+                {...sharedBillPanelProps}
+                isMobileSheet
+                onCloseMobileSheet={() => setIsMobileBillSheetOpen(false)}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Modals for Compact View */}
         <ScheduleHModal
@@ -1355,14 +1244,27 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
         <ApprovalDialog
           isOpen={isApprovalOpen}
           actionCategory="discount_above_limit"
-          recordDescription={`Bill #${nextBillNo}: ${totals.effectiveDiscountPercent}% discount (${formatRupees(totals.discountPaise)}) on ${formatRupees(totals.subtotalPaise)}`}
+          recordDescription={
+            pendingBillDiscount
+              ? pendingBillDiscount.description
+              : `Bill #${nextBillNo}: ${totals.effectiveDiscountPercent}% discount (${formatRupees(totals.discountPaise)}) on ${formatRupees(totals.subtotalPaise)}`
+          }
           requesterName={userName}
           onApproved={() => {
             setIsApprovalOpen(false);
             setDiscountApproved(true);
+            if (pendingBillDiscount) {
+              applyBillDiscount(pendingBillDiscount.mode, pendingBillDiscount.value);
+              setPendingBillDiscount(null);
+              triggerFeedback('success', t('dawai_becho.bill_disc_applied_toast'));
+              return;
+            }
             executePaymentProceed(true);
           }}
-          onClose={() => setIsApprovalOpen(false)}
+          onClose={() => {
+            setIsApprovalOpen(false);
+            setPendingBillDiscount(null);
+          }}
         />
       </div>
     );

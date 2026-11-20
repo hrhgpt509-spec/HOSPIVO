@@ -12,6 +12,7 @@ import {
   type SupplierLowStockGroup,
 } from '../logic/stockDekho';
 import { lowStock, outOfStock, isOutOfStock, isLowStock } from '../logic/stock';
+import { useBackHandler } from '../logic/androidBack';
 
 interface StockDekhoProps {
   onReturnHome: () => void;
@@ -37,6 +38,8 @@ export const StockDekho: React.FC<StockDekhoProps> = ({
   const { t } = useTranslation();
   const [currentView, setCurrentView] = useState<StockDekhoView>('list');
   const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(null);
+
+  useBackHandler(currentView !== 'list', () => setCurrentView('list'));
 
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);

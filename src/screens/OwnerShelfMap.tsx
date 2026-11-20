@@ -3,6 +3,7 @@ import { db, type Medicine, type Batch, type StockMovement, type Shop, type DBUs
 import { useTranslation, tButton } from '../i18n';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { MobileTopBar } from '../components/MobileTopBar';
 import { ShelfMoveModal } from './shelf/ShelfMoveModal';
 import {
   groupMedicinesByShelf,
@@ -122,9 +123,19 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
   const btnPrintShelfLabel = tButton('shelf_map.btn_print_shelf_label');
 
   return (
-    <div className="flex flex-col min-h-dvh bg-surface font-body-md text-on-surface antialiased select-none">
-      {/* ================= TOP BAR ================= */}
-      <header className="fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/60">
+    <div className="flex flex-col w-full min-h-dvh bg-surface font-body-md text-on-surface overflow-x-clip antialiased select-none">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('shelf_map.title')}
+        subtitle={shop?.name || undefined}
+        onBack={onReturnHome}
+        backIcon="home"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* ================= DESKTOP TOP BAR ================= */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/60">
         <div className="h-16 sm:h-20 w-full px-4 sm:px-gutter flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="flex items-baseline gap-1.5 sm:gap-2">
@@ -181,7 +192,7 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
       </header>
 
       {/* ================= MAIN CONTENT ================= */}
-      <main className="w-full pt-16 sm:pt-20 flex-1 flex flex-col min-h-0 bg-surface">
+      <main className="w-full pt-3 lg:pt-20 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex-1 flex flex-col min-h-0 bg-surface">
         <div className="flex flex-col w-full flex-1 px-4 sm:px-gutter py-3 sm:py-4 gap-3 sm:gap-4 lg:overflow-hidden">
           {/* Subheader Title & Search & Action Strip */}
           <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">

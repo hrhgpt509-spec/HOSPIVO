@@ -7,6 +7,7 @@ import { OwnerPinGate } from '../components/OwnerPinGate';
 import { useTranslation, tButton } from '../i18n';
 import { FullscreenButton } from '../components/FullscreenButton';
 import { Icon } from '../components/Icon';
+import { MobileBottomNav, type MobileNavTab } from '../components/MobileBottomNav';
 import { OwnerMenu } from './OwnerMenu';
 import { OwnerMedicineList } from './OwnerMedicineList';
 import { StockJodo } from './StockJodo';
@@ -38,6 +39,7 @@ import { getHomeSyncState, runSyncCycle, type HomeSyncState } from '../logic/clo
 import { OwnerCloudSync } from './OwnerCloudSync';
 import { RemoteApprovalInbox } from './RemoteApprovalInbox';
 import { useIsCompactViewport } from '../logic/useViewport';
+import { useBackHandler } from '../logic/androidBack';
 
 interface HomeProps {
   currentUser?: {
@@ -151,6 +153,30 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
   const userName = currentUser?.name || 'Owner';
   const userInitial = userName ? userName.charAt(0).toUpperCase() : 'O';
 
+  // Android back navigation for top-level subpages: owner subpages -> owner menu, main subpages -> home
+  useBackHandler(activePage !== 'home', () => {
+    const ownerSubPages: ActivePage[] = [
+      'medicine_list',
+      'suppliers',
+      'referral_report',
+      'owner_dashboard',
+      'owner_reports',
+      'audit_log',
+      'owner_staff',
+      'owner_settings',
+      'owner_backup',
+      'owner_shelf_map',
+      'owner_stickers',
+      'owner_cloud_sync',
+      'owner_approvals',
+    ];
+    if (ownerSubPages.includes(activePage)) {
+      setActivePage('owner');
+    } else {
+      setActivePage('home');
+    }
+  });
+
   // Navigate back to home
   const handleReturnHome = () => {
     setActivePage('home');
@@ -224,9 +250,40 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
     }
   };
 
+  // Bottom nav helper across top-level hub screens on phones
+  const handleMobileTabSelect = (tab: MobileNavTab) => {
+    if (tab === 'home') {
+      setActivePage('home');
+    } else if (tab === 'owner') {
+      if (activePage === 'owner') return;
+      if (currentUser?.role === 'owner') {
+        setActivePage('owner');
+      } else {
+        setIsOwnerGateOpen(true);
+      }
+    } else {
+      setActivePage(tab);
+    }
+  };
+
+  const withMobileNav = (activeTab: MobileNavTab, content: React.ReactNode) => (
+    <>
+      <div className="w-full overflow-x-clip max-lg:pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
+        {content}
+      </div>
+      <MobileBottomNav activeTab={activeTab} onSelectTab={handleMobileTabSelect} />
+      <OwnerPinGate
+        isOpen={isOwnerGateOpen}
+        onSuccess={handleOwnerGateSuccess}
+        onClose={() => setIsOwnerGateOpen(false)}
+      />
+    </>
+  );
+
   // 32b Owner Menu
   if (activePage === 'owner') {
-    return (
+    return withMobileNav(
+      'owner',
       <OwnerMenu
         onReturnHome={handleReturnHome}
         onOpenMedicineList={() => setActivePage('medicine_list')}
@@ -285,7 +342,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
 
   // 24a-b, 25 Stock Dekho
   if (activePage === 'stock_dekho') {
-    return (
+    return withMobileNav(
+      'stock_dekho',
       <StockDekho
         onReturnHome={handleReturnHome}
         onOpenShelfMap={() => setActivePage('owner_shelf_map')}
@@ -303,7 +361,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
 
   // 27a-b Suppliers List & Detail
   if (activePage === 'suppliers') {
-    return (
+    return withMobileNav(
+      'owner',
       <SuppliersList
         onReturnHome={handleReturnHome}
         onBackToOwnerMenu={() => setActivePage('owner')}
@@ -340,7 +399,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
 
   // 26a, 26b, 26c Expiry & Supplier Returns
   if (activePage === 'expiry') {
-    return (
+    return withMobileNav(
+      'stock_dekho',
       <Expiry
         onReturnHome={handleReturnHome}
         currentUser={currentUser as any}
@@ -353,7 +413,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
 
   // 28a-c, 29a-b Udhaar, Customers & Regular Reminders
   if (activePage === 'udhaar' || activePage === 'customers') {
-    return (
+    return withMobileNav(
+      'udhaar',
       <Udhaar
         onReturnHome={handleReturnHome}
         onOpenBilling={() => setActivePage('dawai_becho')}
@@ -395,7 +456,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
 
   // 33 Owner Dashboard
   if (activePage === 'owner_dashboard') {
-    return (
+    return withMobileNav(
+      'owner',
       <OwnerDashboard
         onReturnHome={handleReturnHome}
         onBackToOwnerMenu={() => setActivePage('owner')}
@@ -411,7 +473,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
 
   // 34 Owner Reports Hub
   if (activePage === 'owner_reports') {
-    return (
+    return withMobileNav(
+      'owner',
       <OwnerReports
         onReturnHome={handleReturnHome}
         onBackToOwnerMenu={() => setActivePage('owner')}
@@ -464,7 +527,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
 
   // 41a-c Backup & Restore
   if (activePage === 'owner_backup') {
-    return (
+    return withMobileNav(
+      'owner',
       <OwnerBackup
         currentUser={currentUser as any}
         onBack={() => setActivePage('owner')}
@@ -508,7 +572,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
 
   // 02b Cloud Sync & Pairing
   if (activePage === 'owner_cloud_sync') {
-    return (
+    return withMobileNav(
+      'owner',
       <OwnerCloudSync
         currentUser={currentUser as any}
         onBack={() => setActivePage('owner')}
@@ -609,46 +674,46 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
   // COMPACT VIEWPORT: DEDICATED MOBILE & PORTRAIT-TABLET (< 1024px) HOME DASHBOARD
   if (isCompactViewport) {
     return (
-      <div className="w-full min-h-dvh bg-canvas dark:bg-[#0f1713] text-[#101828] dark:text-gray-100 flex flex-col justify-between p-3 sm:p-4 overflow-y-auto overflow-x-hidden pb-24 antialiased select-none transition-colors">
-        <div className="w-full max-w-[1024px] mx-auto flex flex-col gap-3 sm:gap-4 relative">
+      <div className="w-full min-h-dvh bg-canvas dark:bg-[#0f1713] text-[#101828] dark:text-gray-100 flex flex-col justify-between px-3 sm:px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[calc(5.25rem+env(safe-area-inset-bottom))] overflow-x-clip antialiased select-none transition-colors">
+        <div className="w-full max-w-[1024px] mx-auto flex flex-col gap-3 sm:gap-4 relative min-w-0">
           
           {/* COMPACT TOP BAR */}
-          <header className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 p-3 sm:p-4 flex items-center justify-between gap-2">
+          <header className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 p-3 flex items-center justify-between gap-2 min-w-0">
             {/* Left: Hospivo + Shop Name */}
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center text-white shrink-0 shadow-sm">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+              <div className="w-10 h-10 rounded-xl bg-brand flex items-center justify-center text-white shrink-0 shadow-sm">
                 <svg className="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
               </div>
-              <div className="truncate">
-                <span className="text-base font-black tracking-wide text-brand leading-none block">HOSPIVO</span>
+              <div className="min-w-0 flex-1">
+                <span className="text-base font-black tracking-wide text-brand leading-none block truncate">HOSPIVO</span>
                 <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate block mt-0.5">{shopName}</span>
               </div>
             </div>
 
             {/* Right: Offline/Sync Status Pill + Theme Switch + User/Lock */}
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               {syncState?.cloudEnabled ? (
                 syncState.status === 'offline' ? (
                   <StatusChip
                     variant="offline"
                     label={syncState.chipLabel}
-                    className="cursor-pointer text-xs"
+                    className="cursor-pointer text-xs max-w-[110px] truncate"
                     onClick={handleOpenCloudSync}
                   />
                 ) : syncState.status === 'failed' ? (
                   <StatusChip
                     variant="sync_failed"
                     label={syncState.chipLabel}
-                    className="cursor-pointer text-xs"
+                    className="cursor-pointer text-xs max-w-[110px] truncate"
                     onClick={handleOpenCloudSync}
                   />
                 ) : (
                   <StatusChip
                     variant="synced"
                     label={syncState.chipLabel}
-                    className="cursor-pointer text-xs"
+                    className="cursor-pointer text-xs max-w-[110px] truncate"
                     onClick={handleOpenCloudSync}
                   />
                 )
@@ -656,17 +721,17 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
                 <StatusChip
                   variant="local"
                   label={syncState?.chipLabel || modeLabel}
-                  className="cursor-pointer text-xs"
+                  className="cursor-pointer text-xs max-w-[110px] truncate"
                   onClick={handleOpenCloudSync}
                 />
               )}
 
-              {/* Theme toggle */}
+              {/* Theme toggle (>= 48px touch target) */}
               <button
                 type="button"
                 aria-label={t('common.toggle_theme')}
                 onClick={toggleTheme}
-                className="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-yellow-400 transition cursor-pointer"
+                className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-yellow-400 transition cursor-pointer"
               >
                 {theme === 'dark' ? (
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -679,21 +744,21 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
                 )}
               </button>
 
-              {/* Switch User / Lock Button */}
+              {/* Switch User / Lock Button (>= 48px touch target) */}
               <button
                 type="button"
                 onClick={() => {
                   if (onSwitchUser) onSwitchUser();
                   else if (onLock) onLock();
                 }}
-                className="h-9 px-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 flex items-center gap-1.5 text-gray-800 dark:text-gray-100 font-bold text-xs transition cursor-pointer"
+                className="min-h-[48px] px-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 flex items-center gap-1.5 text-gray-800 dark:text-gray-100 font-bold text-xs transition cursor-pointer"
                 title="Switch User / Lock"
               >
-                <div className="w-5 h-5 rounded-full bg-brand text-white flex items-center justify-center font-bold text-[10px]">
+                <div className="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center font-bold text-[11px]">
                   {userInitial}
                 </div>
                 <span className="hidden sm:inline truncate max-w-[65px]">{userName}</span>
-                <Icon name="lock" className="text-xs text-gray-500" />
+                <Icon name="lock" className="text-sm text-gray-500" />
               </button>
             </div>
           </header>
@@ -959,75 +1024,28 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
             </div>
           </div>
 
-          {/* Quick Customers & Suppliers Chips on Mobile */}
+          {/* Quick Customers & Suppliers Chips on Mobile (>= 48px tall) */}
           <div className="flex items-center gap-2 pt-1 pb-2">
             <button
               type="button"
               onClick={() => setActivePage('customers')}
-              className="flex-1 h-11 px-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-100 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.99] cursor-pointer"
+              className="flex-1 min-h-[48px] px-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-100 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.99] cursor-pointer min-w-0"
             >
-              <Icon name="groups" className="text-[18px] text-brand" />
-              <span>{tButton('customers.nav_customers').main}</span>
+              <Icon name="groups" className="text-[20px] text-brand shrink-0" />
+              <span className="truncate">{tButton('customers.nav_customers').main}</span>
             </button>
             <button
               type="button"
               onClick={() => setActivePage('suppliers')}
-              className="flex-1 h-11 px-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-100 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.99] cursor-pointer"
+              className="flex-1 min-h-[48px] px-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-100 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.99] cursor-pointer min-w-0"
             >
-              <Icon name="local_shipping" className="text-[18px] text-brand" />
-              <span>{tButton('suppliers.nav_suppliers').main}</span>
+              <Icon name="local_shipping" className="text-[20px] text-brand shrink-0" />
+              <span className="truncate">{tButton('suppliers.nav_suppliers').main}</span>
             </button>
           </div>
 
           {/* FIXED ANDROID-READY BOTTOM NAVIGATION BAR */}
-          <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex items-center justify-around h-16 pb-[env(safe-area-inset-bottom)] shadow-lg">
-            <button
-              type="button"
-              onClick={handleReturnHome}
-              className={`flex flex-col items-center justify-center flex-1 h-full py-1 transition-colors cursor-pointer ${
-                activePage === 'home' ? 'text-brand font-bold' : 'text-gray-500 dark:text-gray-400 font-medium'
-              }`}
-            >
-              <Icon name="home" className="text-[22px]" />
-              <span className="text-[11px] leading-tight mt-0.5">Home</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleTileClick('dawai_becho')}
-              className="flex flex-col items-center justify-center flex-1 h-full py-1 text-gray-500 dark:text-gray-400 font-medium hover:text-brand transition-colors cursor-pointer"
-            >
-              <Icon name="shopping_cart" className="text-[22px]" />
-              <span className="text-[11px] leading-tight mt-0.5">Sell</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleTileClick('fast_bill')}
-              className="flex flex-col items-center justify-center flex-1 h-full py-1 text-gray-500 dark:text-gray-400 font-medium hover:text-semantic-blue transition-colors cursor-pointer"
-            >
-              <Icon name="bolt" className="text-[22px]" />
-              <span className="text-[11px] leading-tight mt-0.5">Fast Bill</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleTileClick('stock_dekho')}
-              className="flex flex-col items-center justify-center flex-1 h-full py-1 text-gray-500 dark:text-gray-400 font-medium hover:text-brand transition-colors cursor-pointer"
-            >
-              <Icon name="inventory_2" className="text-[22px]" />
-              <span className="text-[11px] leading-tight mt-0.5">Stock</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleTileClick('owner')}
-              className="flex flex-col items-center justify-center flex-1 h-full py-1 text-gray-500 dark:text-gray-400 font-medium hover:text-amber-600 transition-colors cursor-pointer"
-            >
-              <Icon name="key" className="text-[22px]" />
-              <span className="text-[11px] leading-tight mt-0.5">Owner</span>
-            </button>
-          </nav>
+          <MobileBottomNav activeTab="home" onSelectTab={handleMobileTabSelect} />
 
           {/* Owner PIN Gate Modal */}
           <OwnerPinGate

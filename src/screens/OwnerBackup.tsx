@@ -3,6 +3,7 @@ import { type DBUser } from '../db';
 import { useTranslation, tButton } from '../i18n';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { MobileTopBar } from '../components/MobileTopBar';
 import { useShop } from '../logic/useShop';
 import { isOwner } from '../logic/roles';
 import {
@@ -20,6 +21,7 @@ import {
 import { verifyApprovalPin } from '../logic/approvals';
 import { triggerFeedback } from '../logic/feedback';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
+import { useBackHandler } from '../logic/androidBack';
 import { getPinLengthSetting } from '../logic/pin';
 import { FallbackSaveModal } from './owner-backup/FallbackSaveModal';
 
@@ -64,6 +66,12 @@ export const OwnerBackup: React.FC<OwnerBackupProps> = ({
   const [isRestoring, setIsRestoring] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useBackHandler(isFallbackModalOpen, () => setIsFallbackModalOpen(false));
+  useBackHandler(isRestoreModalOpen, () => {
+    setIsRestoreModalOpen(false);
+    setStagedPayload(null);
+  });
 
   // Translations
   const btnBack = tButton('owner_staff.btn_back');
@@ -272,9 +280,19 @@ export const OwnerBackup: React.FC<OwnerBackupProps> = ({
   };
 
   return (
-    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased select-none flex flex-col justify-between">
-      {/* 1. Top Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased select-none overflow-x-clip flex flex-col justify-between">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('owner_backup.page_title')}
+        subtitle={shopName || t('owner_backup.page_sub')}
+        onBack={onBack}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* 1. Desktop Top Fixed Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm">
         <div className="h-20 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3 md:gap-4">
             <span className="font-extrabold text-2xl tracking-tight text-primary">HOSPIVO</span>
@@ -308,9 +326,9 @@ export const OwnerBackup: React.FC<OwnerBackupProps> = ({
       </header>
 
       {/* 2. Main Content */}
-      <main className="w-full pt-24 pb-8 flex-1 flex flex-col max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 gap-5">
-        {/* Title */}
-        <div className="flex flex-col">
+      <main className="w-full pt-3 lg:pt-24 pb-8 flex-1 flex flex-col max-w-[1200px] mx-auto px-3 sm:px-6 md:px-8 gap-4 sm:gap-5 min-w-0">
+        {/* Desktop Title */}
+        <div className="hidden lg:flex flex-col">
           <h1 className="font-headline-lg text-headline-lg font-extrabold text-on-surface tracking-tight leading-none">
             {t('owner_backup.page_title')}
           </h1>
@@ -454,22 +472,22 @@ export const OwnerBackup: React.FC<OwnerBackupProps> = ({
               {history.slice(0, 5).map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between py-3 px-4 rounded-xl hover:bg-surface-container-low transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-4 py-3 px-3.5 sm:px-4 rounded-xl bg-surface-container-low/60 hover:bg-surface-container-low transition-colors border border-outline-variant/20 min-w-0"
                 >
-                  <div className="flex items-center gap-4">
-                    <Icon name="schedule" className="text-[24px] text-on-surface-variant" />
-                    <span className="font-body-md font-medium text-on-surface">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon name="schedule" className="text-[22px] text-on-surface-variant shrink-0" />
+                    <span className="font-body-md text-sm sm:text-base font-semibold text-on-surface truncate">
                       {formatTimestamp(item.timestamp)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-6">
-                    <span className="font-body-md text-on-surface-variant font-medium">
+                  <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 pl-8 sm:pl-0">
+                    <span className="text-xs sm:text-sm text-on-surface-variant font-medium">
                       {(item.sizeBytes / (1024 * 1024)).toFixed(1)} MB
                     </span>
-                    <div className="flex items-center gap-1.5 text-primary">
-                      <Icon name="check" className="text-[20px]" />
-                      <span className="font-label-sub-english text-sm font-bold">
-                        {t('owner_backup.badge_verified')}
+                    <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary-fixed/60 text-primary">
+                      <Icon name="verified" className="text-[16px]" />
+                      <span className="font-label-sub-english text-xs font-bold">
+                        {t('owner_backup.badge_verified')} (SHA-256)
                       </span>
                     </div>
                   </div>
@@ -480,10 +498,10 @@ export const OwnerBackup: React.FC<OwnerBackupProps> = ({
         </div>
       </main>
 
-      {/* RESTORE CONFIRMATION MODAL (41c) */}
+      {/* RESTORE CONFIRMATION MODAL (41c) / Mobile Bottom Sheet */}
       {isRestoreModalOpen && stagedPayload && (
-        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[580px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 md:p-8 flex flex-col gap-5 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
+        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-full sm:w-[580px] max-w-full bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 sm:p-6 md:p-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-4 sm:gap-5 border-t sm:border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             {/* Top Warning Icon and Headings */}
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 min-w-[64px] rounded-2xl bg-error-container flex items-center justify-center shadow-sm">
@@ -535,6 +553,8 @@ export const OwnerBackup: React.FC<OwnerBackupProps> = ({
               </label>
               <input
                 type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 maxLength={pinLength}
                 value={restorePin}
                 onChange={(e) => setRestorePin(e.target.value.replace(/\D/g, '').slice(0, pinLength))}

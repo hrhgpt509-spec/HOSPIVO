@@ -9,6 +9,7 @@ import { formatRupees } from '../logic/money';
 import { canSeePurchasePrice } from '../logic/roles';
 import { formatMedicineStock } from '../logic/medicineSearch';
 import { useIsCompactViewport } from '../logic/useViewport';
+import { useBackHandler } from '../logic/androidBack';
 import {
   loadExpiryDashboardData,
   type ExpiryBatchItem,
@@ -46,6 +47,9 @@ export const Expiry: React.FC<ExpiryProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const [returnTarget, setReturnTarget] = useState<ExpiryBatchItem | null>(null);
+
+  useBackHandler(viewMode === 'tracker', () => setViewMode('list'));
+  useBackHandler(returnTarget !== null, () => setReturnTarget(null));
 
   const isOwnerUser = canSeePurchasePrice(currentUser);
   const modeLabel = mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
@@ -138,9 +142,9 @@ export const Expiry: React.FC<ExpiryProps> = ({
 
   if (isCompactViewport) {
     return (
-      <div className="w-full min-h-dvh bg-background font-body-md text-on-surface flex flex-col overflow-x-hidden antialiased select-none transition-colors">
+      <div className="w-full min-h-dvh bg-background font-body-md text-on-surface flex flex-col overflow-x-clip antialiased select-none transition-colors">
         {/* Sticky Compact Header */}
-        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] flex items-center justify-between gap-2 shadow-xs">
           <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={onReturnHome}

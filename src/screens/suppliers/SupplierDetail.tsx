@@ -3,6 +3,7 @@ import { db, type Supplier, type Purchase, type PurchaseLine, type Medicine } fr
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
 import { FullscreenButton } from '../../components/FullscreenButton';
+import { MobileTopBar } from '../../components/MobileTopBar';
 import { useShop } from '../../logic/useShop';
 import { formatRupees } from '../../logic/money';
 import { canSeePurchasePrice } from '../../logic/roles';
@@ -13,6 +14,7 @@ import {
   type SupplierInvoiceDetail,
 } from '../../logic/suppliers';
 import { triggerFeedback } from '../../logic/feedback';
+import { useBackHandler } from '../../logic/androidBack';
 import { SupplierFormModal } from './SupplierFormModal';
 import { InvoiceDetailModal } from './InvoiceDetailModal';
 
@@ -43,6 +45,9 @@ export const SupplierDetail: React.FC<SupplierDetailProps> = ({
   const [selectedInvoice, setSelectedInvoice] = useState<SupplierInvoiceDetail | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'purchases' | 'returns' | 'expiry_returns'>('purchases');
+
+  useBackHandler(selectedInvoice !== null, () => setSelectedInvoice(null));
+  useBackHandler(isEditModalOpen, () => setIsEditModalOpen(false));
 
   const isOwnerUser = canSeePurchasePrice(currentUser);
   const modeLabel = mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
@@ -129,9 +134,29 @@ export const SupplierDetail: React.FC<SupplierDetailProps> = ({
   }
 
   return (
-    <div className="w-full min-h-screen bg-background text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
-      {/* 1. Header (Matching 27b Stitch design) */}
-      <header className="fixed top-0 left-0 right-0 w-full z-40 bg-surface/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/40">
+    <div className="w-full min-h-dvh bg-background text-on-surface flex flex-col justify-between overflow-x-clip antialiased select-none transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={supplier.name}
+        subtitle={supplier.phone || supplier.address || t('suppliers.detail_context_title')}
+        onBack={onBack}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        rightSlot={
+          <button
+            type="button"
+            onClick={() => setIsEditModalOpen(true)}
+            aria-label={editBtn.main}
+            className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container flex items-center justify-center text-primary cursor-pointer"
+          >
+            <Icon name="edit" className="text-[20px]" />
+          </button>
+        }
+      />
+
+      {/* 1. Desktop Header (Matching 27b Stitch design) */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 w-full z-40 bg-surface/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/40">
         <div className="h-20 w-full px-gutter flex items-center justify-between">
           {/* Left: Brand + Shop Name + Mode Pill */}
           <div className="flex items-center gap-space-lg">
@@ -225,9 +250,9 @@ export const SupplierDetail: React.FC<SupplierDetailProps> = ({
       </header>
 
       {/* 2. Main Content Area */}
-      <main className="w-full pt-24 pb-8 flex-1 bg-background px-gutter max-w-[1440px] mx-auto flex flex-col gap-space-md">
+      <main className="w-full pt-3 lg:pt-24 pb-8 flex-1 bg-background px-3 sm:px-gutter max-w-[1440px] mx-auto flex flex-col gap-3 sm:gap-space-md">
         {/* Top Action / Context Row */}
-        <div className="flex items-center justify-between mt-2">
+        <div className="hidden lg:flex items-center justify-between mt-2">
           <div className="flex items-center gap-space-sm">
             <span className="p-2 rounded-xl bg-surface-container-high text-primary flex items-center justify-center">
               <Icon name="local_shipping" className="text-[28px]" />
@@ -303,7 +328,7 @@ export const SupplierDetail: React.FC<SupplierDetailProps> = ({
           </div>
 
           {/* Outstanding / Purchases Highlight Block */}
-          <div className="flex items-center gap-space-md bg-surface-container-low p-space-md rounded-2xl shadow-sm justify-between md:justify-end min-w-[300px] border border-outline-variant/60">
+          <div className="w-full md:w-auto flex items-center gap-space-md bg-surface-container-low p-4 sm:p-space-md rounded-2xl shadow-sm justify-between md:justify-end md:min-w-[260px] border border-outline-variant/60">
             <div className="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0">
               <Icon name="account_balance_wallet" className="text-[32px]" />
             </div>
@@ -410,10 +435,10 @@ export const SupplierDetail: React.FC<SupplierDetailProps> = ({
                 <div
                   key={purchase.id}
                   onClick={() => handleOpenInvoice(purchase)}
-                  className="w-full min-h-[76px] bg-surface-container-lowest rounded-2xl shadow-sm p-space-md flex items-center justify-between gap-space-md hover:shadow-md transition-shadow cursor-pointer border border-outline-variant/40 hover:border-primary/40"
+                  className="w-full min-h-[76px] bg-surface-container-lowest rounded-2xl shadow-sm p-3.5 sm:p-space-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-md transition-shadow cursor-pointer border border-outline-variant/40 hover:border-primary/40 min-w-0"
                 >
                   {/* Left: Thumbnail & Invoice meta */}
-                  <div className="flex items-center gap-space-md min-w-[280px]">
+                  <div className="flex items-center gap-3 sm:gap-space-md min-w-0 flex-1">
                     <div className="w-14 h-14 rounded-xl bg-surface-container-high flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
                       {purchase.invoicePhoto ? (
                         <img

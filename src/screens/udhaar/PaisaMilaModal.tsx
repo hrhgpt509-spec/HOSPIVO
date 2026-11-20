@@ -6,6 +6,7 @@ import { formatRupees, rupeesToPaise } from '../../logic/money';
 import { textFieldProps } from '../../logic/format';
 import { triggerFeedback } from '../../logic/feedback';
 import { useNumpadKeyboard } from '../../logic/useNumpadKeyboard';
+import { useBackHandler } from '../../logic/androidBack';
 import { recordUdhaarPayment, type CustomerLedgerEntry } from '../../logic/udhaar';
 
 interface PaisaMilaModalProps {
@@ -120,6 +121,8 @@ export const PaisaMilaModal: React.FC<PaisaMilaModalProps> = ({
     allowInsideDialog: true,
   });
 
+  useBackHandler(isOpen, onClose);
+
   if (!isOpen || !customer) return null;
 
   const backBtn = tButton('suppliers.btn_back');
@@ -129,9 +132,9 @@ export const PaisaMilaModal: React.FC<PaisaMilaModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm select-none p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm select-none p-0 sm:p-4"
     >
-      <div className="w-full max-w-[600px] max-h-[94vh] overflow-y-auto bg-surface-container-lowest rounded-[24px] shadow-2xl p-5 sm:p-7 flex flex-col gap-4 border border-outline-variant/40">
+      <div className="w-full max-w-[600px] max-h-[94dvh] overflow-y-auto bg-surface-container-lowest rounded-t-3xl sm:rounded-[24px] shadow-2xl p-4 sm:p-7 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-3.5 sm:gap-4 border-t sm:border border-outline-variant/40">
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/40 pb-3">
           <div>
@@ -213,13 +216,40 @@ export const PaisaMilaModal: React.FC<PaisaMilaModalProps> = ({
               {t('udhaar.pm_btn_full')}
             </button>
           </div>
-          <div className="w-full bg-surface-container-lowest border-2 border-primary rounded-2xl px-5 py-2.5 flex items-center justify-between shadow-sm">
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl sm:text-[28px] font-bold text-primary">
+          <div className="w-full bg-surface-container-lowest border-2 border-primary rounded-2xl px-4 py-2 flex items-center justify-between gap-2 shadow-sm">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Icon name="currency_rupee" className="text-primary text-[26px] shrink-0" />
+              {/* Mobile native numeric input */}
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoFocus
+                value={amountStr === '0' ? '' : amountStr}
+                placeholder="0"
+                onChange={(e) => {
+                  setErrorMsg('');
+                  const clean = e.target.value.replace(/\D/g, '').slice(0, 7);
+                  setAmountStr(clean || '0');
+                }}
+                aria-label={t('udhaar.pm_amount_label')}
+                className="lg:hidden w-full min-w-0 bg-transparent text-2xl font-extrabold text-primary outline-none"
+              />
+              {/* Desktop formatted display */}
+              <span className="hidden lg:inline text-[28px] font-bold text-primary">
                 {formatRupees(amountPaise)}
               </span>
             </div>
-            <Icon name="currency_rupee" className="text-primary text-[28px]" />
+            {amountStr !== '0' && (
+              <button
+                type="button"
+                onClick={handleClear}
+                aria-label={t('common.btn_clear.main')}
+                className="lg:hidden w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 cursor-pointer"
+              >
+                <Icon name="close" className="text-[20px]" />
+              </button>
+            )}
           </div>
           <div className="flex items-center justify-between px-1">
             <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface-variant">
@@ -234,8 +264,8 @@ export const PaisaMilaModal: React.FC<PaisaMilaModalProps> = ({
           </div>
         </div>
 
-        {/* 3x4 Touch Keypad */}
-        <div className="grid grid-cols-3 gap-2.5">
+        {/* Desktop 3x4 Touch Keypad (hidden on mobile where native numeric keyboard is used) */}
+        <div className="hidden lg:grid grid-cols-3 gap-2.5">
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
             <button
               key={digit}

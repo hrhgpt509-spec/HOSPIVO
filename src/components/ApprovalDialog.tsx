@@ -15,6 +15,7 @@ import {
   type CloudConfig,
 } from '../logic/cloudSync';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
+import { useBackHandler } from '../logic/androidBack';
 import { triggerFeedback } from '../logic/feedback';
 import { useTranslation, tButton } from '../i18n';
 import { useShop } from '../logic/useShop';
@@ -221,6 +222,19 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
     onBackspace: isOpen && dialogMode === 'pin' ? handleBackspace : () => {},
     onClear: isOpen && dialogMode === 'pin' ? handleClear : () => {},
   });
+
+  useBackHandler(isOpen, onClose);
+
+  const handleMobilePinChange = (raw: string) => {
+    if (!isOpen || dialogMode !== 'pin' || lockMinutes > 0) return;
+    const digits = raw.replace(/\D/g, '').slice(0, 4);
+    setPin(digits);
+    setHasError(false);
+    setErrorMessage('');
+    if (digits.length === 4) {
+      setTimeout(() => handleVerify(digits), 60);
+    }
+  };
 
   // Remote Send Action
   const handleSendRemoteRequest = async () => {
@@ -470,9 +484,9 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none animate-fadeIn"
+      className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 select-none animate-fadeIn"
     >
-      <div className="relative z-10 m-auto w-full max-w-[540px] bg-surface-container-lowest rounded-[24px] shadow-2xl p-6 sm:p-8 flex flex-col gap-4 border border-outline-variant">
+      <div className="relative z-10 sm:m-auto w-full max-w-[540px] max-h-[92dvh] overflow-y-auto bg-surface-container-lowest rounded-t-3xl sm:rounded-[24px] shadow-2xl p-5 sm:p-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-4 border-t sm:border border-outline-variant">
         {/* 1. Dialog Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
@@ -548,8 +562,35 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
           </div>
         )}
 
-        {/* 4. Touch Number Pad (88px Height Blocks) */}
-        <div className="grid grid-cols-3 gap-3">
+        {/* 4a. Mobile Native Numeric PIN Input (no on-screen numpad on phones) */}
+        <div className="lg:hidden w-full flex flex-col gap-2.5 my-1">
+          <input
+            type="password"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="one-time-code"
+            autoFocus
+            maxLength={4}
+            disabled={lockMinutes > 0}
+            value={pin}
+            onChange={(e) => handleMobilePinChange(e.target.value)}
+            placeholder="••••"
+            aria-label={t('dialogs.ijazat_pin_title')}
+            className="w-full h-14 px-4 rounded-2xl bg-surface-container-low border-2 border-primary/50 focus:border-primary text-center text-3xl font-extrabold tracking-[0.6em] text-on-surface outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+          />
+          {pin.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="h-12 min-h-[48px] w-full rounded-xl bg-surface-container text-on-surface-variant font-bold text-sm cursor-pointer active:scale-95 transition-all"
+            >
+              {clearBtn.main}
+            </button>
+          )}
+        </div>
+
+        {/* 4b. Desktop Touch Number Pad (88px Height Blocks) */}
+        <div className="hidden lg:grid grid-cols-3 gap-3">
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
             <button
               key={digit}

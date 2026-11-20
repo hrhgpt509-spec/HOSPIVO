@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { MobileTopBar } from '../components/MobileTopBar';
 import { useTranslation, tButton } from '../i18n';
 import { useShop } from '../logic/useShop';
 import { db, type ApprovalRequest, type DBUser } from '../db';
@@ -174,9 +175,19 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
   };
 
   return (
-    <div className="min-h-dvh bg-surface text-on-surface flex flex-col justify-between selection:bg-primary-fixed selection:text-on-primary-fixed">
-      {/* Top Bar */}
-      <header className="h-20 w-full px-4 sm:px-8 border-b border-outline-variant/30 bg-surface-container-lowest flex items-center justify-between shrink-0 shadow-sm">
+    <div className="w-full min-h-dvh bg-surface text-on-surface flex flex-col justify-between overflow-x-clip selection:bg-primary-fixed selection:text-on-primary-fixed">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('remote_approval.inbox_title')}
+        subtitle={shopName || t('remote_approval.inbox_sub')}
+        onBack={onBack}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* Desktop Top Bar */}
+      <header className="hidden lg:flex h-20 w-full px-4 sm:px-8 border-b border-outline-variant/30 bg-surface-container-lowest items-center justify-between shrink-0 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm">
             <Icon name="verified_user" className="text-[28px]" />

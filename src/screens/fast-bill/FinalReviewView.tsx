@@ -97,7 +97,7 @@ export const FinalReviewView: React.FC<FinalReviewViewProps> = ({
                   <button
                     type="button"
                     onClick={() => onChangeBatch(idx)}
-                    className="text-xs text-primary underline opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="text-xs font-bold text-primary underline opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity cursor-pointer"
                   >
                     Batch
                   </button>
@@ -216,7 +216,7 @@ export const FinalReviewView: React.FC<FinalReviewViewProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-space-sm">
-                <span className="bg-black/20 text-on-primary font-label-sub-english text-label-sub-english px-3 py-1 rounded-lg font-bold">
+                <span className="hidden lg:inline-block bg-black/20 text-on-primary font-label-sub-english text-label-sub-english px-3 py-1 rounded-lg font-bold">
                   Enter ↵
                 </span>
                 <Icon name="arrow_forward" className="text-[30px]" />
@@ -224,8 +224,8 @@ export const FinalReviewView: React.FC<FinalReviewViewProps> = ({
             </button>
           </div>
 
-          {/* Keyboard Shortcuts Hint Bar */}
-          <div className="flex items-center justify-between pt-1 text-on-surface-variant font-label-sub-english text-label-sub-english px-space-xs text-xs">
+          {/* Keyboard Shortcuts Hint Bar (desktop only) */}
+          <div className="hidden lg:flex items-center justify-between pt-1 text-on-surface-variant font-label-sub-english text-label-sub-english px-space-xs text-xs">
             <div className="flex items-center gap-1.5">
               <span className="bg-surface-container-highest px-2 py-0.5 rounded font-bold text-on-surface">
                 Enter

@@ -3,6 +3,7 @@ import { db, type DBUser, type Shop } from '../db';
 import { useTranslation, tButton } from '../i18n';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { MobileTopBar } from '../components/MobileTopBar';
 import { useShop } from '../logic/useShop';
 import { isOwner } from '../logic/roles';
 import { textFieldProps } from '../logic/format';
@@ -18,6 +19,7 @@ import { getDiscountLimit, DEFAULT_DISCOUNT_LIMIT_PERCENT } from '../logic/billi
 import { addAudit } from '../db/audit';
 import { triggerFeedback } from '../logic/feedback';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
+import { useBackHandler } from '../logic/androidBack';
 import { OwnerCloudSync } from './OwnerCloudSync';
 import { getCloudConfig, enqueueSyncItem, type CloudConfig } from '../logic/cloudSync';
 
@@ -137,6 +139,15 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
+
+  useBackHandler(currentView === 'approval_rules', () => setCurrentView('main'));
+  useBackHandler(isShopModalOpen, () => setIsShopModalOpen(false));
+  useBackHandler(isDiscountModalOpen, () => setIsDiscountModalOpen(false));
+  useBackHandler(isAutoLockModalOpen, () => setIsAutoLockModalOpen(false));
+  useBackHandler(isLanguageModalOpen, () => setIsLanguageModalOpen(false));
+  useBackHandler(isPinLengthModalOpen, () => setIsPinLengthModalOpen(false));
+  useBackHandler(isChangeOwnerPinModalOpen, () => setIsChangeOwnerPinModalOpen(false));
+  useBackHandler(isChangeApprovalPinModalOpen, () => setIsChangeApprovalPinModalOpen(false));
 
   // Hook for physical keyboard entry in Owner PIN modal
   usePinKeyboard({
@@ -477,9 +488,19 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
   };
 
   return (
-    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased select-none flex flex-col justify-between">
-      {/* 1. Top Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased select-none overflow-x-clip flex flex-col justify-between">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('owner_settings.page_title')}
+        subtitle={shopName || undefined}
+        onBack={currentView === 'approval_rules' ? () => setCurrentView('main') : onBack}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* 1. Desktop Top Fixed Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm">
         <div className="h-20 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3 md:gap-4">
             <span className="font-extrabold text-2xl tracking-tight text-primary">HOSPIVO</span>
@@ -513,7 +534,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
       </header>
 
       {/* 2. Main Content */}
-      <main className="w-full pt-24 pb-8 flex-1 flex flex-col max-w-[960px] mx-auto px-4 sm:px-6 md:px-8">
+      <main className="w-full pt-3 lg:pt-24 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex-1 flex flex-col max-w-[960px] mx-auto px-3 sm:px-6 md:px-8">
         {currentView === 'main' ? (
           /* ============================================================ */
           /* 40: OWNER SETTINGS CENTRAL SCREEN                             */
@@ -1276,8 +1297,30 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
             {pinError && <span className="text-error font-bold text-sm text-center">{pinError}</span>}
 
-            {/* Keypad */}
-            <div className="grid grid-cols-3 gap-2.5 w-full max-w-[300px]">
+            {/* Mobile Native Numeric PIN Input (no on-screen numpad on phones) */}
+            <div className="lg:hidden w-full flex flex-col gap-2">
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
+                autoFocus
+                maxLength={pinLength}
+                value={pinStep === 1 ? pinCurrent : pinStep === 2 ? pinNew : pinConfirm}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, pinLength);
+                  if (pinStep === 1) setPinCurrent(digits);
+                  else if (pinStep === 2) setPinNew(digits);
+                  else setPinConfirm(digits);
+                  setPinError('');
+                }}
+                placeholder={'•'.repeat(pinLength)}
+                className="w-full h-14 px-4 rounded-2xl bg-surface-container-low border-2 border-primary/50 focus:border-primary text-center text-3xl font-extrabold tracking-[0.5em] text-on-surface outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+
+            {/* Desktop Keypad */}
+            <div className="hidden lg:grid grid-cols-3 gap-2.5 w-full max-w-[300px]">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map((k) => (
                 <button
                   key={k}
@@ -1355,8 +1398,30 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
             {pinError && <span className="text-error font-bold text-sm text-center">{pinError}</span>}
 
-            {/* Keypad */}
-            <div className="grid grid-cols-3 gap-2.5 w-full max-w-[300px]">
+            {/* Mobile Native Numeric PIN Input (no on-screen numpad on phones) */}
+            <div className="lg:hidden w-full flex flex-col gap-2">
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
+                autoFocus
+                maxLength={pinLength}
+                value={pinStep === 1 ? pinCurrent : pinStep === 2 ? pinNew : pinConfirm}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, pinLength);
+                  if (pinStep === 1) setPinCurrent(digits);
+                  else if (pinStep === 2) setPinNew(digits);
+                  else setPinConfirm(digits);
+                  setPinError('');
+                }}
+                placeholder={'•'.repeat(pinLength)}
+                className="w-full h-14 px-4 rounded-2xl bg-surface-container-low border-2 border-primary/50 focus:border-primary text-center text-3xl font-extrabold tracking-[0.5em] text-on-surface outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+
+            {/* Desktop Keypad */}
+            <div className="hidden lg:grid grid-cols-3 gap-2.5 w-full max-w-[300px]">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map((k) => (
                 <button
                   key={k}

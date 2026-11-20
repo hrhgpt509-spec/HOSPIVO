@@ -4,6 +4,7 @@ import { useTranslation } from '../../i18n';
 import { useShop } from '../../logic/useShop';
 import { Icon } from '../../components/Icon';
 import { FullscreenButton } from '../../components/FullscreenButton';
+import { MobileTopBar } from '../../components/MobileTopBar';
 import { buildWhatsAppShoppingList, type SupplierLowStockGroup } from '../../logic/stockDekho';
 
 interface LowStockListProps {
@@ -59,9 +60,22 @@ export const LowStockList: React.FC<LowStockListProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-surface font-body-md text-on-surface antialiased flex flex-col select-none">
-      {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/30">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased flex flex-col overflow-x-clip select-none">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('stock_dekho.shopping_list_title')}
+        subtitle={t('stock_dekho.shopping_list_summary', {
+          suppliers: groups.length,
+          items: totalLowStockItems,
+        })}
+        onBack={onBack}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* Desktop Fixed Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/30">
         <div className="h-20 w-full max-w-[1440px] mx-auto px-gutter flex items-center justify-between">
           <div className="flex items-center gap-space-lg">
             <div className="flex items-center gap-space-sm cursor-pointer" onClick={onReturnHome}>
@@ -128,8 +142,8 @@ export const LowStockList: React.FC<LowStockListProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="w-full pt-20 bg-surface flex-1">
-        <div className="flex flex-col w-full max-w-[1440px] mx-auto px-gutter py-space-md gap-space-md select-none">
+      <main className="w-full pt-3 lg:pt-20 bg-surface flex-1">
+        <div className="flex flex-col w-full max-w-[1440px] mx-auto px-3 sm:px-gutter py-space-sm sm:py-space-md gap-space-md select-none">
           {/* Screen Header */}
           <div className="flex flex-wrap items-center justify-between gap-y-2 mb-space-xs">
             <div className="flex items-baseline gap-space-sm">
@@ -244,10 +258,10 @@ export const LowStockList: React.FC<LowStockListProps> = ({
           )}
 
           {/* Persistent Action Dock */}
-          <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/30 p-space-md flex flex-wrap items-center justify-between gap-4 mt-auto">
+          <div className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 p-3.5 sm:p-space-md flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 mt-auto">
             {/* Wapas Button */}
             <button
-              className="min-h-[56px] px-space-lg rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all flex items-center gap-space-sm active:translate-y-0.5 cursor-pointer"
+              className="w-full sm:w-auto min-h-[56px] px-space-lg rounded-xl bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-all flex items-center justify-center sm:justify-start gap-space-sm active:translate-y-0.5 cursor-pointer"
               onClick={onBack}
               type="button"
             >
@@ -275,7 +289,7 @@ export const LowStockList: React.FC<LowStockListProps> = ({
             {/* WhatsApp Share Button */}
             <button
               onClick={handleWhatsAppShare}
-              className={`min-h-[64px] px-space-xl rounded-xl shadow-md transition-all flex items-center gap-space-md active:translate-y-0.5 cursor-pointer ${
+              className={`w-full sm:w-auto min-h-[56px] sm:min-h-[64px] px-5 sm:px-space-xl rounded-xl shadow-md transition-all flex items-center justify-center gap-3 sm:gap-space-md active:translate-y-0.5 cursor-pointer ${
                 copiedOrSent
                   ? 'bg-primary-container text-on-primary-container'
                   : 'bg-primary text-on-primary hover:bg-primary-container'

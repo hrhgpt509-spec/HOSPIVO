@@ -10,6 +10,7 @@ import { enterFullscreen } from '../logic/fullscreen';
 import { useShop } from '../logic/useShop';
 import { Icon } from '../components/Icon';
 import { useIsCompactViewport } from '../logic/useViewport';
+import { useBackHandler } from '../logic/androidBack';
 import { pullAndHydrateStaffAccounts, runSyncCycle } from '../logic/cloudSync';
 import { getCurrentCloudSession, createRecoveryOwnerPin } from '../logic/cloudAuth';
 
@@ -58,6 +59,14 @@ export const Login: React.FC<LoginProps> = ({
   const btnSyncStaff = tButton('login.btn_sync_staff');
   const btnCreateOwnerPin = tButton('login.btn_create_owner_pin');
   const btnSaveOwnerPin = tButton('login.btn_save_owner_pin');
+
+  useBackHandler(!isLocked && selectedUser !== null, () => {
+    setSelectedUser(null);
+    setPin('');
+    setHasError(false);
+    setErrorMessage('');
+  });
+  useBackHandler(isCreatingOwner, () => setIsCreatingOwner(false));
   const btnCancelCreateOwner = tButton('login.btn_cancel_create_owner');
   const btnBack = tButton('common.btn_back');
 
@@ -317,8 +326,8 @@ export const Login: React.FC<LoginProps> = ({
 
     if (isCompactViewport) {
       return (
-        <div className="w-full min-h-dvh bg-[#f1fcf6] flex flex-col items-center justify-center p-3 sm:p-6 select-none relative overflow-y-auto overflow-x-hidden">
-          <div className="w-full max-w-[420px] w-[94vw] bg-white rounded-2xl shadow-xl border border-slate-200/90 overflow-hidden flex flex-col items-center p-6 sm:p-8 my-auto">
+        <div className="w-full min-h-dvh bg-[#f1fcf6] flex flex-col items-center justify-center p-3 sm:p-6 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] select-none relative overflow-x-clip">
+          <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-xl border border-slate-200/90 overflow-hidden flex flex-col items-center p-6 sm:p-8 my-auto">
             {/* Green top bar */}
             <div className="w-full h-2.5 bg-[#006b33] -mt-6 sm:-mt-8 -mx-6 sm:-mx-8 mb-5"></div>
 
@@ -393,49 +402,47 @@ export const Login: React.FC<LoginProps> = ({
               </div>
             )}
 
-            {/* Numpad 3-Column Grid */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-[340px] my-2">
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+            {/* Native Mobile Numeric PIN Entry (replaces touch numpad on mobile) */}
+            <div className="w-full max-w-[340px] my-3 flex flex-col gap-3">
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                autoFocus
+                disabled={lockCountdownSeconds > 0}
+                value={lockPin}
+                onChange={(e) => {
+                  if (lockCountdownSeconds > 0) return;
+                  const next = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setLockPin(next);
+                  setLockError(false);
+                  if (next.length === 4) {
+                    setTimeout(() => verifyLockPin(next), 80);
+                  }
+                }}
+                placeholder="••••"
+                aria-label={t('login.enter_pin_prompt', { digits: 4 })}
+                className="w-full h-14 px-4 rounded-2xl bg-[#ebf6f0] border-2 border-[#006b33]/30 focus:border-[#006b33] focus:outline-none text-center text-3xl font-black tracking-[0.5em] text-[#141e1a] disabled:opacity-50"
+              />
+              <div className="grid grid-cols-2 gap-2.5">
                 <button
-                  key={digit}
                   type="button"
-                  onClick={() => handleAddDigit(digit)}
-                  className="min-h-[60px] h-15 sm:h-18 rounded-xl bg-[#ebf6f0] hover:bg-[#e0ebe5] active:scale-95 text-[#141e1a] text-2xl font-bold flex items-center justify-center shadow-sm cursor-pointer transition-all duration-100 border border-slate-200"
+                  onClick={handleClear}
+                  className="min-h-[48px] rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-sm flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  {digit}
+                  <span>{clearBtn.main}</span>
                 </button>
-              ))}
-
-              <button
-                type="button"
-                onClick={handleBackspace}
-                aria-label={t('common.backspace')}
-                className="min-h-[60px] h-15 sm:h-18 rounded-xl bg-[#ffdad6] hover:bg-[#ffdad6]/80 active:scale-95 text-[#93000a] flex flex-col items-center justify-center shadow-sm cursor-pointer transition-all duration-100"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414A2 2 0 0110.828 5H20a2 2 0 012 2v10a2 2 0 01-2 2h-9.172a2 2 0 01-1.414-.586L3 12z" />
-                </svg>
-                <span className="text-[10px] font-bold leading-tight mt-0.5">{deleteBtn.main}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleAddDigit('0')}
-                className="min-h-[60px] h-15 sm:h-18 rounded-xl bg-[#ebf6f0] hover:bg-[#e0ebe5] active:scale-95 text-[#141e1a] text-2xl font-bold flex items-center justify-center shadow-sm cursor-pointer transition-all duration-100 border border-slate-200"
-              >
-                0
-              </button>
-
-              <button
-                type="button"
-                onClick={() => verifyLockPin(lockPin)}
-                className="min-h-[60px] h-15 sm:h-18 rounded-xl bg-[#8ef9a7] hover:bg-[#72dc8e] active:scale-95 text-[#00210b] flex flex-col items-center justify-center shadow-sm cursor-pointer transition-all duration-100"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-                <span className="text-[10px] font-bold leading-tight mt-0.5">{unlockBtn.main}</span>
-              </button>
+                <button
+                  type="button"
+                  disabled={lockPin.length < 4 || lockCountdownSeconds > 0}
+                  onClick={() => verifyLockPin(lockPin)}
+                  className="min-h-[48px] rounded-xl bg-[#006b33] hover:bg-[#005528] active:scale-95 disabled:opacity-40 text-white font-bold text-sm flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Icon name="lock_open" className="text-[18px]" />
+                  <span>{unlockBtn.main}</span>
+                </button>
+              </div>
             </div>
 
             {/* Bottom info strip in modal */}
@@ -634,7 +641,7 @@ export const Login: React.FC<LoginProps> = ({
 
   if (isCompactViewport) {
     return (
-      <div className="w-full min-h-dvh bg-[#F4F6F5] text-slate-800 flex flex-col justify-between p-3 sm:p-6 overflow-y-auto overflow-x-hidden select-none">
+      <div className="w-full min-h-dvh bg-[#F4F6F5] text-slate-800 flex flex-col justify-between p-3 sm:p-6 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] overflow-x-clip select-none">
         <main className="w-full max-w-[540px] mx-auto bg-white rounded-3xl shadow-lg border border-slate-200/80 p-4 sm:p-6 flex flex-col justify-between flex-1 my-auto">
           {/* Compact header */}
           <header className="flex items-center justify-between pb-3 border-b border-slate-100 gap-2 mb-4">
@@ -945,49 +952,48 @@ export const Login: React.FC<LoginProps> = ({
                 )}
               </div>
 
-              {/* 3-Column Numpad */}
-              <div className="grid grid-cols-3 gap-2.5 w-full max-w-[340px] mx-auto my-1">
-                {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
+              {/* Native Mobile Numeric PIN Entry (replaces touch numpad on mobile) */}
+              <div className="w-full max-w-[340px] mx-auto my-3 flex flex-col gap-3">
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={selectedUserPinLength}
+                  autoFocus
+                  disabled={lockCountdownSeconds > 0}
+                  value={pin}
+                  onChange={(e) => {
+                    if (lockCountdownSeconds > 0 || !selectedUser) return;
+                    const next = e.target.value.replace(/\D/g, '').slice(0, selectedUserPinLength);
+                    setPin(next);
+                    setHasError(false);
+                    setErrorMessage('');
+                    if (next.length === selectedUserPinLength) {
+                      setTimeout(() => verifyPin(next, selectedUser), 80);
+                    }
+                  }}
+                  placeholder="••••"
+                  aria-label={t('login.enter_pin_prompt', { digits: 4 })}
+                  className="w-full h-14 px-4 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-[#1B8F4A] focus:outline-none text-center text-3xl font-black tracking-[0.5em] text-slate-900 disabled:opacity-50"
+                />
+                <div className="grid grid-cols-2 gap-2.5">
                   <button
-                    key={digit}
                     type="button"
-                    onClick={() => handleAddDigit(digit)}
-                    className="min-h-[64px] h-16 rounded-2xl bg-white hover:bg-slate-100 active:bg-slate-200 border-2 border-slate-200 shadow-sm text-slate-800 text-2xl font-bold flex items-center justify-center transition-all cursor-pointer"
+                    onClick={handleClear}
+                    className="min-h-[48px] rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-sm flex items-center justify-center cursor-pointer"
                   >
-                    <span>{digit}</span>
+                    <span>{clearBtn.main}</span>
                   </button>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="min-h-[64px] h-16 rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border-2 border-slate-200 text-slate-700 flex flex-col items-center justify-center transition-all cursor-pointer"
-                >
-                  <span className="text-sm font-bold">{clearBtn.main}</span>
-                  {clearBtn.sub ? <span className="text-[10px] text-slate-500">{clearBtn.sub}</span> : null}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleAddDigit('0')}
-                  className="min-h-[64px] h-16 rounded-2xl bg-white hover:bg-slate-100 active:bg-slate-200 border-2 border-slate-200 shadow-sm text-slate-800 text-2xl font-bold flex items-center justify-center transition-all cursor-pointer"
-                >
-                  <span>0</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleBackspace}
-                  aria-label={t('common.backspace')}
-                  className="min-h-[64px] h-16 rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 border-2 border-slate-200 text-slate-700 flex flex-col items-center justify-center transition-all cursor-pointer"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414A2 2 0 0110.828 5H20a2 2 0 012 2v10a2 2 0 01-2 2h-9.172a2 2 0 01-1.414-.586L3 12z" />
-                  </svg>
-                  {deleteBtn.main ? (
-                    <span className="text-[10px] font-semibold text-slate-500 mt-0.5">{deleteBtn.main}</span>
-                  ) : null}
-                </button>
+                  <button
+                    type="button"
+                    disabled={pin.length < selectedUserPinLength || lockCountdownSeconds > 0}
+                    onClick={() => selectedUser && verifyPin(pin, selectedUser)}
+                    className="min-h-[48px] rounded-xl bg-[#1B8F4A] hover:bg-[#15753b] active:scale-95 disabled:opacity-40 text-white font-bold text-sm flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                  >
+                    <Icon name="login" className="text-[18px]" />
+                    <span>{unlockBtn.main}</span>
+                  </button>
+                </div>
               </div>
 
               <div className="text-center pt-2 text-xs text-slate-500">

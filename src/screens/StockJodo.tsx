@@ -28,6 +28,7 @@ import { FullscreenButton } from '../components/FullscreenButton';
 import { formatField, textFieldProps } from '../logic/format';
 import { useShop } from '../logic/useShop';
 import { useIsCompactViewport } from '../logic/useViewport';
+import { useBackHandler } from '../logic/androidBack';
 
 interface StockJodoProps {
   onReturnHome: () => void;
@@ -113,6 +114,15 @@ export const StockJodo: React.FC<StockJodoProps> = ({
 
   // Step 5: Save result
   const [saveResult, setSaveResult] = useState<SavePurchaseResult | null>(null);
+
+  useBackHandler(currentStep === 2 || currentStep === 3 || currentStep === 4, () => {
+    setCurrentStep((prev) => (typeof prev === 'number' && prev > 1 ? ((prev - 1) as WizardStep) : prev));
+  });
+  useBackHandler(isNewSupplierOpen, () => setIsNewSupplierOpen(false));
+  useBackHandler(duplicateWarningOpen, () => setDuplicateWarningOpen(false));
+  useBackHandler(isExpiryConfirmOpen, () => setIsExpiryConfirmOpen(false));
+  useBackHandler(inspectPhotoOpen, () => setInspectPhotoOpen(false));
+  useBackHandler(isSearchOpen, () => setIsSearchOpen(false));
 
   // Form input refs for Enter key navigation
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -510,9 +520,9 @@ export const StockJodo: React.FC<StockJodoProps> = ({
     const stepNum = currentStep === 1 ? 1 : currentStep === 2 ? 2 : currentStep === 3 ? 3 : currentStep === 4 ? 4 : 4;
 
     return (
-      <div className="w-full min-h-dvh bg-canvas font-body-md text-on-surface antialiased select-none flex flex-col overflow-x-hidden overflow-y-auto pb-28">
+      <div className="w-full min-h-dvh bg-canvas font-body-md text-on-surface antialiased select-none flex flex-col overflow-x-clip pb-[calc(7rem+env(safe-area-inset-bottom))]">
         {/* Sticky Compact Top Header */}
-        <header className="sticky top-0 left-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-md shadow-xs border-b border-outline-variant/30 px-3 py-2 flex items-center justify-between gap-2">
+        <header className="sticky top-0 left-0 w-full z-40 bg-surface-container-lowest/95 backdrop-blur-md shadow-xs border-b border-outline-variant/30 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] flex items-center justify-between gap-2">
           {/* Left: Home / Back */}
           <button
             type="button"

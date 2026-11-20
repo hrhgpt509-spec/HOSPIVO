@@ -3,6 +3,7 @@ import { db, type DBUser } from '../db';
 import { useTranslation, tButton } from '../i18n';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { MobileTopBar } from '../components/MobileTopBar';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useShop } from '../logic/useShop';
 import { isOwner } from '../logic/roles';
@@ -12,6 +13,7 @@ import { validateStaffPin } from '../logic/approvals';
 import { addAudit } from '../db/audit';
 import { triggerFeedback } from '../logic/feedback';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
+import { useBackHandler } from '../logic/androidBack';
 import { enqueueSyncItem } from '../logic/cloudSync';
 
 interface OwnerStaffProps {
@@ -60,6 +62,10 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
   // PIN modal state
   const [newPin, setNewPin] = useState('');
   const [pinModalError, setPinModalError] = useState('');
+
+  useBackHandler(selectedStaff !== null, () => setSelectedStaff(null));
+  useBackHandler(isAddModalOpen, () => setIsAddModalOpen(false));
+  useBackHandler(isResetPinModalOpen, () => setIsResetPinModalOpen(false));
 
   // Translations
   const btnAddStaff = tButton('owner_staff.btn_add_staff');
@@ -343,9 +349,19 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
   };
 
   return (
-    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased select-none flex flex-col justify-between">
-      {/* 1. Top Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased select-none overflow-x-clip flex flex-col justify-between">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('owner_staff.page_title')}
+        subtitle={shopName || t('owner_staff.page_sub')}
+        onBack={selectedStaff ? () => setSelectedStaff(null) : onBack}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* 1. Desktop Top Fixed Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-sm">
         <div className="h-20 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3 md:gap-4">
             <span className="font-extrabold text-2xl tracking-tight text-primary">HOSPIVO</span>
@@ -379,7 +395,7 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
       </header>
 
       {/* 2. Main Content Area */}
-      <main className="w-full pt-24 pb-8 flex-1 flex flex-col max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8">
+      <main className="w-full pt-3 lg:pt-24 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex-1 flex flex-col max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8">
         {!selectedStaff ? (
           /* ============================================================ */
           /* 35a: STAFF LIST VIEW                                          */
@@ -805,8 +821,27 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
               <span className="text-error font-bold text-sm text-center">{pinModalError}</span>
             )}
 
-            {/* On-screen Keypad */}
-            <div className="grid grid-cols-3 gap-2.5 w-full max-w-[300px]">
+            {/* Mobile Native Numeric PIN Input (no on-screen numpad on phones) */}
+            <div className="lg:hidden w-full">
+              <input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
+                autoFocus
+                maxLength={pinLength}
+                value={newPin}
+                onChange={(e) => {
+                  setNewPin(e.target.value.replace(/\D/g, '').slice(0, pinLength));
+                  setPinModalError('');
+                }}
+                placeholder={'•'.repeat(pinLength)}
+                className="w-full h-14 px-4 rounded-2xl bg-surface-container-low border-2 border-primary/50 focus:border-primary text-center text-3xl font-extrabold tracking-[0.5em] text-on-surface outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+
+            {/* Desktop On-screen Keypad */}
+            <div className="hidden lg:grid grid-cols-3 gap-2.5 w-full max-w-[300px]">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].map((k) => (
                 <button
                   key={k}

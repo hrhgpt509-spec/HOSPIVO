@@ -15,6 +15,7 @@ import {
   type CustomerLedgerEntry,
 } from '../logic/udhaar';
 import { useIsCompactViewport } from '../logic/useViewport';
+import { useBackHandler } from '../logic/androidBack';
 import { PaisaMilaModal } from './udhaar/PaisaMilaModal';
 import { YaadDilaoModal } from './udhaar/YaadDilaoModal';
 import { CustomerDetailScreen } from './udhaar/CustomerDetailScreen';
@@ -54,6 +55,10 @@ export const Udhaar: React.FC<UdhaarProps> = ({
   const [paisaMilaTarget, setPaisaMilaTarget] = useState<CustomerLedgerEntry | null>(null);
   const [yaadDilaoTarget, setYaadDilaoTarget] = useState<CustomerLedgerEntry | null>(null);
   const [isNewCustomerOpen, setIsNewCustomerOpen] = useState<boolean>(false);
+
+  useBackHandler(selectedCustomerKey !== null, () => setSelectedCustomerKey(null));
+  useBackHandler(yaadDilaoTarget !== null, () => setYaadDilaoTarget(null));
+  useBackHandler(isNewCustomerOpen, () => setIsNewCustomerOpen(false));
 
   const modeLabel = mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
   const userName =
@@ -174,9 +179,9 @@ export const Udhaar: React.FC<UdhaarProps> = ({
 
   if (isCompactViewport) {
     return (
-      <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col overflow-x-hidden antialiased select-none transition-colors">
+      <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col overflow-x-clip antialiased select-none transition-colors">
         {/* Sticky Compact Header */}
-        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] flex items-center justify-between gap-2 shadow-xs">
           <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={onReturnHome}
@@ -220,12 +225,32 @@ export const Udhaar: React.FC<UdhaarProps> = ({
         </header>
 
         {/* View Switcher Tabs */}
-        <div className="px-3 pt-3">
+        <div className="px-3 pt-3 flex flex-col gap-2.5">
+          {/* Summary Balance Banner Card */}
+          <div className="w-full rounded-2xl bg-error-container/70 border border-error/25 px-4 py-3 flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-error text-on-error flex items-center justify-center shrink-0">
+                <Icon name="account_balance_wallet" className="text-[22px]" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-on-error-container/80 truncate">
+                  {t('udhaar.total_outstanding_label')}
+                </span>
+                <span className="font-headline-md text-xl font-extrabold text-error leading-tight tabular-nums">
+                  {formatRupees(totalOutstandingPaise)}
+                </span>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 rounded-xl bg-surface-container-lowest text-on-surface text-xs font-extrabold shrink-0">
+              {pendingCustomers.length}
+            </span>
+          </div>
+
           <div className="w-full grid grid-cols-2 p-1 bg-surface-container rounded-2xl gap-1">
             <button
               type="button"
               onClick={() => setView('udhaar')}
-              className={`min-h-[44px] rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+              className={`min-h-[48px] rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
                 view === 'udhaar'
                   ? 'bg-primary text-on-primary shadow-xs'
                   : 'text-on-surface hover:bg-surface-container-high'
@@ -237,7 +262,7 @@ export const Udhaar: React.FC<UdhaarProps> = ({
             <button
               type="button"
               onClick={() => setView('customers')}
-              className={`min-h-[44px] rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+              className={`min-h-[48px] rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
                 view === 'customers'
                   ? 'bg-primary text-on-primary shadow-xs'
                   : 'text-on-surface hover:bg-surface-container-high'
@@ -317,12 +342,12 @@ export const Udhaar: React.FC<UdhaarProps> = ({
                       key={cust.key}
                       className="w-full bg-surface-container-lowest rounded-2xl p-3.5 shadow-xs border border-outline-variant/30 flex flex-col gap-3"
                     >
-                      <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-center justify-between gap-2.5">
                         <div
                           onClick={() => setSelectedCustomerKey(cust.key)}
                           className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
                         >
-                          <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                          <div className="w-11 h-11 rounded-full bg-surface-container flex items-center justify-center text-primary font-bold text-sm shrink-0">
                             {getInitials(cust.customerName)}
                           </div>
                           <div className="flex flex-col min-w-0">
@@ -337,11 +362,16 @@ export const Udhaar: React.FC<UdhaarProps> = ({
                             </span>
                           </div>
                         </div>
-                        <div className="text-right shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCustomerKey(cust.key)}
+                          className="flex items-center gap-1 text-right shrink-0 cursor-pointer"
+                        >
                           <span className="font-headline-md text-lg font-extrabold text-error tabular-nums">
                             {formatRupees(cust.pendingBalancePaise)}
                           </span>
-                        </div>
+                          <Icon name="chevron_right" className="text-outline text-[20px]" />
+                        </button>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 pt-1 border-t border-outline-variant/20">

@@ -3,9 +3,11 @@ import type { Bill, BillItem, DBUser } from '../../db';
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
 import { FullscreenButton } from '../../components/FullscreenButton';
+import { MobileTopBar } from '../../components/MobileTopBar';
 import { useShop } from '../../logic/useShop';
 import { formatRupees } from '../../logic/money';
 import { triggerFeedback } from '../../logic/feedback';
+import { useBackHandler } from '../../logic/androidBack';
 import { buildWhatsAppBillText, buildWhatsAppBillUrl } from '../../logic/billingFlow';
 import { BillReceiptPrintView, type PrintFormat } from './BillReceiptPrintView';
 
@@ -32,6 +34,8 @@ export const BillDoneScreen: React.FC<BillDoneScreenProps> = ({
   const { name: shopName, mode } = useShop();
   const [printFormat, setPrintFormat] = useState<PrintFormat>('thermal');
   const [showPrintFormatPicker, setShowPrintFormatPicker] = useState<boolean>(false);
+
+  useBackHandler(showPrintFormatPicker, () => setShowPrintFormatPicker(false));
 
   const modeLabel = mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
   const userName =
@@ -92,9 +96,19 @@ export const BillDoneScreen: React.FC<BillDoneScreenProps> = ({
   const btnDone = tButton('billing_flow.btn_done_next');
 
   return (
-    <div className="w-full min-h-screen bg-surface text-on-surface flex flex-col antialiased select-none transition-colors">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
+    <div className="w-full min-h-dvh bg-surface text-on-surface flex flex-col antialiased select-none overflow-x-clip transition-colors">
+      {/* Compact Mobile Top Bar */}
+      <MobileTopBar
+        title={t('billing_flow.done_title')}
+        subtitle={`#${bill.billNo}`}
+        onBack={onReturnHome}
+        backIcon="home"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* Desktop Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-3">
           <div className="flex items-center gap-space-lg min-w-0">
             <span className="font-headline-lg text-headline-lg font-extrabold text-primary tracking-tight">
@@ -158,8 +172,8 @@ export const BillDoneScreen: React.FC<BillDoneScreenProps> = ({
       </header>
 
       {/* Main Centered Success Card (Matching 17_Pay_BillDone.html) */}
-      <main className="w-full pt-20 flex-1 bg-surface flex flex-col justify-center items-center px-gutter py-space-md relative overflow-hidden">
-        <div className="absolute w-[560px] h-[560px] bg-primary-fixed/30 rounded-full blur-3xl pointer-events-none -z-10" />
+      <main className="w-full pt-4 lg:pt-20 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex-1 bg-surface flex flex-col justify-center items-center px-3 sm:px-gutter py-space-md relative overflow-hidden">
+        <div className="absolute w-full max-w-[560px] h-[420px] bg-primary-fixed/30 rounded-full blur-3xl pointer-events-none -z-10" />
 
         <div className="w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-xl p-6 sm:p-space-xl flex flex-col items-center text-center relative overflow-hidden border border-outline-variant/40">
           {/* Top Green Accent Strip */}
@@ -275,17 +289,17 @@ export const BillDoneScreen: React.FC<BillDoneScreenProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center justify-center gap-space-xs mt-space-md text-on-surface-variant">
+          <div className="hidden lg:flex items-center justify-center gap-space-xs mt-space-md text-on-surface-variant">
             <Icon name="keyboard" className="text-[20px]" />
             <span className="font-label-sub-english text-sm">{t('billing_flow.enter_hint')}</span>
           </div>
         </div>
       </main>
 
-      {/* Print Format Chooser Modal (A4 vs 80mm Thermal Receipt) */}
+      {/* Print Format Chooser Modal / Bottom Sheet on Phone */}
       {showPrintFormatPicker && (
-        <div className="fixed inset-0 z-50 bg-inverse-surface/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant p-6 flex flex-col gap-4">
+        <div className="fixed inset-0 z-50 bg-inverse-surface/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-full sm:max-w-md bg-surface-container-lowest rounded-t-3xl sm:rounded-2xl shadow-2xl border-t sm:border border-outline-variant p-5 sm:p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col gap-3.5">
             <div className="flex items-center justify-between">
               <h2 className="font-headline-md font-bold text-on-surface">{btnPrint.main}</h2>
               <button

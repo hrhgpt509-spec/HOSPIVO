@@ -3,10 +3,12 @@ import { db, type Supplier, type Purchase } from '../../db';
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
 import { FullscreenButton } from '../../components/FullscreenButton';
+import { MobileTopBar } from '../../components/MobileTopBar';
 import { EmptyState } from '../../components/EmptyState';
 import { useShop } from '../../logic/useShop';
 import { textFieldProps } from '../../logic/format';
 import { filterSuppliers, getSupplierPurchaseCount } from '../../logic/suppliers';
+import { useBackHandler } from '../../logic/androidBack';
 import { SupplierFormModal } from './SupplierFormModal';
 import { SupplierDetail } from './SupplierDetail';
 
@@ -33,6 +35,9 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+
+  useBackHandler(selectedSupplierId !== null, () => setSelectedSupplierId(null));
+  useBackHandler(isAddModalOpen, () => setIsAddModalOpen(false));
 
   const modeLabel = mode === 'cloud' ? 'Cloud mode' : t('common.local_mode');
   const isOwner = currentUser?.role === 'owner';
@@ -99,9 +104,29 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
   };
 
   return (
-    <div className="w-full min-h-screen bg-background text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
-      {/* 1. Header (Matching 27a Stitch design) */}
-      <header className="fixed top-0 left-0 right-0 w-full z-40 bg-surface/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/40">
+    <div className="w-full min-h-dvh bg-background text-on-surface flex flex-col justify-between overflow-x-clip antialiased select-none transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('suppliers.page_title')}
+        subtitle={shopName || t('suppliers.page_sub')}
+        onBack={handleBack}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        rightSlot={
+          <button
+            type="button"
+            onClick={() => setIsAddModalOpen(true)}
+            className="h-12 min-h-[48px] px-3 rounded-xl bg-primary text-on-primary text-xs font-bold flex items-center gap-1 cursor-pointer shadow-xs"
+          >
+            <Icon name="person_add" className="text-[18px]" />
+            <span>{newSupplierBtn.main}</span>
+          </button>
+        }
+      />
+
+      {/* 1. Desktop Header (Matching 27a Stitch design) */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 w-full z-40 bg-surface/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.06)] border-b border-outline-variant/40">
         <div className="h-20 w-full px-gutter flex items-center justify-between">
           {/* Left: Brand + Shop Name + Mode Pill */}
           <div className="flex items-center gap-space-lg">
@@ -195,10 +220,10 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
       </header>
 
       {/* 2. Main Content Area */}
-      <main className="w-full pt-24 pb-8 flex-1 bg-background px-gutter max-w-[1440px] mx-auto flex flex-col justify-between">
-        <div className="flex flex-col w-full gap-space-md">
-          {/* Header Area */}
-          <div className="flex items-center justify-between w-full flex-wrap gap-4 mt-2">
+      <main className="w-full pt-3 lg:pt-24 pb-8 flex-1 bg-background px-3 sm:px-gutter max-w-[1440px] mx-auto flex flex-col justify-between">
+        <div className="flex flex-col w-full gap-3 sm:gap-space-md">
+          {/* Desktop Header Area */}
+          <div className="hidden lg:flex items-center justify-between w-full flex-wrap gap-4 mt-2">
             <div className="flex items-baseline gap-space-sm">
               <h1 className="font-headline-lg text-headline-lg text-on-surface font-extrabold tracking-tight">
                 {t('suppliers.page_title')}
@@ -270,53 +295,53 @@ export const SuppliersList: React.FC<SuppliersListProps> = ({
                   <div
                     key={supplier.id}
                     onClick={() => supplier.id && setSelectedSupplierId(supplier.id)}
-                    className="w-full min-h-[76px] py-space-sm px-space-lg bg-surface-container-lowest rounded-[16px] shadow-sm flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow border border-outline-variant/40 hover:border-primary/40"
+                    className="w-full min-h-[76px] py-3 px-4 sm:px-space-lg bg-surface-container-lowest rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 cursor-pointer hover:shadow-md transition-shadow border border-outline-variant/40 hover:border-primary/40 min-w-0"
                   >
                     {/* Left: Shipping icon & details */}
-                    <div className="flex items-center gap-space-md">
-                      <div className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
-                        <Icon name="local_shipping" className="text-[26px]" />
+                    <div className="flex items-center gap-3 sm:gap-space-md min-w-0 flex-1">
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0">
+                        <Icon name="local_shipping" className="text-[24px] sm:text-[26px]" />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-title-hinglish text-title-hinglish font-bold text-on-surface">
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="font-title-hinglish text-base sm:text-title-hinglish font-bold text-on-surface truncate">
                           {supplier.name}
                         </span>
-                        <span className="font-label-sub-english text-label-sub-english text-on-surface-variant">
+                        <span className="font-label-sub-english text-xs sm:text-label-sub-english text-on-surface-variant truncate">
                           {supplier.address || t('suppliers.detail_context_title')}
                         </span>
                       </div>
                     </div>
 
                     {/* Right: Phone, GST badge, and Purchase count */}
-                    <div className="flex items-center gap-space-lg sm:gap-space-xl flex-wrap justify-end">
+                    <div className="flex items-center gap-3 sm:gap-space-lg flex-wrap justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-outline-variant/20">
                       {supplier.phone && (
-                        <div className="flex items-center gap-space-xs text-on-surface">
-                          <Icon name="call" className="text-primary text-[22px]" />
-                          <span className="font-body-md text-body-md font-medium">
+                        <div className="flex items-center gap-1.5 text-on-surface">
+                          <Icon name="call" className="text-primary text-[18px] sm:text-[22px]" />
+                          <span className="font-body-md text-sm sm:text-body-md font-medium">
                             {supplier.phone}
                           </span>
                         </div>
                       )}
 
                       {supplier.gstNo && (
-                        <div className="flex items-center gap-space-xs text-on-surface-variant bg-surface-container px-space-sm py-1 rounded-[8px] font-mono">
-                          <span className="font-label-sub-english text-label-sub-english font-bold">
+                        <div className="flex items-center gap-1 text-on-surface-variant bg-surface-container px-2.5 py-1 rounded-[8px] font-mono text-xs">
+                          <span className="font-bold">
                             {t('suppliers.label_gst')}
                           </span>
-                          <span className="font-label-sub-english text-label-sub-english font-bold text-on-surface">
+                          <span className="font-bold text-on-surface">
                             {supplier.gstNo}
                           </span>
                         </div>
                       )}
 
                       {/* Total Purchases Count */}
-                      <div className="flex flex-col items-end min-w-[140px]">
-                        <span className="font-headline-md text-headline-md font-bold text-primary">
+                      <div className="flex flex-col items-end sm:min-w-[120px] ml-auto sm:ml-0">
+                        <span className="font-headline-md text-base sm:text-headline-md font-bold text-primary">
                           {count === 1
                             ? t('suppliers.purchases_count_singular')
                             : t('suppliers.purchases_count', { count })}
                         </span>
-                        <span className="font-label-sub-english text-label-sub-english text-on-surface-variant">
+                        <span className="font-label-sub-english text-xs text-on-surface-variant">
                           {t('suppliers.total_invoices_label')}
                         </span>
                       </div>

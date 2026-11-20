@@ -5,6 +5,7 @@ import { Setup } from './screens/Setup';
 import { FeedbackOverlay } from './components/FeedbackOverlay';
 import { db, type DBUser } from './db';
 import { runSyncCycle } from './logic/cloudSync';
+import { initAndroidBackListener } from './logic/androidBack';
 
 // Default 5 minutes of inactivity triggers auto-lock
 export const DEFAULT_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
@@ -39,6 +40,11 @@ export function App() {
     }
 
     initApp();
+  }, []);
+
+  // Register Android Capacitor 'backButton' handler once at app root
+  useEffect(() => {
+    return initAndroidBackListener();
   }, []);
 
   // Automatic reconnect & 60-second background sync heartbeat

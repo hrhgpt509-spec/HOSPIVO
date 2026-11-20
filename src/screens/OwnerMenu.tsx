@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation, tButton } from '../i18n';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { MobileTopBar } from '../components/MobileTopBar';
 import { useShop } from '../logic/useShop';
 
 interface OwnerMenuProps {
@@ -83,9 +84,31 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
   };
 
   return (
-    <div className="w-full min-h-dvh bg-canvas text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
-      {/* 1. Header (Matching 32b_Owner_Menu.html) */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
+    <div className="w-full min-h-dvh bg-canvas text-on-surface flex flex-col justify-between overflow-x-clip antialiased select-none transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('owner_menu.page_title')}
+        subtitle={shopName ? `${shopName} · ${modeLabel}` : modeLabel}
+        onBack={onReturnHome}
+        backIcon="home"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+        rightSlot={
+          onOpenCloudSync ? (
+            <button
+              type="button"
+              onClick={onOpenCloudSync}
+              className="h-12 min-h-[48px] px-3 rounded-xl bg-surface-container text-primary font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+            >
+              <span className="w-2 h-2 rounded-full bg-primary" />
+              <span className="max-w-[72px] truncate">{modeLabel}</span>
+            </button>
+          ) : undefined
+        }
+      />
+
+      {/* 1. Desktop Header (Matching 32b_Owner_Menu.html) */}
+      <header className="hidden lg:block fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
         <div className="h-16 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
           {/* Left: Brand + Shop Name + Mode Pill */}
           <div className="flex items-center gap-2 sm:gap-4">
@@ -180,14 +203,14 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
       </header>
 
       {/* 2. Main Area (Matching 32b layout) */}
-      <main className="w-full pt-16 flex-1 flex flex-col justify-between">
-        <div className="flex flex-col w-full max-w-[1440px] mx-auto min-h-[calc(100dvh-4rem)] lg:h-[calc(100vh-4rem)] lg:overflow-hidden justify-between px-4 sm:px-6 md:px-12 py-6 box-border select-none relative">
+      <main className="w-full pt-3 lg:pt-16 flex-1 flex flex-col justify-between overflow-x-clip">
+        <div className="flex flex-col w-full max-w-[1440px] mx-auto lg:min-h-[calc(100dvh-4rem)] lg:h-[calc(100vh-4rem)] lg:overflow-hidden justify-between px-3 sm:px-6 md:px-12 py-3 lg:py-6 box-border select-none relative gap-3">
           
-          {/* Subtle Ambient Glow */}
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 w-[900px] h-72 bg-gradient-to-b from-[#006B33]/5 via-[#72dc8e]/5 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
+          {/* Subtle Ambient Glow (desktop only to prevent horizontal overflow) */}
+          <div className="hidden lg:block absolute top-16 left-1/2 -translate-x-1/2 w-[900px] h-72 bg-gradient-to-b from-[#006B33]/5 via-[#72dc8e]/5 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
 
-          {/* Page Header */}
-          <div className="w-full max-w-6xl mx-auto flex items-center justify-between shrink-0">
+          {/* Desktop Page Header */}
+          <div className="hidden lg:flex w-full max-w-6xl mx-auto items-center justify-between shrink-0">
             <div className="flex flex-col">
               <h1 className="text-4xl md:text-5xl font-extrabold text-on-surface tracking-tight leading-none">
                 {t('owner_menu.page_title')}
@@ -237,223 +260,247 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
             </div>
           )}
 
-          {/* Centered Grid of 9 Tiles (5 in row 1, 4 in row 2) */}
-          <div className="w-full max-w-6xl mx-auto flex-1 flex items-center justify-center my-auto py-2">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6 w-full justify-center">
-              
-              {/* Row 1: 5 Items */}
+          {/* Mobile-only Quick Cloud Sync & Approvals Strip */}
+          {(onOpenCloudSync || onOpenApprovals) && (
+            <div className="lg:hidden grid grid-cols-2 gap-2.5 w-full">
+              {onOpenCloudSync && (
+                <button
+                  type="button"
+                  onClick={onOpenCloudSync}
+                  className="min-h-[56px] px-3.5 py-2.5 rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-xs flex items-center gap-2.5 text-left active:scale-[0.98] cursor-pointer min-w-0"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Icon name="cloud_sync" className="text-[22px]" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-bold text-on-surface truncate">
+                      {t('cloud_sync.title')}
+                    </span>
+                    <span className="text-[11px] text-primary font-semibold truncate">
+                      {modeLabel}
+                    </span>
+                  </div>
+                </button>
+              )}
+              {onOpenApprovals && (
+                <button
+                  type="button"
+                  onClick={onOpenApprovals}
+                  className="min-h-[56px] px-3.5 py-2.5 rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-xs flex items-center gap-2.5 text-left active:scale-[0.98] cursor-pointer min-w-0"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-secondary-fixed/60 text-secondary flex items-center justify-center shrink-0">
+                    <Icon name="verified_user" className="text-[22px]" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-bold text-on-surface truncate">
+                      {t('remote_approval.inbox_title')}
+                    </span>
+                    <span className="text-[11px] text-on-surface-variant font-medium truncate">
+                      PIN / Cloud
+                    </span>
+                  </div>
+                </button>
+              )}
+            </div>
+          )}
 
-              {/* 1. Dashboard (ACTIVE! Opens real page) */}
+          {/* Centered Grid of 10 Owner Tiles (clean 2-col mobile, 3-col sm, 5-col lg) */}
+          <div className="w-full max-w-6xl mx-auto flex-1 flex items-center justify-center my-auto py-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4 md:gap-5 w-full">
+              {/* 1. Dashboard */}
               <button
                 type="button"
                 onClick={onOpenDashboard}
-                className="group relative flex flex-col items-center justify-center aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
+                className="group relative flex flex-col items-center justify-center min-h-[120px] lg:aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer p-3.5 sm:p-4 text-center border-2 border-primary/25 hover:border-primary active:scale-[0.98] min-w-0"
               >
-                <div className="w-16 h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
-                  <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
-                  </svg>
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                  <Icon name="dashboard" className="text-[28px] sm:text-[32px]" />
                 </div>
-                <span className="text-lg md:text-xl font-bold text-on-surface group-hover:text-primary transition-colors leading-tight">
+                <span className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-tight truncate max-w-full">
                   {tileDashboard.main}
                 </span>
                 {tileDashboard.sub ? (
-                  <span className="text-xs md:text-sm font-medium text-outline mt-1">
+                  <span className="text-xs font-medium text-outline mt-0.5 truncate max-w-full">
                     {tileDashboard.sub}
                   </span>
                 ) : null}
               </button>
 
-              {/* 2. Reports -> Reports Hub (ACTIVE! Opens real page) */}
+              {/* 2. Reports */}
               <button
                 type="button"
                 onClick={onOpenReports || onOpenReferralReport}
-                className="group relative flex flex-col items-center justify-center aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
+                className="group relative flex flex-col items-center justify-center min-h-[120px] lg:aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer p-3.5 sm:p-4 text-center border-2 border-primary/25 hover:border-primary active:scale-[0.98] min-w-0"
               >
-                <div className="w-16 h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
-                  <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M4 9h4v11H4zm6-5h4v16h-4zm6 8h4v8h-4z" />
-                  </svg>
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                  <Icon name="bar_chart" className="text-[28px] sm:text-[32px]" />
                 </div>
-                <span className="text-lg md:text-xl font-bold text-on-surface group-hover:text-primary transition-colors leading-tight">
+                <span className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-tight truncate max-w-full">
                   {tileReports.main}
                 </span>
                 {tileReports.sub ? (
-                  <span className="text-xs md:text-sm font-medium text-outline mt-1">
+                  <span className="text-xs font-medium text-outline mt-0.5 truncate max-w-full">
                     {tileReports.sub}
                   </span>
                 ) : null}
               </button>
 
-              {/* 3. Staff (ACTIVE! Opens real page) */}
+              {/* 3. Staff */}
               <button
                 type="button"
                 onClick={onOpenStaff || (() => handleLockedClick(tileStaff.main))}
-                className="group relative flex flex-col items-center justify-center aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
+                className="group relative flex flex-col items-center justify-center min-h-[120px] lg:aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer p-3.5 sm:p-4 text-center border-2 border-primary/25 hover:border-primary active:scale-[0.98] min-w-0"
               >
-                <div className="w-16 h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
-                  <Icon name="groups" className="text-[36px]" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                  <Icon name="groups" className="text-[28px] sm:text-[32px]" />
                 </div>
-                <span className="text-lg md:text-xl font-bold text-on-surface group-hover:text-primary transition-colors leading-tight">
+                <span className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-tight truncate max-w-full">
                   {tileStaff.main}
                 </span>
                 {tileStaff.sub ? (
-                  <span className="text-xs md:text-sm font-medium text-outline mt-1">
+                  <span className="text-xs font-medium text-outline mt-0.5 truncate max-w-full">
                     {tileStaff.sub}
                   </span>
                 ) : null}
               </button>
 
-              {/* 4. Audit Log (ACTIVE! Opens real page) */}
+              {/* 4. Audit Log */}
               <button
                 type="button"
                 onClick={onOpenAuditLog}
-                className="group relative flex flex-col items-center justify-center aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
+                className="group relative flex flex-col items-center justify-center min-h-[120px] lg:aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer p-3.5 sm:p-4 text-center border-2 border-primary/25 hover:border-primary active:scale-[0.98] min-w-0"
               >
-                <div className="w-16 h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
-                  <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
-                  </svg>
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                  <Icon name="verified_user" className="text-[28px] sm:text-[32px]" />
                 </div>
-                <span className="text-lg md:text-xl font-bold text-on-surface group-hover:text-primary transition-colors leading-tight">
+                <span className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-tight truncate max-w-full">
                   {tileAudit.main}
                 </span>
                 {tileAudit.sub ? (
-                  <span className="text-xs md:text-sm font-medium text-outline mt-1">
+                  <span className="text-xs font-medium text-outline mt-0.5 truncate max-w-full">
                     {tileAudit.sub}
                   </span>
                 ) : null}
               </button>
 
-              {/* 5. Self / Shelf Map (ACTIVE! Opens real page) */}
+              {/* 5. Shelf Map */}
               <button
                 type="button"
                 onClick={onOpenShelfMap || (() => handleLockedClick(tileShelf.main))}
-                className="group relative flex flex-col items-center justify-center aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
+                className="group relative flex flex-col items-center justify-center min-h-[120px] lg:aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer p-3.5 sm:p-4 text-center border-2 border-primary/25 hover:border-primary active:scale-[0.98] min-w-0"
               >
-                <div className="w-16 h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
-                  <svg className="w-9 h-9" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M4 4h16v4H4V4zm0 6h16v4H4v-4zm0 6h16v4H4v-4z" />
-                  </svg>
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                  <Icon name="shelves" className="text-[28px] sm:text-[32px]" />
                 </div>
-                <span className="text-lg md:text-xl font-bold text-on-surface group-hover:text-primary transition-colors leading-tight">
+                <span className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-tight truncate max-w-full">
                   {tileShelf.main}
                 </span>
                 {tileShelf.sub ? (
-                  <span className="text-xs md:text-sm font-medium text-outline mt-1">
+                  <span className="text-xs font-medium text-outline mt-0.5 truncate max-w-full">
                     {tileShelf.sub}
                   </span>
                 ) : null}
               </button>
 
-              {/* Row 2: 4 centered items (Dawai List, Sticker, Settings, Backup) */}
-              <div className="col-span-2 sm:col-span-3 md:col-span-5 flex flex-wrap md:flex-nowrap justify-center gap-3 sm:gap-4 md:gap-6 mt-2 md:mt-4">
-                
-                {/* 6. Dawai List (ACTIVE! Opens real page) */}
-                <button
-                  type="button"
-                  onClick={onOpenMedicineList}
-                  className="group relative flex flex-col items-center justify-center w-[calc((100%-0.75rem)/2)] sm:w-[calc((100%-2*1rem)/3)] md:w-[calc((100%-4*1.5rem)/5)] aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-3 sm:p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
-                >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
-                    <svg className="w-8 h-8 sm:w-9 sm:h-9" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M6 3h12v2H6V3zm0 4h12v2H6V7zm-1 6c0-2.21 1.79-4 4-4h6c2.21 0 4 1.79 4 4v6c0 2.21-1.79 4-4 4H9c-2.21 0-4-1.79-4-4v-6zm5 2v2H8v2h2v2h2v-2h2v-2h-2v-2h-2z" />
-                    </svg>
-                  </div>
-                  <span className="text-base sm:text-lg md:text-xl font-bold text-on-surface group-hover:text-primary transition-colors leading-tight">
-                    {tileDawaiList.main}
+              {/* 6. Dawai List */}
+              <button
+                type="button"
+                onClick={onOpenMedicineList}
+                className="group relative flex flex-col items-center justify-center min-h-[120px] lg:aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer p-3.5 sm:p-4 text-center border-2 border-primary/25 hover:border-primary active:scale-[0.98] min-w-0"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                  <Icon name="medication" className="text-[28px] sm:text-[32px]" />
+                </div>
+                <span className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-tight truncate max-w-full">
+                  {tileDawaiList.main}
+                </span>
+                {tileDawaiList.sub ? (
+                  <span className="text-xs font-medium text-outline mt-0.5 truncate max-w-full">
+                    {tileDawaiList.sub}
                   </span>
-                  {tileDawaiList.sub ? (
-                    <span className="text-xs md:text-sm font-medium text-outline mt-1">
-                      {tileDawaiList.sub}
-                    </span>
-                  ) : null}
-                </button>
+                ) : null}
+              </button>
 
-                {/* Suppliers (ACTIVE! Opens real page) */}
-                <button
-                  type="button"
-                  onClick={onOpenSuppliers}
-                  className="group relative flex flex-col items-center justify-center w-[calc((100%-0.75rem)/2)] sm:w-[calc((100%-2*1rem)/3)] md:w-[calc((100%-4*1.5rem)/5)] aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-3 sm:p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
-                >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
-                    <Icon name="local_shipping" className="text-[32px] sm:text-[36px]" />
-                  </div>
-                  <span className="text-base sm:text-lg md:text-xl font-bold text-on-surface group-hover:text-primary transition-colors leading-tight">
-                    {tileSuppliers.main}
+              {/* 7. Suppliers */}
+              <button
+                type="button"
+                onClick={onOpenSuppliers}
+                className="group relative flex flex-col items-center justify-center min-h-[120px] lg:aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer p-3.5 sm:p-4 text-center border-2 border-primary/25 hover:border-primary active:scale-[0.98] min-w-0"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                  <Icon name="local_shipping" className="text-[28px] sm:text-[32px]" />
+                </div>
+                <span className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-tight truncate max-w-full">
+                  {tileSuppliers.main}
+                </span>
+                {tileSuppliers.sub ? (
+                  <span className="text-xs font-medium text-outline mt-0.5 truncate max-w-full">
+                    {tileSuppliers.sub}
                   </span>
-                  {tileSuppliers.sub ? (
-                    <span className="text-xs md:text-sm font-medium text-outline mt-1">
-                      {tileSuppliers.sub}
-                    </span>
-                  ) : null}
-                </button>
+                ) : null}
+              </button>
 
-                {/* 7. Sticker (ACTIVE! Opens real page) */}
-                <button
-                  type="button"
-                  onClick={onOpenStickers || (() => handleLockedClick(tileSticker.main))}
-                  className="group relative flex flex-col items-center justify-center w-[calc((100%-0.75rem)/2)] sm:w-[calc((100%-2*1rem)/3)] md:w-[calc((100%-4*1.5rem)/5)] aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-3 sm:p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
-                >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
-                    <svg className="w-8 h-8 sm:w-9 sm:h-9" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z" />
-                    </svg>
-                  </div>
-                  <span className="text-base sm:text-lg md:text-xl font-bold text-on-surface group-hover:text-primary transition-colors leading-tight">
-                    {tileSticker.main}
+              {/* 8. Stickers */}
+              <button
+                type="button"
+                onClick={onOpenStickers || (() => handleLockedClick(tileSticker.main))}
+                className="group relative flex flex-col items-center justify-center min-h-[120px] lg:aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer p-3.5 sm:p-4 text-center border-2 border-primary/25 hover:border-primary active:scale-[0.98] min-w-0"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                  <Icon name="qr_code_2" className="text-[28px] sm:text-[32px]" />
+                </div>
+                <span className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-tight truncate max-w-full">
+                  {tileSticker.main}
+                </span>
+                {tileSticker.sub ? (
+                  <span className="text-xs font-medium text-outline mt-0.5 truncate max-w-full">
+                    {tileSticker.sub}
                   </span>
-                  {tileSticker.sub ? (
-                    <span className="text-xs md:text-sm font-medium text-outline mt-1">
-                      {tileSticker.sub}
-                    </span>
-                  ) : null}
-                </button>
+                ) : null}
+              </button>
 
-                {/* 8. Settings (ACTIVE! Opens real page) */}
-                <button
-                  type="button"
-                  onClick={onOpenSettings || (() => handleLockedClick(tileSettings.main))}
-                  className="group relative flex flex-col items-center justify-center w-[calc((100%-0.75rem)/2)] sm:w-[calc((100%-2*1rem)/3)] md:w-[calc((100%-4*1.5rem)/5)] aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-3 sm:p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
-                >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
-                    <Icon name="settings" className="text-[32px] sm:text-[36px]" />
-                  </div>
-                  <span className="text-base sm:text-lg md:text-xl font-bold text-on-surface group-hover:text-primary transition-colors leading-tight">
-                    {tileSettings.main}
+              {/* 9. Settings */}
+              <button
+                type="button"
+                onClick={onOpenSettings || (() => handleLockedClick(tileSettings.main))}
+                className="group relative flex flex-col items-center justify-center min-h-[120px] lg:aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer p-3.5 sm:p-4 text-center border-2 border-primary/25 hover:border-primary active:scale-[0.98] min-w-0"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                  <Icon name="settings" className="text-[28px] sm:text-[32px]" />
+                </div>
+                <span className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-tight truncate max-w-full">
+                  {tileSettings.main}
+                </span>
+                {tileSettings.sub ? (
+                  <span className="text-xs font-medium text-outline mt-0.5 truncate max-w-full">
+                    {tileSettings.sub}
                   </span>
-                  {tileSettings.sub ? (
-                    <span className="text-xs md:text-sm font-medium text-outline mt-1">
-                      {tileSettings.sub}
-                    </span>
-                  ) : null}
-                </button>
+                ) : null}
+              </button>
 
-                {/* 9. Backup (ACTIVE! Opens real page) */}
-                <button
-                  type="button"
-                  onClick={onOpenBackup || (() => handleLockedClick(tileBackup.main))}
-                  className="group relative flex flex-col items-center justify-center w-[calc((100%-0.75rem)/2)] sm:w-[calc((100%-2*1rem)/3)] md:w-[calc((100%-4*1.5rem)/5)] aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer p-3 sm:p-4 text-center border-2 border-primary/30 hover:border-primary active:scale-[0.98]"
-                >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
-                    <Icon name="cloud_sync" className="text-[32px] sm:text-[36px]" />
-                  </div>
-                  <span className="text-base sm:text-lg md:text-xl font-bold text-on-surface group-hover:text-primary transition-colors leading-tight">
-                    {tileBackup.main}
+              {/* 10. Backup */}
+              <button
+                type="button"
+                onClick={onOpenBackup || (() => handleLockedClick(tileBackup.main))}
+                className="group relative flex flex-col items-center justify-center min-h-[120px] lg:aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer p-3.5 sm:p-4 text-center border-2 border-primary/25 hover:border-primary active:scale-[0.98] min-w-0"
+              >
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                  <Icon name="backup" className="text-[28px] sm:text-[32px]" />
+                </div>
+                <span className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-tight truncate max-w-full">
+                  {tileBackup.main}
+                </span>
+                {tileBackup.sub ? (
+                  <span className="text-xs font-medium text-outline mt-0.5 truncate max-w-full">
+                    {tileBackup.sub}
                   </span>
-                  {tileBackup.sub ? (
-                    <span className="text-xs md:text-sm font-medium text-outline mt-1 whitespace-nowrap">
-                      {tileBackup.sub}
-                    </span>
-                  ) : null}
-                </button>
-
-              </div>
+                ) : null}
+              </button>
             </div>
           </div>
 
-          {/* 3. Bottom Ribbon (Matching 32b) */}
-          <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-30 max-lg:shadow-lg py-3 px-4 sm:px-6 bg-surface-container-low rounded-xl border border-outline-variant gap-2 sm:gap-0">
+          {/* 3. Desktop Bottom Ribbon (hidden on phones where MobileBottomNav sits) */}
+          <div className="hidden lg:flex w-full max-w-6xl mx-auto items-center justify-between shrink-0 py-3 px-6 bg-surface-container-low rounded-xl border border-outline-variant">
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />

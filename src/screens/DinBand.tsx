@@ -31,6 +31,7 @@ import { Step2CashMatch } from './din-band/Step2CashMatch';
 import { Step3CounterPhoto } from './din-band/Step3CounterPhoto';
 import { Step4Report } from './din-band/Step4Report';
 import { useIsCompactViewport } from '../logic/useViewport';
+import { useBackHandler } from '../logic/androidBack';
 
 interface DinBandProps {
   onReturnHome: () => void;
@@ -50,6 +51,10 @@ export const DinBand: React.FC<DinBandProps> = ({
   const { name: shopName, mode } = useShop();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+
+  useBackHandler(step > 1 && step < 4, () => {
+    setStep((prev) => (prev > 1 ? ((prev - 1) as 1 | 2 | 3 | 4) : prev));
+  });
   const [openingCashStr, setOpeningCashStr] = useState<string>('0');
   const [countMode, setCountMode] = useState<'denominations' | 'direct'>('denominations');
   const [denominations, setDenominations] = useState<DenominationCounts>(
@@ -194,9 +199,9 @@ export const DinBand: React.FC<DinBandProps> = ({
 
   if (isCompactViewport) {
     return (
-      <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col overflow-x-hidden antialiased select-none transition-colors">
+      <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col overflow-x-clip antialiased select-none transition-colors">
         {/* Sticky Compact Header */}
-        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+        <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] flex items-center justify-between gap-2 shadow-xs">
           <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={onReturnHome}

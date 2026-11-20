@@ -14,6 +14,7 @@ import { useTranslation, tButton } from '../i18n';
 import { useShop } from '../logic/useShop';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { MobileTopBar } from '../components/MobileTopBar';
 import { EmptyState } from '../components/EmptyState';
 import { formatRupees } from '../logic/money';
 import { isOwner } from '../logic/roles';
@@ -186,9 +187,19 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
   ];
 
   return (
-    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col antialiased select-none transition-colors">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30 print:hidden">
+    <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col overflow-x-clip antialiased select-none transition-colors">
+      {/* Compact Mobile Header */}
+      <MobileTopBar
+        title={t('owner_reports.page_title')}
+        subtitle={shopName || t('owner_reports.page_sub')}
+        onBack={onBackToOwnerMenu}
+        backIcon="arrow_back"
+        theme={theme}
+        onToggleTheme={onToggleTheme}
+      />
+
+      {/* Desktop Header */}
+      <header className="hidden lg:block fixed top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30 print:hidden">
         <div className="h-20 w-full px-gutter flex items-center justify-between gap-space-md">
           <div className="flex items-center gap-space-md min-w-0">
             <span className="text-primary font-headline-md text-2xl font-extrabold tracking-tight uppercase">
@@ -244,8 +255,8 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
       </header>
 
       {/* Main Content */}
-      <main className="w-full pt-20 flex-1 bg-surface p-gutter print:pt-0 print:p-0">
-        <div className="flex flex-col w-full max-w-[1440px] mx-auto gap-space-md">
+      <main className="w-full pt-3 lg:pt-20 flex-1 bg-surface px-3 sm:px-gutter py-3 sm:py-space-md print:pt-0 print:p-0">
+        <div className="flex flex-col w-full max-w-[1440px] mx-auto gap-3 sm:gap-space-md min-w-0">
           {!ownerAllowed ? (
             <div className="py-12">
               <EmptyState
@@ -356,10 +367,10 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
                 })}
               </div>
 
-              {/* Printable Report Table Card */}
+              {/* Report Data: Phone Single-Column Stacked Cards (zero horizontal scroll) + Desktop/Print Table */}
               <div
                 id="hospivo-print-area"
-                className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 p-space-md sm:p-space-lg overflow-x-auto"
+                className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/30 p-3 sm:p-space-lg min-w-0"
               >
                 <div className="hidden print:block mb-4 border-b pb-2">
                   <div className="text-xl font-bold">{shopName}</div>
@@ -374,6 +385,176 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
                   </div>
                 ) : (
                   <>
+                    {/* MOBILE STACKED CARDS (< lg, hidden when printing) */}
+                    <div className="lg:hidden print:hidden flex flex-col gap-2.5">
+                      {activeTab === 'sales' &&
+                        (salesReport.rows.length === 0 ? (
+                          <div className="p-8 text-center text-on-surface-variant font-medium">
+                            {t('owner_reports.empty_rows')}
+                          </div>
+                        ) : (
+                          <>
+                            <div className="p-3.5 rounded-xl bg-primary-fixed/40 border border-primary/25 flex items-center justify-between gap-2">
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-bold text-on-surface-variant">
+                                  {t('owner_reports.col_total')} ({salesReport.rows.length})
+                                </span>
+                                <span className="text-xs text-on-surface-variant">
+                                  {t('owner_reports.col_gst')}: {formatRupees(salesReport.totalGstPaise)}
+                                </span>
+                              </div>
+                              <span className="font-headline-md text-xl font-extrabold text-primary shrink-0">
+                                {formatRupees(salesReport.totalSalesPaise)}
+                              </span>
+                            </div>
+                            {salesReport.rows.map((r) => (
+                              <div
+                                key={r.id || r.billNo}
+                                className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-1.5 min-w-0"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-bold text-sm text-on-surface truncate">
+                                    #{r.billNo} · {r.customerName || '—'}
+                                  </span>
+                                  <span className="font-extrabold text-base text-primary shrink-0">
+                                    {formatRupees(r.totalPaise)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between gap-2 text-xs text-on-surface-variant flex-wrap">
+                                  <span>{r.date} · {r.paymentMode.toUpperCase()}</span>
+                                  <span>
+                                    {t('owner_reports.col_gst')}: {formatRupees(r.gstPaise)} · <strong className="uppercase">{r.status}</strong>
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        ))}
+
+                      {activeTab === 'gst' && (
+                        <>
+                          <div className="p-3.5 rounded-xl bg-primary-fixed/40 border border-primary/25 flex items-center justify-between gap-2">
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-bold text-on-surface-variant">
+                                {t('owner_reports.col_total_tax')}: {formatRupees(gstReport.totalTaxPaise)}
+                              </span>
+                              <span className="text-xs text-on-surface-variant">
+                                {t('owner_reports.col_taxable')}: {formatRupees(gstReport.totalTaxablePaise)}
+                              </span>
+                            </div>
+                            <span className="font-headline-md text-xl font-extrabold text-primary shrink-0">
+                              {formatRupees(gstReport.totalInvoiceValuePaise)}
+                            </span>
+                          </div>
+                          {gstReport.slabs.map((s) => (
+                            <div
+                              key={s.gstPercent}
+                              className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-1.5"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="px-2.5 py-0.5 rounded-lg bg-secondary-fixed text-on-secondary-fixed font-extrabold text-xs">
+                                  GST {s.gstPercent}%
+                                </span>
+                                <span className="font-extrabold text-base text-primary">
+                                  {formatRupees(s.invoiceValuePaise)}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-1 text-xs text-on-surface-variant pt-1">
+                                <span>{t('owner_reports.col_taxable')}: <strong className="text-on-surface">{formatRupees(s.taxablePaise)}</strong></span>
+                                <span className="text-right">{t('owner_reports.col_total_tax')}: <strong className="text-secondary">{formatRupees(s.totalTaxPaise)}</strong></span>
+                                <span>{t('owner_reports.col_cgst')}: {formatRupees(s.cgstPaise)}</span>
+                                <span className="text-right">{t('owner_reports.col_sgst')}: {formatRupees(s.sgstPaise)}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      )}
+
+                      {activeTab === 'purchase' &&
+                        (purchaseRegister.rows.length === 0 ? (
+                          <div className="p-8 text-center text-on-surface-variant font-medium">
+                            {t('owner_reports.empty_rows')}
+                          </div>
+                        ) : (
+                          <>
+                            <div className="p-3.5 rounded-xl bg-primary-fixed/40 border border-primary/25 flex items-center justify-between gap-2">
+                              <span className="text-xs font-bold text-on-surface-variant">
+                                {t('owner_reports.col_total')} ({purchaseRegister.rows.length})
+                              </span>
+                              <span className="font-headline-md text-xl font-extrabold text-primary shrink-0">
+                                {formatRupees(purchaseRegister.totalAmountPaise)}
+                              </span>
+                            </div>
+                            {purchaseRegister.rows.map((r) => (
+                              <div
+                                key={r.purchaseId}
+                                className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-1.5 min-w-0"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-bold text-sm text-on-surface truncate">
+                                    {r.supplierName || '—'}
+                                  </span>
+                                  <span className="font-extrabold text-base text-primary shrink-0">
+                                    {formatRupees(r.totalAmountPaise)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between gap-2 text-xs text-on-surface-variant flex-wrap">
+                                  <span>{r.invoiceNo} · {r.date} · {r.itemsCount} {t('owner_reports.col_items')}</span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                                      r.verified
+                                        ? 'bg-primary-fixed text-on-primary-fixed'
+                                        : 'bg-surface-container-high text-on-surface-variant'
+                                    }`}
+                                  >
+                                    {r.verified
+                                      ? t('owner_reports.verified_yes')
+                                      : t('owner_reports.verified_no')}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </>
+                        ))}
+
+                      {activeTab === 'schedule_h' &&
+                        (scheduleHReport.length === 0 ? (
+                          <div className="p-8 text-center text-on-surface-variant font-medium">
+                            {t('owner_reports.empty_rows')}
+                          </div>
+                        ) : (
+                          scheduleHReport.map((r) => (
+                            <div
+                              key={r.billItemId}
+                              className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/30 flex flex-col gap-1.5 min-w-0"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-bold text-sm text-on-surface truncate">
+                                  {r.medicineName}
+                                </span>
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
+                                    r.prescriptionChecked
+                                      ? 'bg-primary-fixed text-on-primary-fixed'
+                                      : 'bg-error-container text-on-error-container'
+                                  }`}
+                                >
+                                  Rx: {r.prescriptionChecked ? t('owner_reports.rx_yes') : t('owner_reports.rx_no')}
+                                </span>
+                              </div>
+                              <div className="text-xs text-on-surface-variant flex flex-wrap gap-x-2 gap-y-0.5">
+                                <span>{r.date} · #{r.billNo}</span>
+                                <span>· {t('owner_reports.col_patient')}: <strong className="text-on-surface">{r.patientName || '—'}</strong></span>
+                                <span>· {t('owner_reports.col_doctor')}: {r.doctorName || '—'}</span>
+                                <span>· {r.batchNo} · {r.qtyInput} {r.unitMode === 'pack' ? t('medicine.packs_unit') : t('medicine.loose_unit')}</span>
+                              </div>
+                            </div>
+                          ))
+                        ))}
+                    </div>
+
+                    {/* DESKTOP & PRINT FULL TABLES */}
+                    <div className="hidden lg:block print:block overflow-x-auto">
                     {/* TAB 1: SALES REPORT */}
                     {activeTab === 'sales' &&
                       (salesReport.rows.length === 0 ? (
@@ -602,38 +783,39 @@ export const OwnerReports: React.FC<OwnerReportsProps> = ({
                           </tbody>
                         </table>
                       ))}
+                    </div>
                   </>
                 )}
               </div>
 
               {/* Bottom Action Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-1 print:hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1 print:hidden">
                 <button
                   type="button"
                   onClick={onBackToOwnerMenu}
-                  className="h-14 min-h-[56px] px-space-lg rounded-2xl bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/40 text-on-surface font-bold flex items-center gap-2 shadow-sm cursor-pointer"
+                  className="hidden lg:flex h-14 min-h-[56px] px-space-lg rounded-2xl bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/40 text-on-surface font-bold items-center gap-2 shadow-sm cursor-pointer"
                 >
                   <Icon name="arrow_back" className="text-2xl" />
                   <span>{backBtn.main}</span>
                 </button>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 w-full sm:w-auto">
                   <button
                     type="button"
                     onClick={() => window.print()}
-                    className="h-14 min-h-[56px] px-5 rounded-2xl bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/40 text-on-surface font-bold flex items-center gap-2 shadow-sm cursor-pointer"
+                    className="h-14 min-h-[52px] px-4 sm:px-5 rounded-2xl bg-surface-container-lowest hover:bg-surface-container border border-outline-variant/40 text-on-surface font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer"
                   >
-                    <Icon name="print" className="text-2xl text-primary" />
-                    <span>{printBtn.main}</span>
+                    <Icon name="print" className="text-2xl text-primary shrink-0" />
+                    <span className="truncate">{printBtn.main}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleExportCsv}
-                    className="h-14 min-h-[56px] px-6 rounded-2xl bg-primary hover:bg-primary-container text-on-primary font-bold flex items-center gap-2 shadow-md cursor-pointer"
+                    className="h-14 min-h-[52px] px-4 sm:px-6 rounded-2xl bg-primary hover:bg-primary-container text-on-primary font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer"
                   >
-                    <Icon name="table_chart" className="text-2xl" />
-                    <span>{csvBtn.main}</span>
+                    <Icon name="table_chart" className="text-2xl shrink-0" />
+                    <span className="truncate">{csvBtn.main}</span>
                   </button>
                 </div>
               </div>

@@ -104,7 +104,7 @@ export const TileWallView: React.FC<TileWallViewProps> = ({
                 className="h-12 px-4 rounded-xl bg-primary hover:bg-primary-container active:scale-[0.99] text-on-primary font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer shrink-0"
               >
                 <Icon name="add" className="text-[20px]" />
-                <span>Enter ↵</span>
+                <span className="hidden lg:inline">Enter ↵</span>
               </button>
             </form>
 
@@ -194,7 +194,7 @@ export const TileWallView: React.FC<TileWallViewProps> = ({
                           className={`p-1 rounded-md transition-colors ${
                             isPinned
                               ? 'text-primary'
-                              : 'text-outline-variant hover:text-primary opacity-0 group-hover:opacity-100'
+                              : 'text-outline-variant hover:text-primary opacity-75 lg:opacity-0 lg:group-hover:opacity-100'
                           }`}
                           title={
                             isPinned
@@ -348,7 +348,7 @@ export const TileWallView: React.FC<TileWallViewProps> = ({
                 {t('fast_bill.tile_wall.make_bill')}
               </span>
               <span className="font-label-sub-english text-xs text-on-primary-container font-medium mt-0.5">
-                {t('fast_bill.tile_wall.make_bill_sub')} (Enter ↵)
+                {t('fast_bill.tile_wall.make_bill_sub')} <span className="hidden lg:inline">(Enter ↵)</span>
               </span>
             </div>
           </button>

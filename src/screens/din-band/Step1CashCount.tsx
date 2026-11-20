@@ -110,8 +110,9 @@ export const Step1CashCount: React.FC<Step1CashCountProps> = ({
               <span>{t('din_band.opening_cash_label')}</span>
             </label>
             <input
-              type="number"
-              min={0}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={openingCashStr}
               onChange={(e) => onChangeOpeningCashStr(e.target.value.replace(/[^0-9]/g, ''))}
               onFocus={() => setFocusedField('none')}
@@ -167,8 +168,9 @@ export const Step1CashCount: React.FC<Step1CashCountProps> = ({
                       −
                     </button>
                     <input
-                      type="number"
-                      min={0}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={qty === 0 ? '' : String(qty)}
                       placeholder="0"
                       onChange={(e) =>
@@ -197,8 +199,9 @@ export const Step1CashCount: React.FC<Step1CashCountProps> = ({
                 {t('din_band.coins_label')}
               </span>
               <input
-                type="number"
-                min={0}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={denominations.coinsRupees === 0 ? '' : String(denominations.coinsRupees)}
                 placeholder="0"
                 onChange={(e) =>
@@ -253,8 +256,42 @@ export const Step1CashCount: React.FC<Step1CashCountProps> = ({
             </div>
           </div>
 
-          {/* Tactile Numpad Grid */}
-          <div className="grid grid-cols-3 gap-2 flex-1 min-h-[260px]">
+          {/* Mobile Native Numeric Direct Cash Input (no on-screen numpad on phones) */}
+          <div className="lg:hidden bg-surface-container-lowest rounded-2xl shadow-sm p-4 border border-outline-variant/40 flex flex-col gap-2">
+            <label className="text-sm font-bold text-on-surface">
+              {t('din_band.mode_direct')}
+            </label>
+            <div className="flex items-center gap-2 h-14 px-3.5 rounded-xl bg-surface-container-low border-2 border-primary/50 focus-within:border-primary">
+              <Icon name="currency_rupee" className="text-primary text-2xl shrink-0" />
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={countMode === 'direct' && directCashStr !== '0' ? directCashStr : ''}
+                placeholder="0"
+                onChange={(e) => {
+                  const clean = e.target.value.replace(/\D/g, '').slice(0, 7);
+                  onChangeCountMode('direct');
+                  onChangeDirectCashStr(clean || '0');
+                }}
+                aria-label={t('din_band.mode_direct')}
+                className="w-full min-w-0 bg-transparent text-2xl font-extrabold text-primary outline-none"
+              />
+              {countMode === 'direct' && directCashStr !== '0' && (
+                <button
+                  type="button"
+                  onClick={handleNumpadClear}
+                  className="w-10 h-10 rounded-xl bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 cursor-pointer"
+                  aria-label={tButton('common.btn_clear').main}
+                >
+                  <Icon name="close" className="text-[20px]" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop Tactile Numpad Grid */}
+          <div className="hidden lg:grid grid-cols-3 gap-2 flex-1 min-h-[260px]">
             {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
               <button
                 key={digit}

@@ -53,8 +53,8 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn select-none">
-      <div className="w-full max-w-3xl max-h-[90vh] bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn select-none">
+      <div className="w-full sm:max-w-3xl max-h-[92dvh] bg-surface-container-lowest rounded-t-3xl sm:rounded-2xl shadow-2xl border-t sm:border border-outline-variant flex flex-col overflow-hidden">
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between bg-surface-container-low shrink-0">
           <div className="flex items-center gap-3">
@@ -109,9 +109,11 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                   alt={invoiceData.invoiceNo}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                 />
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white gap-1 transition-opacity">
-                  <Icon name="zoom_in" className="text-[28px]" />
-                  <span className="text-xs font-bold">{t('suppliers.photo_zoom_hint')}</span>
+                <div className="absolute inset-0 bg-black/30 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 flex items-end sm:items-center justify-center p-2 text-white gap-1 transition-opacity">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 text-xs font-bold">
+                    <Icon name="zoom_in" className="text-[18px]" />
+                    <span>{t('suppliers.photo_zoom_hint')}</span>
+                  </span>
                 </div>
               </div>
             ) : (
@@ -201,13 +203,44 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Medicine Lines List */}
+          {/* Medicine Lines List: Stacked Cards on Phone, Table on Desktop */}
           <div className="flex flex-col gap-2">
             <h3 className="font-title-hinglish text-title-hinglish font-bold text-on-surface">
               {t('suppliers.modal_invoice_sub')}
             </h3>
 
-            <div className="border border-outline-variant rounded-xl overflow-hidden bg-surface-container-lowest">
+            {/* Mobile Single-Column Stacked Cards */}
+            <div className="md:hidden flex flex-col gap-2">
+              {invoiceData.lines.map((line, idx) => (
+                <div
+                  key={line.id || `m-line-${idx}`}
+                  className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 flex flex-col gap-1.5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-bold text-sm text-on-surface leading-tight break-words min-w-0 flex-1">
+                      {line.medicineName}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-lg bg-surface-container text-xs font-extrabold text-on-surface shrink-0">
+                      {line.packs}
+                      {line.freePacks > 0 ? ` +${line.freePacks}` : ''} {t('suppliers.col_packs')}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-xs text-on-surface-variant flex-wrap">
+                    <span className="font-mono">
+                      {t('suppliers.col_batch')}: {line.batchNo} · {t('suppliers.col_expiry')}: {line.expiry}
+                    </span>
+                    {isOwnerUser && invoiceData.canSeeRates && (
+                      <span className="font-extrabold text-primary">
+                        {formatRupees((line as any).purchaseRatePaise)} → {formatRupees((line as any).lineTotalPaise)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden md:block border border-outline-variant rounded-xl overflow-hidden bg-surface-container-lowest">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-surface-container-low border-b border-outline-variant text-on-surface-variant font-label-sub-english text-xs uppercase tracking-wider">
@@ -258,11 +291,11 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-outline-variant flex items-center justify-end bg-surface-container-low shrink-0">
+        <div className="px-4 sm:px-6 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-outline-variant flex items-center justify-end bg-surface-container-low shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="h-12 px-6 rounded-xl bg-surface-container-high text-on-surface font-bold text-base hover:bg-surface-container-highest cursor-pointer transition-colors"
+            className="w-full sm:w-auto h-12 min-h-[48px] px-6 rounded-xl bg-surface-container-high text-on-surface font-bold text-base hover:bg-surface-container-highest cursor-pointer transition-colors"
           >
             {tButton('suppliers.btn_back').main}
           </button>

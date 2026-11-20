@@ -136,8 +136,22 @@ export function shouldShowSub(
 }
 
 /**
+ * Converts a missing dotted i18n key (e.g. "section.btn_save_item") into a clean readable fallback ("Save Item")
+ * so raw technical keys never leak into the visible UI.
+ */
+function formatMissingKeyFallback(key: string): string {
+  const leaf = key.split('.').pop() || key;
+  const cleaned = leaf
+    .replace(/^(btn|label|title|sub|col|tab|stat|err|toast|modal|nav)_/i, '')
+    .replace(/[_-]+/g, ' ')
+    .trim();
+  if (!cleaned) return key;
+  return cleaned.replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
+
+/**
  * Returns translated string or ButtonLabel.
- * Falls back to English ('en') if missing in current language.
+ * Falls back to English ('en') if missing in current language, and to a humanized label if missing everywhere.
  */
 export function t<T = any>(key: string, params?: Record<string, string | number>): T {
   const primaryCatalog = catalogs[currentLanguage];
@@ -148,9 +162,9 @@ export function t<T = any>(key: string, params?: Record<string, string | number>
     val = resolvePath(catalogs.en, key);
   }
 
-  // If still missing, return the key as fallback
+  // If still missing, return a clean human-readable fallback instead of raw dot-key
   if (val === undefined) {
-    return key as unknown as T;
+    return formatMissingKeyFallback(key) as unknown as T;
   }
 
   // Handle two-line ButtonLabel { main, sub }

@@ -12,6 +12,7 @@ import {
 } from '../logic/approvals';
 import { formatField, textFieldProps, filterDigits } from '../logic/format';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
+import { useBackHandler } from '../logic/androidBack';
 import { useTranslation, tButton } from '../i18n';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { Icon } from '../components/Icon';
@@ -50,6 +51,11 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const { t } = useTranslation();
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1);
   const [isImportingInSetup, setIsImportingInSetup] = useState<boolean>(false);
+
+  useBackHandler(step > 1, () => {
+    setStep((prev) => (prev > 1 ? ((prev - 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8) : prev));
+  });
+  useBackHandler(isImportingInSetup, () => setIsImportingInSetup(false));
 
   const btnBack = tButton('common.btn_back');
   const btnNext = tButton('common.btn_next');
@@ -1238,7 +1244,42 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 w-full max-w-[384px]">
+            {/* Native mobile numeric PIN fields (replaces on-screen numpad on phones) */}
+            <div className="lg:hidden w-full max-w-[384px] flex flex-col gap-3">
+              <input
+                type={showOwnerPin ? 'text' : 'password'}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                value={ownerPin1}
+                onFocus={() => setActiveOwnerPinField(1)}
+                onChange={(e) => {
+                  const next = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setOwnerPin1(next);
+                  setOwnerPinError('');
+                  if (next.length === 4) setActiveOwnerPinField(2);
+                }}
+                placeholder="PIN (4 digits)"
+                className="w-full h-14 px-4 rounded-2xl bg-white border-2 border-slate-200 focus:border-[#1B8F4A] focus:outline-none text-center text-2xl font-black tracking-[0.45em] text-[#1A1F1C]"
+              />
+              <input
+                type={showOwnerPin ? 'text' : 'password'}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                value={ownerPin2}
+                onFocus={() => setActiveOwnerPinField(2)}
+                onChange={(e) => {
+                  const next = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setOwnerPin2(next);
+                  setOwnerPinError('');
+                }}
+                placeholder="Confirm PIN"
+                className="w-full h-14 px-4 rounded-2xl bg-white border-2 border-slate-200 focus:border-[#1B8F4A] focus:outline-none text-center text-2xl font-black tracking-[0.45em] text-[#1A1F1C]"
+              />
+            </div>
+
+            <div className="hidden lg:grid grid-cols-3 gap-3 w-full max-w-[384px]">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
                 <button
                   key={digit}
@@ -1983,7 +2024,42 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 w-full max-w-[384px]">
+            {/* Native mobile numeric Approval PIN fields (replaces on-screen numpad on phones) */}
+            <div className="lg:hidden w-full max-w-[384px] flex flex-col gap-3">
+              <input
+                type={showApprovalPin ? 'text' : 'password'}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                value={approvalPin1}
+                onFocus={() => setActiveApprovalPinField(1)}
+                onChange={(e) => {
+                  const next = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setApprovalPin1(next);
+                  setApprovalPinError('');
+                  if (next.length === 4) setActiveApprovalPinField(2);
+                }}
+                placeholder="PIN (4 digits)"
+                className="w-full h-14 px-4 rounded-2xl bg-white border-2 border-slate-200 focus:border-[#1B8F4A] focus:outline-none text-center text-2xl font-black tracking-[0.45em] text-[#1A1F1C]"
+              />
+              <input
+                type={showApprovalPin ? 'text' : 'password'}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                value={approvalPin2}
+                onFocus={() => setActiveApprovalPinField(2)}
+                onChange={(e) => {
+                  const next = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setApprovalPin2(next);
+                  setApprovalPinError('');
+                }}
+                placeholder="Confirm PIN"
+                className="w-full h-14 px-4 rounded-2xl bg-white border-2 border-slate-200 focus:border-[#1B8F4A] focus:outline-none text-center text-2xl font-black tracking-[0.45em] text-[#1A1F1C]"
+              />
+            </div>
+
+            <div className="hidden lg:grid grid-cols-3 gap-3 w-full max-w-[384px]">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
                 <button
                   key={digit}

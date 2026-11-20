@@ -35,6 +35,7 @@ import type { SubstituteMedicineInfo } from '../logic/billing';
 import type { CartItem } from './dawai-becho/types';
 import { formatRupees } from '../logic/money';
 import { useIsCompactViewport } from '../logic/useViewport';
+import { useBackHandler } from '../logic/androidBack';
 
 interface FastBillProps {
   currentUser?: DBUser | { id?: string; name?: string; role?: string } | null;
@@ -105,6 +106,17 @@ export const FastBill: React.FC<FastBillProps> = ({
     medicineName: '',
     currentBatchId: 0,
   });
+
+  useBackHandler(scheduleHState.isOpen, () =>
+    setScheduleHState({ isOpen: false, medicineName: '' })
+  );
+  useBackHandler(outOfStockState.isOpen, () =>
+    setOutOfStockState({ isOpen: false, medicineName: '', substitutes: [] })
+  );
+  useBackHandler(isUnknownModalOpen, () => setIsUnknownModalOpen(false));
+  useBackHandler(batchModalState.isOpen, () =>
+    setBatchModalState((prev) => ({ ...prev, isOpen: false }))
+  );
 
   // Payment / Completion Flow
   const [paymentScreenData, setPaymentScreenData] = useState<{
@@ -717,7 +729,7 @@ export const FastBill: React.FC<FastBillProps> = ({
 
     return (
       <div
-        className={`w-full min-h-dvh flex flex-col font-body-md text-on-surface select-none overflow-x-hidden transition-colors duration-150 pb-36 ${
+        className={`w-full min-h-dvh flex flex-col font-body-md text-on-surface select-none overflow-x-clip transition-colors duration-150 pb-36 ${
           isActionFeedback ? 'bg-primary/10' : 'bg-background'
         }`}
       >

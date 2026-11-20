@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation, tButton } from '../i18n';
+import { useBackHandler } from '../logic/androidBack';
 
 export interface ConfirmDialogProps {
   isOpen: boolean;
@@ -28,6 +29,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 }) => {
   const { t } = useTranslation();
 
+  useBackHandler(isOpen, onCancel);
+
   if (!isOpen) return null;
 
   const defaultTitle = t('dialogs.delete_title');
@@ -48,9 +51,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none animate-fadeIn"
+      className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 select-none animate-fadeIn"
     >
-      <div className="w-full max-w-[520px] bg-surface-container-lowest rounded-3xl shadow-2xl p-8 flex flex-col items-center text-center relative z-10 border border-outline-variant">
+      <div className="w-full max-w-[520px] bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col items-center text-center relative z-10 border-t sm:border border-outline-variant">
         
         {/* Warning Icon (46a_Shared_DeleteConfirm) */}
         <div className="w-16 h-16 rounded-full bg-error-container/40 flex items-center justify-center mb-4 text-error">

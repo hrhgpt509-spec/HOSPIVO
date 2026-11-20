@@ -42,9 +42,9 @@ export const YaadDilaoModal: React.FC<YaadDilaoModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 select-none"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 select-none"
     >
-      <div className="w-full max-w-[560px] bg-surface-container-lowest rounded-3xl shadow-2xl border border-outline-variant/40 p-6 sm:p-8 flex flex-col gap-5">
+      <div className="w-full max-w-[560px] max-h-[92dvh] overflow-y-auto bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl border-t sm:border border-outline-variant/40 p-5 sm:p-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-4 sm:gap-5">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-outline-variant/30 pb-4">
           <div>

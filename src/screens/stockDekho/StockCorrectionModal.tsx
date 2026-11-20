@@ -205,9 +205,9 @@ export const StockCorrectionModal: React.FC<StockCorrectionModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="stock-correction-title"
-        className="fixed inset-0 z-50 bg-[#0f172a]/65 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 select-none"
+        className="fixed inset-0 z-50 bg-[#0f172a]/65 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 select-none"
       >
-        <div className="w-full max-w-[640px] max-h-[92vh] overflow-y-auto bg-surface-container-lowest text-on-surface rounded-2xl shadow-2xl border border-outline-variant p-space-md sm:p-space-lg flex flex-col gap-space-md">
+        <div className="w-full max-w-[640px] max-h-[92dvh] overflow-y-auto bg-surface-container-lowest text-on-surface rounded-t-3xl sm:rounded-2xl shadow-2xl border-t sm:border border-outline-variant p-4 sm:p-space-lg pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-space-md">
           {/* Header */}
           <div className="flex items-start justify-between gap-3 pb-space-sm border-b border-outline-variant/40">
             <div className="flex items-center gap-space-sm">
