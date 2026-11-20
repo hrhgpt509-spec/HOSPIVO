@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Hospivo">
+  <defs>
+    <linearGradient id="hospivo-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22A958"/>
+      <stop offset="52%" stop-color="#1B8F4A"/>
+      <stop offset="100%" stop-color="#0F6B35"/>
+    </linearGradient>
+    <radialGradient id="hospivo-glow" cx="30%" cy="22%" r="72%">
+      <stop offset="0%" stop-color="#8EF9A7" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#0F6B35" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="hospivo-shadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#073D1E" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <!-- Full rounded pharmacy green tile -->
+  <rect x="0" y="0" width="1024" height="1024" rx="224" fill="url(#hospivo-bg)"/>
+  <rect x="0" y="0" width="1024" height="1024" rx="224" fill="url(#hospivo-glow)"/>
+  <rect x="14" y="14" width="996" height="996" rx="212" fill="none" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="10"/>
+
+  <!-- HOSPIVO Brand Mark: Bold "H" pillars fused with crisp mint medical cross -->
+  <g filter="url(#hospivo-shadow)">
+    <!-- Center pharmacy cross bridging the H -->
+    <rect x="348" y="448" width="328" height="128" rx="44" fill="#8EF9A7"/>
+    <rect x="448" y="336" width="128" height="352" rx="44" fill="#8EF9A7"/>
+
+    <!-- Left and right bold white H pillars -->
+    <rect x="232" y="216" width="144" height="592" rx="56" fill="#FFFFFF"/>
+    <rect x="648" y="216" width="144" height="592" rx="56" fill="#FFFFFF"/>
+  </g>
+</svg>

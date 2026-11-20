@@ -359,6 +359,21 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
 - Setup Wizard mobile overflow & Android storage UI fix (`src/screens/Setup.tsx` + en/hi/hinglish i18n): added safe-area top/bottom padding, `items-start sm:items-center`, `w-full min-w-0 overflow-x-clip` across all 8 steps; wrapped Step 4 labels, info callouts, and staff cards so "1 Added" and delete icons stay inside bounds; fixed PIN placeholder tracking so "PIN (4 digits)" and "Confirm PIN" never clip; stacked Step 6 storage cards vertically and showed native "Android App Storage Ready" inside Capacitor Android.
 - Verified with `npm run build`, `npm run test` (253 tests), and `npx cap sync android` with 0 errors.
 
+- Brand icon refresh (Web, PWA & Android Capacitor): created unified HOSPIVO pharmacy icon (white "H" pillars fused with mint `#8EF9A7` medical cross on emerald `#1B8F4A` gradient) in `public/icon-master.svg` and `public/icon-1024.png`.
+- Replaced default lightning-bolt favicon and added full web/PWA icon set (`favicon.svg`, `favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png`, `pwa-192x192.png`, `pwa-512x512.png`, `pwa-maskable-512x512.png`) wired in `index.html` and `vite.config.ts`.
+- Generated matching Android launcher icons (`ic_launcher.png`, `ic_launcher_round.png`, `ic_launcher_foreground.png`) across `mipmap-mdpi` through `mipmap-xxxhdpi` plus emerald adaptive icon XMLs, and verified with `npm run build`, `npm run test`, and `npx cap sync android`.
+
+- Redesigned mobile Step 2 PIN unlock & lock screens (`src/screens/Login.tsx`, `src/components/LanguageSwitch.tsx`): stacked the top brand bar and full-width language switcher with safe-area padding so zero overflow or stray pills occur on narrow phones.
+- Replaced redundant PIN dot rows with a single tap-to-type 4-slot numeric PIN input (`inputMode="numeric"`), polished rounded emerald key/lock badge, balanced 52px Clear/Unlock touch buttons, and wrapped footer security + Local mode badge.
+- Verified with `npm run build`, `npm run test` (253 tests), and `npx cap sync android` with 0 errors.
+
+- Redesigned mobile Step 1 "Who is using?" account selection screen (`src/screens/Login.tsx`, `src/components/LanguageSwitch.tsx`): top-aligned content cleanly under the HOSPIVO header & single-line language switcher with no excess whitespace above the fold.
+- Upgraded staff/owner profile cards (`min-h-[72px]`, `min-w-0 flex-1`) with inline `OWNER` badge beside the name, full readable wrapped role subtitles, and crisp circular chevron tap affordances, plus clean separated footer security note & Local mode pill.
+- Verified with `npm run build`, `npm run test` (253 tests), and `npx cap sync android` with 0 errors.
+
+
+
+
 
 
 

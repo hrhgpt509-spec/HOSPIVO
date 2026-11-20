@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { db, type DBUser } from '../db';
 import { attemptUserLogin, getLoginLock } from '../logic/auth';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
@@ -46,6 +46,9 @@ export const Login: React.FC<LoginProps> = ({
   const [lockCountdownSeconds, setLockCountdownSeconds] = useState<number>(0);
   const [currentLiveTime, setCurrentLiveTime] = useState<Date>(() => new Date());
   const [isSyncingUsers, setIsSyncingUsers] = useState<boolean>(false);
+  const [isPinFocused, setIsPinFocused] = useState<boolean>(false);
+  const pinInputRef = useRef<HTMLInputElement | null>(null);
+  const lockPinInputRef = useRef<HTMLInputElement | null>(null);
   const isCompactViewport = useIsCompactViewport();
 
   // Recovery Owner PIN form states
@@ -366,78 +369,106 @@ export const Login: React.FC<LoginProps> = ({
               </div>
             </div>
 
-            {/* PIN Dots */}
-            <div className="flex items-center gap-3.5 my-2">
-              {Array.from({ length: lockTargetLen }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-150 ${
-                    idx < lockPin.length
-                      ? 'bg-[#006b33] border-[#006b33] scale-110'
-                      : 'border-[#b6c2bb] bg-white'
-                  }`}
+            {/* Single Unified 4-Slot Numeric PIN Field (Lock Screen) */}
+            <div className="w-full max-w-[300px] my-3 flex flex-col gap-3">
+              <div
+                onClick={() => lockPinInputRef.current?.focus()}
+                className="relative w-full grid grid-cols-4 gap-2.5 cursor-text"
+              >
+                <input
+                  ref={lockPinInputRef}
+                  type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="one-time-code"
+                  maxLength={lockTargetLen}
+                  autoFocus
+                  disabled={lockCountdownSeconds > 0}
+                  value={lockPin}
+                  onFocus={() => setIsPinFocused(true)}
+                  onBlur={() => setIsPinFocused(false)}
+                  onChange={(e) => {
+                    if (lockCountdownSeconds > 0) return;
+                    const next = e.target.value.replace(/\D/g, '').slice(0, lockTargetLen);
+                    setLockPin(next);
+                    setLockError(false);
+                    if (next.length === lockTargetLen) {
+                      setTimeout(() => verifyLockPin(next), 80);
+                    }
+                  }}
+                  aria-label={t('login.enter_pin_prompt', { digits: lockTargetLen })}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
                 />
-              ))}
-            </div>
-
-            {/* Wrong PIN feedback on lock screen */}
-            {lockError && lockCountdownSeconds <= 0 && (
-              <div className="mb-2 px-3 py-1 rounded-full bg-red-100 border border-red-300 text-red-700 flex items-center gap-1.5 animate-bounce text-xs font-bold">
-                <svg className="w-4 h-4 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span>{t('login.wrong_pin')}</span>
+                {Array.from({ length: lockTargetLen }).map((_, idx) => {
+                  const isFilled = idx < lockPin.length;
+                  const isActive = isPinFocused && idx === Math.min(lockPin.length, lockTargetLen - 1);
+                  return (
+                    <div
+                      key={idx}
+                      className={`h-14 rounded-2xl border-2 flex items-center justify-center transition-all duration-150 ${
+                        lockError && lockCountdownSeconds <= 0
+                          ? 'border-red-400 bg-red-50/70'
+                          : isActive
+                            ? 'border-[#006b33] bg-[#ebf6f0] ring-4 ring-[#006b33]/15'
+                            : isFilled
+                              ? 'border-[#006b33] bg-[#f4faf6]'
+                              : 'border-[#d3dfd8] bg-[#f8fbf9]'
+                      }`}
+                    >
+                      {isFilled ? (
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#006b33] transition-transform scale-100" />
+                      ) : isActive ? (
+                        <span className="w-0.5 h-6 rounded-full bg-[#006b33] animate-pulse" />
+                      ) : (
+                        <span className="w-2 h-2 rounded-full bg-slate-300" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            )}
 
-            {/* Lockout countdown on lock screen */}
-            {lockCountdownSeconds > 0 && (
-              <div className="mb-2 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-800 flex items-center gap-1.5 animate-pulse text-xs font-bold">
-                <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>
-                  {t('login.lockout_msg', { minutes: Math.ceil(lockCountdownSeconds / 60) })} ({lockCountdownSeconds}s)
-                </span>
-              </div>
-            )}
+              {/* Wrong PIN feedback on lock screen */}
+              {lockError && lockCountdownSeconds <= 0 && (
+                <div className="px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center justify-center gap-1.5 text-xs font-bold">
+                  <svg className="w-4 h-4 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>{t('login.wrong_pin')}</span>
+                </div>
+              )}
 
-            {/* Native Mobile Numeric PIN Entry (replaces touch numpad on mobile) */}
-            <div className="w-full max-w-[340px] my-3 flex flex-col gap-3">
-              <input
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={4}
-                autoFocus
-                disabled={lockCountdownSeconds > 0}
-                value={lockPin}
-                onChange={(e) => {
-                  if (lockCountdownSeconds > 0) return;
-                  const next = e.target.value.replace(/\D/g, '').slice(0, 4);
-                  setLockPin(next);
-                  setLockError(false);
-                  if (next.length === 4) {
-                    setTimeout(() => verifyLockPin(next), 80);
-                  }
-                }}
-                placeholder="••••"
-                aria-label={t('login.enter_pin_prompt', { digits: 4 })}
-                className="w-full h-14 px-4 rounded-2xl bg-[#ebf6f0] border-2 border-[#006b33]/30 focus:border-[#006b33] focus:outline-none text-center text-3xl font-black tracking-[0.5em] text-[#141e1a] disabled:opacity-50"
-              />
-              <div className="grid grid-cols-2 gap-2.5">
+              {/* Lockout countdown on lock screen */}
+              {lockCountdownSeconds > 0 && (
+                <div className="px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-center gap-1.5 animate-pulse text-xs font-bold">
+                  <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>
+                    {t('login.lockout_msg', { minutes: Math.ceil(lockCountdownSeconds / 60) })} ({lockCountdownSeconds}s)
+                  </span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={handleClear}
-                  className="min-h-[48px] rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                  onClick={() => {
+                    handleClear();
+                    lockPinInputRef.current?.focus();
+                  }}
+                  className="min-h-[50px] rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] border border-slate-200 text-slate-700 font-bold text-sm flex items-center justify-center gap-1.5 cursor-pointer transition-all"
                 >
                   <span>{clearBtn.main}</span>
                 </button>
                 <button
                   type="button"
-                  disabled={lockPin.length < 4 || lockCountdownSeconds > 0}
+                  disabled={lockPin.length < lockTargetLen || lockCountdownSeconds > 0}
                   onClick={() => verifyLockPin(lockPin)}
-                  className="min-h-[48px] rounded-xl bg-[#006b33] hover:bg-[#005528] active:scale-95 disabled:opacity-40 text-white font-bold text-sm flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                  className={`min-h-[50px] rounded-2xl font-bold text-sm flex items-center justify-center gap-1.5 transition-all ${
+                    lockPin.length >= lockTargetLen && lockCountdownSeconds <= 0
+                      ? 'bg-[#006b33] hover:bg-[#005528] active:scale-[0.98] text-white shadow-md shadow-[#006b33]/25 cursor-pointer'
+                      : 'bg-[#006b33]/35 text-white/90 cursor-not-allowed'
+                  }`}
                 >
                   <Icon name="lock_open" className="text-[18px]" />
                   <span>{unlockBtn.main}</span>
@@ -494,12 +525,12 @@ export const Login: React.FC<LoginProps> = ({
 
         {/* Floating Centered Unlock Card (Matches 08c: 440px wide) */}
         <div className="relative z-10 w-[440px] max-w-[95vw] bg-white rounded-2xl shadow-2xl border border-slate-200/90 overflow-hidden flex flex-col items-center">
-          
+
           {/* Green top bar */}
           <div className="w-full h-2.5 bg-[#006b33]"></div>
 
           <div className="w-full p-8 flex flex-col items-center">
-            
+
             {/* Padlock Icon & Auto-Lock Header */}
             <div className="w-14 h-14 rounded-full bg-[#ebf6f0] flex items-center justify-center text-[#006b33] mb-3 shadow-inner">
               <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -540,11 +571,10 @@ export const Login: React.FC<LoginProps> = ({
               {Array.from({ length: lockTargetLen }).map((_, idx) => (
                 <div
                   key={idx}
-                  className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
-                    idx < lockPin.length
-                      ? 'bg-[#006b33] border-[#006b33] scale-110'
-                      : 'border-[#b6c2bb] bg-white'
-                  }`}
+                  className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${idx < lockPin.length
+                    ? 'bg-[#006b33] border-[#006b33] scale-110'
+                    : 'border-[#b6c2bb] bg-white'
+                    }`}
                 />
               ))}
             </div>
@@ -641,38 +671,44 @@ export const Login: React.FC<LoginProps> = ({
 
   if (isCompactViewport) {
     return (
-      <div className="w-full min-h-dvh bg-[#F4F6F5] text-slate-800 flex flex-col justify-between p-3 sm:p-6 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(0.75rem,env(safe-area-inset-bottom))] overflow-x-clip select-none">
-        <main className="w-full max-w-[540px] mx-auto bg-white rounded-3xl shadow-lg border border-slate-200/80 p-4 sm:p-6 flex flex-col justify-between flex-1 my-auto">
-          {/* Compact header */}
-          <header className="flex items-center justify-between pb-3 border-b border-slate-100 gap-2 mb-4">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-10 h-10 bg-[#1B8F4A] rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm shadow-[#1B8F4A]/30">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
-                </svg>
+      <div className="w-full min-h-dvh bg-gradient-to-b from-[#EDF7F1] to-[#F4F6F5] text-slate-800 flex flex-col justify-between px-3 sm:px-6 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] overflow-x-clip select-none">
+        <main className="w-full min-w-0 max-w-[460px] mx-auto bg-white rounded-3xl shadow-[0_12px_36px_rgba(27,143,74,0.08)] border border-slate-200/80 p-4 sm:p-6 flex flex-col justify-between flex-1 my-auto overflow-x-clip">
+          {/* Clean Top Bar & Language Switcher (zero horizontal overflow) */}
+          <header className="w-full min-w-0 flex flex-col gap-3 pb-3.5 border-b border-slate-100 mb-3">
+            <div className="flex items-center justify-between gap-2.5 min-w-0">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="w-10 h-10 bg-gradient-to-br from-[#22A958] to-[#147A3E] rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm shadow-[#1B8F4A]/30">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.6" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg font-black text-slate-900 leading-tight truncate">{t('common.app_name')}</h1>
+                  <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{shopName || t('login.pos_title')}</p>
+                </div>
               </div>
-              <div className="truncate">
-                <h1 className="text-xl font-black text-slate-900 leading-none truncate">{t('common.app_name')}</h1>
-                <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{shopName || t('login.pos_title')}</p>
-              </div>
+              <FullscreenButton className="w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 transition cursor-pointer shrink-0" />
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <LanguageSwitch />
-              <FullscreenButton className="w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 transition cursor-pointer" />
+            <div className="w-full min-w-0">
+              <LanguageSwitch className="w-full justify-between" />
             </div>
           </header>
 
           {!selectedUser ? (
-            /* STEP 1: Staff selection */
-            <div className="flex flex-col flex-1 justify-center py-2">
-              <div className="mb-4">
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">{t('login.who_is_using')}</h2>
-                <p className="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">{t('login.who_is_using_sub')}</p>
+            /* STEP 1: Polished Mobile Staff Selection (balanced top alignment, clean cards) */
+            <div className="flex flex-col flex-1 justify-start pt-2 pb-4 min-w-0">
+              <div className="mb-4 min-w-0">
+                <h2 className="text-2xl sm:text-[28px] font-black text-slate-900 tracking-tight leading-tight break-words">
+                  {t('login.who_is_using')}
+                </h2>
+                <p className="text-sm font-medium text-slate-500 mt-1 leading-snug break-words">
+                  {t('login.who_is_using_sub')}
+                </p>
               </div>
 
               {/* Stacked staff cards */}
-              <div className="flex flex-col gap-3 w-full">
+              <div className="flex flex-col gap-3 w-full min-w-0">
                 {users.length === 0 ? (
                   isCreatingOwner ? (
                     /* Create recovery owner PIN form */
@@ -831,45 +867,47 @@ export const Login: React.FC<LoginProps> = ({
                     const roleDesc = isOwner
                       ? t('login.admin_incharge')
                       : user.role === 'cashier'
-                      ? t('login.counter_staff')
-                      : t('login.runner');
+                        ? t('login.counter_staff')
+                        : t('login.runner');
 
                     return (
                       <button
                         key={user.id}
                         type="button"
                         onClick={() => handleSelectUser(user)}
-                        className="w-full h-16 min-h-[64px] bg-white hover:bg-slate-50 active:bg-slate-100 border-2 border-slate-200 hover:border-[#1B8F4A] rounded-2xl px-4 flex items-center justify-between transition-all shadow-sm text-left cursor-pointer active:scale-[0.99]"
+                        className="w-full min-h-[72px] py-3 px-3.5 sm:px-4 bg-white hover:bg-[#F7FBF8] active:bg-[#EDF7F1] border-2 border-slate-200/90 hover:border-[#1B8F4A] rounded-2xl flex items-center justify-between gap-3 transition-all shadow-[0_2px_8px_rgba(15,23,42,0.04)] text-left cursor-pointer active:scale-[0.99] min-w-0"
                       >
-                        <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
                           {isOwner ? (
-                            <div className={`w-11 h-11 rounded-xl ${palette.bg} ${palette.text} flex items-center justify-center font-bold shrink-0`}>
+                            <div className={`w-12 h-12 rounded-2xl ${palette.bg} ${palette.text} border ${palette.border} flex items-center justify-center font-bold shrink-0 shadow-xs`}>
                               <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                               </svg>
                             </div>
                           ) : (
-                            <div className={`w-11 h-11 rounded-full ${palette.bg} ${palette.text} flex items-center justify-center font-bold text-lg border-2 ${palette.border} shrink-0`}>
+                            <div className={`w-12 h-12 rounded-2xl ${palette.bg} ${palette.text} border ${palette.border} flex items-center justify-center font-extrabold text-lg shrink-0 shadow-xs`}>
                               {initial}
                             </div>
                           )}
-                          <div className="flex flex-col truncate">
-                            <span className="text-lg font-bold text-slate-900 leading-tight truncate">
-                              {user.name}
-                            </span>
-                            <span className="text-xs text-slate-500 font-medium leading-tight truncate">
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <div className="flex items-center flex-wrap gap-1.5 min-w-0">
+                              <span className="text-base sm:text-lg font-extrabold text-slate-900 leading-snug break-words">
+                                {user.name}
+                              </span>
+                              {isOwner && (
+                                <span className="text-[10px] font-extrabold uppercase tracking-wider bg-amber-50 text-amber-800 px-2 py-0.5 rounded-md border border-amber-200/90 shrink-0 whitespace-nowrap">
+                                  {t('login.admin_badge')}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs sm:text-[13px] text-slate-500 font-medium leading-snug break-words mt-0.5">
                               {roleDesc}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {isOwner && (
-                            <span className="text-[11px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-lg border border-amber-200">
-                              {t('login.admin_badge')}
-                            </span>
-                          )}
-                          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"></path>
+                        <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                           </svg>
                         </div>
                       </button>
@@ -879,10 +917,10 @@ export const Login: React.FC<LoginProps> = ({
               </div>
             </div>
           ) : (
-            /* STEP 2: Full-screen PIN entry with prominent "Back / Change User" button */
-            <div className="flex flex-col flex-1 justify-between py-2">
-              {/* Back / Change User header */}
-              <div className="w-full flex items-center justify-between pb-3 border-b border-slate-100">
+            /* STEP 2: Polished Mobile PIN Entry */
+            <div className="flex flex-col flex-1 justify-between gap-4 py-1 min-w-0">
+              {/* Sub-header: Back on left, Step badge on right */}
+              <div className="w-full flex items-center justify-between gap-2 pb-3 border-b border-slate-100 min-w-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -891,121 +929,163 @@ export const Login: React.FC<LoginProps> = ({
                     setHasError(false);
                     setErrorMessage('');
                   }}
-                  className="h-11 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 font-bold text-sm flex items-center gap-2 cursor-pointer transition-colors"
+                  className="min-h-[44px] h-11 px-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-800 font-bold text-sm flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                   </svg>
                   <span>{btnBack.main}</span>
                 </button>
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <span className="text-[11px] font-extrabold text-[#1B8F4A] bg-[#E8F5E9] border border-[#C8E6C9] px-2.5 py-1 rounded-full uppercase tracking-wider shrink-0 truncate">
                   {t('login.step_enter_pin')}
                 </span>
               </div>
 
-              {/* Selected User Header & Avatar */}
-              <div className="flex flex-col items-center text-center my-3">
-                <div className="w-14 h-14 rounded-2xl bg-[#1B8F4A] text-white flex items-center justify-center text-2xl font-black shadow-md shadow-[#1B8F4A]/30 mb-2">
-                  {selectedUser.role === 'owner' ? (
-                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
-                    </svg>
-                  ) : (
-                    selectedUser.name.charAt(0).toUpperCase()
-                  )}
+              {/* Center Identity + Unified 4-Slot PIN Field + Actions */}
+              <div className="w-full flex flex-col items-center text-center my-auto py-2 gap-5 min-w-0">
+                {/* User Identity */}
+                <div className="flex flex-col items-center min-w-0 w-full">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#22A958] to-[#147A3E] text-white flex items-center justify-center shadow-lg shadow-[#1B8F4A]/25 ring-4 ring-[#E8F5E9] mb-3 shrink-0">
+                    {selectedUser.role === 'owner' ? (
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                      </svg>
+                    )}
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-tight max-w-full break-words px-2">
+                    {selectedUser.name}
+                  </h3>
+                  <p className="text-sm font-medium text-slate-500 mt-1 px-2 leading-snug">
+                    {t('login.enter_pin_prompt', { digits: selectedUserPinLength })}
+                  </p>
                 </div>
-                <h3 className="text-2xl font-black text-slate-900 leading-tight">{selectedUser.name}</h3>
-                <p className="text-xs font-semibold text-slate-500 mt-0.5">{t('login.enter_pin_prompt', { digits: 4 })}</p>
 
-                {/* PIN Dots */}
-                <div className="flex items-center gap-4 my-3">
-                  {Array.from({ length: 4 }).map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={`w-4 h-4 rounded-full border-2 transition-all duration-150 ${
-                        idx < pin.length
-                          ? 'bg-[#1B8F4A] border-[#1B8F4A] scale-110 shadow-sm'
-                          : 'border-slate-300 bg-white shadow-inner'
-                      }`}
+                {/* Single Unified 4-Slot Tap-to-Type PIN Input (zero redundant dots) */}
+                <div className="w-full max-w-[304px] flex flex-col gap-3">
+                  <div
+                    onClick={() => pinInputRef.current?.focus()}
+                    className="relative w-full grid grid-cols-4 gap-3 cursor-text"
+                  >
+                    <input
+                      ref={pinInputRef}
+                      type="password"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="one-time-code"
+                      maxLength={selectedUserPinLength}
+                      autoFocus
+                      disabled={lockCountdownSeconds > 0}
+                      value={pin}
+                      onFocus={() => setIsPinFocused(true)}
+                      onBlur={() => setIsPinFocused(false)}
+                      onChange={(e) => {
+                        if (lockCountdownSeconds > 0 || !selectedUser) return;
+                        const next = e.target.value.replace(/\D/g, '').slice(0, selectedUserPinLength);
+                        setPin(next);
+                        setHasError(false);
+                        setErrorMessage('');
+                        if (next.length === selectedUserPinLength) {
+                          setTimeout(() => verifyPin(next, selectedUser), 80);
+                        }
+                      }}
+                      aria-label={t('login.enter_pin_prompt', { digits: selectedUserPinLength })}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
                     />
-                  ))}
+                    {Array.from({ length: selectedUserPinLength }).map((_, idx) => {
+                      const isFilled = idx < pin.length;
+                      const isActive = isPinFocused && idx === Math.min(pin.length, selectedUserPinLength - 1);
+                      return (
+                        <div
+                          key={idx}
+                          className={`h-15 rounded-2xl border-2 flex items-center justify-center transition-all duration-150 ${
+                            hasError && lockCountdownSeconds <= 0
+                              ? 'border-red-400 bg-red-50/70'
+                              : isActive
+                                ? 'border-[#1B8F4A] bg-[#F1FAF4] ring-4 ring-[#1B8F4A]/15 shadow-xs'
+                                : isFilled
+                                  ? 'border-[#1B8F4A] bg-[#F4FAF6]'
+                                  : 'border-slate-200 bg-slate-50/90'
+                          }`}
+                        >
+                          {isFilled ? (
+                            <span className="w-3.5 h-3.5 rounded-full bg-[#1B8F4A] shadow-xs transition-transform scale-100" />
+                          ) : isActive ? (
+                            <span className="w-0.5 h-6 rounded-full bg-[#1B8F4A] animate-pulse" />
+                          ) : (
+                            <span className="w-2 h-2 rounded-full bg-slate-300" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Error Banner */}
+                  {hasError && lockCountdownSeconds <= 0 && (
+                    <div className="px-3.5 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center justify-center gap-1.5 text-xs font-bold">
+                      <svg className="w-4 h-4 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span className="break-words">{errorMessage || t('login.wrong_pin')}</span>
+                    </div>
+                  )}
+
+                  {/* Lockout countdown */}
+                  {lockCountdownSeconds > 0 && (
+                    <div className="px-3.5 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center justify-center gap-1.5 animate-pulse text-xs font-bold">
+                      <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>{t('login.lockout_msg', { minutes: Math.ceil(lockCountdownSeconds / 60) })} ({lockCountdownSeconds}s)</span>
+                    </div>
+                  )}
+
+                  {/* Balanced 52px Action Buttons */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleClear();
+                        pinInputRef.current?.focus();
+                      }}
+                      className="min-h-[52px] h-13 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] border border-slate-200 text-slate-700 font-bold text-base flex items-center justify-center gap-1.5 cursor-pointer transition-all"
+                    >
+                      <Icon name="backspace" className="text-[18px] text-slate-500" />
+                      <span>{clearBtn.main}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pin.length < selectedUserPinLength || lockCountdownSeconds > 0}
+                      onClick={() => selectedUser && verifyPin(pin, selectedUser)}
+                      className={`min-h-[52px] h-13 rounded-2xl font-bold text-base flex items-center justify-center gap-1.5 transition-all ${
+                        pin.length >= selectedUserPinLength && lockCountdownSeconds <= 0
+                          ? 'bg-[#1B8F4A] hover:bg-[#15753B] active:scale-[0.98] text-white shadow-md shadow-[#1B8F4A]/25 cursor-pointer'
+                          : 'bg-[#1B8F4A]/40 text-white cursor-not-allowed'
+                      }`}
+                    >
+                      <Icon name="lock_open" className="text-[19px]" />
+                      <span>{unlockBtn.main}</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Error Banner */}
-                {hasError && lockCountdownSeconds <= 0 && (
-                  <div className="px-3.5 py-1 rounded-full bg-red-100 border border-red-300 text-red-700 flex items-center gap-1.5 animate-bounce text-xs font-bold">
-                    <svg className="w-4 h-4 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <span>{errorMessage || t('login.wrong_pin')}</span>
-                  </div>
-                )}
-
-                {/* Lockout countdown */}
-                {lockCountdownSeconds > 0 && (
-                  <div className="px-3.5 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-800 flex items-center gap-1.5 animate-pulse text-xs font-bold">
-                    <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{t('login.lockout_msg', { minutes: Math.ceil(lockCountdownSeconds / 60) })} ({lockCountdownSeconds}s)</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Native Mobile Numeric PIN Entry (replaces touch numpad on mobile) */}
-              <div className="w-full max-w-[340px] mx-auto my-3 flex flex-col gap-3">
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={selectedUserPinLength}
-                  autoFocus
-                  disabled={lockCountdownSeconds > 0}
-                  value={pin}
-                  onChange={(e) => {
-                    if (lockCountdownSeconds > 0 || !selectedUser) return;
-                    const next = e.target.value.replace(/\D/g, '').slice(0, selectedUserPinLength);
-                    setPin(next);
-                    setHasError(false);
-                    setErrorMessage('');
-                    if (next.length === selectedUserPinLength) {
-                      setTimeout(() => verifyPin(next, selectedUser), 80);
-                    }
-                  }}
-                  placeholder="••••"
-                  aria-label={t('login.enter_pin_prompt', { digits: 4 })}
-                  className="w-full h-14 px-4 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-[#1B8F4A] focus:outline-none text-center text-3xl font-black tracking-[0.5em] text-slate-900 disabled:opacity-50"
-                />
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={handleClear}
-                    className="min-h-[48px] rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-sm flex items-center justify-center cursor-pointer"
-                  >
-                    <span>{clearBtn.main}</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={pin.length < selectedUserPinLength || lockCountdownSeconds > 0}
-                    onClick={() => selectedUser && verifyPin(pin, selectedUser)}
-                    className="min-h-[48px] rounded-xl bg-[#1B8F4A] hover:bg-[#15753b] active:scale-95 disabled:opacity-40 text-white font-bold text-sm flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-                  >
-                    <Icon name="login" className="text-[18px]" />
-                    <span>{unlockBtn.main}</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="text-center pt-2 text-xs text-slate-500">
-                {t('login.forgot_pin_note')}
+                <p className="text-center text-xs sm:text-sm text-slate-500 leading-relaxed max-w-[300px] px-1">
+                  {t('login.forgot_pin_note')}
+                </p>
               </div>
             </div>
           )}
 
-          {/* Compact bottom bar */}
-          <footer className="pt-3 mt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-            <span>{t('login.staff_note')}</span>
-            <div className="flex items-center gap-1.5 font-bold text-[#1B8F4A]">
+          {/* Clean Compact Bottom Bar (zero edge clipping) */}
+          <footer className="pt-3.5 mt-3 px-0.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 min-w-0">
+            <div className="flex items-start gap-1.5 min-w-0 flex-1 leading-snug">
+              <Icon name="lock" className="text-[14px] text-slate-400 shrink-0 mt-0.5" />
+              <span className="break-words">{t('login.staff_note')}</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E8F5E9] text-[#1B8F4A] font-bold shrink-0 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-[#1B8F4A] animate-pulse"></span>
               <span>{t('common.local_mode')}</span>
             </div>
@@ -1017,10 +1097,10 @@ export const Login: React.FC<LoginProps> = ({
 
   return (
     <div className="w-full min-h-dvh bg-[#F4F6F5] text-slate-800 flex flex-col justify-center items-center p-3 sm:p-6 md:p-8 select-none">
-      
+
       {/* Master Outer Card Container (Matches 08a / 08b) */}
       <main className="w-full max-w-[1376px] bg-white rounded-3xl shadow-xl border border-slate-200/80 p-4 sm:p-6 md:p-8 flex flex-col justify-between min-h-[auto] sm:min-h-[640px] lg:min-h-[820px] relative">
-        
+
         {/* Top Branding / Header inside Card */}
         <header className="flex items-center justify-between pb-4 border-b border-slate-100 flex-wrap gap-4">
           <div className="flex items-center gap-4">
@@ -1052,10 +1132,10 @@ export const Login: React.FC<LoginProps> = ({
 
         {/* Main Content Area: Left Half (User List) & Right Half (Empty State or Active PIN Pad) */}
         <section className="grid grid-cols-12 gap-8 my-auto items-stretch py-4">
-          
+
           {/* LEFT HALF (5.5 Columns): "Kaun hai?" with stacked user buttons */}
           <div className={`col-span-12 lg:col-span-5 ${selectedUser ? 'hidden lg:flex' : 'flex'} flex-col justify-center pr-0 lg:pr-4`}>
-            
+
             {/* Heading */}
             <div className="mb-6">
               <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">{t('login.who_is_using')}</h2>
@@ -1234,95 +1314,95 @@ export const Login: React.FC<LoginProps> = ({
                 )
               ) : (
                 users.map((user, idx) => {
-                const isSelected = selectedUser?.id === user.id;
-                const isOwner = user.role === 'owner';
-                const palette = isOwner
-                  ? AVATAR_PALETTES[0]
-                  : AVATAR_PALETTES[(idx % (AVATAR_PALETTES.length - 1)) + 1];
-                const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
-                const roleDesc = isOwner
-                  ? t('login.admin_incharge')
-                  : user.role === 'cashier'
-                  ? t('login.counter_staff')
-                  : t('login.runner');
+                  const isSelected = selectedUser?.id === user.id;
+                  const isOwner = user.role === 'owner';
+                  const palette = isOwner
+                    ? AVATAR_PALETTES[0]
+                    : AVATAR_PALETTES[(idx % (AVATAR_PALETTES.length - 1)) + 1];
+                  const initial = user.name ? user.name.charAt(0).toUpperCase() : 'U';
+                  const roleDesc = isOwner
+                    ? t('login.admin_incharge')
+                    : user.role === 'cashier'
+                      ? t('login.counter_staff')
+                      : t('login.runner');
 
-                if (isSelected) {
+                  if (isSelected) {
+                    return (
+                      <button
+                        key={user.id}
+                        type="button"
+                        onClick={() => handleSelectUser(user)}
+                        className="w-full h-16 px-5 bg-[#1B8F4A] border-2 border-[#1B8F4A] rounded-2xl flex items-center justify-between shadow-lg shadow-[#1B8F4A]/25 ring-4 ring-[#1B8F4A]/20 text-white cursor-pointer text-left transition-all"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-11 h-11 rounded-xl bg-white text-[#1B8F4A] flex items-center justify-center text-xl font-extrabold shadow-sm">
+                            {isOwner ? (
+                              <svg className="w-6 h-6 text-[#1B8F4A]" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                              </svg>
+                            ) : (
+                              initial
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <div className="text-xl font-bold text-white leading-tight">{user.name}</div>
+                            <div className="text-xs text-green-100 font-medium leading-tight">{roleDesc}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-white">
+                          <span className="px-2.5 py-0.5 rounded-md bg-white/20 text-white text-xs font-bold uppercase tracking-wider">
+                            {t('login.selected_tag')}
+                          </span>
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      </button>
+                    );
+                  }
+
+                  // Normal Inactive State
                   return (
                     <button
                       key={user.id}
                       type="button"
                       onClick={() => handleSelectUser(user)}
-                      className="w-full h-16 px-5 bg-[#1B8F4A] border-2 border-[#1B8F4A] rounded-2xl flex items-center justify-between shadow-lg shadow-[#1B8F4A]/25 ring-4 ring-[#1B8F4A]/20 text-white cursor-pointer text-left transition-all"
+                      className="w-full h-16 bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-[#1B8F4A] rounded-2xl px-5 flex items-center justify-between transition-all duration-150 shadow-sm group text-left cursor-pointer active:scale-[0.99]"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-xl bg-white text-[#1B8F4A] flex items-center justify-center text-xl font-extrabold shadow-sm">
-                          {isOwner ? (
-                            <svg className="w-6 h-6 text-[#1B8F4A]" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                        {isOwner ? (
+                          <div className={`w-11 h-11 rounded-xl ${palette.bg} ${palette.text} flex items-center justify-center font-bold`}>
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                             </svg>
-                          ) : (
-                            initial
-                          )}
-                        </div>
-                        <div className="text-left">
-                          <div className="text-xl font-bold text-white leading-tight">{user.name}</div>
-                          <div className="text-xs text-green-100 font-medium leading-tight">{roleDesc}</div>
+                          </div>
+                        ) : (
+                          <div className={`w-11 h-11 rounded-full ${palette.bg} ${palette.text} flex items-center justify-center font-bold text-lg border-2 ${palette.border}`}>
+                            {initial}
+                          </div>
+                        )}
+                        <div className="flex flex-col">
+                          <span className="text-xl font-bold text-slate-900 group-hover:text-[#1B8F4A] leading-tight">
+                            {user.name}
+                          </span>
+                          <span className="text-sm text-slate-500 font-medium leading-tight">
+                            {roleDesc}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-white">
-                        <span className="px-2.5 py-0.5 rounded-md bg-white/20 text-white text-xs font-bold uppercase tracking-wider">
-                          {t('login.selected_tag')}
-                        </span>
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      <div className="flex items-center gap-2">
+                        {isOwner && (
+                          <span className="text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-800 px-3 py-1 rounded-lg border border-amber-200">
+                            {t('login.admin_badge')}
+                          </span>
+                        )}
+                        <svg className="w-6 h-6 text-slate-400 group-hover:text-[#1B8F4A] group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"></path>
                         </svg>
                       </div>
                     </button>
                   );
-                }
-
-                // Normal Inactive State
-                return (
-                  <button
-                    key={user.id}
-                    type="button"
-                    onClick={() => handleSelectUser(user)}
-                    className="w-full h-16 bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-[#1B8F4A] rounded-2xl px-5 flex items-center justify-between transition-all duration-150 shadow-sm group text-left cursor-pointer active:scale-[0.99]"
-                  >
-                    <div className="flex items-center gap-4">
-                      {isOwner ? (
-                        <div className={`w-11 h-11 rounded-xl ${palette.bg} ${palette.text} flex items-center justify-center font-bold`}>
-                          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
-                          </svg>
-                        </div>
-                      ) : (
-                        <div className={`w-11 h-11 rounded-full ${palette.bg} ${palette.text} flex items-center justify-center font-bold text-lg border-2 ${palette.border}`}>
-                          {initial}
-                        </div>
-                      )}
-                      <div className="flex flex-col">
-                        <span className="text-xl font-bold text-slate-900 group-hover:text-[#1B8F4A] leading-tight">
-                          {user.name}
-                        </span>
-                        <span className="text-sm text-slate-500 font-medium leading-tight">
-                          {roleDesc}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {isOwner && (
-                        <span className="text-xs font-bold uppercase tracking-wider bg-amber-50 text-amber-800 px-3 py-1 rounded-lg border border-amber-200">
-                          {t('login.admin_badge')}
-                        </span>
-                      )}
-                      <svg className="w-6 h-6 text-slate-400 group-hover:text-[#1B8F4A] group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"></path>
-                      </svg>
-                    </div>
-                  </button>
-                );
-              }))}
+                }))}
             </div>
 
             {/* Note under list */}
@@ -1337,7 +1417,7 @@ export const Login: React.FC<LoginProps> = ({
 
           {/* RIGHT HALF (7 Columns): Either Empty State (08a) OR Active PIN Pad (08b) */}
           <div className={`col-span-12 lg:col-span-7 ${!selectedUser ? 'hidden lg:flex' : 'flex'} flex-col justify-center pl-0 lg:pl-4`}>
-            
+
             {!selectedUser ? (
               // 08a: Empty state "Naam chuniye"
               <div className="w-full h-[440px] md:h-[480px] bg-[#F4F6F5] rounded-3xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-center p-8">
@@ -1363,7 +1443,7 @@ export const Login: React.FC<LoginProps> = ({
             ) : (
               // 08b: Active User PIN Entry & Large Numpad
               <div className="w-full bg-slate-50/70 border-2 border-slate-200 rounded-3xl p-4 sm:p-6 flex flex-col items-center justify-between min-h-[480px]">
-                
+
                 {/* Header Info for Selected User */}
                 <div className="w-full flex items-center justify-between pb-3 border-b border-slate-200/80 gap-2">
                   <div className="flex items-center gap-3 min-w-0">
@@ -1413,11 +1493,10 @@ export const Login: React.FC<LoginProps> = ({
                     {Array.from({ length: selectedUserPinLength }).map((_, idx) => (
                       <div
                         key={idx}
-                        className={`w-5 h-5 rounded-full border-2 transition-all duration-150 ${
-                          idx < pin.length
-                            ? 'bg-[#1B8F4A] border-[#1B8F4A] scale-110 shadow-sm'
-                            : 'border-slate-300 bg-white shadow-inner'
-                        }`}
+                        className={`w-5 h-5 rounded-full border-2 transition-all duration-150 ${idx < pin.length
+                          ? 'bg-[#1B8F4A] border-[#1B8F4A] scale-110 shadow-sm'
+                          : 'border-slate-300 bg-white shadow-inner'
+                          }`}
                       />
                     ))}
                   </div>
