@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { db, type Shop } from '../db';
 import { hashPin, validatePin } from '../logic/pin';
@@ -83,6 +83,29 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const [authInitialTab, setAuthInitialTab] = useState<'signup' | 'signin'>('signup');
   const [shopSyncId, setShopSyncId] = useState(() => generateShopSyncId());
   const [copiedSyncId, setCopiedSyncId] = useState(false);
+
+  // If user chose "No, Start Clean Cloud Setup" after signing into an empty cloud account,
+  // pre-select Cloud Mode and pre-fill their authenticated email cleanly without re-verifying OTP.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const scope = (await db.settings.get('active_data_scope'))?.value;
+        if (scope === 'cloud_setup_clean') {
+          const emailSetting = (await db.settings.get('owner_email'))?.value as string | undefined;
+          if (!cancelled && emailSetting) {
+            setMode('cloud');
+            setOwnerEmail(emailSetting);
+          }
+        }
+      } catch {
+        // Ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleCopySyncId = () => {
     if (navigator.clipboard) {

@@ -4,16 +4,49 @@ import { addAudit } from '../db/audit';
 import { hashPin, validatePin } from './pin';
 import {
   generateShopSyncId,
+  getCloudConfig,
   runSyncCycle,
+  pullRemoteEvents,
   pullAndHydrateStaffAccounts,
   syncAllUsersToCloud,
   backfillLocalDataToCloud,
   enqueueSyncItem,
   switchToCloudWorkspace,
+  inspectLocalModeData,
+  stashLocalDataAndStartCleanCloud,
   deduplicateLocalUsers,
   startRealtimeSync,
   stopRealtimeSync,
+  emitSyncApplied,
+  type LocalDataSummary,
 } from './cloudSync';
+
+export type CloudSignInScenario =
+  | 'direct_cloud_sync'
+  | 'prompt_push_local_to_empty_cloud'
+  | 'prompt_merge_local_with_cloud'
+  | 'clean_cloud_setup';
+
+export type CloudSignInChoice =
+  | 'push_local'
+  | 'start_clean_cloud'
+  | 'merge_local_and_cloud'
+  | 'use_cloud_only';
+
+export function classifyCloudSignInScenario(params: {
+  hasLocalData: boolean;
+  existingShop: ExistingShopInfo | null;
+  currentScope?: string | null;
+}): CloudSignInScenario {
+  const { hasLocalData, existingShop, currentScope } = params;
+  if (existingShop) {
+    if (!hasLocalData || currentScope === `cloud:${existingShop.id}`) {
+      return 'direct_cloud_sync';
+    }
+    return 'prompt_merge_local_with_cloud';
+  }
+  return hasLocalData ? 'prompt_push_local_to_empty_cloud' : 'clean_cloud_setup';
+}
 
 export interface CloudSessionInfo {
   user: { id: string; email?: string } | null;
@@ -97,82 +130,226 @@ export async function signInOwner(
 }
 
 /**
+ * Pure read-only lookup for an existing cloud shop belonging to the given Supabase user ID.
+ */
+export async function findExistingCloudShop(userId: string): Promise<ExistingShopInfo | null> {
+  try {
+    const { data: shopsData } = await supabase
+      .from('shops')
+      .select('id, shop_name, shop_sync_id')
+      .eq('owner_user_id', userId)
+      .maybeSingle();
+
+    if (shopsData) {
+      return {
+        id: shopsData.id,
+        name: shopsData.shop_name,
+        syncId: shopsData.shop_sync_id,
+      };
+    }
+
+    const { data: memberData } = await supabase
+      .from('shop_members')
+      .select('shop_id, role, shops(id, shop_name, shop_sync_id)')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    const memberShop = (memberData as any)?.shops;
+    if (memberShop) {
+      return {
+        id: memberShop.id,
+        name: memberShop.shop_name,
+        syncId: memberShop.shop_sync_id,
+      };
+    }
+  } catch (lookupErr) {
+    console.warn('Error checking existing shops:', lookupErr);
+  }
+  return null;
+}
+
+/**
+ * Hydrates an existing cloud shop cleanly WITHOUT mixing local-only records into the cloud.
+ * Any prior local-mode records are safely stashed in `local_mode_snapshot`.
+ */
+export async function hydrateExistingCloudShopOnly(
+  existingShop: ExistingShopInfo,
+  cleanEmail: string
+): Promise<void> {
+  await db.settings.put({ key: 'cloud_shop_uuid', value: existingShop.id });
+  await db.settings.put({ key: 'shop_sync_id', value: existingShop.syncId });
+  await db.settings.put({ key: 'cloud_enabled', value: true });
+  await db.settings.put({ key: 'owner_email', value: cleanEmail });
+
+  // Isolate local-only workspace from cloud shop data so local staff/bills never duplicate or mix
+  await switchToCloudWorkspace(existingShop.id, {
+    name: existingShop.name,
+    syncId: existingShop.syncId,
+    ownerEmail: cleanEmail,
+  });
+
+  // 1. Direct pull and hydration of all staff / user accounts into local Dexie (ordered & deduplicated)
+  try {
+    await pullAndHydrateStaffAccounts(existingShop.id);
+  } catch (staffHydrateErr) {
+    console.warn('Initial staff hydration warning:', staffHydrateErr);
+  }
+
+  // 2. Auto-trigger sync cycle to hydrate remote catalog, bills, inventory, batches, and Udhaar
+  try {
+    await runSyncCycle({ force: true });
+  } catch (syncErr) {
+    console.warn('Initial shop hydration warning:', syncErr);
+  }
+
+  // 3. Final deduplication pass and start silent Realtime subscription
+  await deduplicateLocalUsers().catch(() => {});
+  void startRealtimeSync(existingShop.id).catch(() => {});
+}
+
+/**
+ * Merges existing local mode data with an existing cloud shop using strict deduplication
+ * (no duplicate staff like "Suraj Dev", no duplicate bills/stock movements), then syncs both ways.
+ */
+export async function mergeLocalWithCloudShop(
+  existingShop: ExistingShopInfo,
+  cleanEmail: string
+): Promise<void> {
+  await db.settings.put({ key: 'cloud_shop_uuid', value: existingShop.id });
+  await db.settings.put({ key: 'shop_sync_id', value: existingShop.syncId });
+  await db.settings.put({ key: 'cloud_enabled', value: true });
+  await db.settings.put({ key: 'owner_email', value: cleanEmail });
+  await db.settings.put({ key: 'active_data_scope', value: `cloud:${existingShop.id}` });
+  await db.settings.put({ key: 'last_pulled_seq', value: 0 });
+
+  // Update local shop record in place (preserving local shop profile while linking cloud shop)
+  const localShops = await db.shop.toArray();
+  if (localShops.length > 0 && localShops[0].id !== undefined) {
+    await db.shop.update(localShops[0].id, {
+      name: existingShop.name || localShops[0].name,
+      cloudShopUuid: existingShop.id,
+      shopSyncId: existingShop.syncId,
+      ownerEmail: cleanEmail,
+      mode: 'cloud',
+      lastPulledSeq: 0,
+    });
+  } else {
+    await db.shop.add({
+      name: existingShop.name,
+      ownerName: 'Owner',
+      address: '',
+      phone: '',
+      gstNo: '',
+      drugLicenceNos: '',
+      mode: 'cloud',
+      cloudShopUuid: existingShop.id,
+      shopSyncId: existingShop.syncId,
+      ownerEmail: cleanEmail,
+      lastPulledSeq: 0,
+    });
+  }
+
+  // 1. Pull cloud staff first (ordered & deduplicated against local staff like "Suraj Dev")
+  try {
+    await pullAndHydrateStaffAccounts(existingShop.id);
+  } catch (staffErr) {
+    console.warn('Merge staff hydration warning:', staffErr);
+  }
+
+  // 2. Pull all existing cloud events and merge idempotently into local Dexie
+  try {
+    const cfg = await getCloudConfig();
+    await pullRemoteEvents(cfg, existingShop.id);
+  } catch (pullErr) {
+    console.warn('Merge remote pull warning:', pullErr);
+  }
+
+  // 3. Enforce strict user deduplication before pushing merged data back to cloud
+  await deduplicateLocalUsers().catch(() => {});
+
+  // 4. Push merged local + cloud records cleanly to Supabase so all devices stay consistent
+  try {
+    await backfillLocalDataToCloud();
+  } catch (backfillErr) {
+    console.warn('Merge backfill warning:', backfillErr);
+  }
+
+  emitSyncApplied(['shop', 'staff', 'bill', 'medicine', 'batch', 'customer', 'udhaar_payment', 'sync_status']);
+  void startRealtimeSync(existingShop.id).catch(() => {});
+}
+
+/**
+ * Applies the user's explicit decision after signing in with Email OTP:
+ *  - 'push_local': Local setup -> Empty cloud account (YES)
+ *  - 'start_clean_cloud': Local setup -> Empty cloud account (NO)
+ *  - 'merge_local_and_cloud': Local data -> Existing cloud shop (YES)
+ *  - 'use_cloud_only': Local data -> Existing cloud shop (NO)
+ */
+export async function resolveCloudSignInChoice(params: {
+  choice: CloudSignInChoice;
+  email: string;
+  existingShop?: ExistingShopInfo | null;
+  localShopName?: string;
+  shopSyncId?: string;
+}): Promise<{
+  cloudShopUuid?: string;
+  shopName?: string;
+  shopSyncId?: string;
+  startedCleanSetup?: boolean;
+}> {
+  const cleanEmail = params.email.trim().toLowerCase();
+
+  if (params.choice === 'push_local') {
+    const localShop = (await db.shop.toArray())[0];
+    const resolvedName = (params.localShopName || localShop?.name || 'My Medical Store').trim();
+    const prov = await provisionCloudShop(resolvedName, params.shopSyncId || localShop?.shopSyncId);
+    return {
+      cloudShopUuid: prov.shopUuid || undefined,
+      shopName: resolvedName,
+      shopSyncId: prov.shopSyncId,
+    };
+  }
+
+  if (params.choice === 'start_clean_cloud') {
+    await stashLocalDataAndStartCleanCloud(cleanEmail);
+    return {
+      startedCleanSetup: true,
+    };
+  }
+
+  if (params.choice === 'merge_local_and_cloud' && params.existingShop) {
+    await mergeLocalWithCloudShop(params.existingShop, cleanEmail);
+    return {
+      cloudShopUuid: params.existingShop.id,
+      shopName: params.existingShop.name,
+      shopSyncId: params.existingShop.syncId,
+    };
+  }
+
+  if (params.choice === 'use_cloud_only' && params.existingShop) {
+    await hydrateExistingCloudShopOnly(params.existingShop, cleanEmail);
+    return {
+      cloudShopUuid: params.existingShop.id,
+      shopName: params.existingShop.name,
+      shopSyncId: params.existingShop.syncId,
+    };
+  }
+
+  return {};
+}
+
+/**
  * Checks if the user already has an existing shop; if so, hydrates local Dexie and runs syncCycle.
  */
 async function hydrateOrFindExistingShop(
   user: any,
   cleanEmail: string
 ): Promise<{ shop: ExistingShopInfo | null; isNewShop: boolean }> {
-  let existingShop: ExistingShopInfo | null = null;
-  try {
-    const { data: shopsData } = await supabase
-      .from('shops')
-      .select('id, shop_name, shop_sync_id')
-      .eq('owner_user_id', user.id)
-      .maybeSingle();
-
-    if (shopsData) {
-      existingShop = {
-        id: shopsData.id,
-        name: shopsData.shop_name,
-        syncId: shopsData.shop_sync_id,
-      };
-    } else {
-      // Check shop_members table as well
-      const { data: memberData } = await supabase
-        .from('shop_members')
-        .select('shop_id, role, shops(id, shop_name, shop_sync_id)')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      const memberShop = (memberData as any)?.shops;
-      if (memberShop) {
-        existingShop = {
-          id: memberShop.id,
-          name: memberShop.shop_name,
-          syncId: memberShop.shop_sync_id,
-        };
-      }
-    }
-
-    if (existingShop) {
-      // Update local storage with existing shop details
-      await db.settings.put({ key: 'cloud_shop_uuid', value: existingShop.id });
-      await db.settings.put({ key: 'shop_sync_id', value: existingShop.syncId });
-      await db.settings.put({ key: 'cloud_enabled', value: true });
-      await db.settings.put({ key: 'owner_email', value: cleanEmail });
-
-      // Isolate local-only workspace from cloud shop data so local staff/bills never duplicate or mix
-      await switchToCloudWorkspace(existingShop.id, {
-        name: existingShop.name,
-        syncId: existingShop.syncId,
-        ownerEmail: cleanEmail,
-      });
-
-      // 1. Direct pull and hydration of all staff / user accounts into local Dexie (ordered & deduplicated)
-      try {
-        await pullAndHydrateStaffAccounts(existingShop.id);
-      } catch (staffHydrateErr) {
-        console.warn('Initial staff hydration warning:', staffHydrateErr);
-      }
-
-      // 2. Auto-trigger sync cycle to hydrate remote catalog, bills, inventory, batches, and Udhaar
-      try {
-        await runSyncCycle({ force: true });
-      } catch (syncErr) {
-        console.warn('Initial shop hydration warning:', syncErr);
-      }
-
-      // 3. Final deduplication pass and start silent Realtime subscription
-      await deduplicateLocalUsers().catch(() => {});
-      void startRealtimeSync(existingShop.id).catch(() => {});
-
-      return { shop: existingShop, isNewShop: false };
-    }
-  } catch (lookupErr) {
-    console.warn('Error checking existing shops:', lookupErr);
+  const existingShop = await findExistingCloudShop(user.id);
+  if (existingShop) {
+    await hydrateExistingCloudShopOnly(existingShop, cleanEmail);
+    return { shop: existingShop, isNewShop: false };
   }
-
   return { shop: null, isNewShop: true };
 }
 
@@ -308,15 +485,23 @@ export async function sendEmailOtp(
 
 /**
  * Verifies a 6-digit Email OTP and checks for an existing shop on Supabase.
- * Hydrates local Dexie and runs sync cycle if found, or flags isNewShop: true.
+ * When `options.deferHydration` is true (interactive UI), returns the detected
+ * `scenario` and `localSummary` so the UI can ask the user before pushing/merging local data:
+ *  - 'direct_cloud_sync': existing cloud shop with no conflicting local data -> hydrates seamlessly
+ *  - 'prompt_push_local_to_empty_cloud': local data exists + empty cloud account -> prompt YES/NO
+ *  - 'prompt_merge_local_with_cloud': local data exists + existing cloud shop -> prompt YES/NO
+ *  - 'clean_cloud_setup': no local data + empty cloud account -> proceed cleanly with cloud setup
  */
 export async function verifyEmailOtp(
   email: string,
-  token: string
+  token: string,
+  options?: { deferHydration?: boolean }
 ): Promise<{
   user: any;
   shop: ExistingShopInfo | null;
   isNewShop: boolean;
+  scenario?: CloudSignInScenario;
+  localSummary?: LocalDataSummary;
   error: string | null;
   errorCode?: SendOtpErrorCode;
 }> {
@@ -348,6 +533,51 @@ export async function verifyEmailOtp(
     const user = data?.user || (await supabase.auth.getUser()).data.user;
     if (!user) {
       return { user: null, shop: null, isNewShop: false, error: 'User session not found' };
+    }
+
+    if (options?.deferHydration) {
+      const existingShop = await findExistingCloudShop(user.id);
+      const localCheck = await inspectLocalModeData(existingShop?.id);
+      const scenario = classifyCloudSignInScenario({
+        hasLocalData: localCheck.hasLocalData,
+        existingShop,
+        currentScope: localCheck.currentScope,
+      });
+
+      if (scenario === 'direct_cloud_sync' && existingShop) {
+        await hydrateExistingCloudShopOnly(existingShop, cleanEmail);
+        return {
+          user,
+          shop: existingShop,
+          isNewShop: false,
+          scenario,
+          localSummary: localCheck.summary,
+          error: null,
+        };
+      }
+
+      if (scenario === 'clean_cloud_setup') {
+        await db.settings.put({ key: 'owner_email', value: cleanEmail });
+        return {
+          user,
+          shop: null,
+          isNewShop: true,
+          scenario,
+          localSummary: localCheck.summary,
+          error: null,
+        };
+      }
+
+      // Prompt needed: do NOT alter local data or push/pull yet until user chooses
+      await db.settings.put({ key: 'owner_email', value: cleanEmail });
+      return {
+        user,
+        shop: existingShop,
+        isNewShop: !existingShop,
+        scenario,
+        localSummary: localCheck.summary,
+        error: null,
+      };
     }
 
     await db.settings.put({ key: 'owner_email', value: cleanEmail });
@@ -445,7 +675,9 @@ export async function completeCloudSignInFromSession(): Promise<{
 }
 
 /**
- * Signs out the current cloud owner session and updates local settings.
+ * Signs out the current cloud owner session, stops all cloud sync cleanly,
+ * and leaves the device's current data intact and immediately usable in Local Mode
+ * without any future cloud pushes/pulls until signed back in.
  */
 export async function signOutOwner(): Promise<void> {
   stopRealtimeSync();
@@ -457,11 +689,28 @@ export async function signOutOwner(): Promise<void> {
     }
   }
 
+  await db.settings.put({ key: 'cloud_enabled', value: false });
   await db.settings.put({ key: 'owner_email', value: '' });
   await db.settings.delete('cloud_shop_uuid');
   await db.settings.put({ key: 'last_cloud_sync_status', value: 'never' });
   await db.settings.delete('last_cloud_sync_at');
-  await addAudit('Cloud', 'owner_sign_out', 'Owner', 'Signed out of cloud account');
+  await db.settings.put({ key: 'active_data_scope', value: 'local' });
+
+  // Clear pending cloud outbox items so nothing pushes unexpectedly later
+  await db.syncOutbox.where('status').equals('pending').delete().catch(() => {});
+
+  // Keep existing device data usable in Local Mode
+  try {
+    const localShops = await db.shop.toArray();
+    if (localShops.length > 0 && localShops[0].id !== undefined) {
+      await db.shop.update(localShops[0].id, { mode: 'local' });
+    }
+  } catch (err) {
+    console.warn('Could not update local shop mode on sign-out:', err);
+  }
+
+  await addAudit('Cloud', 'owner_sign_out', 'Owner', 'Signed out of cloud account; continuing in Local Mode');
+  emitSyncApplied(['shop', 'sync_status']);
 }
 
 /**

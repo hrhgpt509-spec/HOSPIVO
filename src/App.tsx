@@ -8,6 +8,7 @@ import {
   ensureCloudSyncActive,
   initNetworkSyncListeners,
   stopRealtimeSync,
+  subscribeToSyncUpdates,
 } from './logic/cloudSync';
 import { supabase, isBackendConfigured } from './lib/supabase';
 import { initAndroidBackListener } from './logic/androidBack';
@@ -45,6 +46,19 @@ export function App() {
     }
 
     initApp();
+
+    // Listen for clean cloud setup workspace resets (e.g. user chose "No, Start Clean Cloud Setup")
+    const unsubWorkspaceReset = subscribeToSyncUpdates(() => {
+      db.shop.count().then((count) => {
+        if (count === 0) {
+          setCurrentUser(null);
+          setIsLocked(false);
+          setScreen('setup');
+        }
+      }).catch(() => {});
+    }, ['workspace_reset']);
+
+    return () => unsubWorkspaceReset();
   }, []);
 
   // Register Android Capacitor 'backButton' handler once at app root

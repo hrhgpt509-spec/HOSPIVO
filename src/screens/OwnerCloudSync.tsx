@@ -155,9 +155,11 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     try {
       await signOutOwner();
       setIsAuthenticated(false);
+      setCloudEnabled(false);
       setOwnerEmail('');
       setCloudShopUuid('');
-      triggerFeedback('info', t('cloud_auth.toast_signout_success'));
+      setHighlightConnect(false);
+      triggerFeedback('info', t('cloud_auth.toast_signout_local_mode'));
       await loadData();
     } catch {
       triggerFeedback('error', t('common.error_occurred'));
@@ -290,13 +292,17 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
         shopName={shopName}
         shopSyncId={shopSyncId}
         onSuccess={(sess) => {
+          setIsAuthModalOpen(false);
+          if (sess.startedCleanSetup) {
+            // App root listens for workspace_reset and transitions cleanly to fresh Cloud Setup
+            return;
+          }
           setIsAuthenticated(true);
           setOwnerEmail(sess.email);
           if (sess.cloudShopUuid) setCloudShopUuid(sess.cloudShopUuid);
           if (sess.shopSyncId) setShopSyncId(sess.shopSyncId);
           setCloudEnabled(true);
           setHighlightConnect(false);
-          setIsAuthModalOpen(false);
           void startRealtimeSync(sess.cloudShopUuid).catch(() => {});
           loadData();
         }}

@@ -2058,6 +2058,119 @@ async function restoreWorkspaceSnapshot(snapshot: WorkspaceSnapshot): Promise<vo
   });
 }
 
+export interface LocalDataSummary {
+  shopName: string;
+  usersCount: number;
+  billsCount: number;
+  medicinesCount: number;
+  customersCount: number;
+}
+
+export interface LocalDataCheckResult {
+  hasLocalData: boolean;
+  currentScope: string;
+  summary: LocalDataSummary;
+}
+
+/**
+ * Inspects whether this device currently holds local-mode data that is separate
+ * from the target cloud shop (used to decide whether to prompt before pushing/merging).
+ */
+export async function inspectLocalModeData(
+  targetCloudShopUuid?: string | null
+): Promise<LocalDataCheckResult> {
+  const [
+    scopeItem,
+    shops,
+    usersCount,
+    billsCount,
+    medicinesCount,
+    batchesCount,
+    customersCount,
+    purchasesCount,
+    udhaarCount,
+  ] = await Promise.all([
+    db.settings.get('active_data_scope'),
+    db.shop.toArray(),
+    db.users.count(),
+    db.bills.count(),
+    db.medicines.count(),
+    db.batches.count(),
+    db.customers.count(),
+    db.purchases.count(),
+    db.udhaarPayments.count(),
+  ]);
+
+  const currentScope = typeof scopeItem?.value === 'string' ? scopeItem.value : 'local';
+  const summary: LocalDataSummary = {
+    shopName: shops[0]?.name || '',
+    usersCount,
+    billsCount,
+    medicinesCount,
+    customersCount,
+  };
+
+  // Already operating on this exact cloud shop -> no conflicting local data
+  if (targetCloudShopUuid && currentScope === `cloud:${targetCloudShopUuid}`) {
+    return { hasLocalData: false, currentScope, summary };
+  }
+
+  // Explicitly reset for a clean cloud setup -> no conflicting local data
+  if (currentScope === 'cloud_setup_clean') {
+    return { hasLocalData: false, currentScope, summary };
+  }
+
+  const hasAnyRecords =
+    shops.length > 0 ||
+    usersCount > 0 ||
+    billsCount > 0 ||
+    medicinesCount > 0 ||
+    batchesCount > 0 ||
+    customersCount > 0 ||
+    purchasesCount > 0 ||
+    udhaarCount > 0;
+
+  return {
+    hasLocalData: hasAnyRecords,
+    currentScope,
+    summary,
+  };
+}
+
+/**
+ * Stashes existing local-only data in `local_mode_snapshot` and clears active
+ * operational tables so the user can start a clean Cloud Setup without pushing
+ * or mixing local-only records into the empty cloud account.
+ */
+export async function stashLocalDataAndStartCleanCloud(ownerEmail: string): Promise<void> {
+  stopRealtimeSync();
+  const currentScope = (await db.settings.get('active_data_scope'))?.value as string | undefined;
+
+  if (!currentScope || currentScope === 'local') {
+    const localSnap = await captureWorkspaceSnapshot();
+    const hasAnyLocalData =
+      localSnap.shop.length > 0 ||
+      localSnap.users.length > 0 ||
+      localSnap.bills.length > 0 ||
+      localSnap.medicines.length > 0 ||
+      localSnap.customers.length > 0;
+    if (hasAnyLocalData) {
+      await db.settings.put({ key: 'local_mode_snapshot', value: localSnap });
+    }
+  }
+
+  await clearWorkspaceTables();
+  await db.syncOutbox.clear();
+  await db.settings.delete('cloud_shop_uuid');
+  await db.settings.put({ key: 'last_pulled_seq', value: 0 });
+  await db.settings.put({ key: 'owner_email', value: ownerEmail.trim().toLowerCase() });
+  await db.settings.put({ key: 'cloud_enabled', value: false });
+  await db.settings.put({ key: 'active_data_scope', value: 'cloud_setup_clean' });
+  await db.settings.put({ key: 'last_cloud_sync_status', value: 'never' });
+
+  emitSyncApplied(['workspace_reset', 'shop', 'staff', 'sync_status']);
+}
+
 /**
  * Cleanly switches Dexie into an existing cloud shop workspace without mixing
  * local-only records (bills, staff, inventory) into the cloud shop.

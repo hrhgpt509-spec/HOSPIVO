@@ -322,11 +322,13 @@ describe('cloudSync & remote approvals engine', () => {
       expect(state.chipLabel).toBe('Cloud-enabled · Synced: 10:42');
       expect(state.bannerVisible).toBe(false);
 
-      // After signing out, status flips back to not_connected cleanly
+      // After signing out, cloud sync stops cleanly and device continues in Local Mode
       await signOutOwner();
       const afterSignOut = await getHomeSyncState();
+      expect(afterSignOut.cloudEnabled).toBe(false);
       expect(afterSignOut.isConnected).toBe(false);
-      expect(afterSignOut.status).toBe('not_connected');
+      expect(afterSignOut.status).toBe('local');
+      expect(afterSignOut.chipLabel).toBe('Local mode');
     });
 
     it('returns truthful "Sync nahi hua" with banner when last sync failed', async () => {

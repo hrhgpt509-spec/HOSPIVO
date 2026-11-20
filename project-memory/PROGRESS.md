@@ -387,6 +387,10 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
   - Added `'shop'` and `'settings'` sync support (`OwnerSettings.tsx` shop details, discount limit, auto-lock, approval rules, PIN length/Approval PIN) plus `ensureCustomerForUdhaarBill` and `expiry.ts` supplier-return sync.
   - Added `initNetworkSyncListeners()` handling browser `online`/`offline`, `navigator.connection`, `visibilitychange`, Capacitor `Network`/`App` runtime listeners, and 30s pending-outbox silent flush with zero popup toasts.
 
+- Strict Local vs. Cloud separation & decision prompts (`cloudAuth.ts`, `cloudSync.ts`, `CloudAccountAuth.tsx`, `OwnerCloudSync.tsx`, `Setup.tsx`, `App.tsx` + en/hi/hinglish i18n):
+  - Added scenario classifier (`classifyCloudSignInScenario`) and decision handler (`resolveCloudSignInChoice`) for all 5 auth/sync flows: Local→Empty Cloud prompt (Yes pushes local, No stashes local & opens clean Cloud Setup), direct existing Cloud seamless sync, Local→Existing Cloud prompt (Yes merges with strict deduplication, No isolates local & loads cloud only), and clean Cloud Setup when auth succeeds with no store records.
+  - Updated `signOutOwner()` to stop Realtime/cloud sync cleanly, switch `db.shop` to `mode: 'local'` with `cloud_enabled: false`, and keep existing device data usable locally with no further cloud pushes/pulls until signed back in.
+
 
 
 

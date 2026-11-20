@@ -8,11 +8,15 @@ import { isBackendConfigured } from '../lib/supabase';
 import {
   sendEmailOtp,
   verifyEmailOtp,
-  provisionCloudShop,
+  resolveCloudSignInChoice,
   ACCOUNT_NOT_FOUND_MESSAGE,
   NETWORK_ERROR_MESSAGE,
   RATE_LIMIT_MESSAGE,
+  type CloudSignInScenario,
+  type CloudSignInChoice,
+  type ExistingShopInfo,
 } from '../logic/cloudAuth';
+import type { LocalDataSummary } from '../logic/cloudSync';
 
 export interface CloudAccountAuthProps {
   onSuccess: (session: {
@@ -20,6 +24,7 @@ export interface CloudAccountAuthProps {
     cloudShopUuid?: string;
     shopName?: string;
     shopSyncId?: string;
+    startedCleanSetup?: boolean;
   }) => void;
   onCancel: () => void;
   initialTab?: 'signup' | 'signin';
@@ -62,12 +67,16 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
     return fallback || t('cloud_auth.err_auth_failed');
   };
 
-  const [step, setStep] = useState<'enter_email' | 'enter_otp'>('enter_email');
+  const [step, setStep] = useState<'enter_email' | 'enter_otp' | 'choose_sync_action'>('enter_email');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [pendingScenario, setPendingScenario] = useState<CloudSignInScenario | null>(null);
+  const [pendingExistingShop, setPendingExistingShop] = useState<ExistingShopInfo | null>(null);
+  const [pendingLocalSummary, setPendingLocalSummary] = useState<LocalDataSummary | null>(null);
+  const [verifiedEmail, setVerifiedEmail] = useState('');
 
   const otpInputRef = useRef<HTMLInputElement>(null);
 
@@ -77,6 +86,10 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
   const btnChangeEmail = tButton('cloud_auth.btn_change_email');
   const btnContinueOffline = tButton('cloud_auth.btn_continue_offline');
   const btnBack = tButton('common.btn_back');
+  const btnPushLocalYes = tButton('cloud_auth.decision_push_local_yes');
+  const btnPushLocalNo = tButton('cloud_auth.decision_push_local_no');
+  const btnMergeYes = tButton('cloud_auth.decision_merge_yes');
+  const btnMergeNo = tButton('cloud_auth.decision_merge_no');
 
   const configured = isBackendConfigured();
 
@@ -182,7 +195,7 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
     setError('');
     const cleanEmail = email.trim().toLowerCase();
     try {
-      const res = await verifyEmailOtp(cleanEmail, cleanOtp);
+      const res = await verifyEmailOtp(cleanEmail, cleanOtp, { deferHydration: true });
       if (res.error) {
         setError(otpErrorText(res.errorCode, res.error));
         setIsLoading(false);
@@ -190,20 +203,57 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
       }
 
       if (res.user) {
-        let provisionedUuid = res.shop?.id;
-        if (res.isNewShop && shopName) {
-          const prov = await provisionCloudShop(shopName, shopSyncId);
-          provisionedUuid = prov.shopUuid || undefined;
+        const resolvedEmail = res.user.email || cleanEmail;
+
+        // Scenarios 1, 3 & 5 (when local data exists): ask the user explicitly before pushing/merging
+        if (
+          res.scenario === 'prompt_push_local_to_empty_cloud' ||
+          res.scenario === 'prompt_merge_local_with_cloud'
+        ) {
+          setVerifiedEmail(resolvedEmail);
+          setPendingScenario(res.scenario);
+          setPendingExistingShop(res.shop);
+          setPendingLocalSummary(res.localSummary || null);
+          setStep('choose_sync_action');
+          setIsLoading(false);
+          return;
         }
 
-        triggerFeedback('success', t('cloud_auth.toast_signin_success'));
+        // Scenario 2 (direct existing cloud sync) or Scenario 5 (clean cloud setup with no local data)
         onSuccess({
-          email: res.user.email || cleanEmail,
-          cloudShopUuid: provisionedUuid,
+          email: resolvedEmail,
+          cloudShopUuid: res.shop?.id,
           shopName: res.shop?.name || shopName,
           shopSyncId: res.shop?.syncId || shopSyncId,
         });
       }
+    } catch (err: any) {
+      setError(otpErrorText(undefined, err?.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResolveDecision = async (choice: CloudSignInChoice) => {
+    if (isLoading) return;
+    setIsLoading(true);
+    setError('');
+    try {
+      const result = await resolveCloudSignInChoice({
+        choice,
+        email: verifiedEmail || email.trim().toLowerCase(),
+        existingShop: pendingExistingShop,
+        localShopName: shopName || pendingLocalSummary?.shopName,
+        shopSyncId,
+      });
+
+      onSuccess({
+        email: verifiedEmail || email.trim().toLowerCase(),
+        cloudShopUuid: result.cloudShopUuid,
+        shopName: result.shopName || shopName,
+        shopSyncId: result.shopSyncId || shopSyncId,
+        startedCleanSetup: result.startedCleanSetup,
+      });
     } catch (err: any) {
       setError(otpErrorText(undefined, err?.message));
     } finally {
@@ -293,7 +343,7 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
             </div>
           )}
 
-          {step === 'enter_email' ? (
+          {step === 'enter_email' && (
             /* Step 1: Enter Email */
             <form onSubmit={handleSendEmailOtp} className="flex flex-col gap-5">
               {error && (
@@ -361,7 +411,9 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                 </button>
               </div>
             </form>
-          ) : (
+          )}
+
+          {step === 'enter_otp' && (
             /* Step 2: Enter 6-Digit OTP */
             <form onSubmit={handleVerifyOtp} className="flex flex-col items-center text-center gap-5 animate-fadeIn">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-inner">
@@ -497,6 +549,134 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                 </div>
               </div>
             </form>
+          )}
+
+          {step === 'choose_sync_action' && pendingScenario && (
+            /* Step 3: Explicit Local vs Cloud Data Decision Prompt */
+            <div className="flex flex-col items-center text-center gap-5 animate-fadeIn w-full min-w-0">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-inner shrink-0">
+                <Icon
+                  name={pendingScenario === 'prompt_merge_local_with_cloud' ? 'merge' : 'cloud_upload'}
+                  className="text-[36px]"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 min-w-0 w-full">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                  {pendingScenario === 'prompt_merge_local_with_cloud'
+                    ? t('cloud_auth.decision_merge_title')
+                    : t('cloud_auth.decision_push_local_title')}
+                </span>
+                <h2 className="text-xl sm:text-2xl font-bold text-on-surface leading-snug break-words">
+                  {pendingScenario === 'prompt_merge_local_with_cloud'
+                    ? t('cloud_auth.decision_merge_question')
+                    : t('cloud_auth.decision_push_local_question')}
+                </h2>
+                <p className="text-sm text-on-surface-variant leading-relaxed break-words">
+                  {pendingScenario === 'prompt_merge_local_with_cloud'
+                    ? t('cloud_auth.decision_merge_desc').replace(
+                        '{name}',
+                        pendingExistingShop?.name || shopName || 'Cloud Store'
+                      )
+                    : t('cloud_auth.decision_push_local_desc')}
+                </p>
+              </div>
+
+              {pendingLocalSummary && (
+                <div className="w-full px-4 py-3 rounded-xl bg-surface-container-low border border-outline-variant/40 text-xs sm:text-sm font-semibold text-on-surface-variant flex items-center justify-center gap-2 flex-wrap">
+                  <Icon name="devices" className="text-primary text-[18px] shrink-0" />
+                  <span>
+                    {t('cloud_auth.decision_local_summary')
+                      .replace('{bills}', String(pendingLocalSummary.billsCount))
+                      .replace('{medicines}', String(pendingLocalSummary.medicinesCount))
+                      .replace('{staff}', String(pendingLocalSummary.usersCount))}
+                  </span>
+                </div>
+              )}
+
+              {error && (
+                <div className="w-full p-3.5 bg-error/10 border border-error/30 text-error rounded-xl text-sm font-semibold flex items-center gap-2 text-left">
+                  <Icon name="error" className="text-[20px] shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <div className="w-full flex flex-col gap-3 pt-1">
+                {pendingScenario === 'prompt_push_local_to_empty_cloud' ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => handleResolveDecision('push_local')}
+                      className="min-h-[60px] w-full px-5 py-3 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-[0.99] cursor-pointer font-bold"
+                    >
+                      <Icon name={isLoading ? 'sync' : 'cloud_upload'} className={`text-[22px] shrink-0 ${isLoading ? 'animate-spin' : ''}`} />
+                      <div className="flex flex-col text-left min-w-0">
+                        <span className="text-base font-bold leading-tight">{btnPushLocalYes.main}</span>
+                        {btnPushLocalYes.sub && (
+                          <span className="text-xs text-on-primary/80 font-normal leading-tight mt-0.5">
+                            {btnPushLocalYes.sub}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => handleResolveDecision('start_clean_cloud')}
+                      className="min-h-[60px] w-full px-5 py-3 bg-surface-container hover:bg-surface-container-high disabled:opacity-50 text-on-surface rounded-2xl flex items-center justify-center gap-3 transition-colors cursor-pointer border border-outline-variant/50 font-bold"
+                    >
+                      <Icon name="add_business" className="text-[22px] text-primary shrink-0" />
+                      <div className="flex flex-col text-left min-w-0">
+                        <span className="text-base font-bold leading-tight">{btnPushLocalNo.main}</span>
+                        {btnPushLocalNo.sub && (
+                          <span className="text-xs text-outline font-medium leading-tight mt-0.5">
+                            {btnPushLocalNo.sub}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => handleResolveDecision('merge_local_and_cloud')}
+                      className="min-h-[60px] w-full px-5 py-3 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-[0.99] cursor-pointer font-bold"
+                    >
+                      <Icon name={isLoading ? 'sync' : 'merge'} className={`text-[22px] shrink-0 ${isLoading ? 'animate-spin' : ''}`} />
+                      <div className="flex flex-col text-left min-w-0">
+                        <span className="text-base font-bold leading-tight">{btnMergeYes.main}</span>
+                        {btnMergeYes.sub && (
+                          <span className="text-xs text-on-primary/80 font-normal leading-tight mt-0.5">
+                            {btnMergeYes.sub}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => handleResolveDecision('use_cloud_only')}
+                      className="min-h-[60px] w-full px-5 py-3 bg-surface-container hover:bg-surface-container-high disabled:opacity-50 text-on-surface rounded-2xl flex items-center justify-center gap-3 transition-colors cursor-pointer border border-outline-variant/50 font-bold"
+                    >
+                      <Icon name="cloud_download" className="text-[22px] text-primary shrink-0" />
+                      <div className="flex flex-col text-left min-w-0">
+                        <span className="text-base font-bold leading-tight">{btnMergeNo.main}</span>
+                        {btnMergeNo.sub && (
+                          <span className="text-xs text-outline font-medium leading-tight mt-0.5">
+                            {btnMergeNo.sub}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </main>

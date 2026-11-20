@@ -13,7 +13,11 @@ import {
   verifyEmailOtp,
   completeCloudSignInFromSession,
   createRecoveryOwnerPin,
+  classifyCloudSignInScenario,
+  resolveCloudSignInChoice,
 } from './cloudAuth';
+import { runWithSyncWorkspaceBypass } from '../db';
+import { enqueueSyncItem, getHomeSyncState } from './cloudSync';
 import { verifyPin } from './pin';
 
 function createMockQueryChain(resolvedData: any[] = []) {
@@ -716,5 +720,340 @@ describe('cloudAuth unit tests', () => {
     const invalidPinRes = await createRecoveryOwnerPin({ name: 'Owner', pin: '12' });
     expect(invalidPinRes.success).toBe(false);
     expect(invalidPinRes.error).toBe('owner_pin_length');
+  });
+
+  describe('Strict Local vs Cloud Separation & Decision Prompts (All 5 Scenarios)', () => {
+    it('classifies all 5 sign-in scenarios accurately', () => {
+      // Scenario 1 / 5: Local data + empty cloud -> prompt push local
+      expect(
+        classifyCloudSignInScenario({ hasLocalData: true, existingShop: null, currentScope: 'local' })
+      ).toBe('prompt_push_local_to_empty_cloud');
+
+      // Scenario 2: Fresh device (no local data) + existing cloud -> direct seamless sync
+      expect(
+        classifyCloudSignInScenario({
+          hasLocalData: false,
+          existingShop: { id: 'shop-1', name: 'A', syncId: 'HOSP-1111-2222' },
+          currentScope: 'local',
+        })
+      ).toBe('direct_cloud_sync');
+
+      // Scenario 2b: Already bound to same cloud shop -> direct seamless sync
+      expect(
+        classifyCloudSignInScenario({
+          hasLocalData: true,
+          existingShop: { id: 'shop-1', name: 'A', syncId: 'HOSP-1111-2222' },
+          currentScope: 'cloud:shop-1',
+        })
+      ).toBe('direct_cloud_sync');
+
+      // Scenario 3: Local mode data + existing cloud shop -> prompt merge vs cloud-only
+      expect(
+        classifyCloudSignInScenario({
+          hasLocalData: true,
+          existingShop: { id: 'shop-1', name: 'A', syncId: 'HOSP-1111-2222' },
+          currentScope: 'local',
+        })
+      ).toBe('prompt_merge_local_with_cloud');
+
+      // Scenario 5: No local data + empty cloud account -> clean cloud setup
+      expect(
+        classifyCloudSignInScenario({ hasLocalData: false, existingShop: null, currentScope: 'local' })
+      ).toBe('clean_cloud_setup');
+    });
+
+    it('Scenario 1 (Local -> Empty Cloud): prompts user; NO stashes local data without pushing to cloud; YES provisions & pushes', async () => {
+      await runWithSyncWorkspaceBypass(async () => {
+        await db.users.clear();
+        await db.bills.clear();
+        await db.syncOutbox.clear();
+      });
+
+      await db.users.put({
+        id: 'staff_local_1',
+        name: 'Suraj Dev',
+        role: 'cashier',
+        pinHash: 'h',
+        pinSalt: 's',
+        active: true,
+      });
+
+      vi.spyOn(supabase.auth, 'verifyOtp').mockResolvedValueOnce({
+        data: { user: { id: 'usr-empty-cloud', email: 'empty@cloud.com' } as any, session: {} as any },
+        error: null,
+      });
+      vi.spyOn(supabase, 'from').mockImplementation(() => ({
+        select: vi.fn().mockReturnValue(createMockQueryChain([])),
+      }) as any);
+
+      // Deferred OTP verification must NOT wipe local data or push yet; returns prompt scenario
+      const otpRes = await verifyEmailOtp('empty@cloud.com', '123456', { deferHydration: true });
+      expect(otpRes.error).toBeNull();
+      expect(otpRes.scenario).toBe('prompt_push_local_to_empty_cloud');
+      expect(otpRes.localSummary?.usersCount).toBe(1);
+      expect(await db.users.count()).toBe(1);
+
+      // Choice NO: do NOT push local data to cloud; stash local data cleanly & start clean cloud setup
+      const noRes = await resolveCloudSignInChoice({
+        choice: 'start_clean_cloud',
+        email: 'empty@cloud.com',
+      });
+      expect(noRes.startedCleanSetup).toBe(true);
+      expect(await db.shop.count()).toBe(0);
+      expect(await db.users.count()).toBe(0);
+      expect(await db.syncOutbox.count()).toBe(0);
+      expect((await db.settings.get('active_data_scope'))?.value).toBe('cloud_setup_clean');
+      expect((await db.settings.get('local_mode_snapshot'))?.value).toBeDefined();
+
+      // Now test Choice YES on a fresh local store -> pushes local data to newly provisioned cloud shop
+      await db.settings.put({ key: 'active_data_scope', value: 'local' });
+      await db.shop.add({
+        name: 'Local Push Pharmacy',
+        ownerName: 'Sunil Kumar',
+        address: '',
+        phone: '',
+        gstNo: '',
+        drugLicenceNos: '',
+        mode: 'local',
+      });
+      await db.users.put({
+        id: 'owner',
+        name: 'Sunil Kumar',
+        role: 'owner',
+        pinHash: 'oh',
+        pinSalt: 'os',
+        active: true,
+      });
+
+      const pushedEvents: any[] = [];
+      vi.spyOn(supabase.auth, 'getUser').mockResolvedValue({
+        data: { user: { id: 'usr-empty-cloud', email: 'empty@cloud.com' } as any },
+        error: null,
+      });
+      vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
+        data: { session: { user: { id: 'usr-empty-cloud', email: 'empty@cloud.com' } } as any },
+        error: null,
+      });
+      vi.spyOn(supabase, 'from').mockImplementation((table: string) => {
+        if (table === 'shops') {
+          return {
+            select: vi.fn().mockReturnValue({
+              or: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+              }),
+            }),
+            insert: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({ data: { id: 'shop-new-999' }, error: null }),
+              }),
+            }),
+          } as any;
+        }
+        if (table === 'shop_members') {
+          return {
+            select: vi.fn().mockReturnValue(createMockQueryChain([])),
+            insert: vi.fn().mockResolvedValue({ error: null }),
+          } as any;
+        }
+        if (table === 'hospivo_sync_events') {
+          return {
+            upsert: vi.fn().mockImplementation((evts: any[]) => {
+              pushedEvents.push(...evts);
+              return Promise.resolve({ error: null });
+            }),
+            insert: vi.fn().mockResolvedValue({ error: null }),
+            select: vi.fn().mockReturnValue(createMockQueryChain([])),
+          } as any;
+        }
+        return { select: vi.fn().mockReturnValue(createMockQueryChain([])) } as any;
+      });
+
+      const yesRes = await resolveCloudSignInChoice({
+        choice: 'push_local',
+        email: 'empty@cloud.com',
+        localShopName: 'Local Push Pharmacy',
+      });
+      expect(yesRes.cloudShopUuid).toBe('shop-new-999');
+      expect(pushedEvents.some((e) => e.entity_type === 'staff' && e.entity_id === 'owner')).toBe(true);
+    });
+
+    it('Scenario 3 (Local Data -> Existing Cloud Shop): YES merges with strict staff deduplication (no duplicate Suraj Dev); NO switches cleanly without leaking local bills', async () => {
+      await runWithSyncWorkspaceBypass(async () => {
+        await db.users.clear();
+        await db.bills.clear();
+        await db.syncOutbox.clear();
+      });
+      await db.settings.put({ key: 'active_data_scope', value: 'local' });
+
+      // Device has local "Suraj Dev" (staff_local_1) + local bill
+      await db.users.put({
+        id: 'staff_local_1',
+        name: 'Suraj Dev',
+        role: 'cashier',
+        pinHash: 'lh',
+        pinSalt: 'ls',
+        active: true,
+      });
+      await db.bills.add({
+        billNo: 'LOCAL-MERGE/0001',
+        financialYear: '2026-27',
+        date: '2026-11-20',
+        customerName: 'Local Buyer',
+        customerPhone: '',
+        doctorName: '',
+        subtotalPaise: 5000,
+        discountPaise: 0,
+        discountPercent: 0,
+        roundOffPaise: 0,
+        totalPaise: 5000,
+        taxablePaise: 4464,
+        gstPaise: 536,
+        paymentMode: 'cash',
+        cashReceivedPaise: 5000,
+        changePaise: 0,
+        status: 'completed',
+        cashierId: 'staff_local_1',
+        cashierName: 'Suraj Dev',
+        createdAt: '2026-11-20T09:00:00.000Z',
+      });
+
+      const cloudEvents = [
+        {
+          seq: 1,
+          shop_id: 'shop-existing-555',
+          entity_type: 'staff',
+          entity_id: 'staff_cloud_99',
+          payload_json: JSON.stringify({
+            id: 'staff_cloud_99',
+            name: 'Suraj Dev',
+            role: 'cashier',
+            pinHash: 'ch',
+            pinSalt: 'cs',
+            active: true,
+          }),
+        },
+        {
+          seq: 2,
+          shop_id: 'shop-existing-555',
+          entity_type: 'bill',
+          entity_id: '200',
+          payload_json: JSON.stringify({
+            bill: {
+              id: 200,
+              billNo: 'CLOUD-MERGE/0001',
+              financialYear: '2026-27',
+              date: '2026-11-20',
+              customerName: 'Laptop Buyer',
+              customerPhone: '',
+              doctorName: '',
+              subtotalPaise: 12000,
+              discountPaise: 0,
+              discountPercent: 0,
+              roundOffPaise: 0,
+              totalPaise: 12000,
+              taxablePaise: 10714,
+              gstPaise: 1286,
+              paymentMode: 'upi',
+              cashReceivedPaise: 12000,
+              changePaise: 0,
+              status: 'completed',
+              cashierId: 'staff_cloud_99',
+              cashierName: 'Suraj Dev',
+              createdAt: '2026-11-20T10:00:00.000Z',
+            },
+            items: [],
+          }),
+        },
+      ];
+
+      const pushedDuringMerge: any[] = [];
+      vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
+        data: { session: { user: { id: 'usr-merge', email: 'merge@cloud.com' } } as any },
+        error: null,
+      });
+      vi.spyOn(supabase, 'from').mockImplementation((table: string) => {
+        if (table === 'hospivo_sync_events') {
+          return {
+            upsert: vi.fn().mockImplementation((evts: any[]) => {
+              pushedDuringMerge.push(...evts);
+              return Promise.resolve({ error: null });
+            }),
+            insert: vi.fn().mockResolvedValue({ error: null }),
+            select: vi.fn().mockReturnValue(createMockQueryChain(cloudEvents)),
+          } as any;
+        }
+        return {
+          upsert: vi.fn().mockResolvedValue({ error: null }),
+          select: vi.fn().mockReturnValue(createMockQueryChain([])),
+        } as any;
+      });
+
+      const existingShop = {
+        id: 'shop-existing-555',
+        name: 'Existing Cloud Pharmacy',
+        syncId: 'HOSP-EXST-5555',
+      };
+
+      // YES: Merge local + cloud with strict deduplication
+      await resolveCloudSignInChoice({
+        choice: 'merge_local_and_cloud',
+        email: 'merge@cloud.com',
+        existingShop,
+      });
+
+      const mergedUsers = await db.users.toArray();
+      expect(mergedUsers.length).toBe(1); // Suraj Dev NOT duplicated!
+      expect(mergedUsers[0].name).toBe('Suraj Dev');
+
+      const mergedBills = await db.bills.toArray();
+      expect(mergedBills.map((b) => b.billNo).sort()).toEqual(['CLOUD-MERGE/0001', 'LOCAL-MERGE/0001']);
+      expect(pushedDuringMerge.some((e) => e.entity_type === 'bill')).toBe(true);
+
+      // NO: Use cloud only — local bill is stashed, NEVER leaked into cloud
+      await db.settings.put({ key: 'active_data_scope', value: 'local' });
+      pushedDuringMerge.length = 0;
+
+      await resolveCloudSignInChoice({
+        choice: 'use_cloud_only',
+        email: 'merge@cloud.com',
+        existingShop,
+      });
+
+      const cloudOnlyBills = await db.bills.toArray();
+      expect(cloudOnlyBills.map((b) => b.billNo)).toEqual(['CLOUD-MERGE/0001']);
+      expect(pushedDuringMerge.length).toBe(0);
+    });
+
+    it('Scenario 4 (Sign-Out): stops cloud sync cleanly and keeps device data usable in Local Mode with zero future cloud queueing', async () => {
+      await db.settings.put({ key: 'cloud_enabled', value: true });
+      await db.settings.put({ key: 'cloud_shop_uuid', value: 'shop-signout-1' });
+      await db.settings.put({ key: 'owner_email', value: 'owner@signout.com' });
+      const shop = (await db.shop.toArray())[0];
+      if (shop?.id) await db.shop.update(shop.id, { mode: 'cloud' });
+
+      await db.users.put({
+        id: 'owner',
+        name: 'Sunil Kumar',
+        role: 'owner',
+        pinHash: 'h',
+        pinSalt: 's',
+        active: true,
+      });
+
+      vi.spyOn(supabase.auth, 'signOut').mockResolvedValueOnce({ error: null });
+
+      await signOutOwner();
+
+      // Cloud sync disabled, device data stays intact & usable in Local Mode
+      const homeState = await getHomeSyncState();
+      expect(homeState.cloudEnabled).toBe(false);
+      expect(homeState.status).toBe('local');
+      expect((await db.shop.toArray())[0]?.mode).toBe('local');
+      expect((await db.users.get('owner'))?.name).toBe('Sunil Kumar');
+
+      // Future writes do NOT enqueue cloud sync items until signed back in
+      const queuedAfterSignOut = await enqueueSyncItem('bill', 999, { billNo: 'LOCAL-ONLY/1' });
+      expect(queuedAfterSignOut).toBeNull();
+    });
   });
 });
