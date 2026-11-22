@@ -15,6 +15,11 @@ import { initAndroidBackListener } from './logic/androidBack';
 import { WelcomeIntro } from './screens/WelcomeIntro';
 import { ShopSelector } from './screens/ShopSelector';
 import { hasSeenIntro, markIntroSeen, resolveBootScreen, nextScreen } from './logic/onboarding';
+import {
+  cancelNewShopSetup,
+  prepareNewShopSetup,
+  registerCurrentShopInDirectory,
+} from './logic/multiShop';
 
 // Default 5 minutes of inactivity triggers auto-lock
 export const DEFAULT_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
@@ -29,6 +34,7 @@ export function App() {
   const [screen, setScreen] = useState<AppScreen>('loading');
   const [isLocked, setIsLocked] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<DBUser | null>(null);
+  const [isAddingShop, setIsAddingShop] = useState<boolean>(false);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -53,12 +59,29 @@ export function App() {
         if (count === 0) {
           setCurrentUser(null);
           setIsLocked(false);
+          setIsAddingShop(false);
           setScreen('setup');
         }
       }).catch(() => {});
     }, ['workspace_reset']);
 
-    return () => unsubWorkspaceReset();
+    // When switching to a different account/cloud shop from inside Home ("Keep separate"),
+    // unmount the old user's Home immediately so zero previous-account state stays visible.
+    const unsubWorkspaceSwitched = subscribeToSyncUpdates(() => {
+      setCurrentUser((prevUser) => {
+        if (prevUser) {
+          setIsLocked(false);
+          setScreen('shop_select');
+          return null;
+        }
+        return prevUser;
+      });
+    }, ['workspace_switched']);
+
+    return () => {
+      unsubWorkspaceReset();
+      unsubWorkspaceSwitched();
+    };
   }, []);
 
   // Register Android Capacitor 'backButton' handler once at app root
@@ -178,14 +201,38 @@ export function App() {
         <Setup
           onComplete={() => {
             void markIntroSeen();
+            void registerCurrentShopInDirectory().catch(() => {});
+            setIsAddingShop(false);
             setScreen(nextScreen('setup_complete'));
           }}
+          onCancel={
+            isAddingShop
+              ? () => {
+                  void cancelNewShopSetup().then(() => {
+                    setIsAddingShop(false);
+                    setScreen(nextScreen('cancel_add_shop'));
+                  });
+                }
+              : undefined
+          }
         />
       );
     }
 
     if (screen === 'shop_select') {
-      return <ShopSelector onEnter={() => setScreen(nextScreen('shop_entered'))} />;
+      return (
+        <ShopSelector
+          onEnter={() => setScreen(nextScreen('shop_entered'))}
+          onAddShop={() => {
+            void prepareNewShopSetup().then(() => {
+              setCurrentUser(null);
+              setIsLocked(false);
+              setIsAddingShop(true);
+              setScreen(nextScreen('add_shop'));
+            });
+          }}
+        />
+      );
     }
 
     if (screen === 'home') {

@@ -1914,10 +1914,39 @@ export async function pullAndHydrateStaffAccounts(cloudShopUuid: string): Promis
 }
 
 // ---------------------------------------------------------------------------
-// WORKSPACE ISOLATION (LOCAL-ONLY VS CLOUD ACCOUNT)
+// WORKSPACE ISOLATION (LOCAL-ONLY VS CLOUD ACCOUNT & MULTI-SHOP)
 // ---------------------------------------------------------------------------
 
-interface WorkspaceSnapshot {
+/**
+ * Keys in db.settings that belong strictly to a single shop/account workspace
+ * and MUST be snapshotted and cleared whenever switching accounts or shops.
+ * Device-global keys (intro_seen, language, device_id, device_name, shop_directory,
+ * workspace_snapshot::*, local_mode_snapshot, active_data_scope, cloud_url, cloud_anon_key)
+ * are intentionally excluded.
+ */
+export const SHOP_SCOPED_SETTING_KEYS = [
+  'approval_pin',
+  'approval_rules',
+  'approval_pin_lock',
+  'discount_limit',
+  'auto_lock_minutes',
+  'pinLength',
+  'fullscreenOnLogin',
+  'backup_folder',
+  'backup_dir_name',
+  'backup_history',
+  'lastVerifiedBackupAt',
+  'lastBackupAt',
+  'shop_sync_id',
+  'cloud_shop_uuid',
+  'cloud_enabled',
+  'last_pulled_seq',
+  'last_cloud_sync_at',
+  'last_cloud_sync_status',
+  'last_cloud_sync_error',
+] as const;
+
+export interface WorkspaceSnapshot {
   savedAt: string;
   shop: any[];
   users: any[];
@@ -1938,9 +1967,30 @@ interface WorkspaceSnapshot {
   regularReminders: any[];
   dailyClosings: any[];
   approvalRequests: any[];
+  auditLog?: any[];
+  syncOutbox?: any[];
+  shopSettings?: Record<string, unknown>;
 }
 
-async function captureWorkspaceSnapshot(): Promise<WorkspaceSnapshot> {
+function isShopScopedSettingKey(key: string): boolean {
+  if ((SHOP_SCOPED_SETTING_KEYS as readonly string[]).includes(key)) {
+    return true;
+  }
+  return key.startsWith('login_lock_') || key.startsWith('approval_lock_');
+}
+
+export async function clearShopScopedSettings(preserveKeys: string[] = []): Promise<void> {
+  const preserve = new Set(preserveKeys);
+  const allSettings = await db.settings.toArray();
+  const keysToDelete = allSettings
+    .map((s) => s.key)
+    .filter((k) => !preserve.has(k) && isShopScopedSettingKey(k));
+  if (keysToDelete.length > 0) {
+    await db.settings.bulkDelete(keysToDelete);
+  }
+}
+
+export async function captureWorkspaceSnapshot(): Promise<WorkspaceSnapshot> {
   const [
     shop,
     users,
@@ -1961,6 +2011,9 @@ async function captureWorkspaceSnapshot(): Promise<WorkspaceSnapshot> {
     regularReminders,
     dailyClosings,
     approvalRequests,
+    auditLog,
+    syncOutbox,
+    allSettings,
   ] = await Promise.all([
     db.shop.toArray(),
     db.users.toArray(),
@@ -1981,7 +2034,17 @@ async function captureWorkspaceSnapshot(): Promise<WorkspaceSnapshot> {
     db.regularReminders.toArray(),
     db.dailyClosings.toArray(),
     db.approvalRequests.toArray(),
+    db.auditLog.toArray(),
+    db.syncOutbox.toArray(),
+    db.settings.toArray(),
   ]);
+
+  const shopSettings: Record<string, unknown> = {};
+  for (const s of allSettings) {
+    if (isShopScopedSettingKey(s.key)) {
+      shopSettings[s.key] = s.value;
+    }
+  }
 
   return {
     savedAt: new Date().toISOString(),
@@ -2004,10 +2067,13 @@ async function captureWorkspaceSnapshot(): Promise<WorkspaceSnapshot> {
     regularReminders,
     dailyClosings,
     approvalRequests,
+    auditLog,
+    syncOutbox,
+    shopSettings,
   };
 }
 
-async function clearWorkspaceTables(): Promise<void> {
+export async function clearWorkspaceTables(): Promise<void> {
   await runWithSyncWorkspaceBypass(async () => {
     await Promise.all([
       db.shop.clear(),
@@ -2029,13 +2095,16 @@ async function clearWorkspaceTables(): Promise<void> {
       db.regularReminders.clear(),
       db.dailyClosings.clear(),
       db.approvalRequests.clear(),
+      db.auditLog.clear(),
+      db.syncOutbox.clear(),
     ]);
   });
 }
 
-async function restoreWorkspaceSnapshot(snapshot: WorkspaceSnapshot): Promise<void> {
+export async function restoreWorkspaceSnapshot(snapshot: WorkspaceSnapshot): Promise<void> {
   await runWithSyncWorkspaceBypass(async () => {
     await clearWorkspaceTables();
+    await clearShopScopedSettings();
     if (snapshot.shop?.length) await db.shop.bulkPut(snapshot.shop);
     if (snapshot.users?.length) await db.users.bulkPut(snapshot.users);
     if (snapshot.medicines?.length) await db.medicines.bulkPut(snapshot.medicines);
@@ -2055,6 +2124,15 @@ async function restoreWorkspaceSnapshot(snapshot: WorkspaceSnapshot): Promise<vo
     if (snapshot.regularReminders?.length) await db.regularReminders.bulkPut(snapshot.regularReminders);
     if (snapshot.dailyClosings?.length) await db.dailyClosings.bulkPut(snapshot.dailyClosings);
     if (snapshot.approvalRequests?.length) await db.approvalRequests.bulkPut(snapshot.approvalRequests);
+    if (snapshot.auditLog?.length) await db.auditLog.bulkPut(snapshot.auditLog);
+    if (snapshot.syncOutbox?.length) await db.syncOutbox.bulkPut(snapshot.syncOutbox);
+    if (snapshot.shopSettings) {
+      for (const [key, value] of Object.entries(snapshot.shopSettings)) {
+        if (isShopScopedSettingKey(key)) {
+          await db.settings.put({ key, value });
+        }
+      }
+    }
   });
 }
 
@@ -2115,8 +2193,12 @@ export async function inspectLocalModeData(
     return { hasLocalData: false, currentScope, summary };
   }
 
-  // Explicitly reset for a clean cloud setup -> no conflicting local data
-  if (currentScope === 'cloud_setup_clean') {
+  // Explicitly reset for a clean cloud setup or adding a new shop -> no conflicting local data
+  if (
+    currentScope === 'cloud_setup_clean' ||
+    currentScope === 'cloud_setup_new_shop' ||
+    currentScope === 'local_setup_new_shop'
+  ) {
     return { hasLocalData: false, currentScope, summary };
   }
 
@@ -2138,30 +2220,35 @@ export async function inspectLocalModeData(
 }
 
 /**
- * Stashes existing local-only data in `local_mode_snapshot` and clears active
- * operational tables so the user can start a clean Cloud Setup without pushing
- * or mixing local-only records into the empty cloud account.
+ * Stashes existing workspace data safely under its own snapshot key and clears ALL
+ * active operational tables (including auditLog, syncOutbox) and ALL shop-scoped settings
+ * so a new cloud account starts 100% isolated with zero bleed-over from any previous account.
  */
 export async function stashLocalDataAndStartCleanCloud(ownerEmail: string): Promise<void> {
   stopRealtimeSync();
   const currentScope = (await db.settings.get('active_data_scope'))?.value as string | undefined;
 
-  if (!currentScope || currentScope === 'local') {
-    const localSnap = await captureWorkspaceSnapshot();
-    const hasAnyLocalData =
-      localSnap.shop.length > 0 ||
-      localSnap.users.length > 0 ||
-      localSnap.bills.length > 0 ||
-      localSnap.medicines.length > 0 ||
-      localSnap.customers.length > 0;
-    if (hasAnyLocalData) {
-      await db.settings.put({ key: 'local_mode_snapshot', value: localSnap });
+  const snap = await captureWorkspaceSnapshot();
+  const hasAnyData =
+    snap.shop.length > 0 ||
+    snap.users.length > 0 ||
+    snap.bills.length > 0 ||
+    snap.medicines.length > 0 ||
+    snap.customers.length > 0 ||
+    (snap.auditLog?.length ?? 0) > 0;
+
+  if (hasAnyData) {
+    if (!currentScope || currentScope === 'local' || currentScope.startsWith('local:')) {
+      await db.settings.put({ key: 'local_mode_snapshot', value: snap });
+    }
+    if (currentScope && !currentScope.endsWith('_setup_clean') && !currentScope.endsWith('_setup_new_shop')) {
+      await db.settings.put({ key: `workspace_snapshot::${currentScope}`, value: snap });
     }
   }
 
+  // Strictly wipe all 21 workspace tables (including auditLog & syncOutbox) and all shop-scoped settings
   await clearWorkspaceTables();
-  await db.syncOutbox.clear();
-  await db.settings.delete('cloud_shop_uuid');
+  await clearShopScopedSettings();
   await db.settings.put({ key: 'last_pulled_seq', value: 0 });
   await db.settings.put({ key: 'owner_email', value: ownerEmail.trim().toLowerCase() });
   await db.settings.put({ key: 'cloud_enabled', value: false });
@@ -2173,8 +2260,8 @@ export async function stashLocalDataAndStartCleanCloud(ownerEmail: string): Prom
 
 /**
  * Cleanly switches Dexie into an existing cloud shop workspace without mixing
- * local-only records (bills, staff, inventory) into the cloud shop.
- * Preserves local-only data inside `local_mode_snapshot` so switching back to Local Mode restores it cleanly.
+ * any previous account's or local-only records (bills, staff, inventory, Udhaar, auditLog, settings).
+ * Preserves the prior workspace safely under its own snapshot key.
  */
 export async function switchToCloudWorkspace(
   cloudShopUuid: string,
@@ -2212,23 +2299,30 @@ export async function switchToCloudWorkspace(
     return { switched: false };
   }
 
-  // Save local-only data snapshot before switching from local mode to an existing cloud shop
-  if (!currentScope || currentScope === 'local') {
-    const localSnap = await captureWorkspaceSnapshot();
-    const hasAnyLocalData =
-      localSnap.shop.length > 0 ||
-      localSnap.users.length > 0 ||
-      localSnap.bills.length > 0 ||
-      localSnap.medicines.length > 0 ||
-      localSnap.customers.length > 0;
-    if (hasAnyLocalData) {
-      await db.settings.put({ key: 'local_mode_snapshot', value: localSnap });
+  // Save prior workspace snapshot before switching so nothing is lost and nothing bleeds over
+  const priorSnap = await captureWorkspaceSnapshot();
+  const hasAnyPriorData =
+    priorSnap.shop.length > 0 ||
+    priorSnap.users.length > 0 ||
+    priorSnap.bills.length > 0 ||
+    priorSnap.medicines.length > 0 ||
+    priorSnap.customers.length > 0;
+  if (hasAnyPriorData) {
+    if (!currentScope || currentScope === 'local' || currentScope.startsWith('local:')) {
+      await db.settings.put({ key: 'local_mode_snapshot', value: priorSnap });
+    }
+    if (currentScope && !currentScope.endsWith('_setup_clean') && !currentScope.endsWith('_setup_new_shop')) {
+      await db.settings.put({ key: `workspace_snapshot::${currentScope}`, value: priorSnap });
     }
   }
 
-  // Clear local operational tables & outbox so local-only records never duplicate or leak into cloud shop
+  // Strictly clear ALL operational tables (including auditLog & syncOutbox) and shop-scoped settings
   await clearWorkspaceTables();
-  await db.syncOutbox.clear();
+  await clearShopScopedSettings(['cloud_shop_uuid', 'shop_sync_id', 'cloud_enabled']);
+  await db.settings.put({ key: 'cloud_shop_uuid', value: cloudShopUuid });
+  await db.settings.put({ key: 'shop_sync_id', value: shopMeta.syncId });
+  await db.settings.put({ key: 'cloud_enabled', value: true });
+  await db.settings.put({ key: 'owner_email', value: shopMeta.ownerEmail });
   await db.settings.put({ key: 'last_pulled_seq', value: 0 });
   await db.settings.put({ key: 'active_data_scope', value: targetScope });
 
@@ -2246,7 +2340,7 @@ export async function switchToCloudWorkspace(
     lastPulledSeq: 0,
   });
 
-  emitSyncApplied(['shop', 'staff', 'bill', 'medicine', 'batch', 'customer', 'udhaar_payment']);
+  emitSyncApplied(['workspace_switched', 'shop', 'staff', 'bill', 'medicine', 'batch', 'customer', 'udhaar_payment']);
   return { switched: true };
 }
 

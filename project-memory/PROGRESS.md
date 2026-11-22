@@ -396,6 +396,11 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
   - After setup (or cloud sign-in) the app shows "Select Your Shop" (name, details, Local/Cloud badge, staff count) then "Who is using?"; "+ Add Another Shop" shows Coming Soon (no schema change); "Switch Shop" chip added on Who-is-using header. Returning users still boot straight to Who-is-using.
   - Added `onboarding.test.ts`.
 
+- Strict account/shop isolation on "Keep Separate" & real Multi-Shop management (`cloudSync.ts`, `cloudAuth.ts`, `multiShop.ts`, `ShopSelector.tsx`, `Setup.tsx`, `App.tsx` + en/hi/hinglish i18n):
+  - Expanded workspace snapshots and clearing to cover ALL 21 Dexie tables (including `auditLog` and `syncOutbox`) plus all shop-scoped `db.settings` (`approval_pin`, `discount_limit`, `approval_rules`, `auto_lock_minutes`, `pinLength`, `shop_sync_id`, backup history, lock states) so signing out and signing into a new account with "Keep separate" leaves zero previous-account bleed-over.
+  - Updated `provisionCloudShop(..., { forceCreateNew: true })` and `listCloudShopsForUser()` so new accounts and additional branches always create/list separate shops without overwriting or mixing with previous shops.
+  - Enabled functional multi-shop creation and switching in `ShopSelector.tsx` (`+ Add Another Shop`, per-shop isolated workspace switching & cloud hydration, zero popups) and added `multiShop.test.ts`.
+
 
 
 

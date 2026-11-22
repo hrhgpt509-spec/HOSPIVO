@@ -1836,11 +1836,17 @@ export interface TranslationSchema {
     title: string;
     sub: string;
     current_label: string;
+    other_shops_label: string;
+    active_badge: string;
     badge_cloud: string;
     badge_local: string;
     staff_count: string;
     btn_enter: ButtonLabel;
     add_shop: string;
+    add_shop_sub: string;
+    switching: string;
+    btn_cancel_add: ButtonLabel;
+    cloud_account_label: string;
     coming_soon: string;
     coming_soon_msg: string;
     btn_switch_shop: ButtonLabel;

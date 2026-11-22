@@ -41,11 +41,13 @@ describe('shop selector navigation flow', () => {
     await db.users.clear();
   });
 
-  it('routes intro -> setup -> Select Your Shop -> Who is using? and back via Switch Shop', () => {
+  it('routes intro -> setup -> Select Your Shop -> Who is using? and back via Switch Shop / Add Shop', () => {
     expect(nextScreen('intro_done')).toBe('setup');
     expect(nextScreen('setup_complete')).toBe('shop_select');
     expect(nextScreen('shop_entered')).toBe('login');
     expect(nextScreen('switch_shop')).toBe('shop_select');
+    expect(nextScreen('add_shop')).toBe('setup');
+    expect(nextScreen('cancel_add_shop')).toBe('shop_select');
   });
 
   it('counts only active staff profiles for the shop card', async () => {

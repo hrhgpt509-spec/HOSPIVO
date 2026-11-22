@@ -27,6 +27,10 @@ import {
 } from '../logic/cloudSync';
 import { provisionCloudShop } from '../logic/cloudAuth';
 import {
+  PREVIOUS_WORKSPACE_KEY,
+  registerCurrentShopInDirectory,
+} from '../logic/multiShop';
+import {
   isDirectoryPickerSupported,
   pickBackupDirectory,
   writeBackupToDirectoryHandle,
@@ -38,6 +42,8 @@ import { downloadSampleCsvTemplate } from '../logic/medicineImport';
 
 interface SetupProps {
   onComplete: () => void;
+  /** Optional cancel handler shown on Step 1 when adding another shop from Shop Selector. */
+  onCancel?: () => void;
 }
 
 interface AddedStaffMember {
@@ -48,7 +54,7 @@ interface AddedStaffMember {
   pinSalt: string;
 }
 
-export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
+export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
   const { t } = useTranslation();
   const isNativeAndroid = Capacitor.isNativePlatform();
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8>(1);
@@ -57,7 +63,10 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   useBackHandler(step > 1, () => {
     setStep((prev) => (prev > 1 ? ((prev - 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8) : prev));
   });
+  useBackHandler(step === 1 && Boolean(onCancel), () => onCancel?.());
   useBackHandler(isImportingInSetup, () => setIsImportingInSetup(false));
+
+  const btnCancelAdd = tButton('shop_select.btn_cancel_add');
 
   const btnBack = tButton('common.btn_back');
   const btnNext = tButton('common.btn_next');
@@ -84,14 +93,14 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
   const [shopSyncId, setShopSyncId] = useState(() => generateShopSyncId());
   const [copiedSyncId, setCopiedSyncId] = useState(false);
 
-  // If user chose "No, Start Clean Cloud Setup" after signing into an empty cloud account,
+  // If user chose "No, Start Clean Cloud Setup" or "+ Add Another Shop" while signed in,
   // pre-select Cloud Mode and pre-fill their authenticated email cleanly without re-verifying OTP.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const scope = (await db.settings.get('active_data_scope'))?.value;
-        if (scope === 'cloud_setup_clean') {
+        if (scope === 'cloud_setup_clean' || scope === 'cloud_setup_new_shop') {
           const emailSetting = (await db.settings.get('owner_email'))?.value as string | undefined;
           if (!cancelled && emailSetting) {
             setMode('cloud');
@@ -498,17 +507,26 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
       await addAudit('Setup', 'staff_created', staff.name, 'Staff member added with hashed PIN');
     }
 
+    const normalizedSyncId = shopSyncId.trim().toUpperCase();
     if (mode === 'cloud') {
       try {
-        const prov = await provisionCloudShop(formattedShopName, shopSyncId.trim().toUpperCase());
+        const prov = await provisionCloudShop(formattedShopName, normalizedSyncId, {
+          forceCreateNew: !cloudShopUuid,
+        });
         if (prov?.shopUuid) {
           await db.settings.put({ key: 'cloud_shop_uuid', value: prov.shopUuid });
+          await db.settings.put({ key: 'active_data_scope', value: `cloud:${prov.shopUuid}` });
         }
         await runSyncCycle({ force: true });
       } catch (err) {
         console.warn('Could not provision cloud shop during setup completion:', err);
       }
+    } else {
+      await db.settings.put({ key: 'active_data_scope', value: `local:${normalizedSyncId}` });
     }
+
+    await db.settings.delete(PREVIOUS_WORKSPACE_KEY).catch(() => {});
+    await registerCurrentShopInDirectory().catch(() => {});
 
     // 6. Audit entry for setup completion
     await addAudit('Setup', 'setup_complete', shopName.trim(), 'Initial setup completed successfully');
@@ -647,6 +665,19 @@ export const Setup: React.FC<SetupProps> = ({ onComplete }) => {
       <div className="w-full min-h-dvh overflow-x-clip flex items-start sm:items-center justify-center px-3 sm:px-6 md:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-b from-[#EBF7F0] to-[#E3F2E9] select-none">
         <main className="w-full min-w-0 max-w-[1240px] min-h-[auto] sm:min-h-[640px] lg:min-h-[836px] bg-white rounded-3xl shadow-[0_12px_40px_rgba(27,143,74,0.08)] border border-[#D5E5DC] flex flex-col justify-between gap-4 px-4 sm:px-8 md:px-12 py-5 sm:py-8 overflow-x-clip">
           {renderProgress(1)}
+
+          {onCancel && (
+            <div className="flex items-center justify-start">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="min-h-[44px] px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm flex items-center gap-2 cursor-pointer transition-colors"
+              >
+                <Icon name="arrow_back" className="text-[18px]" />
+                <span>{btnCancelAdd.main}</span>
+              </button>
+            </div>
+          )}
 
           {step1Error && (
             <div className="mt-2 px-4 py-2 bg-red-100 border border-red-300 text-red-700 rounded-xl font-bold text-sm">

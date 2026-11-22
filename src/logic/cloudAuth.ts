@@ -14,6 +14,7 @@ import {
   switchToCloudWorkspace,
   inspectLocalModeData,
   stashLocalDataAndStartCleanCloud,
+  captureWorkspaceSnapshot,
   deduplicateLocalUsers,
   startRealtimeSync,
   stopRealtimeSync,
@@ -130,42 +131,78 @@ export async function signInOwner(
 }
 
 /**
+ * Pure read-only lookup for ALL cloud shops belonging to the given Supabase user ID
+ * (from both public.shops as owner and public.shop_members as member).
+ * Supports multi-shop accounts while staying backwards-compatible with single-row test mocks.
+ */
+export async function listCloudShopsForUser(userId: string): Promise<ExistingShopInfo[]> {
+  const seen = new Map<string, ExistingShopInfo>();
+
+  try {
+    const ownedQuery: any = supabase
+      .from('shops')
+      .select('id, shop_name, shop_sync_id')
+      .eq('owner_user_id', userId);
+
+    // Support both real Supabase array responses (thenable) and legacy maybeSingle-only unit test mocks
+    let ownedRows: any[] = [];
+    if (ownedQuery && typeof ownedQuery.then === 'function') {
+      const { data } = await ownedQuery;
+      if (Array.isArray(data)) ownedRows = data;
+      else if (data) ownedRows = [data];
+    } else if (ownedQuery && typeof ownedQuery.maybeSingle === 'function') {
+      const { data } = await ownedQuery.maybeSingle();
+      if (data) ownedRows = [data];
+    }
+
+    for (const row of ownedRows) {
+      if (row?.id && !seen.has(row.id)) {
+        seen.set(row.id, {
+          id: row.id,
+          name: row.shop_name,
+          syncId: row.shop_sync_id,
+        });
+      }
+    }
+
+    const memberQuery: any = supabase
+      .from('shop_members')
+      .select('shop_id, role, shops(id, shop_name, shop_sync_id)')
+      .eq('user_id', userId);
+
+    let memberRows: any[] = [];
+    if (memberQuery && typeof memberQuery.then === 'function') {
+      const { data } = await memberQuery;
+      if (Array.isArray(data)) memberRows = data;
+      else if (data) memberRows = [data];
+    } else if (memberQuery && typeof memberQuery.maybeSingle === 'function') {
+      const { data } = await memberQuery.maybeSingle();
+      if (data) memberRows = [data];
+    }
+
+    for (const row of memberRows) {
+      const memberShop = row?.shops;
+      if (memberShop?.id && !seen.has(memberShop.id)) {
+        seen.set(memberShop.id, {
+          id: memberShop.id,
+          name: memberShop.shop_name,
+          syncId: memberShop.shop_sync_id,
+        });
+      }
+    }
+  } catch (lookupErr) {
+    console.warn('Error listing existing cloud shops:', lookupErr);
+  }
+
+  return Array.from(seen.values());
+}
+
+/**
  * Pure read-only lookup for an existing cloud shop belonging to the given Supabase user ID.
  */
 export async function findExistingCloudShop(userId: string): Promise<ExistingShopInfo | null> {
-  try {
-    const { data: shopsData } = await supabase
-      .from('shops')
-      .select('id, shop_name, shop_sync_id')
-      .eq('owner_user_id', userId)
-      .maybeSingle();
-
-    if (shopsData) {
-      return {
-        id: shopsData.id,
-        name: shopsData.shop_name,
-        syncId: shopsData.shop_sync_id,
-      };
-    }
-
-    const { data: memberData } = await supabase
-      .from('shop_members')
-      .select('shop_id, role, shops(id, shop_name, shop_sync_id)')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    const memberShop = (memberData as any)?.shops;
-    if (memberShop) {
-      return {
-        id: memberShop.id,
-        name: memberShop.shop_name,
-        syncId: memberShop.shop_sync_id,
-      };
-    }
-  } catch (lookupErr) {
-    console.warn('Error checking existing shops:', lookupErr);
-  }
-  return null;
+  const shops = await listCloudShopsForUser(userId);
+  return shops[0] ?? null;
 }
 
 /**
@@ -681,6 +718,18 @@ export async function completeCloudSignInFromSession(): Promise<{
  */
 export async function signOutOwner(): Promise<void> {
   stopRealtimeSync();
+
+  // Snapshot the signed-in cloud workspace cleanly under its own scope key before disconnecting
+  try {
+    const currentScope = (await db.settings.get('active_data_scope'))?.value as string | undefined;
+    if (currentScope && currentScope.startsWith('cloud:')) {
+      const snap = await captureWorkspaceSnapshot();
+      await db.settings.put({ key: `workspace_snapshot::${currentScope}`, value: snap });
+    }
+  } catch (snapErr) {
+    console.warn('Could not snapshot cloud workspace on sign-out:', snapErr);
+  }
+
   if (isBackendConfigured()) {
     try {
       await supabase.auth.signOut();
@@ -716,16 +765,23 @@ export async function signOutOwner(): Promise<void> {
 /**
  * Provisions a shop row in public.shops and public.shop_members on Supabase,
  * and saves the returned cloudShopUuid in local Dexie settings.
+ * Pass `{ forceCreateNew: true }` when creating a new shop (clean setup or multi-shop "+ Add Another Shop")
+ * so an existing shop belonging to the same user is NEVER reused or overwritten.
  */
 export async function provisionCloudShop(
   shopName: string,
-  providedSyncId?: string
+  providedSyncId?: string,
+  options?: { forceCreateNew?: boolean }
 ): Promise<{ shopUuid: string | null; shopSyncId: string }> {
   // Determine shop sync ID
   let shopSyncId = providedSyncId?.trim().toUpperCase();
   if (!shopSyncId) {
-    const existingSyncIdItem = await db.settings.get('shop_sync_id');
-    shopSyncId = (existingSyncIdItem?.value as string) || generateShopSyncId();
+    if (options?.forceCreateNew) {
+      shopSyncId = generateShopSyncId();
+    } else {
+      const existingSyncIdItem = await db.settings.get('shop_sync_id');
+      shopSyncId = (existingSyncIdItem?.value as string) || generateShopSyncId();
+    }
   }
   await db.settings.put({ key: 'shop_sync_id', value: shopSyncId });
 
@@ -744,13 +800,18 @@ export async function provisionCloudShop(
       return { shopUuid: localUuid, shopSyncId };
     }
 
-    // Check if shop already exists
+    // Check if shop already exists (skip lookup when explicitly creating a brand-new shop)
     let shopUuid: string | null = null;
-    const { data: existingShop } = await supabase
-      .from('shops')
-      .select('id, shop_name, shop_sync_id')
-      .or(`owner_user_id.eq.${user.id},shop_sync_id.eq.${shopSyncId}`)
-      .maybeSingle();
+    let existingShop: { id: string; shop_name: string; shop_sync_id: string } | null = null;
+
+    if (!options?.forceCreateNew) {
+      const { data } = await supabase
+        .from('shops')
+        .select('id, shop_name, shop_sync_id')
+        .or(`owner_user_id.eq.${user.id},shop_sync_id.eq.${shopSyncId}`)
+        .maybeSingle();
+      existingShop = data || null;
+    }
 
     if (existingShop) {
       shopUuid = existingShop.id;

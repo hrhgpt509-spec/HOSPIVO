@@ -33,16 +33,24 @@ export function resolveBootScreen(params: { shopCount: number; introSeen: boolea
   return params.introSeen ? 'setup' : 'intro';
 }
 
-export type ShopFlowEvent = 'intro_done' | 'setup_complete' | 'shop_entered' | 'switch_shop';
+export type ShopFlowEvent =
+  | 'intro_done'
+  | 'setup_complete'
+  | 'shop_entered'
+  | 'switch_shop'
+  | 'add_shop'
+  | 'cancel_add_shop';
 export type ShopFlowScreen = 'setup' | 'shop_select' | 'login';
 
-/** Navigation map: setup -> Select Your Shop -> Who is using? (and back via Switch Shop). */
+/** Navigation map: setup -> Select Your Shop -> Who is using? (and back via Switch Shop / Add Shop). */
 export function nextScreen(event: ShopFlowEvent): ShopFlowScreen {
   switch (event) {
     case 'intro_done':
+    case 'add_shop':
       return 'setup';
     case 'setup_complete':
     case 'switch_shop':
+    case 'cancel_add_shop':
       return 'shop_select';
     case 'shop_entered':
     default:
