@@ -12,6 +12,9 @@ import {
 } from './logic/cloudSync';
 import { supabase, isBackendConfigured } from './lib/supabase';
 import { initAndroidBackListener } from './logic/androidBack';
+import { WelcomeIntro } from './screens/WelcomeIntro';
+import { ShopSelector } from './screens/ShopSelector';
+import { hasSeenIntro, markIntroSeen, resolveBootScreen, nextScreen } from './logic/onboarding';
 
 // Default 5 minutes of inactivity triggers auto-lock
 export const DEFAULT_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
@@ -20,7 +23,7 @@ export function shouldRunAutoLock(screen: string, currentUser: unknown): boolean
   return screen === 'home' && currentUser !== null && currentUser !== undefined;
 }
 
-type AppScreen = 'loading' | 'setup' | 'login' | 'home';
+type AppScreen = 'loading' | 'intro' | 'setup' | 'shop_select' | 'login' | 'home';
 
 export function App() {
   const [screen, setScreen] = useState<AppScreen>('loading');
@@ -34,11 +37,8 @@ export function App() {
     async function initApp() {
       try {
         const shopCount = await db.shop.count();
-        if (shopCount === 0) {
-          setScreen('setup');
-        } else {
-          setScreen('login');
-        }
+        const introSeen = await hasSeenIntro();
+        setScreen(resolveBootScreen({ shopCount, introSeen }));
       } catch (err) {
         console.error('Failed to query shop database:', err);
         setScreen('login');
@@ -162,14 +162,30 @@ export function App() {
       );
     }
 
+    if (screen === 'intro') {
+      return (
+        <WelcomeIntro
+          onDone={() => {
+            void markIntroSeen();
+            setScreen(nextScreen('intro_done'));
+          }}
+        />
+      );
+    }
+
     if (screen === 'setup') {
       return (
         <Setup
           onComplete={() => {
-            setScreen('login');
+            void markIntroSeen();
+            setScreen(nextScreen('setup_complete'));
           }}
         />
       );
+    }
+
+    if (screen === 'shop_select') {
+      return <ShopSelector onEnter={() => setScreen(nextScreen('shop_entered'))} />;
     }
 
     if (screen === 'home') {
@@ -192,6 +208,7 @@ export function App() {
       <Login
         onLoginSuccess={handleLoginSuccess}
         isLocked={false}
+        onSwitchShop={() => setScreen(nextScreen('switch_shop'))}
       />
     );
   };

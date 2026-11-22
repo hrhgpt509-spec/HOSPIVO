@@ -24,6 +24,8 @@ interface LoginProps {
   isLocked?: boolean;
   lockedUser?: DBUser | null;
   onUnlock?: () => void;
+  /** Returns to the "Select Your Shop" screen (hidden on the lock screen to keep unlocks fast). */
+  onSwitchShop?: () => void;
 }
 
 const AVATAR_PALETTES = [
@@ -38,8 +40,10 @@ export const Login: React.FC<LoginProps> = ({
   isLocked = false,
   lockedUser = null,
   onUnlock,
+  onSwitchShop,
 }) => {
   const { t } = useTranslation();
+  const switchShopBtn = tButton('shop_select.btn_switch_shop');
   const [users, setUsers] = useState<DBUser[]>([]);
   const { name: shopName, ownerName: shopOwnerName } = useShop();
   const [selectedUser, setSelectedUser] = useState<DBUser | null>(null);
@@ -696,6 +700,16 @@ export const Login: React.FC<LoginProps> = ({
                   <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{shopName || t('login.pos_title')}</p>
                 </div>
               </div>
+              {onSwitchShop && !isLocked && (
+                <button
+                  type="button"
+                  onClick={onSwitchShop}
+                  className="min-h-[40px] px-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[#147A3E] text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0 max-w-[40%]"
+                >
+                  <Icon name="swap_horiz" className="text-[16px] shrink-0" />
+                  <span className="truncate">{switchShopBtn.main}</span>
+                </button>
+              )}
               <FullscreenButton className="w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 transition cursor-pointer shrink-0" />
             </div>
 
@@ -1127,6 +1141,16 @@ export const Login: React.FC<LoginProps> = ({
           {/* Secure Login Badge, Fullscreen & Language Switch */}
           <div className="flex items-center gap-3 flex-wrap">
             {/* DEV ONLY: becomes a Settings option in Phase 5 */}
+            {onSwitchShop && !isLocked && (
+              <button
+                type="button"
+                onClick={onSwitchShop}
+                className="min-h-[44px] px-3.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[#147A3E] text-sm font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Icon name="swap_horiz" className="text-[20px]" />
+                <span>{switchShopBtn.main}</span>
+              </button>
+            )}
             <LanguageSwitch />
             <FullscreenButton className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 transition cursor-pointer" />
 

@@ -391,6 +391,11 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
   - Added scenario classifier (`classifyCloudSignInScenario`) and decision handler (`resolveCloudSignInChoice`) for all 5 auth/sync flows: Local→Empty Cloud prompt (Yes pushes local, No stashes local & opens clean Cloud Setup), direct existing Cloud seamless sync, Local→Existing Cloud prompt (Yes merges with strict deduplication, No isolates local & loads cloud only), and clean Cloud Setup when auth succeeds with no store records.
   - Updated `signOutOwner()` to stop Realtime/cloud sync cleanly, switch `db.shop` to `mode: 'local'` with `cloud_enabled: false`, and keep existing device data usable locally with no further cloud pushes/pulls until signed back in.
 
+- First-launch Welcome Intro & Shop Selector (`WelcomeIntro.tsx`, `ShopSelector.tsx`, `logic/onboarding.ts`, `App.tsx`, `Login.tsx` + en/hi/hinglish i18n):
+  - 3-slide intro (offline billing, FEFO/expiry/Udhaar, cloud sync + staff PINs) with dots, Skip, Next/Get Started (56px), safe-area padding; shown once before first setup, flag `intro_seen` saved in `db.settings`.
+  - After setup (or cloud sign-in) the app shows "Select Your Shop" (name, details, Local/Cloud badge, staff count) then "Who is using?"; "+ Add Another Shop" shows Coming Soon (no schema change); "Switch Shop" chip added on Who-is-using header. Returning users still boot straight to Who-is-using.
+  - Added `onboarding.test.ts`.
+
 
 
 

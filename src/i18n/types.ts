@@ -1819,4 +1819,30 @@ export interface TranslationSchema {
     cloud_status_connected: string;
     cloud_status_disconnected: string;
   };
+  intro: {
+    welcome_badge: string;
+    slide1_title: string;
+    slide1_desc: string;
+    slide2_title: string;
+    slide2_desc: string;
+    slide3_title: string;
+    slide3_desc: string;
+    progress_label: string;
+    btn_skip: ButtonLabel;
+    btn_next: ButtonLabel;
+    btn_get_started: ButtonLabel;
+  };
+  shop_select: {
+    title: string;
+    sub: string;
+    current_label: string;
+    badge_cloud: string;
+    badge_local: string;
+    staff_count: string;
+    btn_enter: ButtonLabel;
+    add_shop: string;
+    coming_soon: string;
+    coming_soon_msg: string;
+    btn_switch_shop: ButtonLabel;
+  };
 }
