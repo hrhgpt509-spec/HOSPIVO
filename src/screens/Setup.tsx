@@ -441,7 +441,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
       cloudShopUuid: cloudShopUuid || undefined,
       ownerEmail: ownerEmail || undefined,
     };
-    await db.shop.add(shopRecord);
+    const addedShopId = await db.shop.add(shopRecord);
     await addAudit('Setup', 'shop_saved', formattedShopName, 'Shop details saved during initial setup');
 
     // 2. Save settings (approval rules, auto-lock minutes, backup folder, pinLength, cloud settings)
@@ -514,6 +514,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
           forceCreateNew: !cloudShopUuid,
         });
         if (prov?.shopUuid) {
+          await db.shop.update(addedShopId, { cloudShopUuid: prov.shopUuid });
           await db.settings.put({ key: 'cloud_shop_uuid', value: prov.shopUuid });
           await db.settings.put({ key: 'active_data_scope', value: `cloud:${prov.shopUuid}` });
         }

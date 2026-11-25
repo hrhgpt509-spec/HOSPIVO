@@ -682,4 +682,68 @@ describe('strict account/shop isolation & multi-shop management', () => {
     expect(devices[0].isCurrentDevice).toBe(true);
     expect(devices[1].deviceName).toBe('Owner Android Phone');
   });
+
+  it('fresh setup produces strictly 1 shop matching user input and never injects "My Medical Store"', async () => {
+    const { runSyncCycle } = await import('./cloudSync');
+
+    // Before setup finishes (db.shop empty), runSyncCycle must NOT auto-provision "My Medical Store"
+    await db.settings.put({ key: 'cloud_enabled', value: true });
+    vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
+      data: { session: { user: { id: 'usr-fresh', email: 'fresh@test.com' } } },
+      error: null,
+    } as any);
+    vi.spyOn(supabase.auth, 'getUser').mockResolvedValue({
+      data: { user: { id: 'usr-fresh', email: 'fresh@test.com' } },
+      error: null,
+    } as any);
+    const fromSpy = vi.spyOn(supabase, 'from').mockImplementation(() => ({
+      select: vi.fn().mockReturnValue(createMockArrayQueryChain([])),
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { id: 'unexpected-shop' }, error: null }),
+        }),
+      }),
+      upsert: vi.fn().mockResolvedValue({ error: null }),
+    }) as any);
+
+    await runSyncCycle({ force: true });
+    // Should not have inserted any shop when db.shop is empty
+    const shopInsertCalls = fromSpy.mock.calls.filter(([t]) => t === 'shops');
+    expect(shopInsertCalls.length).toBe(0);
+
+    // Restore mocks so local setup runs in genuine Local Mode
+    vi.restoreAllMocks();
+
+    // Now simulate completing setup for "Maa Durga Medical Hall"
+    await db.settings.put({ key: 'cloud_enabled', value: false });
+    await runWithSyncWorkspaceBypass(async () => {
+      await db.shop.add({
+        name: 'Maa Durga Medical Hall',
+        ownerName: 'Rajesh Sharma',
+        address: 'Main Road',
+        phone: '9876543210',
+        gstNo: '',
+        drugLicenceNos: '',
+        mode: 'local',
+        shopSyncId: 'HOSP-MDMH-0001',
+      });
+      await db.users.add({
+        id: 'owner',
+        name: 'Rajesh Sharma',
+        role: 'owner',
+        pinHash: 'h',
+        pinSalt: 's',
+        active: true,
+      });
+    });
+    await db.settings.put({ key: 'shop_sync_id', value: 'HOSP-MDMH-0001' });
+    await db.settings.put({ key: 'active_data_scope', value: 'local:HOSP-MDMH-0001' });
+    await registerCurrentShopInDirectory();
+
+    const avail = await getAvailableShops();
+    expect(await db.shop.count()).toBe(1);
+    expect(avail.shops).toHaveLength(1);
+    expect(avail.shops[0].name).toBe('Maa Durga Medical Hall');
+    expect(avail.shops.some((s) => s.name === 'My Medical Store')).toBe(false);
+  });
 });

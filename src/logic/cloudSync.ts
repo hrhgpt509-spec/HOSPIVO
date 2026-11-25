@@ -1495,9 +1495,11 @@ export async function runSyncCycle(options?: {
     if (!cloudShopUuid && session.user) {
       try {
         const shops = await db.shop.toArray();
-        const currentShopName = shops[0]?.name || 'My Medical Store';
-        const prov = await provisionCloudShop(currentShopName, config.shopSyncId);
-        cloudShopUuid = prov.shopUuid;
+        const currentShopName = (shops[0]?.name || '').trim();
+        if (currentShopName) {
+          const prov = await provisionCloudShop(currentShopName, config.shopSyncId);
+          cloudShopUuid = prov.shopUuid;
+        }
       } catch (provErr) {
         console.warn('Auto-provision shop warning:', provErr);
       }

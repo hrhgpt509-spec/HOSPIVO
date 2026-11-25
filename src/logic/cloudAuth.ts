@@ -339,7 +339,10 @@ export async function resolveCloudSignInChoice(params: {
 
   if (params.choice === 'push_local') {
     const localShop = (await db.shop.toArray())[0];
-    const resolvedName = (params.localShopName || localShop?.name || 'My Medical Store').trim();
+    const resolvedName = (params.localShopName || localShop?.name || '').trim();
+    if (!resolvedName) {
+      return {};
+    }
     const prov = await provisionCloudShop(resolvedName, params.shopSyncId || localShop?.shopSyncId);
     return {
       cloudShopUuid: prov.shopUuid || undefined,

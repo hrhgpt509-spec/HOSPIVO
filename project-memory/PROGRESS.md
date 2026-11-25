@@ -424,6 +424,10 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
   - Redesigned `Home.tsx` compact mobile header into a clean two-tier bar so the Cloud Enabled / Sync status badge never crowds or truncates against shop name and controls.
   - Fixed button text overlaps in `OldBillsReturnScreen.tsx` (Reprint / Process Return), `Step2CashMatch.tsx` (Match Cash cards), `OwnerStaff.tsx` (bottom status ribbon), and `OwnerMedicineForm.tsx` (360px responsive grid stacking, sticky header, and flexible heights).
 
+- Eliminated Phantom "My Medical Store" on Fresh Setup (`cloudSync.ts`, `cloudAuth.ts`, `multiShop.ts`, `Setup.tsx`, `multiShop.test.ts`):
+  - Removed hardcoded `'My Medical Store'` fallbacks in `runSyncCycle()`, `resolveCloudSignInChoice()`, and `registerCurrentShopInDirectory()` so pre-setup syncs or incomplete states never auto-provision a phantom shop.
+  - Updated `Setup.tsx` to persist `cloudShopUuid` back onto `db.shop` after `provisionCloudShop()` so `ShopSelector` lists strictly the single shop entered by the user.
+
 
 
 

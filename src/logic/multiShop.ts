@@ -104,7 +104,7 @@ export async function registerCurrentShopInDirectory(
   overrideOwnerUserId?: string
 ): Promise<ShopDirectoryEntry | null> {
   const shop = await db.shop.toCollection().first();
-  if (!shop) return null;
+  if (!shop || !shop.name?.trim()) return null;
 
   const workspaceId = await resolveActiveWorkspaceId();
   if (!workspaceId) return null;
@@ -128,7 +128,7 @@ export async function registerCurrentShopInDirectory(
 
   const entry: ShopDirectoryEntry = {
     workspaceId,
-    name: shop.name || existing?.name || 'My Medical Store',
+    name: shop.name.trim(),
     address: shop.address || '',
     ownerName: shop.ownerName || existing?.ownerName || '',
     mode: shop.mode === 'cloud' && workspaceId.startsWith('cloud:') ? 'cloud' : 'local',
