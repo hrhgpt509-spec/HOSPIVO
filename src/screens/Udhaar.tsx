@@ -186,7 +186,7 @@ export const Udhaar: React.FC<UdhaarProps> = ({
       <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col overflow-x-clip antialiased select-none transition-colors">
         {/* Sticky Compact Header */}
         <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] flex items-center justify-between gap-2 shadow-xs">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <button
               onClick={onReturnHome}
               aria-label={t('common.btn_home.main')}
@@ -195,7 +195,7 @@ export const Udhaar: React.FC<UdhaarProps> = ({
             >
               <Icon name="arrow_back" className="text-[24px]" />
             </button>
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 flex-1">
               <h1 className="font-title-hinglish font-bold text-base text-on-surface truncate">
                 {view === 'udhaar' ? t('udhaar.page_title') : t('customers.page_title')}
               </h1>
@@ -205,14 +205,14 @@ export const Udhaar: React.FC<UdhaarProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 max-w-[50%]">
             <button
               type="button"
               onClick={() => setIsNewCustomerOpen(true)}
-              className="min-h-[48px] px-3 rounded-xl bg-primary text-on-primary text-xs font-bold flex items-center gap-1 cursor-pointer shadow-xs"
+              className="min-h-[48px] py-1.5 px-2.5 sm:px-3 rounded-xl bg-primary text-on-primary text-xs font-bold flex items-center gap-1 cursor-pointer shadow-xs min-w-0"
             >
-              <Icon name="person_add" className="text-[18px]" />
-              <span>{newCustomerBtn.main}</span>
+              <Icon name="person_add" className="text-[18px] shrink-0" />
+              <span className="truncate">{newCustomerBtn.main}</span>
             </button>
 
             {onToggleTheme && (
@@ -220,7 +220,7 @@ export const Udhaar: React.FC<UdhaarProps> = ({
                 type="button"
                 onClick={onToggleTheme}
                 aria-label={t('common.toggle_theme')}
-                className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
+                className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer shrink-0"
               >
                 <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[22px]" />
               </button>
@@ -382,24 +382,24 @@ export const Udhaar: React.FC<UdhaarProps> = ({
                         <button
                           type="button"
                           onClick={() => setPaisaMilaTarget(cust)}
-                          className="min-h-[48px] rounded-xl bg-surface-container-low hover:bg-surface-container text-primary border border-primary/30 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
+                          className="min-h-[48px] py-1.5 px-2 rounded-xl bg-surface-container-low hover:bg-surface-container text-primary border border-primary/30 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98] min-w-0"
                         >
-                          <Icon name="payments" className="text-[20px]" />
-                          <span>{paisaMilaBtn.main}</span>
+                          <Icon name="payments" className="text-[18px] sm:text-[20px] shrink-0" />
+                          <span className="truncate">{paisaMilaBtn.main}</span>
                         </button>
 
                         <button
                           type="button"
                           disabled={!canRemind}
                           onClick={() => canRemind && setYaadDilaoTarget(cust)}
-                          className={`min-h-[48px] rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                          className={`min-h-[48px] py-1.5 px-2 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all min-w-0 ${
                             canRemind
                               ? 'bg-primary text-on-primary hover:bg-primary-container shadow-xs active:scale-[0.98] cursor-pointer'
                               : 'bg-surface-container text-outline cursor-not-allowed opacity-60'
                           }`}
                         >
-                          <Icon name="chat" className="text-[20px]" />
-                          <span>{yaadDilaoBtn.main}</span>
+                          <Icon name="chat" className="text-[18px] sm:text-[20px] shrink-0" />
+                          <span className="truncate">{yaadDilaoBtn.main}</span>
                         </button>
                       </div>
                     </div>

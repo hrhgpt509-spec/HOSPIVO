@@ -864,92 +864,94 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
 
     return (
       <div className="w-full min-h-dvh bg-surface text-on-surface flex flex-col antialiased select-none overflow-x-clip transition-colors pb-[calc(9rem+env(safe-area-inset-bottom))]">
-        {/* Sticky Compact Top Header (zero desktop clutter, >= 48px touch targets) */}
-        <header className="sticky top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-xs px-3 pb-2.5 pt-[max(0.5rem,env(safe-area-inset-top))] flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={onReturnHome}
-            className="w-12 h-12 min-w-[48px] min-h-[48px] bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 rounded-xl text-on-surface active:scale-95 transition-all flex items-center justify-center cursor-pointer shrink-0"
-            aria-label={returnHomeBtn.main}
-          >
-            <Icon name="home" className="text-primary text-[22px]" />
-          </button>
-
-          <div className="flex flex-col min-w-0 flex-1">
-            <h1 className="text-base font-extrabold text-on-surface tracking-tight truncate leading-tight">
-              {t('home.tile_dawai_becho.main')}
-            </h1>
-            <span className="text-xs text-on-surface-variant font-semibold truncate leading-tight mt-0.5">
-              {t('dawai_becho.bill_header_prefix')} #{nextBillNo}
-              {shopName ? ` · ${shopName}` : ''}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 shrink-0">
-            {heldBills.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setIsHeldModalOpen(true)}
-                className="h-12 min-h-[48px] px-3 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed text-xs font-extrabold flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
-                aria-label={t('dawai_becho.btn_held_list', { count: heldBills.length })}
-              >
-                <Icon name="pause_circle" className="text-[20px]" />
-                <span>{heldBills.length}</span>
-              </button>
-            )}
-
+        {/* Unified Sticky Top Header + Search Bar (eliminates sticky-offset collisions on Android WebView) */}
+        <div className="sticky top-0 left-0 right-0 z-40 bg-surface-container-lowest/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-xs">
+          <header className="px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] flex items-center justify-between gap-2">
             <button
               type="button"
-              onClick={() => (onOpenOldBills ? onOpenOldBills() : setActiveScreen('old_bills'))}
-              className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer"
-              aria-label={tButton('dawai_becho.btn_old_bills').main}
+              onClick={onReturnHome}
+              className="w-12 h-12 min-w-[48px] min-h-[48px] bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 rounded-xl text-on-surface active:scale-95 transition-all flex items-center justify-center cursor-pointer shrink-0"
+              aria-label={returnHomeBtn.main}
             >
-              <Icon name="history" className="text-[22px]" />
+              <Icon name="home" className="text-primary text-[22px]" />
             </button>
 
-            {onToggleTheme && (
-              <button
-                type="button"
-                onClick={onToggleTheme}
-                aria-label={t('common.toggle_theme')}
-                className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer"
-              >
-                <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[22px]" />
-              </button>
-            )}
-          </div>
-        </header>
+            <div className="flex flex-col min-w-0 flex-1">
+              <h1 className="text-base font-extrabold text-on-surface tracking-tight truncate leading-tight">
+                {t('home.tile_dawai_becho.main')}
+              </h1>
+              <span className="text-xs text-on-surface-variant font-semibold truncate leading-tight mt-0.5">
+                {t('dawai_becho.bill_header_prefix')} #{nextBillNo}
+                {shopName ? ` · ${shopName}` : ''}
+              </span>
+            </div>
 
-        {/* Sticky Full-Width Search & Barcode Bar */}
-        <div className="sticky top-[calc(3.75rem+env(safe-area-inset-top))] z-30 w-full bg-surface/95 backdrop-blur-md px-3 pt-2.5 pb-2 border-b border-outline-variant/20 shrink-0">
-          <div className="flex items-center w-full bg-surface-container-lowest border-2 border-primary rounded-2xl shadow-xs px-3 h-13 min-h-[52px] focus-within:ring-2 focus-within:ring-primary/30 transition-all">
-            <Icon name="search" className="text-primary text-[24px] shrink-0 mr-2" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              placeholder={t('dawai_becho.search_placeholder')}
-              className="w-full min-w-0 bg-transparent text-sm sm:text-base font-medium text-on-surface placeholder-on-surface-variant/60 outline-none"
-            />
-            {searchQuery ? (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {heldBills.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsHeldModalOpen(true)}
+                  className="min-h-[48px] px-3 py-1.5 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed text-xs font-extrabold flex items-center gap-1 cursor-pointer shadow-xs active:scale-95 shrink-0"
+                  aria-label={t('dawai_becho.btn_held_list', { count: heldBills.length })}
+                >
+                  <Icon name="pause_circle" className="text-[20px] shrink-0" />
+                  <span>{heldBills.length}</span>
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  searchInputRef.current?.focus();
-                }}
-                className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface rounded-xl shrink-0 cursor-pointer"
-                aria-label={t('common.btn_clear.main')}
+                onClick={() => (onOpenOldBills ? onOpenOldBills() : setActiveScreen('old_bills'))}
+                className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer shrink-0"
+                aria-label={tButton('dawai_becho.btn_old_bills').main}
               >
-                <Icon name="close" className="text-[20px]" />
+                <Icon name="history" className="text-[22px]" />
               </button>
-            ) : (
-              <div className="w-10 h-10 flex items-center justify-center bg-primary-fixed text-primary rounded-xl shrink-0">
-                <Icon name="barcode_scanner" className="text-[20px]" />
-              </div>
-            )}
+
+              {onToggleTheme && (
+                <button
+                  type="button"
+                  onClick={onToggleTheme}
+                  aria-label={t('common.toggle_theme')}
+                  className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer shrink-0"
+                >
+                  <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[22px]" />
+                </button>
+              )}
+            </div>
+          </header>
+
+          {/* Full-Width Search & Barcode Bar inside unified sticky wrapper */}
+          <div className="w-full px-3 pt-1 pb-2.5 border-t border-outline-variant/15">
+            <div className="flex items-center w-full bg-surface-container-lowest border-2 border-primary rounded-2xl shadow-xs px-3 min-h-[52px] py-1 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+              <Icon name="search" className="text-primary text-[24px] shrink-0 mr-2" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder={t('dawai_becho.search_placeholder')}
+                className="w-full min-w-0 bg-transparent text-sm sm:text-base font-medium text-on-surface placeholder-on-surface-variant/60 outline-none"
+              />
+              {searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    searchInputRef.current?.focus();
+                  }}
+                  className="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-on-surface rounded-xl shrink-0 cursor-pointer"
+                  aria-label={t('common.btn_clear.main')}
+                >
+                  <Icon name="close" className="text-[20px]" />
+                </button>
+              ) : (
+                <div className="w-10 h-10 flex items-center justify-center bg-primary-fixed text-primary rounded-xl shrink-0">
+                  <Icon name="barcode_scanner" className="text-[20px]" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -1143,20 +1145,20 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
           </button>
 
           {/* Action Row: Open Cart Sheet + Proceed to Payment */}
-          <div className="flex items-center gap-2 w-full">
+          <div className="flex items-stretch gap-2 w-full">
             <button
               type="button"
               onClick={() => setIsMobileBillSheetOpen(true)}
-              className="h-[54px] min-h-[54px] px-4 bg-surface-container hover:bg-surface-container-high border border-outline-variant/50 text-on-surface rounded-2xl flex items-center justify-center gap-1.5 font-bold text-sm active:scale-95 transition-all cursor-pointer shrink-0"
+              className="min-h-[56px] py-2 px-4 bg-surface-container hover:bg-surface-container-high border border-outline-variant/50 text-on-surface rounded-2xl flex items-center justify-center gap-1.5 font-bold text-sm active:scale-95 transition-all cursor-pointer shrink-0"
             >
-              <Icon name="shopping_cart" className="text-[22px] text-primary" />
+              <Icon name="shopping_cart" className="text-[22px] text-primary shrink-0" />
               <span>{cart.length}</span>
             </button>
 
             <button
               type="button"
               onClick={handleProceedToPayment}
-              className="flex-1 h-[54px] min-h-[54px] bg-primary hover:bg-primary-container text-on-primary rounded-2xl px-4 flex items-center justify-center gap-2.5 shadow-md active:scale-[0.98] transition-all cursor-pointer min-w-0"
+              className="flex-1 min-h-[56px] py-2 bg-primary hover:bg-primary-container text-on-primary rounded-2xl px-4 flex items-center justify-center gap-2.5 shadow-md active:scale-[0.98] transition-all cursor-pointer min-w-0"
             >
               <Icon name="receipt_long" className="text-[24px] shrink-0" />
               <div className="flex flex-col items-start justify-center text-left leading-tight min-w-0">
@@ -1164,7 +1166,7 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
                   {btnMakeBill.main}
                 </span>
                 {btnMakeBill.sub && (
-                  <span className="text-[11px] text-primary-fixed leading-none truncate max-w-full">
+                  <span className="text-[11px] text-primary-fixed leading-tight truncate max-w-full mt-0.5">
                     {btnMakeBill.sub}
                   </span>
                 )}
@@ -1375,8 +1377,8 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
       </main>
 
       {/* 3. Mobile Sticky Bottom Bar (Matching 12_Sell_DawaiBecho_Phone.html, visible < lg) */}
-      <footer className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/50 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-4 flex flex-col gap-2.5">
-        <div className="flex items-center justify-between gap-2.5 w-full">
+      <footer className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/50 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex flex-col gap-2.5">
+        <div className="flex items-center justify-between gap-2.5 w-full min-w-0">
           <button
             type="button"
             aria-label="Open bill panel"
@@ -1386,14 +1388,14 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
             <div className="w-10 h-10 rounded-full bg-surface-container border border-outline-variant flex items-center justify-center text-on-surface shrink-0">
               <Icon name="expand_less" className="text-[24px]" />
             </div>
-            <div className="text-[18px] font-bold text-on-surface tracking-tight truncate">
+            <div className="text-base sm:text-[18px] font-bold text-on-surface tracking-tight truncate min-w-0">
               {t('dawai_becho.bill_header_prefix')} #{nextBillNo} ·{' '}
               {t('dawai_becho.items_count', { count: cart.length })}
             </div>
           </button>
 
           {/* Prominent Total >= 36px always visible */}
-          <span className="font-display-total-mobile text-[36px] leading-none font-extrabold text-primary shrink-0">
+          <span className="font-display-total-mobile text-[32px] sm:text-[36px] leading-none font-extrabold text-primary shrink-0">
             {formatRupees(totals.totalPaise)}
           </span>
         </div>
@@ -1401,13 +1403,13 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
         <button
           type="button"
           onClick={handleProceedToPayment}
-          className="w-full h-[60px] min-h-[56px] bg-primary hover:bg-primary-container text-on-primary rounded-2xl px-5 flex items-center justify-center gap-3 shadow-md active:scale-[0.98] transition-all cursor-pointer"
+          className="w-full min-h-[58px] py-2.5 bg-primary hover:bg-primary-container text-on-primary rounded-2xl px-5 flex items-center justify-center gap-3 shadow-md active:scale-[0.98] transition-all cursor-pointer min-w-0"
         >
-          <Icon name="receipt_long" className="text-[28px]" />
-          <div className="flex flex-col items-start justify-center text-left leading-tight">
-            <span className="text-[20px] font-extrabold tracking-tight">{btnMakeBill.main}</span>
+          <Icon name="receipt_long" className="text-[26px] sm:text-[28px] shrink-0" />
+          <div className="flex flex-col items-start justify-center text-left leading-tight min-w-0">
+            <span className="text-lg sm:text-[20px] font-extrabold tracking-tight break-words">{btnMakeBill.main}</span>
             {btnMakeBill.sub && (
-              <span className="text-[14px] text-primary-fixed leading-none">{btnMakeBill.sub}</span>
+              <span className="text-xs sm:text-[14px] text-primary-fixed leading-tight mt-0.5 break-words">{btnMakeBill.sub}</span>
             )}
           </div>
         </button>

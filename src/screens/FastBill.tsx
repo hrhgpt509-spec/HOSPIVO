@@ -729,30 +729,30 @@ export const FastBill: React.FC<FastBillProps> = ({
 
     return (
       <div
-        className={`w-full min-h-dvh flex flex-col font-body-md text-on-surface select-none overflow-x-clip transition-colors duration-150 pb-36 ${
+        className={`w-full min-h-dvh flex flex-col font-body-md text-on-surface select-none overflow-x-clip transition-colors duration-150 pb-[calc(9.5rem+env(safe-area-inset-bottom))] ${
           isActionFeedback ? 'bg-primary/10' : 'bg-background'
         }`}
       >
         {/* Sticky Compact Top Header */}
-        <header className="sticky top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-xs px-3 py-2 flex items-center justify-between gap-2">
+        <header className="sticky top-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-b border-outline-variant/30 shadow-xs px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] flex items-center justify-between gap-2">
           {/* Left: Home */}
           <button
             type="button"
             onClick={onReturnHome}
-            className="h-11 min-h-[44px] px-3 bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 rounded-2xl shadow-xs text-on-surface active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            className="min-h-[44px] py-1.5 px-3 bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 rounded-2xl shadow-xs text-on-surface active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
             aria-label="Home"
           >
-            <Icon name="home" className="text-primary text-[20px]" />
+            <Icon name="home" className="text-primary text-[20px] shrink-0" />
             <span className="text-xs sm:text-sm font-bold">{t('common.btn_home.main')}</span>
           </button>
 
           {/* Center Title */}
           <div className="flex flex-col items-center min-w-0 flex-1 px-1">
-            <h1 className="text-base sm:text-lg font-extrabold text-on-surface tracking-tight truncate">
+            <h1 className="text-base sm:text-lg font-extrabold text-on-surface tracking-tight truncate max-w-full">
               {t('fast_bill.title')}
             </h1>
             {shop.name && (
-              <span className="text-[11px] text-on-surface-variant font-medium truncate max-w-[150px]">
+              <span className="text-[11px] text-on-surface-variant font-medium truncate max-w-full">
                 {shop.name}
               </span>
             )}
@@ -765,13 +765,13 @@ export const FastBill: React.FC<FastBillProps> = ({
                 type="button"
                 onClick={onToggleTheme}
                 aria-label={t('common.toggle_theme')}
-                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer shrink-0"
               >
                 <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[20px]" />
               </button>
             )}
 
-            <FullscreenButton className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" />
+            <FullscreenButton className="hidden lg:flex w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 items-center justify-center text-on-surface-variant transition-colors cursor-pointer shrink-0" />
           </div>
         </header>
 
@@ -1008,37 +1008,37 @@ export const FastBill: React.FC<FastBillProps> = ({
         </div>
 
         {/* Sticky Bottom "Complete Bill" Bar */}
-        <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2.5 w-full">
-            <div className="text-sm sm:text-base font-bold text-on-surface tracking-tight truncate">
+        <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-3.5 sm:px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2.5 w-full min-w-0">
+            <div className="text-sm sm:text-base font-bold text-on-surface tracking-tight truncate min-w-0">
               {activeBill.billNumberLabel} ·{' '}
               <span className="text-on-surface-variant font-medium">
                 {activeBill.items.length} items
               </span>
             </div>
-            <span className="font-display-total-mobile text-[30px] sm:text-[34px] leading-none font-extrabold text-primary shrink-0">
+            <span className="font-display-total-mobile text-[28px] sm:text-[34px] leading-none font-extrabold text-primary shrink-0">
               {formatRupees(fastTotals.totalPaise)}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 w-full">
+          <div className="flex items-stretch gap-2 w-full min-w-0">
             <button
               type="button"
               onClick={handleQuickCashFinalize}
               disabled={activeBill.items.length === 0}
-              className="h-14 min-h-[56px] flex-1 bg-primary hover:bg-primary-container disabled:opacity-40 text-on-primary rounded-2xl font-extrabold text-base sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all"
+              className="min-h-[56px] py-2 px-3 flex-1 bg-primary hover:bg-primary-container disabled:opacity-40 text-on-primary rounded-2xl font-extrabold text-sm sm:text-lg flex items-center justify-center gap-1.5 sm:gap-2 shadow-md active:scale-95 cursor-pointer transition-all min-w-0"
             >
-              <Icon name="payments" className="text-[24px]" />
-              <span>Cash {formatRupees(fastTotals.totalPaise)}</span>
+              <Icon name="payments" className="text-[22px] sm:text-[24px] shrink-0" />
+              <span className="truncate">Cash {formatRupees(fastTotals.totalPaise)}</span>
             </button>
 
             <button
               type="button"
               onClick={handleQuickUpiFinalize}
               disabled={activeBill.items.length === 0}
-              className="h-14 min-h-[56px] px-4 bg-tertiary-container hover:brightness-105 disabled:opacity-40 text-on-tertiary-container rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer transition-all"
+              className="min-h-[56px] py-2 px-3.5 sm:px-4 bg-tertiary-container hover:brightness-105 disabled:opacity-40 text-on-tertiary-container rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer transition-all shrink-0"
             >
-              <Icon name="qr_code_2" className="text-[22px]" />
+              <Icon name="qr_code_2" className="text-[20px] sm:text-[22px] shrink-0" />
               <span>UPI</span>
             </button>
 
@@ -1046,7 +1046,7 @@ export const FastBill: React.FC<FastBillProps> = ({
               type="button"
               onClick={handleOpenDetailedPayment}
               disabled={activeBill.items.length === 0}
-              className="h-14 min-h-[56px] w-14 rounded-2xl bg-surface-container-low hover:bg-surface-container disabled:opacity-40 text-on-surface flex items-center justify-center cursor-pointer transition-all shrink-0"
+              className="min-h-[56px] w-13 sm:w-14 rounded-2xl bg-surface-container-low hover:bg-surface-container disabled:opacity-40 text-on-surface flex items-center justify-center cursor-pointer transition-all shrink-0"
               title="Detailed Payment"
             >
               <Icon name="receipt_long" className="text-[24px]" />

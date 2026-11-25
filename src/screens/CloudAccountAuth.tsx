@@ -283,60 +283,60 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface flex flex-col justify-between selection:bg-primary-fixed selection:text-on-primary-fixed">
+    <div className="min-h-dvh w-full overflow-x-clip bg-surface text-on-surface flex flex-col justify-between pb-[max(1rem,env(safe-area-inset-bottom))] selection:bg-primary-fixed selection:text-on-primary-fixed">
       {/* Top Header */}
-      <header className="h-20 w-full px-4 sm:px-8 border-b border-outline-variant/30 bg-surface-container-lowest flex items-center justify-between shrink-0 shadow-sm">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm shrink-0">
-            <Icon name="cloud" className="text-[28px]" />
+      <header className="min-h-[64px] w-full px-3 sm:px-8 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] border-b border-outline-variant/30 bg-surface-container-lowest flex items-center justify-between gap-2.5 shrink-0 shadow-sm">
+        <div className="flex items-center gap-2.5 sm:gap-4 min-w-0 flex-1">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary flex items-center justify-center text-on-primary shadow-sm shrink-0">
+            <Icon name="cloud" className="text-[24px] sm:text-[28px]" />
           </div>
-          <div className="flex flex-col">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-on-surface leading-tight">
+          <div className="flex flex-col min-w-0">
+            <h1 className="text-base sm:text-2xl font-bold tracking-tight text-on-surface leading-tight truncate">
               {t('cloud_auth.modal_title')}
             </h1>
-            <span className="text-xs sm:text-sm text-outline font-medium">
+            <span className="text-[11px] sm:text-sm text-outline font-medium truncate">
               {t('cloud_auth.modal_sub')}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {onToggleTheme && (
             <button
               type="button"
               aria-label={t('common.toggle_theme')}
               onClick={onToggleTheme}
-              className="w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant"
+              className="w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant shrink-0"
             >
               <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[20px]" />
             </button>
           )}
 
-          <FullscreenButton className="w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant" />
+          <FullscreenButton className="hidden lg:flex w-10 h-10 rounded-xl bg-surface-container hover:bg-surface-container-high items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant shrink-0" />
 
           <button
             type="button"
             onClick={onCancel}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-surface-container rounded-xl border border-outline-variant hover:bg-surface-container-high transition-colors cursor-pointer"
+            className="min-h-[40px] flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-surface-container rounded-xl border border-outline-variant hover:bg-surface-container-high transition-colors cursor-pointer shrink-0"
           >
-            <Icon name="arrow_back" className="text-primary text-[20px]" />
-            <span className="font-bold text-sm text-on-surface leading-none">{btnBack.main}</span>
+            <Icon name="arrow_back" className="text-primary text-[20px] shrink-0" />
+            <span className="font-bold text-xs sm:text-sm text-on-surface leading-none">{btnBack.main}</span>
           </button>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 w-full max-w-xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col justify-center">
-        <div className="bg-surface-container-lowest rounded-3xl p-6 sm:p-8 border border-outline-variant/40 shadow-xl flex flex-col gap-6">
+      <main className="flex-1 w-full max-w-xl mx-auto px-3 sm:px-6 py-5 sm:py-10 flex flex-col justify-center min-w-0">
+        <div className="bg-surface-container-lowest rounded-3xl p-4 sm:p-8 border border-outline-variant/40 shadow-xl flex flex-col gap-5 sm:gap-6 min-w-0">
           {/* Unconfigured notice if backend is unconfigured */}
           {!configured && (
-            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-start gap-3">
+            <div className="p-3.5 sm:p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-start gap-3">
               <Icon name="warning" className="text-amber-600 dark:text-amber-400 text-[24px] shrink-0 mt-0.5" />
-              <div className="flex flex-col text-sm text-on-surface">
-                <span className="font-bold text-amber-800 dark:text-amber-300">
+              <div className="flex flex-col text-sm text-on-surface min-w-0">
+                <span className="font-bold text-amber-800 dark:text-amber-300 break-words">
                   {t('cloud_auth.backend_unconfigured')}
                 </span>
-                <span className="text-xs text-outline mt-0.5">
+                <span className="text-xs text-outline mt-0.5 break-words">
                   {t('cloud_auth.offline_note')}
                 </span>
               </div>
@@ -345,11 +345,11 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
 
           {step === 'enter_email' && (
             /* Step 1: Enter Email */
-            <form onSubmit={handleSendEmailOtp} className="flex flex-col gap-5">
+            <form onSubmit={handleSendEmailOtp} className="flex flex-col gap-5 min-w-0">
               {error && (
                 <div className="p-3.5 bg-error/10 border border-error/30 text-error rounded-xl text-sm font-semibold flex items-center gap-2 animate-fadeIn">
                   <Icon name="error" className="text-[20px] shrink-0" />
-                  <span>{error}</span>
+                  <span className="min-w-0 break-words">{error}</span>
                 </div>
               )}
 
@@ -373,7 +373,7 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                     inputMode="email"
                     placeholder={t('cloud_auth.email_placeholder')}
                     required
-                    className="w-full h-14 pl-12 pr-4 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface normal-case text-base focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
+                    className="w-full min-h-[56px] py-2.5 pl-12 pr-4 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface normal-case text-base focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                   />
                 </div>
               </div>
@@ -383,13 +383,13 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="h-14 min-h-[56px] px-8 bg-primary hover:bg-primary-container text-on-primary rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-[0.99] cursor-pointer font-bold disabled:opacity-50"
+                  className="min-h-[56px] py-2.5 px-5 sm:px-8 bg-primary hover:bg-primary-container text-on-primary rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-[0.99] cursor-pointer font-bold disabled:opacity-50 min-w-0"
                 >
-                  <Icon name="send" className={`text-[22px] ${isLoading ? 'animate-spin' : ''}`} />
-                  <div className="flex flex-col text-left">
-                    <span className="text-base font-bold leading-tight">{btnSendOtp.main}</span>
+                  <Icon name="send" className={`text-[22px] shrink-0 ${isLoading ? 'animate-spin' : ''}`} />
+                  <div className="flex flex-col text-left min-w-0">
+                    <span className="text-base font-bold leading-tight break-words">{btnSendOtp.main}</span>
                     {btnSendOtp.sub && (
-                      <span className="text-xs text-on-primary/80 font-normal leading-none">
+                      <span className="text-xs text-on-primary/80 font-normal leading-tight mt-0.5 break-words">
                         {btnSendOtp.sub}
                       </span>
                     )}
@@ -399,13 +399,13 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                 <button
                   type="button"
                   onClick={onCancel}
-                  className="h-14 min-h-[56px] px-6 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-2xl flex items-center justify-center gap-2.5 transition-colors cursor-pointer border border-outline-variant/40"
+                  className="min-h-[56px] py-2.5 px-5 sm:px-6 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-2xl flex items-center justify-center gap-2.5 transition-colors cursor-pointer border border-outline-variant/40 min-w-0"
                 >
-                  <Icon name="offline_pin" className="text-[20px] text-outline" />
-                  <div className="flex flex-col text-left">
-                    <span className="text-sm sm:text-base font-bold leading-tight">{btnContinueOffline.main}</span>
+                  <Icon name="offline_pin" className="text-[20px] text-outline shrink-0" />
+                  <div className="flex flex-col text-left min-w-0">
+                    <span className="text-sm sm:text-base font-bold leading-tight break-words">{btnContinueOffline.main}</span>
                     {btnContinueOffline.sub && (
-                      <span className="text-xs text-outline font-medium leading-none">{btnContinueOffline.sub}</span>
+                      <span className="text-xs text-outline font-medium leading-tight mt-0.5 break-words">{btnContinueOffline.sub}</span>
                     )}
                   </div>
                 </button>
@@ -415,33 +415,33 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
 
           {step === 'enter_otp' && (
             /* Step 2: Enter 6-Digit OTP */
-            <form onSubmit={handleVerifyOtp} className="flex flex-col items-center text-center gap-5 animate-fadeIn">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-inner">
+            <form onSubmit={handleVerifyOtp} className="flex flex-col items-center text-center gap-5 animate-fadeIn min-w-0">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-inner shrink-0">
                 <Icon name="pin" className="text-[36px]" />
               </div>
 
-              <div className="flex flex-col gap-1">
-                <h2 className="text-xl sm:text-2xl font-bold text-on-surface">
+              <div className="flex flex-col gap-1 min-w-0 w-full">
+                <h2 className="text-xl sm:text-2xl font-bold text-on-surface break-words">
                   {t('cloud_auth.enter_otp_title')}
                 </h2>
-                <p className="text-sm text-on-surface-variant max-w-md">
+                <p className="text-sm text-on-surface-variant max-w-md mx-auto break-words">
                   {t('cloud_auth.enter_otp_sub').replace('{email}', email)}
                 </p>
               </div>
 
               {/* Email chip with Change Email button */}
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-container-high rounded-full border border-outline-variant/30 text-xs sm:text-sm font-semibold text-on-surface">
-                <Icon name="mail" className="text-primary text-[16px]" />
-                <span className="select-all">{email}</span>
+              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3 py-1.5 bg-surface-container-high rounded-2xl sm:rounded-full border border-outline-variant/30 text-xs sm:text-sm font-semibold text-on-surface max-w-full min-w-0">
+                <Icon name="mail" className="text-primary text-[16px] shrink-0" />
+                <span className="select-all break-all">{email}</span>
                 <button
                   type="button"
                   onClick={() => {
                     setStep('enter_email');
                     setError('');
                   }}
-                  className="ml-1 text-primary hover:underline flex items-center gap-0.5 cursor-pointer font-bold"
+                  className="ml-1 text-primary hover:underline flex items-center gap-0.5 cursor-pointer font-bold shrink-0"
                 >
-                  <Icon name="edit" className="text-[14px]" />
+                  <Icon name="edit" className="text-[14px] shrink-0" />
                   <span>{btnChangeEmail.main}</span>
                 </button>
               </div>
@@ -449,19 +449,19 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
               {error && (
                 <div className="w-full p-3.5 bg-error/10 border border-error/30 text-error rounded-xl text-sm font-semibold flex items-center gap-2 text-left">
                   <Icon name="error" className="text-[20px] shrink-0" />
-                  <span>{error}</span>
+                  <span className="min-w-0 break-words">{error}</span>
                 </div>
               )}
 
               {/* 6-Digit Numeric OTP Input */}
-              <div className="w-full flex flex-col items-center gap-3">
+              <div className="w-full flex flex-col items-center gap-3 min-w-0">
                 <label className="text-xs font-bold text-outline uppercase tracking-wider">
                   {t('cloud_auth.otp_label')}
                 </label>
 
-                {/* 6 digit display boxes */}
+                {/* 6 digit display boxes (responsive grid fits cleanly on 360px screens) */}
                 <div
-                  className="flex items-center justify-center gap-2 sm:gap-3 cursor-pointer"
+                  className="w-full max-w-[312px] sm:max-w-[360px] grid grid-cols-6 gap-1.5 sm:gap-2.5 cursor-pointer"
                   onClick={() => otpInputRef.current?.focus()}
                 >
                   {[0, 1, 2, 3, 4, 5].map((idx) => {
@@ -470,7 +470,7 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                     return (
                       <div
                         key={idx}
-                        className={`w-11 sm:w-13 h-14 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center text-2xl sm:text-3xl font-mono font-bold transition-all border-2 ${
+                        className={`w-full min-w-0 h-13 sm:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-3xl font-mono font-bold transition-all border-2 ${
                           char
                             ? 'border-primary bg-primary/10 text-primary'
                             : isCurrent
@@ -509,13 +509,13 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                 <button
                   type="submit"
                   disabled={isLoading || otp.length !== 6}
-                  className="h-14 min-h-[56px] w-full px-8 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-[0.99] cursor-pointer font-bold disabled:cursor-not-allowed"
+                  className="min-h-[56px] py-2.5 w-full px-5 sm:px-8 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-[0.99] cursor-pointer font-bold disabled:cursor-not-allowed min-w-0"
                 >
-                  <Icon name="verified_user" className={`text-[22px] ${isLoading ? 'animate-spin' : ''}`} />
-                  <div className="flex flex-col text-left">
-                    <span className="text-base font-bold leading-tight">{btnVerifyOtp.main}</span>
+                  <Icon name="verified_user" className={`text-[22px] shrink-0 ${isLoading ? 'animate-spin' : ''}`} />
+                  <div className="flex flex-col text-left min-w-0">
+                    <span className="text-base font-bold leading-tight break-words">{btnVerifyOtp.main}</span>
                     {btnVerifyOtp.sub && (
-                      <span className="text-xs text-on-primary/80 font-normal leading-none">
+                      <span className="text-xs text-on-primary/80 font-normal leading-tight mt-0.5 break-words">
                         {btnVerifyOtp.sub}
                       </span>
                     )}
@@ -528,10 +528,10 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                     type="button"
                     onClick={handleResendOtp}
                     disabled={cooldown > 0 || isLoading}
-                    className="h-14 min-h-[56px] px-4 bg-surface-container hover:bg-surface-container-high disabled:opacity-50 text-on-surface rounded-2xl flex items-center justify-center gap-2 transition-colors cursor-pointer border border-outline-variant/40 font-bold text-sm disabled:cursor-not-allowed"
+                    className="min-h-[56px] py-2.5 px-4 bg-surface-container hover:bg-surface-container-high disabled:opacity-50 text-on-surface rounded-2xl flex items-center justify-center gap-2 transition-colors cursor-pointer border border-outline-variant/40 font-bold text-sm disabled:cursor-not-allowed min-w-0"
                   >
-                    <Icon name="refresh" className={`text-[18px] ${isLoading ? 'animate-spin' : ''}`} />
-                    <span>
+                    <Icon name="refresh" className={`text-[18px] shrink-0 ${isLoading ? 'animate-spin' : ''}`} />
+                    <span className="break-words">
                       {cooldown > 0
                         ? t('cloud_auth.resend_cooldown').replace('{seconds}', String(cooldown))
                         : btnResendOtp.main}
@@ -541,10 +541,10 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                   <button
                     type="button"
                     onClick={onCancel}
-                    className="h-14 min-h-[56px] px-4 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-2xl flex items-center justify-center gap-2 transition-colors cursor-pointer border border-outline-variant/40 font-bold text-sm"
+                    className="min-h-[56px] py-2.5 px-4 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-2xl flex items-center justify-center gap-2 transition-colors cursor-pointer border border-outline-variant/40 font-bold text-sm min-w-0"
                   >
-                    <Icon name="offline_pin" className="text-[18px] text-outline" />
-                    <span>{btnContinueOffline.main}</span>
+                    <Icon name="offline_pin" className="text-[18px] text-outline shrink-0" />
+                    <span className="break-words">{btnContinueOffline.main}</span>
                   </button>
                 </div>
               </div>

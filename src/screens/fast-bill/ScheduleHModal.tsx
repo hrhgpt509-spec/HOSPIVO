@@ -40,28 +40,28 @@ export const ScheduleHModal: React.FC<ScheduleHModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-space-md">
-      <div className="bg-surface-container-lowest w-full max-w-xl rounded-2xl shadow-xl overflow-hidden border border-outline-variant/40 flex flex-col animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-space-md">
+      <div className="bg-surface-container-lowest w-full max-w-xl max-h-[92dvh] rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden border-t sm:border border-outline-variant/40 flex flex-col animate-in fade-in zoom-in-95">
         {/* Banner */}
-        <div className="px-space-lg py-space-md bg-[#FFE0B2] text-[#C25700] flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-space-sm">
-            <Icon name="warning" className="text-[28px]" />
-            <div className="flex flex-col">
-              <span className="font-headline-md text-lg md:text-xl font-bold leading-tight">
+        <div className="px-4 sm:px-space-lg py-3.5 sm:py-space-md bg-[#FFE0B2] text-[#C25700] flex flex-wrap items-center justify-between gap-2 shadow-xs shrink-0">
+          <div className="flex items-center gap-space-sm min-w-0 flex-1">
+            <Icon name="warning" className="text-[26px] sm:text-[28px] shrink-0" />
+            <div className="flex flex-col min-w-0">
+              <span className="font-headline-md text-base sm:text-xl font-bold leading-tight break-words">
                 {t('fast_bill.schedule_h.banner_title')}
               </span>
-              <span className="font-label-sub-english text-xs font-medium opacity-90">
+              <span className="font-label-sub-english text-xs font-medium opacity-90 break-words">
                 {t('fast_bill.schedule_h.banner_sub')}
               </span>
             </div>
           </div>
-          <span className="font-label-sub-english text-xs font-bold px-2.5 py-1 rounded-full bg-[#C25700] text-white">
+          <span className="font-label-sub-english text-xs font-bold px-2.5 py-1 rounded-full bg-[#C25700] text-white shrink-0">
             {t('fast_bill.schedule_h.mandatory_badge')}
           </span>
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-space-lg flex flex-col gap-space-md">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-space-lg pb-[max(1rem,env(safe-area-inset-bottom))] flex flex-col gap-space-md overflow-y-auto min-h-0">
           <div className="text-sm font-bold text-on-surface">
             {medicineName}
           </div>
@@ -163,20 +163,20 @@ export const ScheduleHModal: React.FC<ScheduleHModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between gap-space-md pt-space-xs">
+          <div className="flex items-stretch justify-between gap-2.5 sm:gap-space-md pt-space-xs">
             <button
               type="button"
               onClick={onCancel}
-              className="h-14 px-space-lg rounded-xl bg-surface-container-high hover:bg-surface-variant text-on-surface font-bold text-sm cursor-pointer"
+              className="min-h-[56px] py-2.5 px-4 sm:px-space-lg rounded-xl bg-surface-container-high hover:bg-surface-variant text-on-surface font-bold text-sm cursor-pointer shrink-0"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="h-14 flex-1 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-base flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all"
+              className="min-h-[56px] py-2.5 px-4 flex-1 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all min-w-0"
             >
-              <Icon name="arrow_forward" className="text-[24px]" />
-              <span>
+              <Icon name="arrow_forward" className="text-[22px] sm:text-[24px] shrink-0" />
+              <span className="break-words">
                 {t('fast_bill.schedule_h.next')} (Press ENTER ↵)
               </span>
             </button>

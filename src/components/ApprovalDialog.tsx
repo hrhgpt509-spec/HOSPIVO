@@ -267,29 +267,29 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
       <div
         role="dialog"
         aria-modal="true"
-        className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none animate-fadeIn"
+        className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 select-none animate-fadeIn"
       >
-        <div className="relative z-10 m-auto w-full max-w-[540px] bg-surface-container-lowest rounded-[24px] shadow-2xl p-8 flex flex-col gap-6 border border-outline-variant">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-error-container text-error flex items-center justify-center shrink-0">
-              <Icon name="block" className="text-[32px]" />
+        <div className="relative z-10 sm:m-auto w-full max-w-[540px] max-h-[92dvh] overflow-y-auto bg-surface-container-lowest rounded-t-3xl sm:rounded-[24px] shadow-2xl p-5 sm:p-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-5 sm:gap-6 border-t sm:border border-outline-variant">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-error-container text-error flex items-center justify-center shrink-0">
+              <Icon name="block" className="text-[28px] sm:text-[32px]" />
             </div>
-            <div className="flex flex-col">
-              <h2 className="text-2xl font-bold text-on-surface">Offline mein manaa hai</h2>
-              <span className="text-sm text-outline">Action blocked while offline</span>
+            <div className="flex flex-col min-w-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-on-surface leading-tight break-words">Offline mein manaa hai</h2>
+              <span className="text-sm text-outline break-words">Action blocked while offline</span>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant text-base text-on-surface">
+          <div className="p-4 rounded-xl bg-surface-container-low border border-outline-variant text-sm sm:text-base text-on-surface break-words">
             {t('remote_approval.offline_notice')}
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="w-full min-h-[56px] py-3 rounded-2xl bg-surface-container hover:bg-surface-container-high transition-all flex items-center justify-center gap-2 font-bold text-on-surface cursor-pointer"
+            className="w-full min-h-[56px] py-3 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high transition-all flex items-center justify-center gap-2 font-bold text-on-surface cursor-pointer"
           >
-            <Icon name="arrow_back" className="text-[20px]" />
+            <Icon name="arrow_back" className="text-[20px] shrink-0" />
             <span>{wapasBtn.main}</span>
           </button>
         </div>
@@ -303,20 +303,20 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
       <div
         role="dialog"
         aria-modal="true"
-        className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none animate-fadeIn"
+        className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 select-none animate-fadeIn"
       >
-        <div className="relative z-10 m-auto w-full max-w-[560px] bg-surface-container-lowest rounded-[24px] shadow-2xl p-8 flex flex-col gap-6 border border-outline-variant">
+        <div className="relative z-10 sm:m-auto w-full max-w-[560px] max-h-[92dvh] overflow-y-auto bg-surface-container-lowest rounded-t-3xl sm:rounded-[24px] shadow-2xl p-5 sm:p-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-4 sm:gap-6 border-t sm:border border-outline-variant">
           {/* Header & Status Chip Row */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <Icon name="admin_panel_settings" className="text-[36px]" />
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <Icon name="admin_panel_settings" className="text-[30px] sm:text-[36px]" />
               </div>
-              <div className="flex flex-col">
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface leading-tight">
+              <div className="flex flex-col min-w-0">
+                <h2 className="text-xl sm:text-3xl font-extrabold text-on-surface leading-tight break-words">
                   {t('remote_approval.ask_owner_title')}
                 </h2>
-                <span className="text-sm font-medium text-outline">
+                <span className="text-xs sm:text-sm font-medium text-outline break-words">
                   {t('remote_approval.ask_owner_sub')}
                 </span>
               </div>
@@ -324,18 +324,18 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
 
             {/* Status Chip */}
             {isOnline ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 shrink-0">
-                <Icon name="check_circle" className="text-primary text-[20px]" />
-                <span className="text-xs text-primary font-bold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 shrink-0 max-w-full">
+                <Icon name="check_circle" className="text-primary text-[18px] shrink-0" />
+                <span className="text-xs text-primary font-bold truncate">
                   {remoteStatus === 'sent'
                     ? t('remote_approval.sent_to_owner')
                     : 'Cloud connected'}
                 </span>
               </div>
             ) : (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-tertiary-fixed text-tertiary shrink-0 font-medium">
-                <Icon name="wifi_off" className="text-[18px]" />
-                <span className="text-xs text-tertiary font-bold">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-tertiary-fixed text-tertiary shrink-0 font-medium max-w-full">
+                <Icon name="wifi_off" className="text-[18px] shrink-0" />
+                <span className="text-xs text-tertiary font-bold truncate">
                   {t('remote_approval.waiting_internet')}
                 </span>
               </div>
@@ -344,13 +344,13 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
 
           {/* Offline Warning Banner (if offline, matching 18b) */}
           {!isOnline && (
-            <div className="w-full p-4 rounded-[16px] bg-tertiary-fixed/40 border border-tertiary-fixed-dim flex items-center gap-3 text-tertiary">
-              <Icon name="wifi_off" className="text-[24px] shrink-0" />
-              <div className="flex flex-col">
-                <span className="font-bold text-base leading-tight">
+            <div className="w-full p-3.5 sm:p-4 rounded-[16px] bg-tertiary-fixed/40 border border-tertiary-fixed-dim flex items-center gap-3 text-tertiary">
+              <Icon name="wifi_off" className="text-[22px] sm:text-[24px] shrink-0" />
+              <div className="flex flex-col min-w-0">
+                <span className="font-bold text-sm sm:text-base leading-tight break-words">
                   {t('remote_approval.offline_banner_title')}
                 </span>
-                <span className="text-xs text-on-surface-variant">
+                <span className="text-xs text-on-surface-variant break-words">
                   {t('remote_approval.offline_banner_sub')}
                 </span>
               </div>
@@ -358,29 +358,29 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
           )}
 
           {/* Action & Details Block */}
-          <div className="bg-surface-container-low rounded-[16px] p-5 flex flex-col gap-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-on-surface-variant font-medium">
+          <div className="bg-surface-container-low rounded-[16px] p-4 sm:p-5 flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="text-on-surface-variant font-medium shrink-0">
                 {t('remote_approval.label_shop')}
               </span>
-              <span className="text-on-surface font-bold">{shopName}</span>
+              <span className="text-on-surface font-bold text-right break-words min-w-0">{shopName}</span>
             </div>
 
-            <div className="flex items-center justify-between bg-surface-container-lowest p-3 rounded-xl shadow-sm">
-              <span className="text-sm text-on-surface-variant font-medium">
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-surface-container-lowest p-3 rounded-xl shadow-sm">
+              <span className="text-sm text-on-surface-variant font-medium shrink-0">
                 {t('remote_approval.label_action')}
               </span>
-              <span className="text-base text-error font-bold flex items-center gap-2">
-                <Icon name="delete" className="text-[20px]" />
-                <span>{recordDescription}</span>
+              <span className="text-sm sm:text-base text-error font-bold flex items-center gap-1.5 min-w-0 break-words">
+                <Icon name="delete" className="text-[18px] sm:text-[20px] shrink-0" />
+                <span className="break-words">{recordDescription}</span>
               </span>
             </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-on-surface-variant font-medium">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="text-on-surface-variant font-medium shrink-0">
                 {t('remote_approval.label_requester')}
               </span>
-              <span className="text-on-surface font-bold">{requesterName}</span>
+              <span className="text-on-surface font-bold text-right break-words min-w-0">{requesterName}</span>
             </div>
           </div>
 
@@ -395,36 +395,36 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
               onChange={(e) => setReason(e.target.value)}
               disabled={remoteStatus === 'sent'}
               placeholder={t('remote_approval.placeholder_reason')}
-              className="w-full bg-surface-container-low text-on-surface text-base rounded-[16px] p-4 resize-none outline-none focus:bg-surface-container-lowest transition-all placeholder:text-outline shadow-inner border border-outline-variant/30 font-medium"
+              className="w-full bg-surface-container-low text-on-surface text-base rounded-[16px] p-3.5 sm:p-4 resize-none outline-none focus:bg-surface-container-lowest transition-all placeholder:text-outline shadow-inner border border-outline-variant/30 font-medium"
             />
           </div>
 
           {/* Notice box if offline */}
           {!isOnline && (
-            <div className="p-4 rounded-[16px] bg-surface-container-low border border-outline-variant/40 flex items-start gap-3">
+            <div className="p-3.5 sm:p-4 rounded-[16px] bg-surface-container-low border border-outline-variant/40 flex items-start gap-3">
               <Icon name="info" className="text-tertiary text-[22px] shrink-0 mt-0.5" />
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-on-surface leading-snug">
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-bold text-on-surface leading-snug break-words">
                   {t('remote_approval.offline_notice')}
                 </span>
-                <span className="text-xs text-outline">{t('remote_approval.offline_notice_sub')}</span>
+                <span className="text-xs text-outline break-words">{t('remote_approval.offline_notice_sub')}</span>
               </div>
             </div>
           )}
 
           {/* Footer Action Buttons Row */}
-          <div className="grid grid-cols-2 gap-4 pt-1">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4 pt-1">
             <button
               type="button"
               onClick={onClose}
-              className="h-16 min-h-[56px] rounded-[16px] bg-surface-container-high hover:bg-surface-container-highest active:scale-[0.98] transition-transform flex flex-col items-center justify-center text-on-surface shadow-sm cursor-pointer"
+              className="min-h-[56px] py-2.5 px-3 rounded-[16px] bg-surface-container-high hover:bg-surface-container-highest active:scale-[0.98] transition-transform flex flex-col items-center justify-center text-on-surface shadow-sm cursor-pointer min-w-0"
             >
-              <div className="flex items-center gap-2">
-                <Icon name="arrow_back" className="text-[20px]" />
-                <span className="text-lg font-bold leading-tight">{wapasBtn.main}</span>
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
+                <Icon name="arrow_back" className="text-[18px] sm:text-[20px] shrink-0" />
+                <span className="text-sm sm:text-lg font-bold leading-tight break-words">{wapasBtn.main}</span>
               </div>
               {wapasBtn.sub && (
-                <span className="text-xs text-outline leading-none">{wapasBtn.sub}</span>
+                <span className="text-[11px] sm:text-xs text-outline leading-tight mt-0.5 break-words">{wapasBtn.sub}</span>
               )}
             </button>
 
@@ -433,18 +433,18 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
                 type="button"
                 onClick={handleSendRemoteRequest}
                 disabled={isSending || remoteStatus === 'sent'}
-                className="h-16 min-h-[56px] rounded-[16px] bg-primary hover:bg-primary-container disabled:opacity-70 active:scale-[0.98] transition-transform flex flex-col items-center justify-center text-on-primary shadow-md cursor-pointer"
+                className="min-h-[56px] py-2.5 px-3 rounded-[16px] bg-primary hover:bg-primary-container disabled:opacity-70 active:scale-[0.98] transition-transform flex flex-col items-center justify-center text-on-primary shadow-md cursor-pointer min-w-0"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
                   <Icon
                     name={remoteStatus === 'sent' ? 'sync' : 'send'}
-                    className={`text-[20px] ${remoteStatus === 'sent' ? 'animate-spin' : ''}`}
+                    className={`text-[18px] sm:text-[20px] shrink-0 ${remoteStatus === 'sent' ? 'animate-spin' : ''}`}
                   />
-                  <span className="text-lg font-bold leading-tight">
+                  <span className="text-sm sm:text-lg font-bold leading-tight break-words">
                     {remoteStatus === 'sent' ? 'Owner ka intezaar...' : btnSendRequest.main}
                   </span>
                 </div>
-                <span className="text-xs text-on-primary/80 leading-none">
+                <span className="text-[11px] sm:text-xs text-on-primary/80 leading-tight mt-0.5 break-words">
                   {remoteStatus === 'sent' ? 'Waiting for approval' : btnSendRequest.sub}
                 </span>
               </button>
@@ -452,26 +452,26 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
               <button
                 type="button"
                 disabled
-                className="h-16 min-h-[56px] rounded-[16px] bg-surface-container-highest text-on-surface-variant/40 cursor-not-allowed flex flex-col items-center justify-center shadow-none select-none"
+                className="min-h-[56px] py-2.5 px-3 rounded-[16px] bg-surface-container-highest text-on-surface-variant/40 cursor-not-allowed flex flex-col items-center justify-center shadow-none select-none min-w-0"
               >
-                <div className="flex items-center gap-2">
-                  <Icon name="send" className="text-[20px]" />
-                  <span className="text-lg font-bold leading-tight">{btnSendRequest.main}</span>
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
+                  <Icon name="send" className="text-[18px] sm:text-[20px] shrink-0" />
+                  <span className="text-sm sm:text-lg font-bold leading-tight break-words">{btnSendRequest.main}</span>
                 </div>
-                <span className="text-xs leading-none">{btnSendRequest.sub}</span>
+                <span className="text-[11px] sm:text-xs leading-tight mt-0.5 break-words">{btnSendRequest.sub}</span>
               </button>
             )}
           </div>
 
           {/* Fallback to local Approval PIN */}
-          <div className="text-center pt-1 border-t border-outline-variant/30">
+          <div className="text-center pt-2 border-t border-outline-variant/30">
             <button
               type="button"
               onClick={() => setDialogMode('pin')}
-              className="text-sm font-bold text-primary hover:underline cursor-pointer inline-flex items-center gap-1.5"
+              className="text-sm font-bold text-primary hover:underline cursor-pointer inline-flex items-center justify-center gap-1.5 min-h-[40px] px-2"
             >
-              <Icon name="pin" className="text-[18px]" />
-              <span>{btnUsePin.main} ({btnUsePin.sub})</span>
+              <Icon name="pin" className="text-[18px] shrink-0" />
+              <span className="break-words">{btnUsePin.main} ({btnUsePin.sub})</span>
             </button>
           </div>
         </div>
@@ -488,44 +488,44 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
     >
       <div className="relative z-10 sm:m-auto w-full max-w-[540px] max-h-[92dvh] overflow-y-auto bg-surface-container-lowest rounded-t-3xl sm:rounded-[24px] shadow-2xl p-5 sm:p-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-4 border-t sm:border border-outline-variant">
         {/* 1. Dialog Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-on-primary shadow-md">
-              <Icon name="verified_user" className="text-[32px]" />
+        <div className="flex flex-wrap items-start justify-between gap-2.5">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary flex items-center justify-center text-on-primary shadow-md shrink-0">
+              <Icon name="verified_user" className="text-[28px] sm:text-[32px]" />
             </div>
-            <div className="flex flex-col">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight leading-tight">
+            <div className="flex flex-col min-w-0">
+              <h2 className="text-xl sm:text-3xl font-extrabold text-on-surface tracking-tight leading-tight break-words">
                 {t('dialogs.ijazat_pin_title')}
               </h2>
-              <span className="text-sm font-medium text-outline">
+              <span className="text-xs sm:text-sm font-medium text-outline break-words">
                 {t('dialogs.ijazat_pin_sub')}
               </span>
             </div>
           </div>
 
           {/* Top-right Local mode chip */}
-          <div className="flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full shadow-sm border border-outline-variant">
-            <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block animate-pulse" />
-            <span className="text-xs font-bold text-on-surface">
+          <div className="flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full shadow-sm border border-outline-variant shrink-0">
+            <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-primary inline-block animate-pulse shrink-0" />
+            <span className="text-xs font-bold text-on-surface whitespace-nowrap">
               {cloudConfig?.cloudEnabled ? 'Cloud mode' : t('common.local_mode')}
             </span>
           </div>
         </div>
 
         {/* 2. Context Info Strip */}
-        <div className="w-full bg-surface-container-low rounded-xl px-4 py-3 flex items-center justify-between shadow-sm border border-outline-variant">
-          <div className="flex items-center gap-3 text-error">
-            <Icon name="warning" className="text-error text-[24px] shrink-0" />
-            <div className="flex flex-col text-left">
-              <span className="text-lg font-bold text-error leading-tight">
+        <div className="w-full bg-surface-container-low rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm border border-outline-variant">
+          <div className="flex items-center gap-2.5 sm:gap-3 text-error min-w-0 flex-1">
+            <Icon name="warning" className="text-error text-[22px] sm:text-[24px] shrink-0" />
+            <div className="flex flex-col text-left min-w-0">
+              <span className="text-base sm:text-lg font-bold text-error leading-tight break-words">
                 {recordDescription}
               </span>
-              <span className="text-xs text-outline leading-tight">{categoryTitle}</span>
+              <span className="text-xs text-outline leading-tight break-words">{categoryTitle}</span>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-sm font-bold text-on-surface">{shopName}</div>
-            <div className="text-xs text-outline">{t('dialogs.ijazat_pin_required')}</div>
+          <div className="sm:text-right shrink-0 pl-8 sm:pl-0">
+            <div className="text-xs sm:text-sm font-bold text-on-surface break-words">{shopName}</div>
+            <div className="text-[11px] sm:text-xs text-outline">{t('dialogs.ijazat_pin_required')}</div>
           </div>
         </div>
 
@@ -637,17 +637,17 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
         </div>
 
         {/* 5. Bottom Action: Wapas Button */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap sm:flex-nowrap items-stretch gap-2.5 sm:gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 min-h-[56px] py-3 rounded-2xl bg-surface-container hover:bg-surface-container-high active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm text-on-surface cursor-pointer border border-outline-variant"
+            className="flex-1 min-h-[56px] py-2.5 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm text-on-surface cursor-pointer border border-outline-variant min-w-0"
           >
-            <Icon name="arrow_back" className="text-[22px]" />
-            <div className="flex items-center gap-1.5">
-              <span className="text-xl font-bold leading-none">{wapasBtn.main}</span>
+            <Icon name="arrow_back" className="text-[20px] sm:text-[22px] shrink-0" />
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-base sm:text-xl font-bold leading-tight truncate">{wapasBtn.main}</span>
               {wapasBtn.sub && (
-                <span className="text-xs text-outline font-medium leading-none">
+                <span className="text-xs text-outline font-medium leading-tight truncate">
                   {wapasBtn.sub}
                 </span>
               )}
@@ -658,9 +658,9 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
             <button
               type="button"
               onClick={() => setDialogMode('remote')}
-              className="h-[56px] px-5 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm flex items-center gap-2 cursor-pointer transition-colors"
+              className="min-h-[56px] py-2.5 px-4 sm:px-5 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors shrink-0"
             >
-              <Icon name="send" className="text-[18px]" />
+              <Icon name="send" className="text-[18px] shrink-0" />
               <span>{btnSendRequest.main}</span>
             </button>
           )}

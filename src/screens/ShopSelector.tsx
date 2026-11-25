@@ -116,12 +116,12 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({ onEnter, onAddShop }
                       : 'border border-outline-variant hover:border-primary/50'
                   }`}
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <Icon name={isBusy ? 'sync' : 'storefront'} className={`text-[30px] ${isBusy ? 'animate-spin' : ''}`} />
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Icon name={isBusy ? 'sync' : 'storefront'} className={`text-[26px] sm:text-[30px] ${isBusy ? 'animate-spin' : ''}`} />
                   </div>
                   <div className="min-w-0 flex-1 flex flex-col gap-1.5">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-lg font-bold leading-tight truncate">{shop.name}</span>
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+                      <span className="text-base sm:text-lg font-bold leading-tight break-words min-w-0">{shop.name}</span>
                       {isActive && (
                         <span className="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary text-on-primary">
                           {t('shop_select.active_badge')}
@@ -129,13 +129,13 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({ onEnter, onAddShop }
                       )}
                     </div>
                     {isBusy ? (
-                      <span className="text-sm font-semibold text-primary truncate">
+                      <span className="text-sm font-semibold text-primary break-words">
                         {t('shop_select.switching')}
                       </span>
                     ) : shop.address ? (
-                      <span className="text-sm text-on-surface-variant truncate">{shop.address}</span>
+                      <span className="text-sm text-on-surface-variant break-words line-clamp-2">{shop.address}</span>
                     ) : null}
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                       <span
                         className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${
                           isCloud
@@ -143,12 +143,12 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({ onEnter, onAddShop }
                             : 'bg-surface-container text-on-surface-variant border-outline-variant'
                         }`}
                       >
-                        <Icon name={isCloud ? 'cloud_done' : 'smartphone'} className="text-[14px]" />
-                        {isCloud ? t('shop_select.badge_cloud') : t('shop_select.badge_local')}
+                        <Icon name={isCloud ? 'cloud_done' : 'smartphone'} className="text-[14px] shrink-0" />
+                        <span>{isCloud ? t('shop_select.badge_cloud') : t('shop_select.badge_local')}</span>
                       </span>
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-surface-container text-on-surface-variant border border-outline-variant">
-                        <Icon name="group" className="text-[14px]" />
-                        {t('shop_select.staff_count', { count: shop.staffCount })}
+                        <Icon name="group" className="text-[14px] shrink-0" />
+                        <span>{t('shop_select.staff_count', { count: shop.staffCount })}</span>
                       </span>
                     </div>
                   </div>
@@ -175,7 +175,7 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({ onEnter, onAddShop }
                 <Icon name="add_business" className="text-[24px]" />
               </div>
               <div className="flex-1 min-w-0 flex flex-col">
-                <span className="text-base font-bold text-primary leading-tight truncate">
+                <span className="text-base font-bold text-primary leading-tight break-words">
                   {t('shop_select.add_shop')}
                 </span>
                 <span className="text-xs text-on-surface-variant font-medium mt-0.5 break-words">

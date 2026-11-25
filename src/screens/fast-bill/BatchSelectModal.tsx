@@ -63,29 +63,29 @@ export const BatchSelectModal: React.FC<BatchSelectModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-space-md">
-      <div className="bg-surface-container-lowest w-full max-w-xl rounded-2xl shadow-xl overflow-hidden border border-outline-variant/40 flex flex-col animate-in fade-in zoom-in-95 max-h-[85vh]">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-space-md">
+      <div className="bg-surface-container-lowest w-full max-w-xl rounded-t-3xl sm:rounded-2xl shadow-xl overflow-hidden border-t sm:border border-outline-variant/40 flex flex-col animate-in fade-in zoom-in-95 max-h-[92dvh] sm:max-h-[85dvh]">
         {/* Header */}
-        <div className="p-space-lg bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between">
-          <div className="flex flex-col">
-            <h2 className="font-headline-md text-lg font-bold text-on-surface">
+        <div className="p-4 sm:p-space-lg bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between gap-2 shrink-0">
+          <div className="flex flex-col min-w-0">
+            <h2 className="font-headline-md text-lg font-bold text-on-surface truncate">
               {t('fast_bill.batch_modal.title')}
             </h2>
-            <span className="font-label-sub-english text-xs text-on-surface-variant">
+            <span className="font-label-sub-english text-xs text-on-surface-variant truncate">
               {t('fast_bill.batch_modal.subtitle', { name: medicineName })}
             </span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-on-surface-variant hover:text-on-surface p-1"
+            className="text-on-surface-variant hover:text-on-surface p-1 shrink-0 cursor-pointer"
           >
             <Icon name="close" className="text-[24px]" />
           </button>
         </div>
 
         {/* Batch List */}
-        <div className="p-space-lg flex flex-col gap-space-sm overflow-y-auto flex-1">
+        <div className="p-4 sm:p-space-lg flex flex-col gap-space-sm overflow-y-auto flex-1 min-h-0">
           {loading ? (
             <div className="py-8 text-center text-outline">Loading batches...</div>
           ) : batches.length === 0 ? (
@@ -141,11 +141,11 @@ export const BatchSelectModal: React.FC<BatchSelectModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-space-md bg-surface-container-low/50 border-t border-outline-variant/30 flex justify-end">
+        <div className="px-4 sm:px-space-md pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] bg-surface-container-low/50 border-t border-outline-variant/30 flex justify-end shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="h-12 px-space-lg rounded-xl bg-surface-container-high hover:bg-surface-variant text-on-surface font-bold text-sm cursor-pointer"
+            className="w-full sm:w-auto min-h-[48px] py-2.5 px-space-lg rounded-xl bg-surface-container-high hover:bg-surface-variant text-on-surface font-bold text-sm cursor-pointer"
           >
             {t('fast_bill.batch_modal.close')}
           </button>

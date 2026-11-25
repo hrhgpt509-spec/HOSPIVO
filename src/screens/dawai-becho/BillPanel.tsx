@@ -93,9 +93,9 @@ export const BillPanel: React.FC<BillPanelProps> = ({
       {/* 1. Bill Panel Card */}
       <div className="flex-1 bg-surface-container-lowest rounded-2xl shadow-md p-space-md lg:p-space-lg flex flex-col justify-between min-h-0 border border-outline-variant/40">
         {/* Header */}
-        <div className="flex items-center justify-between gap-2 pb-space-xs border-b border-outline-variant/30 shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-space-xs border-b border-outline-variant/30 shrink-0 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="font-headline-md text-headline-md text-on-surface tracking-tight font-bold truncate">
+            <span className="font-headline-md text-base sm:text-headline-md text-on-surface tracking-tight font-bold truncate">
               {t('dawai_becho.bill_header_prefix')} #{nextBillNo}
             </span>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant shrink-0">
@@ -103,15 +103,15 @@ export const BillPanel: React.FC<BillPanelProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
             {heldCount > 0 && (
               <button
                 type="button"
                 onClick={onOpenHeldBills}
-                className="h-12 min-h-[48px] px-3 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed font-bold text-sm flex items-center gap-1.5 hover:brightness-95 cursor-pointer transition-all"
+                className="min-h-[44px] py-1.5 px-2.5 sm:px-3 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed font-bold text-xs sm:text-sm flex items-center gap-1.5 hover:brightness-95 cursor-pointer transition-all"
               >
-                <Icon name="receipt_long" className="text-[18px]" />
-                <span>{t('dawai_becho.btn_held_list', { count: heldCount })}</span>
+                <Icon name="receipt_long" className="text-[18px] shrink-0" />
+                <span className="whitespace-nowrap">{t('dawai_becho.btn_held_list', { count: heldCount })}</span>
               </button>
             )}
 
@@ -119,26 +119,26 @@ export const BillPanel: React.FC<BillPanelProps> = ({
               type="button"
               onClick={() => setShowMetaInputs((prev) => !prev)}
               aria-label={t('dawai_becho.customer_name_placeholder')}
-              className={`h-12 px-3 rounded-xl flex items-center gap-1 font-bold text-sm transition-colors cursor-pointer ${
+              className={`min-h-[44px] py-1.5 px-2.5 sm:px-3 rounded-xl flex items-center gap-1 font-bold text-xs sm:text-sm transition-colors cursor-pointer ${
                 showMetaInputs || customerName || doctorName || wholeBillDiscountPercent > 0 || wholeBillDiscountPaise > 0
                   ? 'bg-primary-fixed text-on-primary-fixed'
                   : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
               }`}
             >
-              <Icon name="person_add" className="text-[20px]" />
+              <Icon name="person_add" className="text-[20px] shrink-0" />
               <span>%</span>
             </button>
 
             <button
               type="button"
               onClick={onHoldBill}
-              className="min-h-[56px] flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface transition-all cursor-pointer active:scale-95"
+              className="min-h-[44px] sm:min-h-[56px] flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface transition-all cursor-pointer active:scale-95"
             >
-              <Icon name="pause_circle" className="text-[22px] text-tertiary" />
-              <div className="flex flex-col items-start leading-none">
-                <span className="font-label-sub-english text-sm font-bold">{btnHold.main}</span>
+              <Icon name="pause_circle" className="text-[20px] sm:text-[22px] text-tertiary shrink-0" />
+              <div className="flex flex-col items-start leading-tight">
+                <span className="font-label-sub-english text-xs sm:text-sm font-bold">{btnHold.main}</span>
                 {btnHold.sub && (
-                  <span className="text-[11px] text-on-surface-variant font-medium">
+                  <span className="text-[10px] sm:text-[11px] text-on-surface-variant font-medium">
                     {btnHold.sub}
                   </span>
                 )}
@@ -150,7 +150,7 @@ export const BillPanel: React.FC<BillPanelProps> = ({
                 type="button"
                 onClick={onCloseMobileSheet}
                 aria-label="Close"
-                className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer shrink-0"
               >
                 <Icon name="expand_more" className="text-[28px]" />
               </button>
@@ -393,11 +393,11 @@ export const BillPanel: React.FC<BillPanelProps> = ({
           )}
 
           {/* Prominent Total display (>= 36px always visible) */}
-          <div className="flex items-baseline justify-between bg-surface-container-low rounded-xl px-space-md py-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2 bg-surface-container-low rounded-xl px-space-md py-2 min-w-0">
             <span className="font-title-hinglish text-title-hinglish text-on-surface-variant font-bold">
               {t('dawai_becho.summary_total')}
             </span>
-            <span className="font-display-total text-[36px] sm:text-[42px] leading-[44px] font-extrabold text-primary">
+            <span className="font-display-total text-[34px] sm:text-[42px] leading-tight font-extrabold text-primary shrink-0">
               {formatRupees(totals.totalPaise)}
             </span>
           </div>
@@ -406,15 +406,15 @@ export const BillPanel: React.FC<BillPanelProps> = ({
           <button
             type="button"
             onClick={onProceedToPayment}
-            className="w-full h-16 min-h-[56px] rounded-2xl bg-primary hover:bg-primary-container text-on-primary shadow-lg flex items-center justify-center gap-space-md active:translate-y-0.5 transition-all cursor-pointer"
+            className="w-full min-h-[56px] py-2.5 px-4 rounded-2xl bg-primary hover:bg-primary-container text-on-primary shadow-lg flex items-center justify-center gap-3 active:translate-y-0.5 transition-all cursor-pointer min-w-0"
           >
-            <Icon name="receipt_long" className="text-[32px]" />
-            <div className="flex flex-col items-start justify-center leading-none">
-              <span className="font-button-text text-button-text font-bold leading-tight">
+            <Icon name="receipt_long" className="text-[28px] sm:text-[32px] shrink-0" />
+            <div className="flex flex-col items-start justify-center leading-tight min-w-0 text-left">
+              <span className="font-button-text text-lg sm:text-button-text font-bold leading-tight break-words">
                 {btnMakeBill.main}
               </span>
               {btnMakeBill.sub && (
-                <span className="font-label-sub-english text-label-sub-english text-primary-fixed leading-tight">
+                <span className="font-label-sub-english text-label-sub-english text-primary-fixed leading-tight mt-0.5 break-words">
                   {btnMakeBill.sub}
                 </span>
               )}
@@ -423,19 +423,19 @@ export const BillPanel: React.FC<BillPanelProps> = ({
         </div>
       </div>
 
-      {/* 2. Under the Bill Panel Action Row (all >= 56px tall) */}
-      <div className="grid grid-cols-4 gap-space-xs shrink-0">
+      {/* 2. Under the Bill Panel Action Row (all >= 56px tall, 2x2 on narrow phones, 4-col on >= sm) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-space-xs shrink-0">
         {/* Wapas (Undo last item) */}
         <button
           type="button"
           onClick={onUndoLastItem}
-          className="h-14 min-h-[56px] rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm border border-outline-variant/40 flex flex-col items-center justify-center px-1 transition-all cursor-pointer active:scale-95"
+          className="min-h-[56px] py-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm border border-outline-variant/40 flex flex-col items-center justify-center px-2 text-center transition-all cursor-pointer active:scale-95 min-w-0"
         >
-          <span className="font-label-sub-english text-sm sm:text-base font-bold leading-tight">
+          <span className="font-label-sub-english text-sm sm:text-base font-bold leading-tight break-words max-w-full">
             {btnUndo.main}
           </span>
           {btnUndo.sub && (
-            <span className="text-[11px] text-on-surface-variant leading-none">{btnUndo.sub}</span>
+            <span className="text-[11px] text-on-surface-variant leading-tight mt-0.5 break-words max-w-full">{btnUndo.sub}</span>
           )}
         </button>
 
@@ -443,13 +443,13 @@ export const BillPanel: React.FC<BillPanelProps> = ({
         <button
           type="button"
           onClick={onNewBill}
-          className="h-14 min-h-[56px] rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm border border-outline-variant/40 flex flex-col items-center justify-center px-1 transition-all cursor-pointer active:scale-95"
+          className="min-h-[56px] py-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm border border-outline-variant/40 flex flex-col items-center justify-center px-2 text-center transition-all cursor-pointer active:scale-95 min-w-0"
         >
-          <span className="font-label-sub-english text-sm sm:text-base font-bold leading-tight">
+          <span className="font-label-sub-english text-sm sm:text-base font-bold leading-tight break-words max-w-full">
             {btnNewBill.main}
           </span>
           {btnNewBill.sub && (
-            <span className="text-[11px] text-on-surface-variant leading-none">
+            <span className="text-[11px] text-on-surface-variant leading-tight mt-0.5 break-words max-w-full">
               {btnNewBill.sub}
             </span>
           )}
@@ -459,13 +459,13 @@ export const BillPanel: React.FC<BillPanelProps> = ({
         <button
           type="button"
           onClick={onOpenOldBills}
-          className="h-14 min-h-[56px] rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm border border-outline-variant/40 flex flex-col items-center justify-center px-1 transition-all cursor-pointer active:scale-95"
+          className="min-h-[56px] py-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm border border-outline-variant/40 flex flex-col items-center justify-center px-2 text-center transition-all cursor-pointer active:scale-95 min-w-0"
         >
-          <span className="font-label-sub-english text-sm sm:text-base font-bold leading-tight">
+          <span className="font-label-sub-english text-sm sm:text-base font-bold leading-tight break-words max-w-full">
             {btnOldBills.main}
           </span>
           {btnOldBills.sub && (
-            <span className="text-[11px] text-on-surface-variant leading-none">
+            <span className="text-[11px] text-on-surface-variant leading-tight mt-0.5 break-words max-w-full">
               {btnOldBills.sub}
             </span>
           )}
@@ -475,13 +475,13 @@ export const BillPanel: React.FC<BillPanelProps> = ({
         <button
           type="button"
           onClick={onOpenReturns}
-          className="h-14 min-h-[56px] rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm border border-outline-variant/40 flex flex-col items-center justify-center px-1 transition-all cursor-pointer active:scale-95"
+          className="min-h-[56px] py-2 rounded-xl bg-surface-container-lowest hover:bg-surface-container-high text-on-surface shadow-sm border border-outline-variant/40 flex flex-col items-center justify-center px-2 text-center transition-all cursor-pointer active:scale-95 min-w-0"
         >
-          <span className="font-label-sub-english text-sm sm:text-base font-bold leading-tight">
+          <span className="font-label-sub-english text-sm sm:text-base font-bold leading-tight break-words max-w-full">
             {btnReturns.main}
           </span>
           {btnReturns.sub && (
-            <span className="text-[11px] text-on-surface-variant leading-none">
+            <span className="text-[11px] text-on-surface-variant leading-tight mt-0.5 break-words max-w-full">
               {btnReturns.sub}
             </span>
           )}

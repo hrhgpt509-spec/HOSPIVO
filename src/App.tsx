@@ -168,7 +168,7 @@ export function App() {
   const renderActiveScreen = () => {
     if (screen === 'loading') {
       return (
-        <div className="w-full min-h-screen bg-[#F4F6F5] flex items-center justify-center">
+        <div className="w-full min-h-dvh bg-[#F4F6F5] dark:bg-[#0f1713] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex items-center justify-center">
           <div className="w-10 h-10 border-4 border-[#1B8F4A] border-t-transparent rounded-full animate-spin" />
         </div>
       );

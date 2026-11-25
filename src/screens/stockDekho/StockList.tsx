@@ -99,7 +99,7 @@ export const StockList: React.FC<StockListProps> = ({
       <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface antialiased flex flex-col overflow-x-clip select-none">
         {/* Sticky Top Header */}
         <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] flex items-center justify-between gap-2 shadow-xs">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <button
               onClick={onReturnHome}
               aria-label={t('common.btn_home.main')}
@@ -108,7 +108,7 @@ export const StockList: React.FC<StockListProps> = ({
             >
               <Icon name="arrow_back" className="text-[24px]" />
             </button>
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 flex-1">
               <h1 className="font-title-hinglish font-bold text-base text-on-surface truncate">
                 {t('stock_dekho.screen_title')}
               </h1>
@@ -118,16 +118,16 @@ export const StockList: React.FC<StockListProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 max-w-[50%]">
             <button
               onClick={onOpenShoppingList}
               type="button"
-              className="min-h-[48px] px-3 rounded-xl bg-tertiary-fixed text-tertiary font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="min-h-[48px] py-1.5 px-2.5 sm:px-3 rounded-xl bg-tertiary-fixed text-tertiary font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs min-w-0"
             >
-              <Icon name="local_shipping" className="text-[20px]" />
-              <span>{shoppingListBtn.main}</span>
+              <Icon name="local_shipping" className="text-[18px] sm:text-[20px] shrink-0" />
+              <span className="truncate">{shoppingListBtn.main}</span>
               {lowCount + outCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-tertiary text-on-tertiary text-[10px] font-bold">
+                <span className="px-1.5 py-0.5 rounded-full bg-tertiary text-on-tertiary text-[10px] font-bold shrink-0">
                   {lowCount + outCount}
                 </span>
               )}
@@ -136,7 +136,7 @@ export const StockList: React.FC<StockListProps> = ({
             <button
               onClick={onToggleTheme}
               aria-label={t('common.toggle_theme')}
-              className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
+              className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer shrink-0"
               type="button"
             >
               <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[22px]" />

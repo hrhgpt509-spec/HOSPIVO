@@ -871,11 +871,11 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
             <button
               type="button"
               onClick={handleStep1Next}
-              className="w-full sm:w-auto h-[58px] sm:h-[64px] sm:min-w-[240px] px-6 sm:px-10 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white flex items-center justify-center sm:justify-between gap-4 sm:gap-5 shadow-[0_6px_20px_rgba(27,143,74,0.35)] cursor-pointer transition-all active:scale-[0.98] order-1 sm:order-none"
+              className="w-full sm:w-auto min-h-[58px] sm:min-h-[64px] py-2.5 sm:min-w-[240px] px-6 sm:px-10 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white flex items-center justify-center sm:justify-between gap-4 sm:gap-5 shadow-[0_6px_20px_rgba(27,143,74,0.35)] cursor-pointer transition-all active:scale-[0.98] order-1 sm:order-none min-w-0"
             >
-              <div className="text-left">
-                <div className="text-xl sm:text-[24px] font-extrabold leading-tight tracking-wide">{btnNext.main}</div>
-                {btnNext.sub ? <div className="text-xs sm:text-[16px] font-medium text-white/90 leading-none">{btnNext.sub}</div> : null}
+              <div className="text-left min-w-0">
+                <div className="text-xl sm:text-[24px] font-extrabold leading-tight tracking-wide break-words">{btnNext.main}</div>
+                {btnNext.sub ? <div className="text-xs sm:text-[16px] font-medium text-white/90 leading-tight mt-0.5 break-words">{btnNext.sub}</div> : null}
               </div>
               <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white shrink-0" fill="none" stroke="currentColor" strokeWidth={2.8} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -1176,28 +1176,28 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="h-14 sm:h-16 px-4 sm:px-8 rounded-2xl bg-[#EBEFEA] hover:bg-[#DEE5E0] text-[#1A1F1C] font-bold flex items-center justify-center gap-2 sm:gap-3 cursor-pointer sm:order-1 flex-1 sm:flex-initial"
+                className="min-h-[56px] sm:min-h-[64px] py-2.5 px-4 sm:px-8 rounded-2xl bg-[#EBEFEA] hover:bg-[#DEE5E0] text-[#1A1F1C] font-bold flex items-center justify-center gap-2 sm:gap-3 cursor-pointer sm:order-1 flex-1 sm:flex-initial min-w-0"
               >
-                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#4A5550]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-[#4A5550] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <line x1="19" y1="12" x2="5" y2="12" />
                   <polyline points="12 19 5 12 12 5" />
                 </svg>
-                <div className="text-left flex flex-col justify-center">
-                  <span className="text-base sm:text-[20px] font-bold leading-tight text-[#1A1F1C]">{btnBack.main}</span>
-                  {btnBack.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-[#66766F]">{btnBack.sub}</span> : null}
+                <div className="text-left flex flex-col justify-center min-w-0">
+                  <span className="text-base sm:text-[20px] font-bold leading-tight text-[#1A1F1C] break-words">{btnBack.main}</span>
+                  {btnBack.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-[#66766F] break-words">{btnBack.sub}</span> : null}
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="h-14 sm:h-16 px-5 sm:px-10 rounded-2xl bg-[#1B8F4A] hover:bg-[#16783E] text-white font-bold flex items-center justify-center gap-2 sm:gap-4 shadow-lg shadow-[#1B8F4A]/30 cursor-pointer sm:order-3 flex-1 sm:flex-initial"
+                className="min-h-[56px] sm:min-h-[64px] py-2.5 px-5 sm:px-10 rounded-2xl bg-[#1B8F4A] hover:bg-[#16783E] text-white font-bold flex items-center justify-center gap-2 sm:gap-4 shadow-lg shadow-[#1B8F4A]/30 cursor-pointer sm:order-3 flex-1 sm:flex-initial min-w-0"
               >
-                <div className="text-right flex flex-col justify-center">
-                  <span className="text-base sm:text-[22px] font-extrabold leading-tight">{btnNext.main}</span>
-                  {btnNext.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-[#D4F3DF]">{btnNext.sub}</span> : null}
+                <div className="text-right flex flex-col justify-center min-w-0">
+                  <span className="text-base sm:text-[22px] font-extrabold leading-tight break-words">{btnNext.main}</span>
+                  {btnNext.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-[#D4F3DF] break-words">{btnNext.sub}</span> : null}
                 </div>
-                <svg className="w-5 h-5 sm:w-7 sm:h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-5 h-5 sm:w-7 sm:h-7 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12" />
                   <polyline points="12 5 19 12 12 19" />
                 </svg>
@@ -1399,25 +1399,25 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="flex-1 sm:flex-initial h-14 sm:h-16 px-4 sm:px-8 rounded-2xl bg-slate-100 hover:bg-slate-200 text-[#1A1F1C] font-bold flex items-center justify-center gap-2 sm:gap-3 cursor-pointer"
+                className="flex-1 sm:flex-initial min-h-[56px] sm:min-h-[64px] py-2.5 px-4 sm:px-8 rounded-2xl bg-slate-100 hover:bg-slate-200 text-[#1A1F1C] font-bold flex items-center justify-center gap-2 sm:gap-3 cursor-pointer min-w-0"
               >
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
-                <div className="text-left flex flex-col justify-center">
-                  <span className="text-base sm:text-[20px] font-bold leading-tight">{btnBack.main}</span>
-                  {btnBack.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-slate-500">{btnBack.sub}</span> : null}
+                <div className="text-left flex flex-col justify-center min-w-0">
+                  <span className="text-base sm:text-[20px] font-bold leading-tight break-words">{btnBack.main}</span>
+                  {btnBack.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-slate-500 break-words">{btnBack.sub}</span> : null}
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={handleStep3Next}
-                className="flex-1 sm:flex-initial h-14 sm:h-16 sm:min-w-[200px] px-5 sm:px-8 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white font-bold flex items-center justify-center gap-2 sm:gap-4 shadow-md cursor-pointer transition-all sm:order-3"
+                className="flex-1 sm:flex-initial min-h-[56px] sm:min-h-[64px] py-2.5 sm:min-w-[200px] px-5 sm:px-8 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white font-bold flex items-center justify-center gap-2 sm:gap-4 shadow-md cursor-pointer transition-all sm:order-3 min-w-0"
               >
-                <div className="text-left flex flex-col justify-center">
-                  <span className="text-base sm:text-[22px] font-extrabold leading-tight">{btnNext.main}</span>
-                  {btnNext.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-emerald-100">{btnNext.sub}</span> : null}
+                <div className="text-left flex flex-col justify-center min-w-0">
+                  <span className="text-base sm:text-[22px] font-extrabold leading-tight break-words">{btnNext.main}</span>
+                  {btnNext.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-emerald-100 break-words">{btnNext.sub}</span> : null}
                 </div>
                 <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
@@ -1601,29 +1601,29 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="flex-1 sm:flex-initial h-14 sm:h-[60px] sm:min-w-[130px] px-4 sm:px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-[#1A1F1C] transition-all flex items-center justify-center gap-2 cursor-pointer font-bold"
+                className="flex-1 sm:flex-initial min-h-[56px] sm:min-h-[60px] py-2.5 sm:min-w-[130px] px-4 sm:px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-[#1A1F1C] transition-all flex items-center justify-center gap-2 cursor-pointer font-bold min-w-0"
               >
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
-                <div className="text-left leading-none">
-                  <span className="text-base sm:text-[18px] font-bold block">{btnBack.main}</span>
-                  {btnBack.sub ? <span className="text-xs text-slate-500 font-normal">{btnBack.sub}</span> : null}
+                <div className="text-left leading-tight min-w-0">
+                  <span className="text-base sm:text-[18px] font-bold block break-words">{btnBack.main}</span>
+                  {btnBack.sub ? <span className="text-xs text-slate-500 font-normal break-words">{btnBack.sub}</span> : null}
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setStep(5)}
-                className="flex-1 sm:flex-initial h-14 sm:h-[60px] sm:min-w-[160px] px-4 sm:px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer font-bold"
+                className="flex-1 sm:flex-initial min-h-[56px] sm:min-h-[60px] py-2.5 sm:min-w-[160px] px-4 sm:px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer font-bold min-w-0"
               >
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 text-slate-500 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
-                <div className="text-left leading-none">
-                  <span className="text-base sm:text-[18px] font-bold block">{btnSkip.main}</span>
-                  {btnSkip.sub ? <span className="text-xs text-slate-500 font-normal">{btnSkip.sub}</span> : null}
+                <div className="text-left leading-tight min-w-0">
+                  <span className="text-base sm:text-[18px] font-bold block break-words">{btnSkip.main}</span>
+                  {btnSkip.sub ? <span className="text-xs text-slate-500 font-normal break-words">{btnSkip.sub}</span> : null}
                 </div>
               </button>
             </div>
@@ -1635,11 +1635,11 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
             <button
               type="button"
               onClick={() => setStep(5)}
-              className="w-full sm:w-auto h-14 sm:h-[60px] sm:min-w-[170px] px-6 sm:px-8 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white shadow-md flex items-center justify-center gap-3 cursor-pointer transition-all active:scale-[0.98]"
+              className="w-full sm:w-auto min-h-[56px] sm:min-h-[60px] py-2.5 sm:min-w-[170px] px-6 sm:px-8 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white shadow-md flex items-center justify-center gap-3 cursor-pointer transition-all active:scale-[0.98] min-w-0"
             >
-              <div className="text-right leading-none">
-                <span className="text-lg sm:text-[20px] font-extrabold block">{btnNext.main}</span>
-                {btnNext.sub ? <span className="text-xs text-emerald-100 font-normal">{btnNext.sub}</span> : null}
+              <div className="text-right leading-tight min-w-0">
+                <span className="text-lg sm:text-[20px] font-extrabold block break-words">{btnNext.main}</span>
+                {btnNext.sub ? <span className="text-xs text-emerald-100 font-normal break-words">{btnNext.sub}</span> : null}
               </div>
               <svg className="w-6 h-6 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
@@ -1766,25 +1766,25 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
               <button
                 type="button"
                 onClick={() => setStep(4)}
-                className="flex-1 sm:flex-initial h-14 sm:h-[58px] sm:min-w-[170px] px-4 sm:px-6 rounded-2xl bg-[#E5E7EB] hover:bg-[#D1D5DB] text-[#1A1F1C] flex items-center justify-center gap-2 sm:gap-3 cursor-pointer font-bold transition-all"
+                className="flex-1 sm:flex-initial min-h-[56px] sm:min-h-[58px] py-2.5 sm:min-w-[170px] px-4 sm:px-6 rounded-2xl bg-[#E5E7EB] hover:bg-[#D1D5DB] text-[#1A1F1C] flex items-center justify-center gap-2 sm:gap-3 cursor-pointer font-bold transition-all min-w-0"
               >
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
-                <div className="flex flex-col text-left leading-tight">
-                  <span className="text-base sm:text-[18px] font-bold">{btnBack.main}</span>
-                  {btnBack.sub ? <span className="text-xs text-slate-500 font-normal">{btnBack.sub}</span> : null}
+                <div className="flex flex-col text-left leading-tight min-w-0">
+                  <span className="text-base sm:text-[18px] font-bold break-words">{btnBack.main}</span>
+                  {btnBack.sub ? <span className="text-xs text-slate-500 font-normal break-words">{btnBack.sub}</span> : null}
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setStep(6)}
-                className="flex-1 sm:flex-initial h-14 sm:h-[58px] sm:min-w-[170px] px-5 sm:px-7 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white flex items-center justify-center gap-2 sm:gap-3 shadow-md cursor-pointer transition-all active:scale-[0.98] sm:order-3"
+                className="flex-1 sm:flex-initial min-h-[56px] sm:min-h-[58px] py-2.5 sm:min-w-[170px] px-5 sm:px-7 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white flex items-center justify-center gap-2 sm:gap-3 shadow-md cursor-pointer transition-all active:scale-[0.98] sm:order-3 min-w-0"
               >
-                <div className="flex flex-col text-right leading-tight">
-                  <span className="text-base sm:text-[18px] font-bold">{btnNext.main}</span>
-                  {btnNext.sub ? <span className="text-xs text-emerald-100 font-normal">{btnNext.sub}</span> : null}
+                <div className="flex flex-col text-right leading-tight min-w-0">
+                  <span className="text-base sm:text-[18px] font-bold break-words">{btnNext.main}</span>
+                  {btnNext.sub ? <span className="text-xs text-emerald-100 font-normal break-words">{btnNext.sub}</span> : null}
                 </div>
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
@@ -2210,25 +2210,25 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
               <button
                 type="button"
                 onClick={() => setStep(6)}
-                className="flex-1 sm:flex-initial h-14 sm:h-16 px-4 sm:px-8 rounded-2xl bg-slate-100 hover:bg-slate-200 text-[#1A1F1C] font-bold flex items-center justify-center gap-2 sm:gap-3 cursor-pointer"
+                className="flex-1 sm:flex-initial min-h-[56px] sm:min-h-[64px] py-2.5 px-4 sm:px-8 rounded-2xl bg-slate-100 hover:bg-slate-200 text-[#1A1F1C] font-bold flex items-center justify-center gap-2 sm:gap-3 cursor-pointer min-w-0"
               >
                 <svg className="w-5 h-5 sm:w-6 sm:h-6 text-slate-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
-                <div className="text-left flex flex-col justify-center">
-                  <span className="text-base sm:text-[20px] font-bold leading-tight">{btnBack.main}</span>
-                  {btnBack.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-slate-500">{btnBack.sub}</span> : null}
+                <div className="text-left flex flex-col justify-center min-w-0">
+                  <span className="text-base sm:text-[20px] font-bold leading-tight break-words">{btnBack.main}</span>
+                  {btnBack.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-slate-500 break-words">{btnBack.sub}</span> : null}
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={handleStep7Next}
-                className="flex-1 sm:flex-initial h-14 sm:h-16 sm:min-w-[200px] px-5 sm:px-8 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white font-bold flex items-center justify-center gap-2 sm:gap-4 shadow-md cursor-pointer transition-all sm:order-3"
+                className="flex-1 sm:flex-initial min-h-[56px] sm:min-h-[64px] py-2.5 sm:min-w-[200px] px-5 sm:px-8 rounded-2xl bg-[#1B8F4A] hover:bg-[#16733B] text-white font-bold flex items-center justify-center gap-2 sm:gap-4 shadow-md cursor-pointer transition-all sm:order-3 min-w-0"
               >
-                <div className="text-left flex flex-col justify-center">
-                  <span className="text-base sm:text-[22px] font-extrabold leading-tight">{btnNext.main}</span>
-                  {btnNext.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-emerald-100">{btnNext.sub}</span> : null}
+                <div className="text-left flex flex-col justify-center min-w-0">
+                  <span className="text-base sm:text-[22px] font-extrabold leading-tight break-words">{btnNext.main}</span>
+                  {btnNext.sub ? <span className="text-xs sm:text-[16px] font-normal leading-tight text-emerald-100 break-words">{btnNext.sub}</span> : null}
                 </div>
                 <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
@@ -2291,30 +2291,30 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
               return (
                 <div
                   key={item.category}
-                  className="bg-white rounded-2xl p-4 md:px-5 min-h-[70px] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 shadow-sm border border-gray-200"
+                  className="bg-white rounded-2xl p-4 md:px-5 min-h-[70px] flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 shadow-sm border border-gray-200 min-w-0"
                 >
-                  <div className="w-full lg:w-[300px]">
-                    <span className="text-base md:text-[18px] font-bold text-gray-900">{item.title}</span>
+                  <div className="w-full lg:w-[300px] min-w-0">
+                    <span className="text-base md:text-[18px] font-bold text-gray-900 break-words">{item.title}</span>
                   </div>
 
                   {/* 3-option Segmented Selector */}
-                  <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                  <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto min-w-0">
                     {/* Option 1: Ijazat PIN (yahin) */}
                     <button
                       type="button"
                       onClick={() => handleRuleToggle(item.category, 'local_pin')}
-                      className={`h-[54px] px-4 rounded-xl flex items-center gap-2 font-bold text-[16px] cursor-pointer transition-all ${
+                      className={`min-h-[54px] py-2 px-3.5 sm:px-4 rounded-xl flex items-center gap-2 font-bold text-[15px] sm:text-[16px] cursor-pointer transition-all min-w-0 ${
                         currentChoice === 'local_pin'
                           ? 'bg-[#E8F5E9] border-2 border-[#1B8F4A] text-[#1B8F4A]'
                           : 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100'
                       }`}
                     >
                       {currentChoice === 'local_pin' && (
-                        <svg className="w-5 h-5 text-[#1B8F4A]" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-5 h-5 text-[#1B8F4A] shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                       )}
-                      <span>{t('setup.step8_opt_pin')}</span>
+                      <span className="break-words text-left">{t('setup.step8_opt_pin')}</span>
                     </button>
 
                     {/* Option 2: Door se approval (Enabled in Cloud mode, Disabled in Local-only) */}
@@ -2352,18 +2352,18 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
                     <button
                       type="button"
                       onClick={() => handleRuleToggle(item.category, 'blocked_offline')}
-                      className={`h-[54px] px-4 rounded-xl flex items-center gap-2 font-bold text-[16px] cursor-pointer transition-all ${
+                      className={`min-h-[54px] py-2 px-3.5 sm:px-4 rounded-xl flex items-center gap-2 font-bold text-[15px] sm:text-[16px] cursor-pointer transition-all min-w-0 ${
                         currentChoice === 'blocked_offline'
                           ? 'bg-[#E8F5E9] border-2 border-[#1B8F4A] text-[#1B8F4A]'
                           : 'bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100'
                       }`}
                     >
                       {currentChoice === 'blocked_offline' && (
-                        <svg className="w-5 h-5 text-[#1B8F4A]" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-5 h-5 text-[#1B8F4A] shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                       )}
-                      <span>{t('setup.step8_opt_blocked')}</span>
+                      <span className="break-words text-left">{t('setup.step8_opt_blocked')}</span>
                     </button>
                   </div>
                 </div>
@@ -2377,28 +2377,28 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
           <button
             type="button"
             onClick={() => setStep(7)}
-            className="w-full sm:w-auto h-14 sm:h-[60px] px-6 sm:px-8 rounded-2xl bg-white border border-gray-300 text-gray-800 flex items-center justify-center gap-3 hover:bg-gray-50 transition shadow-sm cursor-pointer order-2 sm:order-1"
+            className="w-full sm:w-auto min-h-[56px] sm:min-h-[60px] py-2.5 px-6 sm:px-8 rounded-2xl bg-white border border-gray-300 text-gray-800 flex items-center justify-center gap-3 hover:bg-gray-50 transition shadow-sm cursor-pointer order-2 sm:order-1 min-w-0"
           >
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
-            <div className="flex flex-col text-left leading-tight">
-              <span className="text-base sm:text-[18px] font-bold">{btnBack.main}</span>
-              {btnBack.sub ? <span className="text-xs text-gray-500 font-normal">{btnBack.sub}</span> : null}
+            <div className="flex flex-col text-left leading-tight min-w-0">
+              <span className="text-base sm:text-[18px] font-bold break-words">{btnBack.main}</span>
+              {btnBack.sub ? <span className="text-xs text-gray-500 font-normal break-words">{btnBack.sub}</span> : null}
             </div>
           </button>
 
           <button
             type="button"
             onClick={handleFinishSetup}
-            className="w-full sm:w-auto h-14 sm:h-[60px] px-6 sm:px-10 rounded-2xl bg-[#1B8F4A] hover:bg-[#167a3e] text-white flex items-center justify-center gap-3 sm:gap-4 transition shadow-md cursor-pointer active:scale-[0.98] order-1 sm:order-2"
+            className="w-full sm:w-auto min-h-[56px] sm:min-h-[60px] py-2.5 px-6 sm:px-10 rounded-2xl bg-[#1B8F4A] hover:bg-[#167a3e] text-white flex items-center justify-center gap-3 sm:gap-4 transition shadow-md cursor-pointer active:scale-[0.98] order-1 sm:order-2 min-w-0"
           >
             <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
-            <div className="flex flex-col text-left leading-tight">
-              <span className="text-lg sm:text-[20px] font-extrabold">{btnFinish.main}</span>
-              {btnFinish.sub ? <span className="text-xs text-green-100 font-medium">{btnFinish.sub}</span> : null}
+            <div className="flex flex-col text-left leading-tight min-w-0">
+              <span className="text-lg sm:text-[20px] font-extrabold break-words">{btnFinish.main}</span>
+              {btnFinish.sub ? <span className="text-xs text-green-100 font-medium break-words">{btnFinish.sub}</span> : null}
             </div>
           </button>
         </footer>

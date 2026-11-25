@@ -206,15 +206,15 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
               {/* Shelf Map Shortcut */}
               {onOpenShelfMap && (
                 <button
                   type="button"
                   onClick={onOpenShelfMap}
-                  className="h-14 min-h-[56px] px-4 rounded-[16px] bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant shadow-sm flex items-center gap-2 font-bold transition-all active:translate-y-[1px] cursor-pointer"
+                  className="min-h-[52px] sm:min-h-[56px] py-2 px-3.5 sm:px-4 rounded-[16px] bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant shadow-sm flex items-center gap-2 font-bold transition-all active:translate-y-[1px] cursor-pointer"
                 >
-                  <Icon name="shelves" className="text-primary text-[22px]" />
+                  <Icon name="shelves" className="text-primary text-[22px] shrink-0" />
                   <span className="text-sm font-bold">{t('shelf_map.title')}</span>
                 </button>
               )}
@@ -224,9 +224,9 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
                 <button
                   type="button"
                   onClick={onOpenStickers}
-                  className="h-14 min-h-[56px] px-4 rounded-[16px] bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant shadow-sm flex items-center gap-2 font-bold transition-all active:translate-y-[1px] cursor-pointer"
+                  className="min-h-[52px] sm:min-h-[56px] py-2 px-3.5 sm:px-4 rounded-[16px] bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant shadow-sm flex items-center gap-2 font-bold transition-all active:translate-y-[1px] cursor-pointer"
                 >
-                  <Icon name="print" className="text-primary text-[22px]" />
+                  <Icon name="print" className="text-primary text-[22px] shrink-0" />
                   <span className="text-sm font-bold">{t('stickers.title')}</span>
                 </button>
               )}
@@ -235,13 +235,13 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
               <button
                 type="button"
                 onClick={() => setIsImportOpen(true)}
-                className="h-14 min-h-[56px] px-5 rounded-[16px] bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant shadow-sm flex items-center gap-3 font-bold transition-all active:translate-y-[1px] cursor-pointer"
+                className="min-h-[52px] sm:min-h-[56px] py-2 px-4 sm:px-5 rounded-[16px] bg-surface-container-lowest hover:bg-surface-container text-on-surface border border-outline-variant shadow-sm flex items-center gap-2.5 sm:gap-3 font-bold transition-all active:translate-y-[1px] cursor-pointer"
               >
-                <svg className="w-6 h-6 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-on-surface-variant shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
                 </svg>
                 <div className="flex flex-col text-left leading-tight">
-                  <span className="text-base font-bold leading-tight">{btnImport.main}</span>
+                  <span className="text-sm sm:text-base font-bold leading-tight">{btnImport.main}</span>
                   {btnImport.sub ? <span className="text-xs text-outline font-medium leading-tight">{btnImport.sub}</span> : null}
                 </div>
               </button>
@@ -250,13 +250,13 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
               <button
                 type="button"
                 onClick={() => setEditingMedicineId('new')}
-                className="h-14 min-h-[56px] px-6 rounded-[16px] bg-primary hover:bg-[#088643] text-on-primary shadow-sm flex items-center gap-3 font-bold transition-all active:translate-y-[1px] cursor-pointer"
+                className="flex-1 sm:flex-initial min-h-[52px] sm:min-h-[56px] py-2 px-5 sm:px-6 rounded-[16px] bg-primary hover:bg-[#088643] text-on-primary shadow-sm flex items-center justify-center gap-2.5 sm:gap-3 font-bold transition-all active:translate-y-[1px] cursor-pointer"
               >
-                <svg className="w-6 h-6 text-on-primary stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-on-primary stroke-[2.2] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
                 <div className="flex flex-col text-left leading-tight">
-                  <span className="text-base font-bold text-on-primary leading-tight">{btnAdd.main}</span>
+                  <span className="text-sm sm:text-base font-bold text-on-primary leading-tight">{btnAdd.main}</span>
                   {btnAdd.sub ? <span className="text-xs text-emerald-100 font-medium leading-tight">{btnAdd.sub}</span> : null}
                 </div>
               </button>
@@ -415,8 +415,8 @@ export const OwnerMedicineList: React.FC<OwnerMedicineListProps> = ({
         </div>
       </main>
 
-      {/* 3. Footer Ribbon (Matching 38a) */}
-      <footer className="fixed bottom-0 left-0 w-full h-11 px-6 md:px-8 bg-surface-container-low border-t border-outline-variant flex items-center justify-between text-xs md:text-sm text-on-surface-variant font-medium select-none z-40">
+      {/* 3. Footer Ribbon (Desktop only so it never collides with MobileBottomNav) */}
+      <footer className="hidden lg:flex fixed bottom-0 left-0 w-full h-11 px-6 md:px-8 bg-surface-container-low border-t border-outline-variant items-center justify-between text-xs md:text-sm text-on-surface-variant font-medium select-none z-40">
         <div className="flex items-center gap-2 truncate">
           {shopName ? <span>{shopName}</span> : null}
           {shopName && currentGst ? <span>•</span> : null}

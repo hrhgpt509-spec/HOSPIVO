@@ -907,27 +907,27 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
                 const currentRule = approvalRules[item.key];
                 return (
                   <React.Fragment key={item.key}>
-                    <div className="min-h-[74px] px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-surface-container-lowest">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0 shadow-sm">
-                          <Icon name={item.icon} className="text-[26px]" />
+                    <div className="min-h-[74px] px-3.5 sm:px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-surface-container-lowest min-w-0">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0 shadow-sm">
+                          <Icon name={item.icon} className="text-[24px] sm:text-[26px]" />
                         </div>
-                        <span className="font-title-hinglish font-bold text-on-surface">{item.title}</span>
+                        <span className="font-title-hinglish font-bold text-on-surface break-words min-w-0">{item.title}</span>
                       </div>
 
-                      <div className="flex items-center bg-surface-container-low p-1.5 rounded-xl gap-2 self-start md:self-center shadow-inner flex-wrap">
+                      <div className="flex items-center bg-surface-container-low p-1.5 rounded-xl gap-1.5 sm:gap-2 self-stretch md:self-center shadow-inner flex-wrap">
                         {/* Option 1: Owner PIN (Local) */}
                         <button
                           type="button"
                           onClick={() => setApprovalRules((r) => ({ ...r, [item.key]: 'local_pin' }))}
-                          className={`h-11 px-4 rounded-xl flex items-center gap-2 font-label-sub-english text-sm font-bold transition-all cursor-pointer ${
+                          className={`min-h-[44px] py-2 px-3 sm:px-4 rounded-xl flex items-center gap-1.5 sm:gap-2 font-label-sub-english text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                             currentRule === 'local_pin'
                               ? 'bg-primary text-on-primary shadow-sm'
                               : 'text-on-surface-variant hover:bg-surface-container'
                           }`}
                         >
                           {currentRule === 'local_pin' && (
-                            <Icon name="check_circle" className="text-[18px] text-on-primary" />
+                            <Icon name="check_circle" className="text-[18px] text-on-primary shrink-0" />
                           )}
                           <span>{t('owner_settings.rule_option_local')}</span>
                         </button>
@@ -941,7 +941,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
                               setApprovalRules((r) => ({ ...r, [item.key]: 'remote_approval' }));
                             }
                           }}
-                          className={`h-11 px-4 rounded-xl flex items-center gap-2 font-label-sub-english text-sm font-bold transition-all ${
+                          className={`min-h-[44px] py-2 px-3 sm:px-4 rounded-xl flex items-center gap-1.5 sm:gap-2 font-label-sub-english text-xs sm:text-sm font-bold transition-all ${
                             !cloudConfig?.cloudEnabled
                               ? 'text-outline-variant opacity-50 cursor-not-allowed'
                               : currentRule === 'remote_approval'
@@ -951,7 +951,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
                           title={!cloudConfig?.cloudEnabled ? 'Cloud mode only' : undefined}
                         >
                           {currentRule === 'remote_approval' && (
-                            <Icon name="check_circle" className="text-[18px] text-on-primary" />
+                            <Icon name="check_circle" className="text-[18px] text-on-primary shrink-0" />
                           )}
                           <span>{t('owner_settings.rule_option_remote')}</span>
                           {!cloudConfig?.cloudEnabled && (
@@ -963,14 +963,14 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
                         <button
                           type="button"
                           onClick={() => setApprovalRules((r) => ({ ...r, [item.key]: 'blocked_offline' }))}
-                          className={`h-11 px-4 rounded-xl flex items-center gap-2 font-label-sub-english text-sm font-bold transition-all cursor-pointer ${
+                          className={`min-h-[44px] py-2 px-3 sm:px-4 rounded-xl flex items-center gap-1.5 sm:gap-2 font-label-sub-english text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                             currentRule === 'blocked_offline'
                               ? 'bg-tertiary-container text-on-tertiary-container shadow-sm'
                               : 'text-on-surface-variant hover:bg-surface-container'
                           }`}
                         >
                           {currentRule === 'blocked_offline' && (
-                            <Icon name="block" className="text-[18px] text-on-tertiary-container" />
+                            <Icon name="block" className="text-[18px] text-on-tertiary-container shrink-0" />
                           )}
                           <span>{t('owner_settings.rule_option_blocked')}</span>
                         </button>
@@ -983,23 +983,23 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
             </div>
 
             {/* Bottom Buttons */}
-            <div className="w-full flex items-center justify-between py-2">
+            <div className="w-full flex items-stretch justify-between gap-2.5 sm:gap-4 py-2">
               <button
                 type="button"
                 onClick={() => setCurrentView('main')}
-                className="h-14 min-w-[160px] max-sm:min-w-0 max-sm:flex-1 px-6 rounded-2xl bg-surface-container-lowest hover:bg-surface-container transition-all flex items-center gap-2 shadow-sm cursor-pointer font-bold border border-outline-variant/30"
+                className="min-h-[56px] py-2 sm:min-w-[160px] max-sm:min-w-0 max-sm:flex-1 px-4 sm:px-6 rounded-2xl bg-surface-container-lowest hover:bg-surface-container transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer font-bold border border-outline-variant/30"
               >
-                <Icon name="arrow_back" className="text-[24px] text-outline" />
-                <span>{btnBack.main}</span>
+                <Icon name="arrow_back" className="text-[22px] sm:text-[24px] text-outline shrink-0" />
+                <span className="truncate">{btnBack.main}</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleSaveApprovalRules}
-                className="h-14 min-w-[200px] max-sm:min-w-0 max-sm:flex-1 px-8 rounded-2xl bg-primary hover:bg-primary-container text-on-primary transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer font-bold"
+                className="min-h-[56px] py-2 sm:min-w-[200px] max-sm:min-w-0 max-sm:flex-1 px-5 sm:px-8 rounded-2xl bg-primary hover:bg-primary-container text-on-primary transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer font-bold"
               >
-                <Icon name="check" className="text-[26px]" />
-                <span>{btnSaveRules.main}</span>
+                <Icon name="check" className="text-[24px] sm:text-[26px] shrink-0" />
+                <span className="truncate">{btnSaveRules.main}</span>
               </button>
             </div>
           </div>
@@ -1008,8 +1008,8 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
       {/* MODAL: Shop Details Editor */}
       {isShopModalOpen && (
-        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[560px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-[560px] max-w-full bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 sm:p-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-4 border-t sm:border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-headline-md font-bold text-on-surface">
@@ -1108,8 +1108,8 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
       {/* MODAL: Discount Limit */}
       {isDiscountModalOpen && (
-        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
+        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 sm:p-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-4 border-t sm:border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface">
               {t('owner_settings.modal_discount_title')}
             </h2>
@@ -1147,8 +1147,8 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
       {/* MODAL: Auto-lock Timeout */}
       {isAutoLockModalOpen && (
-        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
+        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 sm:p-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-4 border-t sm:border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface">
               {t('owner_settings.modal_autolock_title')}
             </h2>
@@ -1186,8 +1186,8 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
       {/* MODAL: Language Picker */}
       {isLanguageModalOpen && (
-        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
+        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 sm:p-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-4 border-t sm:border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface">{t('owner_settings.row_bhasha')}</h2>
 
             <div className="flex flex-col gap-3 my-2">
@@ -1228,8 +1228,8 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
       {/* MODAL: PIN Length Change Flow */}
       {isPinLengthModalOpen && (
-        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[460px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
+        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-[460px] max-w-full bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 sm:p-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-4 border-t sm:border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface">
               {t('owner_settings.modal_pin_length_title')} ({targetPinLength} Digits)
             </h2>
@@ -1310,8 +1310,8 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
       {/* MODAL: Change Owner Login PIN */}
       {isChangeOwnerPinModalOpen && (
-        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col items-center gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
+        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 sm:p-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col items-center gap-4 border-t sm:border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface text-center">
               {t('owner_settings.modal_change_owner_pin_title')}
             </h2>
@@ -1411,8 +1411,8 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
       {/* MODAL: Change Approval (Ijazat) PIN */}
       {isChangeApprovalPinModalOpen && (
-        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-3xl shadow-2xl p-6 flex flex-col items-center gap-4 border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
+        <div className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-[420px] max-w-full bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 sm:p-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col items-center gap-4 border-t sm:border border-outline-variant/30 max-h-[92dvh] overflow-y-auto">
             <h2 className="text-headline-md font-bold text-on-surface text-center">
               {t('owner_settings.modal_change_approval_pin_title')}
             </h2>

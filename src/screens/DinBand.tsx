@@ -202,7 +202,7 @@ export const DinBand: React.FC<DinBandProps> = ({
       <div className="w-full min-h-dvh bg-surface font-body-md text-on-surface flex flex-col overflow-x-clip antialiased select-none transition-colors">
         {/* Sticky Compact Header */}
         <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] flex items-center justify-between gap-2 shadow-xs">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <button
               onClick={onReturnHome}
               aria-label={t('common.btn_home.main')}
@@ -211,7 +211,7 @@ export const DinBand: React.FC<DinBandProps> = ({
             >
               <Icon name="arrow_back" className="text-[24px]" />
             </button>
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 flex-1">
               <h1 className="font-title-hinglish font-bold text-base text-on-surface truncate">
                 {t('din_band.page_title')}
               </h1>
@@ -253,7 +253,7 @@ export const DinBand: React.FC<DinBandProps> = ({
         </div>
 
         {/* Step Body */}
-        <div className="flex-1 px-3 pb-8 flex flex-col gap-3">
+        <div className="flex-1 px-3 pb-[max(2rem,env(safe-area-inset-bottom))] flex flex-col gap-3">
           {step === 1 && (
             <Step1CashCount
               openingCashStr={openingCashStr}

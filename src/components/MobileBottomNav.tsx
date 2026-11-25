@@ -49,13 +49,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               }`}
             >
               <div
-                className={`px-3 py-0.5 rounded-full flex items-center justify-center transition-colors ${
+                className={`px-2.5 sm:px-3 py-0.5 rounded-full flex items-center justify-center transition-colors shrink-0 ${
                   isActive ? 'bg-primary-fixed/70 text-primary' : 'bg-transparent'
                 }`}
               >
-                <Icon name={tab.icon} filled={isActive} className="text-[22px]" />
+                <Icon name={tab.icon} filled={isActive} className="text-[22px] shrink-0" />
               </div>
-              <span className="text-[11px] leading-tight whitespace-nowrap text-center">
+              <span className="text-[11px] leading-tight truncate max-w-full text-center">
                 {tab.label}
               </span>
             </button>

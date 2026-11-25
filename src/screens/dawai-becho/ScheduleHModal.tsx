@@ -77,25 +77,25 @@ export const ScheduleHModal: React.FC<ScheduleHModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-inverse-surface/60 backdrop-blur-sm flex items-center justify-center p-gutter select-none">
-      <div className="w-full max-w-[580px] bg-surface-container-lowest rounded-[24px] shadow-2xl overflow-hidden flex flex-col border border-outline-variant/40">
+    <div className="fixed inset-0 z-50 bg-inverse-surface/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-gutter select-none">
+      <div className="w-full max-w-[580px] max-h-[92dvh] bg-surface-container-lowest rounded-t-3xl sm:rounded-[24px] shadow-2xl overflow-hidden flex flex-col border-t sm:border border-outline-variant/40">
         {/* Top Orange Header Banner (Matching 13_Sell_ScheduleH_Dialog.html) */}
-        <div className="w-full bg-tertiary-container px-space-lg py-space-md flex flex-col gap-space-xs text-on-tertiary">
-          <div className="flex items-center gap-space-xs">
-            <Icon name="warning" className="text-[26px]" />
-            <span className="font-title-hinglish text-title-hinglish uppercase tracking-wide font-bold">
+        <div className="w-full bg-tertiary-container px-4 sm:px-space-lg py-3.5 sm:py-space-md flex flex-col gap-1 text-on-tertiary shrink-0">
+          <div className="flex items-center gap-space-xs min-w-0">
+            <Icon name="warning" className="text-[24px] sm:text-[26px] shrink-0" />
+            <span className="font-title-hinglish text-sm sm:text-title-hinglish uppercase tracking-wide font-bold break-words">
               {t('dawai_becho.sch_modal_title', {
                 type: medicine.scheduleType === 'H1' ? 'H1' : 'H',
               })}
             </span>
           </div>
-          <div className="font-headline-lg text-headline-lg text-on-tertiary tracking-tight font-extrabold">
+          <div className="font-headline-lg text-lg sm:text-headline-lg text-on-tertiary tracking-tight font-extrabold break-words">
             {medicine.name} {medicine.strength}
           </div>
         </div>
 
         {/* Modal Body Content */}
-        <form onSubmit={handleSubmit} className="p-space-lg flex flex-col gap-space-md">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-space-lg pb-[max(1rem,env(safe-area-inset-bottom))] flex flex-col gap-4 sm:gap-space-md overflow-y-auto min-h-0">
           {errorMsg && (
             <div className="p-3 rounded-xl bg-error-container text-on-error-container text-sm font-bold flex items-center gap-2">
               <Icon name="error" className="text-[20px] shrink-0" />
@@ -145,7 +145,7 @@ export const ScheduleHModal: React.FC<ScheduleHModalProps> = ({
             <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
               {t('dawai_becho.sch_rx_question')} <span className="text-error">*</span>
             </span>
-            <div className="grid grid-cols-2 gap-space-md pt-1">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-space-md pt-1">
               {/* Haan Button (Yes) */}
               <button
                 type="button"
@@ -153,20 +153,20 @@ export const ScheduleHModal: React.FC<ScheduleHModalProps> = ({
                   setPrescriptionChoice('yes');
                   if (errorMsg) setErrorMsg('');
                 }}
-                className={`h-14 min-h-[56px] w-full rounded-2xl flex items-center justify-center gap-space-sm px-space-md transition-all cursor-pointer active:scale-[0.98] ${
+                className={`min-h-[56px] py-2 w-full rounded-2xl flex items-center justify-center gap-2 px-3 sm:px-space-md transition-all cursor-pointer active:scale-[0.98] min-w-0 ${
                   prescriptionChoice === 'yes'
                     ? 'bg-primary text-on-primary shadow-md hover:bg-primary-container'
                     : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest border border-outline-variant'
                 }`}
               >
-                <Icon name="check_circle" className="text-[28px]" />
-                <div className="flex flex-col items-start leading-none">
-                  <span className="font-title-hinglish text-title-hinglish leading-tight font-bold">
+                <Icon name="check_circle" className="text-[24px] sm:text-[28px] shrink-0" />
+                <div className="flex flex-col items-start leading-tight min-w-0">
+                  <span className="font-title-hinglish text-sm sm:text-title-hinglish leading-tight font-bold break-words">
                     {btnYes.main}
                   </span>
                   {btnYes.sub && (
                     <span
-                      className={`font-label-sub-english text-label-sub-english ${
+                      className={`font-label-sub-english text-[11px] sm:text-label-sub-english leading-tight mt-0.5 break-words ${
                         prescriptionChoice === 'yes' ? 'text-primary-fixed' : 'text-on-surface-variant'
                       }`}
                     >
@@ -183,20 +183,20 @@ export const ScheduleHModal: React.FC<ScheduleHModalProps> = ({
                   setPrescriptionChoice('no');
                   setErrorMsg(t('dawai_becho.sch_err_rx_required'));
                 }}
-                className={`h-14 min-h-[56px] w-full rounded-2xl flex items-center justify-center gap-space-sm px-space-md transition-all cursor-pointer active:scale-[0.98] ${
+                className={`min-h-[56px] py-2 w-full rounded-2xl flex items-center justify-center gap-2 px-3 sm:px-space-md transition-all cursor-pointer active:scale-[0.98] min-w-0 ${
                   prescriptionChoice === 'no'
                     ? 'bg-error text-on-error shadow-md'
                     : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest border border-outline-variant'
                 }`}
               >
-                <Icon name="cancel" className="text-[28px]" />
-                <div className="flex flex-col items-start leading-none">
-                  <span className="font-title-hinglish text-title-hinglish leading-tight font-bold">
+                <Icon name="cancel" className="text-[24px] sm:text-[28px] shrink-0" />
+                <div className="flex flex-col items-start leading-tight min-w-0">
+                  <span className="font-title-hinglish text-sm sm:text-title-hinglish leading-tight font-bold break-words">
                     {btnNo.main}
                   </span>
                   {btnNo.sub && (
                     <span
-                      className={`font-label-sub-english text-label-sub-english ${
+                      className={`font-label-sub-english text-[11px] sm:text-label-sub-english leading-tight mt-0.5 break-words ${
                         prescriptionChoice === 'no' ? 'text-error-container' : 'text-on-surface-variant'
                       }`}
                     >
@@ -209,20 +209,20 @@ export const ScheduleHModal: React.FC<ScheduleHModalProps> = ({
           </div>
 
           {/* Action Footer */}
-          <div className="flex items-center gap-space-md pt-space-sm">
+          <div className="flex items-stretch gap-2.5 sm:gap-space-md pt-space-sm">
             {/* Wapas Button */}
             <button
               type="button"
               onClick={onCancel}
-              className="h-14 min-h-[56px] w-1/3 rounded-2xl bg-surface-container-high text-on-surface flex items-center justify-center gap-space-xs px-space-md hover:bg-surface-container-highest active:scale-[0.98] transition-all cursor-pointer border border-outline-variant"
+              className="min-h-[56px] py-2 px-3 sm:px-space-md sm:w-1/3 rounded-2xl bg-surface-container-high text-on-surface flex items-center justify-center gap-1.5 sm:gap-space-xs hover:bg-surface-container-highest active:scale-[0.98] transition-all cursor-pointer border border-outline-variant shrink-0"
             >
-              <Icon name="arrow_back" className="text-[24px] text-primary" />
-              <div className="flex flex-col items-start leading-none">
-                <span className="font-title-hinglish text-title-hinglish leading-tight font-bold">
+              <Icon name="arrow_back" className="text-[22px] sm:text-[24px] text-primary shrink-0" />
+              <div className="flex flex-col items-start leading-tight">
+                <span className="font-title-hinglish text-sm sm:text-title-hinglish leading-tight font-bold">
                   {btnBack.main}
                 </span>
                 {btnBack.sub && (
-                  <span className="font-label-sub-english text-label-sub-english text-on-surface-variant">
+                  <span className="font-label-sub-english text-[11px] sm:text-label-sub-english text-on-surface-variant">
                     {btnBack.sub}
                   </span>
                 )}
@@ -232,15 +232,15 @@ export const ScheduleHModal: React.FC<ScheduleHModalProps> = ({
             {/* Bill Mein Jodo Button */}
             <button
               type="submit"
-              className="h-14 min-h-[56px] w-2/3 rounded-2xl bg-primary text-on-primary flex items-center justify-center gap-space-sm px-space-md shadow-md hover:bg-primary-container active:scale-[0.98] transition-all cursor-pointer"
+              className="flex-1 min-h-[56px] py-2 px-3 sm:px-space-md rounded-2xl bg-primary text-on-primary flex items-center justify-center gap-2 sm:gap-space-sm shadow-md hover:bg-primary-container active:scale-[0.98] transition-all cursor-pointer min-w-0"
             >
-              <Icon name="add_shopping_cart" className="text-[26px]" />
-              <div className="flex flex-col items-start leading-none">
-                <span className="font-title-hinglish text-title-hinglish leading-tight font-bold">
+              <Icon name="add_shopping_cart" className="text-[24px] sm:text-[26px] shrink-0" />
+              <div className="flex flex-col items-start leading-tight min-w-0 text-left">
+                <span className="font-title-hinglish text-sm sm:text-title-hinglish leading-tight font-bold break-words">
                   {btnAdd.main}
                 </span>
                 {btnAdd.sub && (
-                  <span className="font-label-sub-english text-label-sub-english text-primary-fixed">
+                  <span className="font-label-sub-english text-[11px] sm:text-label-sub-english text-primary-fixed leading-tight mt-0.5 break-words">
                     {btnAdd.sub}
                   </span>
                 )}

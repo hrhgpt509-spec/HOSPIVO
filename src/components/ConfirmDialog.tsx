@@ -53,11 +53,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       aria-modal="true"
       className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 select-none animate-fadeIn"
     >
-      <div className="w-full max-w-[520px] bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 sm:p-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col items-center text-center relative z-10 border-t sm:border border-outline-variant">
+      <div className="w-full max-w-[520px] max-h-[92dvh] overflow-y-auto bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col items-center text-center relative z-10 border-t sm:border border-outline-variant">
         
         {/* Warning Icon (46a_Shared_DeleteConfirm) */}
-        <div className="w-16 h-16 rounded-full bg-error-container/40 flex items-center justify-center mb-4 text-error">
-          <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-error-container/40 flex items-center justify-center mb-3 sm:mb-4 text-error shrink-0">
+          <svg className="w-8 h-8 sm:w-9 sm:h-9" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -67,29 +67,29 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </div>
 
         {/* Heading */}
-        <h2 className="text-3xl font-extrabold text-on-surface mb-2 tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface mb-2 tracking-tight break-words max-w-full">
           {activeTitle}
         </h2>
 
         {/* Subtitle */}
-        <p className="text-lg text-outline mb-8 max-w-[380px] leading-relaxed">
+        <p className="text-base sm:text-lg text-outline mb-6 sm:mb-8 max-w-[380px] leading-relaxed break-words">
           {activeSubtitle}
         </p>
 
         {/* Action Buttons: 2 large buttons (>=56px) */}
-        <div className="w-full grid grid-cols-2 gap-4">
+        <div className="w-full grid grid-cols-2 gap-2.5 sm:gap-4">
           <button
             type="button"
             onClick={onCancel}
-            className="h-16 px-6 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] border border-outline-variant"
+            className="min-h-[56px] py-2.5 px-3 sm:px-5 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] border border-outline-variant min-w-0"
           >
-            <svg className="w-6 h-6 text-on-surface-variant" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-on-surface-variant shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
-            <div className="flex flex-col text-left justify-center leading-none">
-              <span className="text-xl font-bold">{activeCancelMain}</span>
+            <div className="flex flex-col text-left justify-center leading-tight min-w-0">
+              <span className="text-base sm:text-xl font-bold break-words">{activeCancelMain}</span>
               {activeCancelSub ? (
-                <span className="text-xs text-outline font-medium mt-0.5">
+                <span className="text-[11px] sm:text-xs text-outline font-medium mt-0.5 break-words">
                   {activeCancelSub}
                 </span>
               ) : null}
@@ -99,23 +99,23 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <button
             type="button"
             onClick={onConfirm}
-            className={`h-16 px-6 rounded-2xl ${
+            className={`min-h-[56px] py-2.5 px-3 sm:px-5 rounded-2xl ${
               isDanger
                 ? 'bg-error hover:bg-red-700 text-on-error shadow-md shadow-error/25'
                 : 'bg-primary hover:bg-[#15733b] text-on-primary shadow-md shadow-primary/25'
-            } font-bold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]`}
+            } font-bold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] min-w-0`}
           >
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
               />
             </svg>
-            <div className="flex flex-col text-left justify-center leading-none">
-              <span className="text-xl font-bold">{activeConfirmMain}</span>
+            <div className="flex flex-col text-left justify-center leading-tight min-w-0">
+              <span className="text-base sm:text-xl font-bold break-words">{activeConfirmMain}</span>
               {activeConfirmSub ? (
-                <span className="text-xs text-red-200 font-medium mt-0.5">
+                <span className="text-[11px] sm:text-xs text-red-200 font-medium mt-0.5 break-words">
                   {activeConfirmSub}
                 </span>
               ) : null}

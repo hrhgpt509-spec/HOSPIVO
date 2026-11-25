@@ -84,39 +84,39 @@ export const ShelfMoveModal: React.FC<ShelfMoveModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-[2px] animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[640px] bg-surface-container-lowest rounded-3xl shadow-2xl border border-outline-variant p-6 sm:p-8 flex flex-col gap-6 animate-in zoom-in-95 duration-150 text-on-surface"
+        className="w-full max-w-[640px] max-h-[92dvh] overflow-y-auto bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl border-t sm:border border-outline-variant p-5 sm:p-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-5 sm:gap-6 animate-in zoom-in-95 duration-150 text-on-surface"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-outline-variant/40 pb-4">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight leading-tight">
+        <div className="flex items-start justify-between gap-3 border-b border-outline-variant/40 pb-4">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl sm:text-3xl font-extrabold text-on-surface tracking-tight leading-tight break-words">
               {t('move_shelf_modal.title')}
             </h2>
-            <p className="text-sm sm:text-base font-medium text-on-surface-variant mt-0.5">
+            <p className="text-xs sm:text-base font-medium text-on-surface-variant mt-0.5 break-words">
               {t('move_shelf_modal.sub')}
             </p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-            <Icon name="swap_horiz" className="text-[28px]" />
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Icon name="swap_horiz" className="text-[26px] sm:text-[28px]" />
           </div>
         </div>
 
         {/* Medicine Name & Current Shelf Card */}
-        <div className="bg-surface-container-low rounded-2xl p-4 sm:p-5 border border-outline-variant/60 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-surface-container-lowest border border-outline-variant/50 flex items-center justify-center text-primary flex-shrink-0">
-              <Icon name="medication" className="text-[26px]" />
+        <div className="bg-surface-container-low rounded-2xl p-4 sm:p-5 border border-outline-variant/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 min-w-0">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-surface-container-lowest border border-outline-variant/50 flex items-center justify-center text-primary shrink-0">
+              <Icon name="medication" className="text-[24px] sm:text-[26px]" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="text-xs uppercase font-extrabold tracking-wider text-on-surface-variant">
                 {t('move_shelf_modal.label_dawai')}
               </div>
-              <div className="text-xl sm:text-2xl font-extrabold text-on-surface truncate">
+              <div className="text-lg sm:text-2xl font-extrabold text-on-surface truncate">
                 {medicine.name}
               </div>
               {medicine.company && (
@@ -125,13 +125,13 @@ export const ShelfMoveModal: React.FC<ShelfMoveModalProps> = ({
             </div>
           </div>
 
-          <div className="text-right flex-shrink-0">
+          <div className="sm:text-right shrink-0">
             <div className="text-xs uppercase font-extrabold tracking-wider text-on-surface-variant">
               {t('move_shelf_modal.label_current_shelf')}
             </div>
-            <div className="inline-flex items-center px-3 sm:px-4 py-1.5 rounded-xl bg-surface-container-lowest border border-outline-variant text-base sm:text-lg font-bold text-on-surface mt-1 shadow-xs">
-              <span className="w-2.5 h-2.5 rounded-full bg-tertiary mr-2"></span>
-              {t('move_shelf_modal.label_abhi', { shelf: currentShelfDisplay })}
+            <div className="inline-flex items-center px-3 sm:px-4 py-1.5 rounded-xl bg-surface-container-lowest border border-outline-variant text-sm sm:text-lg font-bold text-on-surface mt-1 shadow-xs">
+              <span className="w-2.5 h-2.5 rounded-full bg-tertiary mr-2 shrink-0"></span>
+              <span>{t('move_shelf_modal.label_abhi', { shelf: currentShelfDisplay })}</span>
             </div>
           </div>
         </div>
@@ -203,15 +203,15 @@ export const ShelfMoveModal: React.FC<ShelfMoveModalProps> = ({
         )}
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-outline-variant/40">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-2 border-t border-outline-variant/40">
           <button
             type="button"
             onClick={onClose}
-            className="w-full h-14 min-h-[56px] rounded-2xl border-2 border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-on-surface font-bold text-base sm:text-lg flex flex-col items-center justify-center cursor-pointer transition-colors"
+            className="w-full min-h-[56px] py-2 px-3 rounded-2xl border-2 border-outline-variant bg-surface-container-lowest hover:bg-surface-container text-on-surface font-bold text-sm sm:text-lg flex flex-col items-center justify-center text-center cursor-pointer transition-colors min-w-0"
           >
-            <span className="leading-tight">{btnCancel.main}</span>
+            <span className="leading-tight break-words max-w-full">{btnCancel.main}</span>
             {btnCancel.sub && (
-              <span className="text-xs font-medium text-on-surface-variant leading-none">
+              <span className="text-[11px] sm:text-xs font-medium text-on-surface-variant leading-tight mt-0.5 break-words max-w-full">
                 {btnCancel.sub}
               </span>
             )}
@@ -221,15 +221,15 @@ export const ShelfMoveModal: React.FC<ShelfMoveModalProps> = ({
             type="button"
             disabled={saving || !cleanTarget || !isChanged}
             onClick={handleSave}
-            className={`w-full h-14 min-h-[56px] rounded-2xl font-bold text-base sm:text-lg flex flex-col items-center justify-center cursor-pointer transition-all shadow-sm ${
+            className={`w-full min-h-[56px] py-2 px-3 rounded-2xl font-bold text-sm sm:text-lg flex flex-col items-center justify-center text-center cursor-pointer transition-all shadow-sm min-w-0 ${
               saving || !cleanTarget || !isChanged
                 ? 'bg-surface-container text-on-surface-variant opacity-50 cursor-not-allowed'
                 : 'bg-primary hover:bg-primary-container text-on-primary hover:text-on-primary-container active:translate-y-0.5'
             }`}
           >
-            <span className="leading-tight">{btnConfirm.main}</span>
+            <span className="leading-tight break-words max-w-full">{btnConfirm.main}</span>
             {btnConfirm.sub && (
-              <span className="text-xs font-medium opacity-90 leading-none">
+              <span className="text-[11px] sm:text-xs font-medium opacity-90 leading-tight mt-0.5 break-words max-w-full">
                 {btnConfirm.sub}
               </span>
             )}

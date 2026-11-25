@@ -101,16 +101,16 @@ export const RegularReminderModal: React.FC<RegularReminderModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 select-none"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 select-none"
     >
-      <div className="w-full max-w-lg bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant overflow-hidden flex flex-col max-h-[92vh]">
-        <div className="px-6 py-4 bg-surface-container-low border-b border-outline-variant/40 flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0">
+      <div className="w-full max-w-lg bg-surface-container-lowest rounded-t-3xl sm:rounded-2xl shadow-2xl border-t sm:border border-outline-variant overflow-hidden flex flex-col max-h-[92dvh]">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-surface-container-low border-b border-outline-variant/40 flex items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0">
               <Icon name="notifications_active" className="text-2xl" />
             </div>
             <div className="min-w-0">
-              <h2 className="font-headline-md text-xl font-bold text-on-surface truncate">
+              <h2 className="font-headline-md text-lg sm:text-xl font-bold text-on-surface truncate">
                 {t('customers.regular_title')}
               </h2>
               <p className="text-xs text-on-surface-variant truncate">{customerName}</p>
@@ -125,7 +125,7 @@ export const RegularReminderModal: React.FC<RegularReminderModalProps> = ({
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex flex-col gap-4">
+        <div className="p-4 sm:p-6 overflow-y-auto flex flex-col gap-4 min-h-0">
           {/* Medicine Selector */}
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-bold text-on-surface">
@@ -205,14 +205,14 @@ export const RegularReminderModal: React.FC<RegularReminderModalProps> = ({
           )}
         </div>
 
-        <div className="px-6 py-4 bg-surface-container-low border-t border-outline-variant/40 flex items-center justify-between gap-3">
+        <div className="px-4 sm:px-6 pt-3.5 pb-[max(1rem,env(safe-area-inset-bottom))] bg-surface-container-low border-t border-outline-variant/40 flex items-stretch justify-between gap-2.5 sm:gap-3 shrink-0">
           <button
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="h-14 min-h-[56px] px-5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold flex items-center gap-2 cursor-pointer"
+            className="min-h-[56px] py-2 px-4 sm:px-5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold flex items-center justify-center gap-2 cursor-pointer shrink-0"
           >
-            <Icon name="arrow_back" className="text-xl" />
+            <Icon name="arrow_back" className="text-xl shrink-0" />
             <span>{backBtn.main}</span>
           </button>
 
@@ -220,12 +220,12 @@ export const RegularReminderModal: React.FC<RegularReminderModalProps> = ({
             type="button"
             onClick={() => void handleSave()}
             disabled={isSaving}
-            className="h-14 min-h-[56px] px-6 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
+            className="flex-1 sm:flex-initial min-h-[56px] py-2 px-4 sm:px-6 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50 min-w-0"
           >
-            <Icon name="check_circle" className="text-2xl" />
-            <div className="flex flex-col text-left leading-none">
-              <span className="font-title-hinglish font-bold">{saveBtn.main}</span>
-              {saveBtn.sub && <span className="text-xs opacity-90 pt-0.5">{saveBtn.sub}</span>}
+            <Icon name="check_circle" className="text-2xl shrink-0" />
+            <div className="flex flex-col text-left leading-tight min-w-0">
+              <span className="font-title-hinglish font-bold truncate">{saveBtn.main}</span>
+              {saveBtn.sub && <span className="text-xs opacity-90 pt-0.5 truncate">{saveBtn.sub}</span>}
             </div>
           </button>
         </div>

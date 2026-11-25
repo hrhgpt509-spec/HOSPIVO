@@ -169,10 +169,10 @@ export const OwnerPinGate: React.FC<OwnerPinGateProps> = ({
         </div>
 
         {/* 2. Heading & Micro English Label */}
-        <h2 className="text-3xl font-extrabold text-on-surface text-center leading-tight">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface text-center leading-tight break-words max-w-full">
           {t('dialogs.owner_pin_title')}
         </h2>
-        <p className="text-sm font-medium text-outline text-center mt-1 mb-4">
+        <p className="text-sm font-medium text-outline text-center mt-1 mb-4 break-words max-w-full">
           {t('dialogs.owner_pin_sub')}
         </p>
 
@@ -289,15 +289,15 @@ export const OwnerPinGate: React.FC<OwnerPinGateProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="w-full min-h-[56px] py-3 rounded-2xl bg-surface-container hover:bg-surface-container-high active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm text-on-surface cursor-pointer border border-outline-variant"
+          className="w-full min-h-[56px] py-2.5 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm text-on-surface cursor-pointer border border-outline-variant min-w-0"
         >
-          <svg className="w-6 h-6 text-outline" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <svg className="w-5 h-5 sm:w-6 sm:h-6 text-outline shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xl font-bold leading-none">{wapasBtn.main}</span>
+          <div className="flex flex-wrap items-center justify-center gap-1.5 min-w-0">
+            <span className="text-lg sm:text-xl font-bold leading-tight break-words">{wapasBtn.main}</span>
             {wapasBtn.sub && (
-              <span className="text-xs text-outline font-medium leading-none">{wapasBtn.sub}</span>
+              <span className="text-xs text-outline font-medium leading-tight break-words">{wapasBtn.sub}</span>
             )}
           </div>
         </button>

@@ -30,10 +30,10 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       return (
         <div
           onClick={onClick}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#E9EEF2] dark:bg-gray-800 text-[#344054] dark:text-gray-200 border border-gray-300 dark:border-gray-700 font-semibold text-base select-none ${className}`}
+          className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#E9EEF2] dark:bg-gray-800 text-[#344054] dark:text-gray-200 border border-gray-300 dark:border-gray-700 font-semibold text-xs sm:text-base select-none min-w-0 max-w-full ${className}`}
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-[#475467] dark:bg-gray-400 inline-block" />
-          <span>{label || t('status.local')}</span>
+          <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#475467] dark:bg-gray-400 inline-block shrink-0" />
+          <span className="truncate min-w-0">{label || t('status.local')}</span>
         </div>
       );
 
@@ -41,10 +41,10 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       return (
         <div
           onClick={onClick}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#8ef9a7] text-[#005226] font-bold text-base shadow-sm select-none ${className}`}
+          className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#8ef9a7] text-[#005226] font-bold text-xs sm:text-base shadow-sm select-none min-w-0 max-w-full ${className}`}
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-[#006b33] inline-block" />
-          <span>{label || t('status.synced')}</span>
+          <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#006b33] inline-block shrink-0" />
+          <span className="truncate min-w-0">{label || t('status.synced')}</span>
         </div>
       );
 
@@ -52,12 +52,12 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       return (
         <div
           onClick={onClick}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ffdcc6] text-[#723600] font-bold text-base shadow-sm select-none ${className}`}
+          className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#ffdcc6] text-[#723600] font-bold text-xs sm:text-base shadow-sm select-none min-w-0 max-w-full ${className}`}
         >
-          <svg className="w-4 h-4 text-[#924700]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#924700] shrink-0" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M10.5 6.5A7.5 7.5 0 0121 12c0 1.25-.3 2.43-.84 3.47M9.2 9.2A7.5 7.5 0 003 12c0 3.32 2.15 6.13 5.16 7.08" />
           </svg>
-          <span>{label || t('status.offline')}</span>
+          <span className="truncate min-w-0">{label || t('status.offline')}</span>
         </div>
       );
 
@@ -65,10 +65,10 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       return (
         <div
           onClick={onClick}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ffb786] text-[#311300] font-bold text-base shadow-sm select-none ${className}`}
+          className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#ffb786] text-[#311300] font-bold text-xs sm:text-base shadow-sm select-none min-w-0 max-w-full ${className}`}
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-[#924700] inline-block" />
-          <span>{label || t('status.pending_sync')}</span>
+          <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#924700] inline-block shrink-0" />
+          <span className="truncate min-w-0">{label || t('status.pending_sync')}</span>
         </div>
       );
 
@@ -76,14 +76,14 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       return (
         <div
           onClick={onClick}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#ffdad6] text-[#93000a] font-bold text-base shadow-sm select-none ${className}`}
+          className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#ffdad6] text-[#93000a] font-bold text-xs sm:text-base shadow-sm select-none min-w-0 max-w-full ${className}`}
         >
-          <svg className="w-4 h-4 text-[#ba1a1a]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ba1a1a] shrink-0" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <span>{label || t('status.sync_failed')}</span>
+          <span className="truncate min-w-0">{label || t('status.sync_failed')}</span>
         </div>
       );
 
@@ -91,12 +91,12 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       return (
         <div
           onClick={onClick}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#8ef9a7] text-[#005226] font-bold text-base shadow-sm select-none ${className}`}
+          className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-[#8ef9a7] text-[#005226] font-bold text-xs sm:text-base shadow-sm select-none min-w-0 max-w-full ${className}`}
         >
-          <svg className="w-4 h-4 text-[#006b33]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#006b33] shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
-          <span>{label || t('status.backup_today')}</span>
+          <span className="truncate min-w-0">{label || t('status.backup_today')}</span>
         </div>
       );
 
@@ -105,14 +105,14 @@ export const StatusChip: React.FC<StatusChipProps> = ({
       return (
         <div
           onClick={onClick}
-          className={`inline-flex items-center gap-2 px-4 py-2 bg-[#FEF3F2] dark:bg-[#381a17] text-[#D92D20] dark:text-[#f87171] border border-[#FCA5A5] dark:border-[#7f1d1d] rounded-xl font-bold text-base shadow-sm select-none ${className}`}
+          className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#FEF3F2] dark:bg-[#381a17] text-[#D92D20] dark:text-[#f87171] border border-[#FCA5A5] dark:border-[#7f1d1d] rounded-xl font-bold text-xs sm:text-base shadow-sm select-none min-w-0 max-w-full ${className}`}
         >
-          <svg className="w-4 h-4 stroke-[2.4] text-[#D92D20] dark:text-[#f87171]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.4] text-[#D92D20] dark:text-[#f87171] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" strokeLinecap="round" />
             <line x1="12" y1="16" x2="12.01" y2="16" strokeLinecap="round" />
           </svg>
-          <span>{label || t('status.backup_needed')}</span>
+          <span className="truncate min-w-0">{label || t('status.backup_needed')}</span>
         </div>
       );
   }

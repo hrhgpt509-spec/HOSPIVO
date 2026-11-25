@@ -362,8 +362,8 @@ export const Login: React.FC<LoginProps> = ({
             </p>
 
             {/* Active User Pill in Modal */}
-            <div className="mt-3 mb-3 px-3.5 py-1.5 bg-[#f1fcf6] rounded-xl border border-[#dae5df] flex items-center gap-2.5 w-full justify-center">
-              <div className="w-7 h-7 rounded-full bg-[#006b33] text-white flex items-center justify-center font-bold text-xs">
+            <div className="mt-3 mb-3 px-3.5 py-1.5 bg-[#f1fcf6] rounded-xl border border-[#dae5df] flex items-center gap-2.5 w-full justify-center min-w-0">
+              <div className="w-7 h-7 rounded-full bg-[#006b33] text-white flex items-center justify-center font-bold text-xs shrink-0">
                 {activeLockUser?.role === 'owner' ? (
                   <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
@@ -372,11 +372,11 @@ export const Login: React.FC<LoginProps> = ({
                   activeLockUser?.name.charAt(0).toUpperCase() || 'U'
                 )}
               </div>
-              <div className="flex flex-col text-left">
-                <span className="text-sm font-bold text-[#141e1a] leading-tight">
+              <div className="flex flex-col text-left min-w-0">
+                <span className="text-sm font-bold text-[#141e1a] leading-tight truncate">
                   {activeLockUser?.name || ''}
                 </span>
-                <span className="text-[11px] text-[#3e4a3f]">
+                <span className="text-[11px] text-[#3e4a3f] truncate">
                   {activeLockUser?.role === 'owner' ? t('common.role_owner') : t('common.role_cashier')}
                 </span>
               </div>
@@ -710,7 +710,7 @@ export const Login: React.FC<LoginProps> = ({
                   <span className="truncate">{switchShopBtn.main}</span>
                 </button>
               )}
-              <FullscreenButton className="w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 transition cursor-pointer shrink-0" />
+              <FullscreenButton className="hidden lg:flex w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 items-center justify-center text-slate-600 transition cursor-pointer shrink-0" />
             </div>
 
             <div className="w-full min-w-0">
@@ -824,19 +824,19 @@ export const Login: React.FC<LoginProps> = ({
                             setCreateOwnerError('');
                           }}
                           disabled={isSavingOwner}
-                          className="flex-1 min-h-[48px] h-12 px-3 bg-surface hover:bg-surface-container-high border border-outline-variant/80 text-on-surface rounded-xl flex items-center justify-center gap-1.5 font-bold transition-all active:scale-[0.99] cursor-pointer"
+                          className="flex-1 min-h-[48px] py-2.5 px-3 bg-surface hover:bg-surface-container-high border border-outline-variant/80 text-on-surface rounded-xl flex items-center justify-center gap-1.5 font-bold transition-all active:scale-[0.99] cursor-pointer min-w-0"
                         >
-                          <Icon name="close" className="text-[18px]" />
-                          <span>{btnCancelCreateOwner.main}</span>
+                          <Icon name="close" className="text-[18px] shrink-0" />
+                          <span className="truncate">{btnCancelCreateOwner.main}</span>
                         </button>
 
                         <button
                           type="submit"
                           disabled={isSavingOwner}
-                          className="flex-1 min-h-[48px] h-12 px-3 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-xl flex items-center justify-center gap-1.5 font-bold transition-all shadow-md active:scale-[0.99] cursor-pointer"
+                          className="flex-1 min-h-[48px] py-2.5 px-3 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-xl flex items-center justify-center gap-1.5 font-bold transition-all shadow-md active:scale-[0.99] cursor-pointer min-w-0"
                         >
-                          <Icon name={isSavingOwner ? 'sync' : 'check'} className={`text-[18px] ${isSavingOwner ? 'animate-spin' : ''}`} />
-                          <span className="text-sm font-bold leading-tight">{btnSaveOwnerPin.main}</span>
+                          <Icon name={isSavingOwner ? 'sync' : 'check'} className={`text-[18px] shrink-0 ${isSavingOwner ? 'animate-spin' : ''}`} />
+                          <span className="text-sm font-bold leading-tight truncate">{btnSaveOwnerPin.main}</span>
                         </button>
                       </div>
                     </form>
@@ -858,10 +858,10 @@ export const Login: React.FC<LoginProps> = ({
                           type="button"
                           onClick={handleSyncStaffAccounts}
                           disabled={isSyncingUsers}
-                          className="w-full min-h-[52px] h-13 px-4 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-xl flex items-center justify-center gap-2 font-bold transition-all shadow-md active:scale-[0.99] cursor-pointer"
+                          className="w-full min-h-[52px] py-2.5 px-4 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-xl flex items-center justify-center gap-2 font-bold transition-all shadow-md active:scale-[0.99] cursor-pointer"
                         >
-                          <Icon name="sync" className={`text-[20px] ${isSyncingUsers ? 'animate-spin' : ''}`} />
-                          <span className="text-sm font-bold leading-tight">{btnSyncStaff.main}</span>
+                          <Icon name="sync" className={`text-[20px] shrink-0 ${isSyncingUsers ? 'animate-spin' : ''}`} />
+                          <span className="text-sm font-bold leading-tight break-words">{btnSyncStaff.main}</span>
                         </button>
                         <button
                           type="button"

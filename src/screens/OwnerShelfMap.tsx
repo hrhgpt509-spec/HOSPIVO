@@ -354,17 +354,17 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
                   </div>
 
                   {/* Visual Rack Photo/Tag Graphic */}
-                  <div className="w-full h-24 shrink-0 my-2 rounded-xl bg-surface-container-low border border-outline-variant/50 flex items-center justify-between px-4 overflow-hidden shadow-inner">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                  <div className="w-full min-h-[88px] py-2.5 shrink-0 my-2 rounded-xl bg-surface-container-low border border-outline-variant/50 flex items-center justify-between gap-3 px-4 overflow-hidden shadow-inner min-w-0">
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider truncate">
                         {selectedGroup.isUnassigned ? 'Unsorted Rack' : `Section ${selectedGroup.shelf}`}
                       </span>
-                      <span className="text-base font-extrabold text-on-surface mt-0.5">
+                      <span className="text-sm sm:text-base font-extrabold text-on-surface mt-0.5 break-words">
                         {selectedGroup.totalStockPacks} {t('shelf_map.unit_packs')} · {selectedGroup.totalStockUnits} {t('shelf_map.unit_loose')}
                       </span>
                     </div>
-                    <div className="w-14 h-14 rounded-xl bg-surface-container flex items-center justify-center text-primary">
-                      <Icon name="shelves" className="text-[32px]" />
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0">
+                      <Icon name="shelves" className="text-[28px] sm:text-[32px]" />
                     </div>
                   </div>
 
@@ -378,26 +378,26 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
                       selectedGroup.medicines.map((med) => (
                         <div
                           key={med.id}
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/40 transition-colors group"
+                          className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/40 transition-colors group min-w-0"
                         >
-                          <div className="flex flex-col min-w-0 pr-2">
+                          <div className="flex flex-col min-w-0 flex-1">
                             <span className="font-bold text-sm text-on-surface truncate">
                               {med.name}
                             </span>
-                            <div className="flex items-center gap-2 text-xs text-on-surface-variant truncate">
+                            <div className="flex flex-wrap items-center gap-1.5 text-xs text-on-surface-variant min-w-0">
                               {med.shortCode && (
-                                <span className="font-mono font-bold bg-surface-container-high px-1.5 py-0.2 rounded text-[11px]">
+                                <span className="font-mono font-bold bg-surface-container-high px-1.5 py-0.2 rounded text-[11px] shrink-0">
                                   {med.shortCode}
                                 </span>
                               )}
-                              <span>
+                              <span className="truncate">
                                 {med.latestBatch ? t('shelf_map.card_batch', { batch: med.latestBatch }) : med.company}
                               </span>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-xs font-extrabold text-primary">
+                            <span className="text-xs font-extrabold text-primary whitespace-nowrap">
                               {med.totalPacks} {t('shelf_map.unit_packs')}
                             </span>
                             <button
@@ -407,9 +407,9 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
                                 setIsMoveModalOpen(true);
                               }}
                               title={btnMoveShelf.main}
-                              className="w-8 h-8 rounded-lg bg-surface-container-lowest hover:bg-primary hover:text-on-primary text-on-surface-variant border border-outline-variant flex items-center justify-center cursor-pointer transition-colors"
+                              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-surface-container-lowest hover:bg-primary hover:text-on-primary text-on-surface-variant border border-outline-variant flex items-center justify-center cursor-pointer transition-colors shrink-0"
                             >
-                              <Icon name="swap_horiz" className="text-[18px]" />
+                              <Icon name="swap_horiz" className="text-[20px]" />
                             </button>
                           </div>
                         </div>
@@ -428,17 +428,17 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
                           setIsMoveModalOpen(true);
                         }
                       }}
-                      className={`w-full h-14 min-h-[56px] px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high active:translate-y-0.5 transition-all flex items-center justify-center gap-3 cursor-pointer shadow-xs border border-outline-variant text-on-surface ${
+                      className={`w-full min-h-[56px] py-2 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high active:translate-y-0.5 transition-all flex items-center justify-center gap-3 cursor-pointer shadow-xs border border-outline-variant text-on-surface min-w-0 ${
                         selectedGroup.medicines.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >
-                      <Icon name="swap_horiz" className="text-primary text-[26px]" />
-                      <div className="flex flex-col text-center leading-tight">
-                        <span className="font-bold text-base text-on-surface">
+                      <Icon name="swap_horiz" className="text-primary text-[24px] sm:text-[26px] shrink-0" />
+                      <div className="flex flex-col text-center leading-tight min-w-0">
+                        <span className="font-bold text-sm sm:text-base text-on-surface break-words">
                           {btnMoveShelf.main}
                         </span>
                         {btnMoveShelf.sub && (
-                          <span className="text-xs text-on-surface-variant font-medium">
+                          <span className="text-xs text-on-surface-variant font-medium break-words">
                             {btnMoveShelf.sub}
                           </span>
                         )}
@@ -449,10 +449,10 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
                       <button
                         type="button"
                         onClick={() => onOpenStickers(selectedGroup.shelf)}
-                        className="w-full h-12 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant text-on-surface font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                        className="w-full min-h-[48px] py-2 px-4 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant text-on-surface font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
                       >
-                        <Icon name="print" className="text-primary text-[20px]" />
-                        <span>{btnPrintShelfLabel.main}</span>
+                        <Icon name="print" className="text-primary text-[20px] shrink-0" />
+                        <span className="break-words">{btnPrintShelfLabel.main}</span>
                       </button>
                     )}
                   </div>
@@ -483,9 +483,9 @@ export const OwnerShelfMap: React.FC<OwnerShelfMapProps> = ({
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-primary text-on-primary px-5 py-3 rounded-2xl shadow-xl font-bold text-sm flex items-center gap-2 animate-in fade-in duration-150">
-          <Icon name="check_circle" className="text-[20px]" />
-          <span>{toastMessage}</span>
+        <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-3 right-3 sm:left-auto sm:right-6 z-50 bg-primary text-on-primary px-5 py-3 rounded-2xl shadow-xl font-bold text-sm flex items-center justify-center sm:justify-start gap-2 animate-in fade-in duration-150">
+          <Icon name="check_circle" className="text-[20px] shrink-0" />
+          <span className="break-words">{toastMessage}</span>
         </div>
       )}
     </div>

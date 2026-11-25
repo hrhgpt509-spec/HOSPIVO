@@ -230,17 +230,17 @@ export const BillDoneScreen: React.FC<BillDoneScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setShowPrintFormatPicker(true)}
-                className="group h-[80px] min-h-[56px] rounded-xl bg-surface-container-high hover:bg-surface-container-highest active:translate-y-0.5 transition-all duration-150 flex items-center justify-center gap-space-md px-space-md text-left shadow-sm cursor-pointer border border-outline-variant/40"
+                className="group min-h-[68px] py-3 rounded-xl bg-surface-container-high hover:bg-surface-container-highest active:translate-y-0.5 transition-all duration-150 flex items-center justify-center gap-space-md px-space-md text-left shadow-sm cursor-pointer border border-outline-variant/40 min-w-0"
               >
-                <div className="w-12 h-12 rounded-lg bg-surface-container-lowest flex items-center justify-center text-on-surface shadow-sm group-hover:scale-105 transition-transform">
-                  <Icon name="print" className="text-[30px]" />
+                <div className="w-12 h-12 rounded-lg bg-surface-container-lowest flex items-center justify-center text-on-surface shadow-sm group-hover:scale-105 transition-transform shrink-0">
+                  <Icon name="print" className="text-[28px] sm:text-[30px]" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold leading-tight">
+                <div className="flex flex-col min-w-0">
+                  <span className="font-title-hinglish text-base sm:text-title-hinglish text-on-surface font-bold leading-tight break-words">
                     {btnPrint.main}
                   </span>
                   {btnPrint.sub && (
-                    <span className="font-label-sub-english text-label-sub-english text-on-surface-variant leading-normal">
+                    <span className="font-label-sub-english text-label-sub-english text-on-surface-variant leading-snug mt-0.5 break-words">
                       {btnPrint.sub}
                     </span>
                   )}
@@ -251,17 +251,17 @@ export const BillDoneScreen: React.FC<BillDoneScreenProps> = ({
               <button
                 type="button"
                 onClick={handleWhatsAppShare}
-                className="group h-[80px] min-h-[56px] rounded-xl bg-surface-container-high hover:bg-surface-container-highest active:translate-y-0.5 transition-all duration-150 flex items-center justify-center gap-space-md px-space-md text-left shadow-sm cursor-pointer border border-outline-variant/40"
+                className="group min-h-[68px] py-3 rounded-xl bg-surface-container-high hover:bg-surface-container-highest active:translate-y-0.5 transition-all duration-150 flex items-center justify-center gap-space-md px-space-md text-left shadow-sm cursor-pointer border border-outline-variant/40 min-w-0"
               >
-                <div className="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-primary shadow-sm group-hover:scale-105 transition-transform">
-                  <Icon name="share" className="text-[30px]" />
+                <div className="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-primary shadow-sm group-hover:scale-105 transition-transform shrink-0">
+                  <Icon name="share" className="text-[28px] sm:text-[30px]" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold leading-tight">
+                <div className="flex flex-col min-w-0">
+                  <span className="font-title-hinglish text-base sm:text-title-hinglish text-on-surface font-bold leading-tight break-words">
                     {btnWhatsapp.main}
                   </span>
                   {btnWhatsapp.sub && (
-                    <span className="font-label-sub-english text-label-sub-english text-on-surface-variant leading-normal">
+                    <span className="font-label-sub-english text-label-sub-english text-on-surface-variant leading-snug mt-0.5 break-words">
                       {btnWhatsapp.sub}
                     </span>
                   )}
@@ -273,15 +273,15 @@ export const BillDoneScreen: React.FC<BillDoneScreenProps> = ({
             <button
               type="button"
               onClick={onDone}
-              className="w-full h-[76px] min-h-[56px] rounded-xl bg-primary hover:bg-primary-container active:translate-y-0.5 transition-all duration-150 flex items-center justify-center gap-space-md px-space-lg text-on-primary shadow-md cursor-pointer"
+              className="w-full min-h-[64px] py-3 rounded-xl bg-primary hover:bg-primary-container active:translate-y-0.5 transition-all duration-150 flex items-center justify-center gap-space-md px-space-lg text-on-primary shadow-md cursor-pointer min-w-0"
             >
-              <Icon name="task_alt" className="text-[34px] leading-none" />
-              <div className="flex flex-col items-start text-left">
-                <span className="font-button-text text-button-text text-on-primary font-bold leading-tight">
+              <Icon name="task_alt" className="text-[30px] sm:text-[34px] leading-none shrink-0" />
+              <div className="flex flex-col items-start text-left min-w-0">
+                <span className="font-button-text text-lg sm:text-button-text text-on-primary font-bold leading-tight break-words">
                   {btnDone.main}
                 </span>
                 {btnDone.sub && (
-                  <span className="font-label-sub-english text-label-sub-english text-primary-fixed leading-normal">
+                  <span className="font-label-sub-english text-label-sub-english text-primary-fixed leading-snug mt-0.5 break-words">
                     {btnDone.sub}
                   </span>
                 )}
@@ -299,13 +299,13 @@ export const BillDoneScreen: React.FC<BillDoneScreenProps> = ({
       {/* Print Format Chooser Modal / Bottom Sheet on Phone */}
       {showPrintFormatPicker && (
         <div className="fixed inset-0 z-50 bg-inverse-surface/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="w-full sm:max-w-md bg-surface-container-lowest rounded-t-3xl sm:rounded-2xl shadow-2xl border-t sm:border border-outline-variant p-5 sm:p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col gap-3.5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-headline-md font-bold text-on-surface">{btnPrint.main}</h2>
+          <div className="w-full sm:max-w-md max-h-[92dvh] overflow-y-auto bg-surface-container-lowest rounded-t-3xl sm:rounded-2xl shadow-2xl border-t sm:border border-outline-variant p-5 sm:p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col gap-3.5">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-headline-md font-bold text-on-surface truncate">{btnPrint.main}</h2>
               <button
                 type="button"
                 onClick={() => setShowPrintFormatPicker(false)}
-                className="w-10 h-10 rounded-full hover:bg-surface-container-high flex items-center justify-center cursor-pointer"
+                className="w-10 h-10 rounded-full hover:bg-surface-container-high flex items-center justify-center cursor-pointer shrink-0"
               >
                 <Icon name="close" className="text-xl" />
               </button>
@@ -314,19 +314,19 @@ export const BillDoneScreen: React.FC<BillDoneScreenProps> = ({
             <button
               type="button"
               onClick={() => handlePrint('thermal')}
-              className="h-16 px-5 rounded-xl bg-primary text-on-primary font-bold text-lg flex items-center justify-between hover:bg-primary-container cursor-pointer"
+              className="min-h-[60px] py-3 px-5 rounded-xl bg-primary text-on-primary font-bold text-base sm:text-lg flex items-center justify-between gap-3 hover:bg-primary-container cursor-pointer min-w-0 text-left"
             >
-              <span>{t('billing_flow.print_format_thermal')}</span>
-              <Icon name="receipt" className="text-2xl" />
+              <span className="break-words">{t('billing_flow.print_format_thermal')}</span>
+              <Icon name="receipt" className="text-2xl shrink-0" />
             </button>
 
             <button
               type="button"
               onClick={() => handlePrint('a4')}
-              className="h-16 px-5 rounded-xl bg-surface-container-high text-on-surface font-bold text-lg flex items-center justify-between hover:bg-surface-container-highest border border-outline-variant cursor-pointer"
+              className="min-h-[60px] py-3 px-5 rounded-xl bg-surface-container-high text-on-surface font-bold text-base sm:text-lg flex items-center justify-between gap-3 hover:bg-surface-container-highest border border-outline-variant cursor-pointer min-w-0 text-left"
             >
-              <span>{t('billing_flow.print_format_a4')}</span>
-              <Icon name="description" className="text-2xl text-primary" />
+              <span className="break-words">{t('billing_flow.print_format_a4')}</span>
+              <Icon name="description" className="text-2xl text-primary shrink-0" />
             </button>
           </div>
         </div>

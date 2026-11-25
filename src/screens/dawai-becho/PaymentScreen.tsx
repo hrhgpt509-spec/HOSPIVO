@@ -376,20 +376,20 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
           {/* Two Columns: Left 42% (5 cols) Bill Summary, Right 58% (7 cols) Payment */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-md flex-1 min-h-0">
             {/* LEFT COLUMN: Bill Review & Grand Total Display */}
-            <div className="lg:col-span-5 flex flex-col justify-between bg-surface-container-lowest rounded-xl shadow-md p-space-lg border border-outline-variant/40 min-h-0">
+            <div className="lg:col-span-5 flex flex-col justify-between bg-surface-container-lowest rounded-xl shadow-md p-4 sm:p-space-lg border border-outline-variant/40 min-h-0 min-w-0">
               <div className="flex flex-col min-h-0 flex-1">
-                <div className="flex items-center justify-between pb-space-sm mb-space-sm border-b border-outline-variant/30 shrink-0">
-                  <div className="flex flex-col">
-                    <span className="font-headline-md text-headline-md text-on-surface font-bold">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-space-sm mb-space-sm border-b border-outline-variant/30 shrink-0">
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-headline-md text-lg sm:text-headline-md text-on-surface font-bold break-words">
                       {t('billing_flow.pay_items_title')}
                     </span>
-                    <span className="font-label-sub-english text-label-sub-english text-on-surface-variant">
+                    <span className="font-label-sub-english text-label-sub-english text-on-surface-variant break-words">
                       {t('billing_flow.pay_items_sub')}
                     </span>
                   </div>
                   <div className="flex items-center gap-space-xs px-space-sm py-1 bg-surface-container rounded-lg shrink-0">
-                    <Icon name="receipt_long" className="text-primary text-2xl" />
-                    <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold">
+                    <Icon name="receipt_long" className="text-primary text-2xl shrink-0" />
+                    <span className="font-title-hinglish text-sm sm:text-title-hinglish text-on-surface font-bold">
                       {t('dawai_becho.items_count', { count: cart.length })}
                     </span>
                   </div>
@@ -402,17 +402,17 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                     return (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between p-space-md bg-surface-container-low rounded-xl min-h-[60px]"
+                        className="flex items-center justify-between gap-2 p-3 sm:p-space-md bg-surface-container-low rounded-xl min-h-[60px] min-w-0"
                       >
-                        <div className="flex items-center gap-space-sm min-w-0">
+                        <div className="flex items-center gap-space-sm min-w-0 flex-1">
                           <div className="w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-primary shrink-0">
                             <Icon name="medication" className="text-2xl" />
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold truncate">
+                            <span className="font-title-hinglish text-sm sm:text-title-hinglish text-on-surface font-bold truncate">
                               {item.medicine.name} {item.medicine.strength}
                             </span>
-                            <span className="font-label-sub-english text-sm text-on-surface-variant">
+                            <span className="font-label-sub-english text-xs sm:text-sm text-on-surface-variant">
                               {item.qtyInput}{' '}
                               {item.unitMode === 'pack'
                                 ? t('dawai_becho.unit_strip')
@@ -420,7 +420,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                             </span>
                           </div>
                         </div>
-                        <span className="font-title-hinglish text-title-hinglish text-on-surface font-bold shrink-0">
+                        <span className="font-title-hinglish text-sm sm:text-title-hinglish text-on-surface font-bold shrink-0 whitespace-nowrap">
                           {comp ? formatRupees(comp.lineTotalPaise) : ''}
                         </span>
                       </div>
@@ -430,47 +430,47 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
               </div>
 
               {/* Total Display Card (>= 36px always visible) */}
-              <div className="p-space-lg rounded-xl bg-surface-container-low shadow-sm flex items-center justify-between mt-space-sm border border-outline-variant/50 shrink-0">
-                <div className="flex flex-col">
-                  <span className="font-title-hinglish text-title-hinglish text-on-surface-variant font-bold">
+              <div className="p-4 sm:p-space-lg rounded-xl bg-surface-container-low shadow-sm flex flex-wrap items-center justify-between gap-2 mt-space-sm border border-outline-variant/50 shrink-0 min-w-0">
+                <div className="flex flex-col min-w-0">
+                  <span className="font-title-hinglish text-base sm:text-title-hinglish text-on-surface-variant font-bold">
                     {t('billing_flow.pay_total_title')}
                   </span>
                   <span className="font-label-sub-english text-label-sub-english text-on-surface-variant">
                     {t('billing_flow.pay_total_sub')}
                   </span>
                 </div>
-                <span className="font-display-total text-[36px] sm:text-[44px] leading-none font-extrabold text-primary tracking-tight">
+                <span className="font-display-total text-[34px] sm:text-[44px] leading-none font-extrabold text-primary tracking-tight shrink-0">
                   {formatRupees(totals.totalPaise)}
                 </span>
               </div>
             </div>
 
             {/* RIGHT COLUMN: 4 Payment Mode Tabs + Active Panel */}
-            <div className="lg:col-span-7 flex flex-col gap-space-sm bg-surface-container-lowest rounded-xl shadow-md p-space-lg border border-outline-variant/40 min-h-0">
+            <div className="lg:col-span-7 flex flex-col gap-space-sm bg-surface-container-lowest rounded-xl shadow-md p-4 sm:p-space-lg border border-outline-variant/40 min-h-0 min-w-0">
               {/* 4 Chunky Square Payment Mode Buttons */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-space-sm shrink-0">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-space-sm shrink-0">
                 {/* Cash */}
                 <button
                   type="button"
                   onClick={() => setPaymentMode('cash')}
-                  className={`h-20 min-h-[56px] rounded-xl flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer ${
+                  className={`min-h-[68px] py-2.5 px-2 rounded-xl flex flex-col items-center justify-center text-center transition-all active:scale-95 cursor-pointer min-w-0 ${
                     paymentMode === 'cash'
                       ? 'bg-primary text-on-primary shadow-md'
                       : 'bg-surface-container-low text-on-surface shadow-sm hover:bg-surface-container'
                   }`}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-center gap-1 min-w-0 max-w-full">
                     <Icon
                       name={paymentMode === 'cash' ? 'check_circle' : 'payments'}
-                      className={`text-2xl ${paymentMode === 'cash' ? '' : 'text-primary'}`}
+                      className={`text-xl sm:text-2xl shrink-0 ${paymentMode === 'cash' ? '' : 'text-primary'}`}
                     />
-                    <span className="font-title-hinglish text-title-hinglish font-bold">
+                    <span className="font-title-hinglish text-sm sm:text-title-hinglish font-bold leading-tight break-words">
                       {modeCashBtn.main}
                     </span>
                   </div>
                   {modeCashBtn.sub && (
                     <span
-                      className={`font-label-sub-english text-xs ${
+                      className={`font-label-sub-english text-[11px] sm:text-xs leading-tight mt-0.5 break-words max-w-full ${
                         paymentMode === 'cash' ? 'text-primary-fixed' : 'text-on-surface-variant'
                       }`}
                     >
@@ -483,24 +483,24 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                 <button
                   type="button"
                   onClick={() => setPaymentMode('upi')}
-                  className={`h-20 min-h-[56px] rounded-xl flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer ${
+                  className={`min-h-[68px] py-2.5 px-2 rounded-xl flex flex-col items-center justify-center text-center transition-all active:scale-95 cursor-pointer min-w-0 ${
                     paymentMode === 'upi'
                       ? 'bg-primary text-on-primary shadow-md'
                       : 'bg-surface-container-low text-on-surface shadow-sm hover:bg-surface-container'
                   }`}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-center gap-1 min-w-0 max-w-full">
                     <Icon
                       name={paymentMode === 'upi' ? 'check_circle' : 'qr_code_scanner'}
-                      className={`text-2xl ${paymentMode === 'upi' ? '' : 'text-secondary'}`}
+                      className={`text-xl sm:text-2xl shrink-0 ${paymentMode === 'upi' ? '' : 'text-secondary'}`}
                     />
-                    <span className="font-title-hinglish text-title-hinglish font-bold">
+                    <span className="font-title-hinglish text-sm sm:text-title-hinglish font-bold leading-tight break-words">
                       {modeUpiBtn.main}
                     </span>
                   </div>
                   {modeUpiBtn.sub && (
                     <span
-                      className={`font-label-sub-english text-xs ${
+                      className={`font-label-sub-english text-[11px] sm:text-xs leading-tight mt-0.5 break-words max-w-full ${
                         paymentMode === 'upi' ? 'text-primary-fixed' : 'text-on-surface-variant'
                       }`}
                     >
@@ -513,24 +513,24 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                 <button
                   type="button"
                   onClick={() => setPaymentMode('udhaar')}
-                  className={`h-20 min-h-[56px] rounded-xl flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer ${
+                  className={`min-h-[68px] py-2.5 px-2 rounded-xl flex flex-col items-center justify-center text-center transition-all active:scale-95 cursor-pointer min-w-0 ${
                     paymentMode === 'udhaar'
                       ? 'bg-primary text-on-primary shadow-md'
                       : 'bg-surface-container-low text-on-surface shadow-sm hover:bg-surface-container'
                   }`}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-center gap-1 min-w-0 max-w-full">
                     <Icon
                       name={paymentMode === 'udhaar' ? 'check_circle' : 'menu_book'}
-                      className={`text-2xl ${paymentMode === 'udhaar' ? '' : 'text-tertiary'}`}
+                      className={`text-xl sm:text-2xl shrink-0 ${paymentMode === 'udhaar' ? '' : 'text-tertiary'}`}
                     />
-                    <span className="font-title-hinglish text-title-hinglish font-bold">
+                    <span className="font-title-hinglish text-sm sm:text-title-hinglish font-bold leading-tight break-words">
                       {modeUdhaarBtn.main}
                     </span>
                   </div>
                   {modeUdhaarBtn.sub && (
                     <span
-                      className={`font-label-sub-english text-xs ${
+                      className={`font-label-sub-english text-[11px] sm:text-xs leading-tight mt-0.5 break-words max-w-full ${
                         paymentMode === 'udhaar' ? 'text-primary-fixed' : 'text-on-surface-variant'
                       }`}
                     >
@@ -543,24 +543,24 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                 <button
                   type="button"
                   onClick={() => setPaymentMode('split')}
-                  className={`h-20 min-h-[56px] rounded-xl flex flex-col items-center justify-center transition-all active:scale-95 cursor-pointer ${
+                  className={`min-h-[68px] py-2.5 px-2 rounded-xl flex flex-col items-center justify-center text-center transition-all active:scale-95 cursor-pointer min-w-0 ${
                     paymentMode === 'split'
                       ? 'bg-primary text-on-primary shadow-md'
                       : 'bg-surface-container-low text-on-surface shadow-sm hover:bg-surface-container'
                   }`}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-center gap-1 min-w-0 max-w-full">
                     <Icon
                       name={paymentMode === 'split' ? 'check_circle' : 'call_split'}
-                      className={`text-2xl ${paymentMode === 'split' ? '' : 'text-on-surface-variant'}`}
+                      className={`text-xl sm:text-2xl shrink-0 ${paymentMode === 'split' ? '' : 'text-on-surface-variant'}`}
                     />
-                    <span className="font-title-hinglish text-title-hinglish font-bold">
+                    <span className="font-title-hinglish text-sm sm:text-title-hinglish font-bold leading-tight break-words">
                       {modeSplitBtn.main}
                     </span>
                   </div>
                   {modeSplitBtn.sub && (
                     <span
-                      className={`font-label-sub-english text-xs ${
+                      className={`font-label-sub-english text-[11px] sm:text-xs leading-tight mt-0.5 break-words max-w-full ${
                         paymentMode === 'split' ? 'text-primary-fixed' : 'text-on-surface-variant'
                       }`}
                     >
@@ -885,9 +885,9 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
 
               {/* MODE 4: AADHA-AADHA (SPLIT) */}
               {paymentMode === 'split' && (
-                <div className="flex-1 flex flex-col justify-center gap-5 p-6 rounded-2xl bg-surface-container-low border border-outline-variant/50">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-2">
+                <div className="flex-1 flex flex-col justify-center gap-4 sm:gap-5 p-4 sm:p-6 rounded-2xl bg-surface-container-low border border-outline-variant/50 min-w-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="flex flex-col gap-1.5 min-w-0">
                       <label className="font-title-hinglish font-bold text-on-surface">
                         {t('billing_flow.split_cash_label')}
                       </label>
@@ -896,10 +896,10 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                         min={0}
                         value={splitCashStr}
                         onChange={(e) => handleSplitCashChange(e.target.value)}
-                        className="h-16 px-4 rounded-xl bg-surface-container-lowest border-2 border-outline-variant text-on-surface font-headline-lg font-extrabold focus:outline-none focus:border-primary"
+                        className="min-h-[56px] py-2 px-4 rounded-xl bg-surface-container-lowest border-2 border-outline-variant text-on-surface font-headline-lg font-extrabold focus:outline-none focus:border-primary w-full"
                       />
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-1.5 min-w-0">
                       <label className="font-title-hinglish font-bold text-on-surface">
                         {t('billing_flow.split_upi_label')}
                       </label>
@@ -908,27 +908,27 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                         min={0}
                         value={splitUpiStr}
                         onChange={(e) => handleSplitUpiChange(e.target.value)}
-                        className="h-16 px-4 rounded-xl bg-surface-container-lowest border-2 border-outline-variant text-on-surface font-headline-lg font-extrabold focus:outline-none focus:border-primary"
+                        className="min-h-[56px] py-2 px-4 rounded-xl bg-surface-container-lowest border-2 border-outline-variant text-on-surface font-headline-lg font-extrabold focus:outline-none focus:border-primary w-full"
                       />
                     </div>
                   </div>
 
                   <div
-                    className={`p-4 rounded-xl flex items-center justify-between border ${
+                    className={`p-3.5 sm:p-4 rounded-xl flex flex-wrap items-center justify-between gap-2 border min-w-0 ${
                       splitCheck.valid
                         ? 'bg-primary-fixed/30 border-primary/40 text-primary'
                         : 'bg-error-container/50 border-error/40 text-on-error-container'
                     }`}
                   >
-                    <div className="flex items-center gap-2 font-bold text-lg">
-                      <Icon name={splitCheck.valid ? 'check_circle' : 'error'} className="text-2xl" />
-                      <span>
+                    <div className="flex items-center gap-2 font-bold text-base sm:text-lg min-w-0">
+                      <Icon name={splitCheck.valid ? 'check_circle' : 'error'} className="text-2xl shrink-0" />
+                      <span className="break-words">
                         {splitCheck.valid
                           ? t('billing_flow.split_matched')
                           : `${t('billing_flow.split_remaining_label')} ${formatRupees(splitCheck.remainingPaise)}`}
                       </span>
                     </div>
-                    <span className="font-headline-md font-extrabold">
+                    <span className="font-headline-md text-base sm:text-lg font-extrabold shrink-0 whitespace-nowrap">
                       {formatRupees(splitCashPaise + splitUpiPaise)} / {formatRupees(totals.totalPaise)}
                     </span>
                   </div>

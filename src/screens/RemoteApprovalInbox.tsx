@@ -257,24 +257,24 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
           </div>
 
           {/* Filter Tabs: Baaki, Approve hue, Reject hue */}
-          <div className="inline-flex p-1.5 bg-surface-container-high rounded-2xl gap-2 self-start sm:self-auto shadow-inner">
+          <div className="w-full sm:w-auto grid grid-cols-3 sm:inline-flex p-1.5 bg-surface-container-high rounded-2xl gap-1 sm:gap-2 self-start sm:self-auto shadow-inner">
             <button
               type="button"
               onClick={() => setActiveTab('pending')}
-              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              className={`min-h-[44px] px-2 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer min-w-0 ${
                 activeTab === 'pending'
                   ? 'bg-surface-container-lowest text-primary shadow-sm'
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
-              <span>{t('remote_approval.tab_pending')}</span>
-              <span className="w-2.5 h-2.5 rounded-full bg-tertiary" />
+              <span className="truncate">{t('remote_approval.tab_pending')}</span>
+              <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-tertiary shrink-0" />
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('approved')}
-              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`min-h-[44px] px-2 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer truncate ${
                 activeTab === 'approved'
                   ? 'bg-surface-container-lowest text-primary shadow-sm'
                   : 'text-on-surface-variant hover:text-on-surface'
@@ -286,7 +286,7 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('rejected')}
-              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`min-h-[44px] px-2 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer truncate ${
                 activeTab === 'rejected'
                   ? 'bg-surface-container-lowest text-primary shadow-sm'
                   : 'text-on-surface-variant hover:text-on-surface'
@@ -316,31 +316,31 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
               return (
                 <div
                   key={req.id}
-                  className="w-full min-h-[88px] bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-md transition-shadow px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-outline-variant/30"
+                  className="w-full min-h-[88px] bg-surface-container-lowest rounded-2xl shadow-sm hover:shadow-md transition-shadow px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 border border-outline-variant/30 min-w-0"
                 >
                   <div
-                    className="flex items-center gap-4 min-w-0 cursor-pointer flex-1"
+                    className="flex items-center gap-3 sm:gap-4 min-w-0 cursor-pointer flex-1"
                     onClick={() =>
                       setSelectedRequest(selectedRequest?.id === req.id ? null : req)
                     }
                   >
-                    <div className="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center text-primary shrink-0">
-                      <Icon name={iconName} className="text-[30px]" />
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-surface-container flex items-center justify-center text-primary shrink-0">
+                      <Icon name={iconName} className="text-[26px] sm:text-[30px]" />
                     </div>
 
-                    <div className="flex flex-col justify-center min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-lg font-bold text-on-surface truncate">
+                    <div className="flex flex-col justify-center min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap min-w-0">
+                        <span className="text-base sm:text-lg font-bold text-on-surface break-words">
                           {req.summary}
                         </span>
                         {isPending && (
-                          <span className="bg-tertiary-fixed text-on-tertiary-fixed text-xs font-bold px-2.5 py-0.5 rounded-full">
+                          <span className="bg-tertiary-fixed text-on-tertiary-fixed text-xs font-bold px-2.5 py-0.5 rounded-full shrink-0">
                             Naya
                           </span>
                         )}
                         {!isPending && (
                           <span
-                            className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                            className={`text-xs font-bold px-2.5 py-0.5 rounded-full shrink-0 ${
                               req.status === 'approved'
                                 ? 'bg-primary/10 text-primary'
                                 : 'bg-error-container text-error'
@@ -350,7 +350,7 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-on-surface-variant font-medium mt-0.5">
+                      <span className="text-xs text-on-surface-variant font-medium mt-0.5 break-words">
                         {req.requestedBy} · {shopName} · {formatItemTime(req.createdAt)}
                       </span>
                     </div>
@@ -358,26 +358,27 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
 
                   {/* Actions (Approve / Reject) */}
                   {isPending ? (
-                    <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                    <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto">
                       <button
                         type="button"
                         onClick={() => handleOpenDecisionModal(req.id!, 'rejected')}
-                        className="h-14 min-h-[56px] px-6 rounded-2xl bg-surface-container-high hover:bg-error-container text-error font-bold transition-colors cursor-pointer flex items-center justify-center"
+                        className="flex-1 sm:flex-initial min-h-[52px] sm:min-h-[56px] py-2 px-4 sm:px-6 rounded-2xl bg-surface-container-high hover:bg-error-container text-error font-bold transition-colors cursor-pointer flex items-center justify-center text-sm sm:text-base"
                       >
                         {t('remote_approval.btn_reject')}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleOpenDecisionModal(req.id!, 'approved')}
-                        className="h-14 min-h-[56px] px-8 rounded-2xl bg-primary hover:bg-primary-container text-on-primary font-bold shadow-md transition-all cursor-pointer flex items-center justify-center"
+                        className="flex-1 sm:flex-initial min-h-[52px] sm:min-h-[56px] py-2 px-5 sm:px-8 rounded-2xl bg-primary hover:bg-primary-container text-on-primary font-bold shadow-md transition-all cursor-pointer flex items-center justify-center text-sm sm:text-base"
                       >
                         {t('remote_approval.btn_approve')}
                       </button>
                     </div>
                   ) : (
-                    <div className="text-right text-xs text-outline shrink-0">
+                    <div className="sm:text-right text-xs text-outline shrink-0">
                       <span>By: {req.resolvedBy || 'Owner'}</span>
-                      <br />
+                      <span className="sm:hidden"> · </span>
+                      <br className="hidden sm:inline" />
                       <span>{formatItemTime(req.resolvedAt)}</span>
                     </div>
                   )}
@@ -436,17 +437,17 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="h-20 w-full px-4 sm:px-8 border-t border-outline-variant/30 bg-surface-container-lowest flex items-center justify-between shrink-0">
+      <footer className="min-h-[72px] w-full px-4 sm:px-8 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-outline-variant/30 bg-surface-container-lowest flex items-center justify-between shrink-0">
         <button
           type="button"
           onClick={onBack}
-          className="h-14 min-h-[56px] px-6 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-2xl flex items-center gap-3 transition-colors cursor-pointer border border-outline-variant/40"
+          className="min-h-[56px] py-2 px-5 sm:px-6 bg-surface-container hover:bg-surface-container-high text-on-surface rounded-2xl flex items-center gap-2.5 sm:gap-3 transition-colors cursor-pointer border border-outline-variant/40"
         >
-          <Icon name="arrow_back" className="text-[22px]" />
+          <Icon name="arrow_back" className="text-[22px] shrink-0" />
           <div className="flex flex-col text-left">
-            <span className="text-base font-bold leading-tight">{btnBack.main}</span>
+            <span className="text-sm sm:text-base font-bold leading-tight">{btnBack.main}</span>
             {btnBack.sub && (
-              <span className="text-xs text-outline font-medium leading-none">{btnBack.sub}</span>
+              <span className="text-xs text-outline font-medium leading-tight">{btnBack.sub}</span>
             )}
           </div>
         </button>
@@ -457,9 +458,9 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-center justify-center p-4 select-none animate-fadeIn"
+          className="fixed inset-0 bg-[#0f172a]/65 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 select-none animate-fadeIn"
         >
-          <div className="relative z-10 m-auto w-full max-w-[560px] bg-surface-container-lowest rounded-[24px] shadow-2xl p-8 flex flex-col gap-6 border border-outline-variant max-h-[92dvh] overflow-y-auto">
+          <div className="relative z-10 sm:m-auto w-full max-w-[560px] bg-surface-container-lowest rounded-t-3xl sm:rounded-[24px] shadow-2xl p-5 sm:p-8 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex flex-col gap-5 sm:gap-6 border-t sm:border border-outline-variant max-h-[92dvh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
@@ -517,7 +518,7 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
             </div>
 
             {/* Actions */}
-            <div className="grid grid-cols-2 gap-4 pt-2">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-2">
               <button
                 type="button"
                 onClick={() => {
@@ -525,14 +526,14 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
                   setPendingDecision(null);
                   setOwnerPin('');
                 }}
-                className="h-16 min-h-[56px] rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold flex flex-col items-center justify-center cursor-pointer transition-colors"
+                className="min-h-[56px] py-2 px-3 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold flex flex-col items-center justify-center text-center cursor-pointer transition-colors min-w-0"
               >
-                <div className="flex items-center gap-1.5">
-                  <Icon name="arrow_back" className="text-[20px]" />
-                  <span className="text-lg leading-tight">{btnBack.main}</span>
+                <div className="flex items-center justify-center gap-1.5 min-w-0">
+                  <Icon name="arrow_back" className="text-[18px] sm:text-[20px] shrink-0" />
+                  <span className="text-sm sm:text-lg leading-tight break-words">{btnBack.main}</span>
                 </div>
                 {btnBack.sub && (
-                  <span className="text-xs text-outline leading-none font-normal">{btnBack.sub}</span>
+                  <span className="text-[11px] sm:text-xs text-outline leading-tight font-normal mt-0.5 break-words">{btnBack.sub}</span>
                 )}
               </button>
 
@@ -540,24 +541,24 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
                 type="button"
                 onClick={handleConfirmDecision}
                 disabled={isVerifying}
-                className={`h-16 min-h-[56px] rounded-2xl font-bold flex flex-col items-center justify-center text-white shadow-md transition-all cursor-pointer ${
+                className={`min-h-[56px] py-2 px-3 rounded-2xl font-bold flex flex-col items-center justify-center text-center text-white shadow-md transition-all cursor-pointer min-w-0 ${
                   pendingDecision === 'approved'
                     ? 'bg-primary hover:bg-primary-container'
                     : 'bg-error hover:brightness-110'
                 }`}
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-center gap-1.5 min-w-0">
                   <Icon
                     name={pendingDecision === 'approved' ? 'check_circle' : 'cancel'}
-                    className="text-[20px]"
+                    className="text-[18px] sm:text-[20px] shrink-0"
                   />
-                  <span className="text-lg leading-tight">
+                  <span className="text-sm sm:text-lg leading-tight break-words">
                     {pendingDecision === 'approved'
                       ? btnConfirmApprove.main
                       : btnConfirmReject.main}
                   </span>
                 </div>
-                <span className="text-xs text-white/80 leading-none font-normal">
+                <span className="text-[11px] sm:text-xs text-white/80 leading-tight font-normal mt-0.5 break-words">
                   {pendingDecision === 'approved'
                     ? btnConfirmApprove.sub
                     : btnConfirmReject.sub}

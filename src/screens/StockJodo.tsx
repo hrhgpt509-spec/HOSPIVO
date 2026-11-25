@@ -556,7 +556,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 <Icon name={theme === 'dark' ? 'dark_mode' : 'light_mode'} className="text-[20px]" />
               </button>
             )}
-            <FullscreenButton className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" />
+            <FullscreenButton className="hidden lg:flex w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 items-center justify-center text-on-surface-variant transition-colors cursor-pointer shrink-0" />
           </div>
         </header>
 
@@ -577,21 +577,21 @@ export const StockJodo: React.FC<StockJodoProps> = ({
           <div className="flex flex-col gap-3 px-3 sm:px-4 py-2">
             {/* Card 1: Supplier Selection */}
             <div className="bg-surface-container-lowest rounded-2xl p-4 shadow-xs border border-outline-variant/50 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-base sm:text-lg font-bold text-on-surface">
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base sm:text-lg font-bold text-on-surface break-words">
                     {t('stock_jodo.supplier_select_title')} *
                   </h2>
-                  <p className="text-xs text-on-surface-variant">
+                  <p className="text-xs text-on-surface-variant break-words">
                     {t('stock_jodo.supplier_select_sub')}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsNewSupplierOpen(true)}
-                  className="min-h-[44px] px-3 rounded-xl bg-primary-container text-on-primary-container font-bold text-xs sm:text-sm flex items-center gap-1 cursor-pointer shrink-0"
+                  className="min-h-[44px] py-1.5 px-3 rounded-xl bg-primary-container text-on-primary-container font-bold text-xs sm:text-sm flex items-center gap-1 cursor-pointer shrink-0"
                 >
-                  <Icon name="add" className="text-[18px]" />
+                  <Icon name="add" className="text-[18px] shrink-0" />
                   <span>{tButton('stock_jodo.btn_add_supplier').main}</span>
                 </button>
               </div>
@@ -667,13 +667,13 @@ export const StockJodo: React.FC<StockJodoProps> = ({
             </div>
 
             {/* Sticky Bottom Action Bar */}
-            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center gap-2.5">
+            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-3.5 sm:px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-stretch gap-2.5">
               <button
                 type="button"
                 onClick={handleAttemptReturnHome}
-                className="h-14 min-h-[56px] px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
+                className="min-h-[56px] py-2 px-3.5 sm:px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                <Icon name="arrow_back" className="text-[22px]" />
+                <Icon name="arrow_back" className="text-[20px] sm:text-[22px] shrink-0" />
                 <span>{backButtonLabel.main}</span>
               </button>
 
@@ -681,10 +681,10 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 type="button"
                 disabled={!selectedSupplierId || !invoiceNo.trim()}
                 onClick={handleProceedFromStep1}
-                className="h-14 min-h-[56px] flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-base sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all"
+                className="min-h-[56px] py-2 px-3 flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-sm sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all min-w-0"
               >
-                <span>{nextButtonLabel.main} (Photo)</span>
-                <Icon name="arrow_forward" className="text-[22px]" />
+                <span className="truncate">{nextButtonLabel.main} (Photo)</span>
+                <Icon name="arrow_forward" className="text-[20px] sm:text-[22px] shrink-0" />
               </button>
             </footer>
           </div>
@@ -758,13 +758,13 @@ export const StockJodo: React.FC<StockJodoProps> = ({
             </div>
 
             {/* Sticky Bottom Action Bar */}
-            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center gap-2.5">
+            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-3.5 sm:px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-stretch gap-2.5">
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
-                className="h-14 min-h-[56px] px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
+                className="min-h-[56px] py-2 px-3.5 sm:px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                <Icon name="arrow_back" className="text-[22px]" />
+                <Icon name="arrow_back" className="text-[20px] sm:text-[22px] shrink-0" />
                 <span>{backButtonLabel.main}</span>
               </button>
 
@@ -772,10 +772,10 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 type="button"
                 disabled={!invoicePhoto}
                 onClick={() => setCurrentStep(3)}
-                className="h-14 min-h-[56px] flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-base sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all"
+                className="min-h-[56px] py-2 px-3 flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-sm sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all min-w-0"
               >
-                <span>{nextButtonLabel.main} (Medicines)</span>
-                <Icon name="arrow_forward" className="text-[22px]" />
+                <span className="truncate">{nextButtonLabel.main} (Medicines)</span>
+                <Icon name="arrow_forward" className="text-[20px] sm:text-[22px] shrink-0" />
               </button>
             </footer>
           </div>
@@ -1008,13 +1008,13 @@ export const StockJodo: React.FC<StockJodoProps> = ({
             </div>
 
             {/* Sticky Bottom Action Bar */}
-            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center gap-2.5">
+            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-3.5 sm:px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-stretch gap-2.5">
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="h-14 min-h-[56px] px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
+                className="min-h-[56px] py-2 px-3.5 sm:px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                <Icon name="arrow_back" className="text-[22px]" />
+                <Icon name="arrow_back" className="text-[20px] sm:text-[22px] shrink-0" />
                 <span>{backButtonLabel.main}</span>
               </button>
 
@@ -1024,10 +1024,10 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 onClick={() => {
                   if (lines.length > 0) setCurrentStep(4);
                 }}
-                className="h-14 min-h-[56px] flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-base sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all"
+                className="min-h-[56px] py-2 px-3 flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-sm sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all min-w-0"
               >
-                <span>{nextButtonLabel.main} (Review)</span>
-                <Icon name="arrow_forward" className="text-[22px]" />
+                <span className="truncate">{nextButtonLabel.main} (Review)</span>
+                <Icon name="arrow_forward" className="text-[20px] sm:text-[22px] shrink-0" />
               </button>
             </footer>
           </div>
@@ -1092,13 +1092,13 @@ export const StockJodo: React.FC<StockJodoProps> = ({
             </div>
 
             {/* Sticky Bottom Action Bar */}
-            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-center gap-2.5">
+            <footer className="fixed bottom-0 left-0 right-0 z-30 bg-surface-container-lowest border-t-2 border-outline-variant/40 rounded-t-3xl shadow-[0_-8px_24px_rgba(0,0,0,0.08)] px-3.5 sm:px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] flex items-stretch gap-2.5">
               <button
                 type="button"
                 onClick={() => setCurrentStep(3)}
-                className="h-14 min-h-[56px] px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
+                className="min-h-[56px] py-2 px-3.5 sm:px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface font-bold text-sm sm:text-base flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                <Icon name="arrow_back" className="text-[22px]" />
+                <Icon name="arrow_back" className="text-[20px] sm:text-[22px] shrink-0" />
                 <span>{backButtonLabel.main}</span>
               </button>
 
@@ -1106,10 +1106,10 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 type="button"
                 disabled={isSaving}
                 onClick={handleSavePurchase}
-                className="h-14 min-h-[56px] flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-base sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all"
+                className="min-h-[56px] py-2 px-3 flex-1 rounded-2xl bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary font-extrabold text-sm sm:text-lg flex items-center justify-center gap-2 shadow-md active:scale-95 cursor-pointer transition-all min-w-0"
               >
-                <Icon name="check_circle" className="text-[24px]" />
-                <span>{confirmSaveLabel.main}</span>
+                <Icon name="check_circle" className="text-[22px] sm:text-[24px] shrink-0" />
+                <span className="truncate">{confirmSaveLabel.main}</span>
               </button>
             </footer>
           </div>

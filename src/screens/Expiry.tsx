@@ -145,7 +145,7 @@ export const Expiry: React.FC<ExpiryProps> = ({
       <div className="w-full min-h-dvh bg-background font-body-md text-on-surface flex flex-col overflow-x-clip antialiased select-none transition-colors">
         {/* Sticky Compact Header */}
         <header className="sticky top-0 z-40 bg-surface-container-lowest/95 backdrop-blur-md border-b border-outline-variant/30 px-3 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] flex items-center justify-between gap-2 shadow-xs">
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <button
               onClick={onReturnHome}
               aria-label={t('common.btn_home.main')}
@@ -154,7 +154,7 @@ export const Expiry: React.FC<ExpiryProps> = ({
             >
               <Icon name="arrow_back" className="text-[24px]" />
             </button>
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col min-w-0 flex-1">
               <h1 className="font-title-hinglish font-bold text-base text-on-surface truncate">
                 {t('expiry.page_title')}
               </h1>
@@ -164,15 +164,15 @@ export const Expiry: React.FC<ExpiryProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 max-w-[50%]">
             <button
               type="button"
               onClick={() => setViewMode('tracker')}
-              className="min-h-[48px] px-3 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/60 text-on-surface text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="min-h-[48px] py-1.5 px-2.5 sm:px-3 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/60 text-on-surface text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs min-w-0"
             >
-              <Icon name="local_shipping" className="text-[20px] text-primary" />
-              <span>{trackerBtn.main}</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-[10px] font-extrabold">
+              <Icon name="local_shipping" className="text-[18px] sm:text-[20px] text-primary shrink-0" />
+              <span className="truncate">{trackerBtn.main}</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed text-[10px] font-extrabold shrink-0">
                 {pendingReturnsCount > 0 ? pendingReturnsCount : returns.length}
               </span>
             </button>
@@ -181,7 +181,7 @@ export const Expiry: React.FC<ExpiryProps> = ({
                 type="button"
                 onClick={onToggleTheme}
                 aria-label={t('common.toggle_theme')}
-                className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
+                className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer shrink-0"
               >
                 <Icon name={theme === 'dark' ? 'light_mode' : 'dark_mode'} className="text-[22px]" />
               </button>
@@ -401,9 +401,9 @@ export const Expiry: React.FC<ExpiryProps> = ({
                   </span>
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-error-container text-on-error-container flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-error-container text-on-error-container flex flex-wrap items-center justify-between gap-2">
                 <span className="font-bold text-sm">{t('expiry.loss_total_label')}</span>
-                <span className="text-lg font-extrabold text-error">
+                <span className="text-lg font-extrabold text-error shrink-0">
                   {formatRupees(lossSummary.totalLossPaise)}
                 </span>
               </div>
