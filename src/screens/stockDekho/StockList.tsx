@@ -5,6 +5,7 @@ import { useShop } from '../../logic/useShop';
 import { Icon } from '../../components/Icon';
 import { FullscreenButton } from '../../components/FullscreenButton';
 import { EmptyState } from '../../components/EmptyState';
+import { CameraBarcodeModal } from '../../components/CameraBarcodeModal';
 import { textFieldProps } from '../../logic/format';
 import { searchMedicines, formatMedicineStock } from '../../logic/medicineSearch';
 import { filterStockSummaries, type StockFilter, type MedicineStockSummary } from '../../logic/stockDekho';
@@ -12,6 +13,7 @@ import { useIsCompactViewport } from '../../logic/useViewport';
 
 interface StockListProps {
   stockSummaries: MedicineStockSummary[];
+  initialFilter?: StockFilter;
   onSelectMedicine: (medicine: Medicine) => void;
   onOpenShoppingList: () => void;
   onReturnHome: () => void;
@@ -23,6 +25,7 @@ interface StockListProps {
 
 export const StockList: React.FC<StockListProps> = ({
   stockSummaries,
+  initialFilter = 'all',
   onSelectMedicine,
   onOpenShoppingList,
   onReturnHome,
@@ -33,8 +36,26 @@ export const StockList: React.FC<StockListProps> = ({
 }) => {
   const { t, shouldShowSub } = useTranslation();
   const { name: hookShopName } = useShop();
-  const [activeFilter, setActiveFilter] = useState<StockFilter>('all');
+  const [activeFilter, setActiveFilter] = useState<StockFilter>(initialFilter);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
+
+  const handleCameraScan = (code: string) => {
+    const clean = code.trim();
+    if (!clean) return;
+    const q = clean.toLowerCase();
+    const exactMatch = stockSummaries.find(
+      (s) =>
+        (s.medicine.barcode && s.medicine.barcode.trim().toLowerCase() === q) ||
+        (s.medicine.shortCode && s.medicine.shortCode.trim().toLowerCase() === q)
+    );
+    if (exactMatch) {
+      setSearchQuery('');
+      onSelectMedicine(exactMatch.medicine);
+    } else {
+      setSearchQuery(clean);
+    }
+  };
 
   // Counts for the 3 tabs
   const allCount = stockSummaries.length;
@@ -165,9 +186,14 @@ export const StockList: React.FC<StockListProps> = ({
                 <Icon name="close" className="text-[18px]" />
               </button>
             ) : (
-              <div className="absolute right-3.5 text-outline pointer-events-none">
-                <Icon name="barcode_scanner" className="text-[22px] text-primary" />
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsCameraScannerOpen(true)}
+                aria-label={t('stock_dekho.btn_scan')}
+                className="absolute right-1.5 w-10 h-10 rounded-xl bg-primary/10 hover:bg-primary text-primary hover:text-on-primary flex items-center justify-center cursor-pointer transition-colors"
+              >
+                <Icon name="barcode_scanner" className="text-[22px]" />
+              </button>
             )}
           </div>
         </div>
@@ -322,6 +348,12 @@ export const StockList: React.FC<StockListProps> = ({
             })
           )}
         </div>
+
+        <CameraBarcodeModal
+          isOpen={isCameraScannerOpen}
+          onClose={() => setIsCameraScannerOpen(false)}
+          onScan={handleCameraScan}
+        />
       </div>
     );
   }
@@ -460,10 +492,7 @@ export const StockList: React.FC<StockListProps> = ({
                 className="h-[44px] px-space-sm flex items-center gap-space-xs bg-surface-container hover:bg-surface-container-high rounded-xl text-on-surface transition-colors cursor-pointer"
                 title={t('stock_dekho.btn_scan')}
                 type="button"
-                onClick={() => {
-                  const input = document.getElementById('stockSearchInput');
-                  if (input) input.focus();
-                }}
+                onClick={() => setIsCameraScannerOpen(true)}
               >
                 <Icon name="barcode_scanner" className="text-primary text-[22px]" />
                 <span className="font-label-sub-english text-label-sub-english font-bold">
@@ -700,6 +729,12 @@ export const StockList: React.FC<StockListProps> = ({
           )}
         </div>
       </main>
+
+      <CameraBarcodeModal
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onScan={handleCameraScan}
+      />
     </div>
   );
 };

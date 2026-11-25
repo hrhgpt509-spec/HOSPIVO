@@ -17,6 +17,11 @@ import {
   listCloudShopsForUser,
 } from './cloudAuth';
 import { subscribeFeedback } from './feedback';
+import {
+  captureWorkspaceSnapshot,
+  listConnectedDevices,
+  registerCurrentDeviceInCloud,
+} from './cloudSync';
 
 function createMockArrayQueryChain(resolvedData: any[] = []) {
   const query: any = {
@@ -552,5 +557,129 @@ describe('strict account/shop isolation & multi-shop management', () => {
     expect(await db.bills.count()).toBe(0);
     expect((await db.users.get('owner'))?.name).toBe('Branch 2 Manager');
     expect((await db.settings.get('cloud_shop_uuid'))?.value).toBe('cloud-shop-2');
+  });
+
+  it('restores offline Local Mode data cleanly when signing out of cloud after Keep Separate', async () => {
+    await runWithSyncWorkspaceBypass(async () => {
+      await db.shop.add({
+        name: 'My Offline Local Shop',
+        ownerName: 'Local Owner',
+        address: '',
+        phone: '',
+        gstNo: '',
+        drugLicenceNos: '',
+        mode: 'local',
+        shopSyncId: 'HOSP-LOC1-0001',
+      });
+      await db.users.add({
+        id: 'owner',
+        name: 'Local Owner',
+        role: 'owner',
+        pinHash: 'h',
+        pinSalt: 's',
+        active: true,
+      });
+    });
+
+    const localSnap = await captureWorkspaceSnapshot();
+    await db.settings.put({ key: 'local_mode_snapshot', value: localSnap });
+
+    // Now simulate being signed into a separate cloud workspace
+    await runWithSyncWorkspaceBypass(async () => {
+      await db.shop.clear();
+      await db.users.clear();
+      await db.shop.add({
+        name: 'Cloud Separate Shop',
+        ownerName: 'Cloud Owner',
+        address: '',
+        phone: '',
+        gstNo: '',
+        drugLicenceNos: '',
+        mode: 'cloud',
+        cloudShopUuid: 'cloud-sep-1',
+        shopSyncId: 'HOSP-CLD1-0001',
+        ownerEmail: 'cloud@test.com',
+      });
+      await db.users.add({
+        id: 'owner',
+        name: 'Cloud Owner',
+        role: 'owner',
+        pinHash: 'h',
+        pinSalt: 's',
+        active: true,
+      });
+    });
+    await db.settings.put({ key: 'active_data_scope', value: 'cloud:cloud-sep-1' });
+    await db.settings.put({ key: 'cloud_enabled', value: true });
+
+    vi.spyOn(supabase.auth, 'signOut').mockResolvedValueOnce({ error: null });
+    await signOutOwner();
+
+    const restoredShop = await db.shop.toCollection().first();
+    expect(restoredShop?.name).toBe('My Offline Local Shop');
+    expect(restoredShop?.mode).toBe('local');
+    expect((await db.users.get('owner'))?.name).toBe('Local Owner');
+  });
+
+  it('registers current device and lists multiple connected devices under the same cloud shop', async () => {
+    await db.settings.put({ key: 'cloud_enabled', value: true });
+    await db.settings.put({ key: 'cloud_shop_uuid', value: 'cloud-dev-shop' });
+    await db.settings.put({ key: 'shop_sync_id', value: 'HOSP-DEV1-0001' });
+    await db.settings.put({ key: 'device_id', value: 'dev-laptop-1' });
+    await db.settings.put({ key: 'device_name', value: 'Counter PC 1' });
+
+    vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
+      data: { session: { user: { id: 'usr-dev', email: 'dev@test.com' } } },
+      error: null,
+    } as any);
+    vi.spyOn(supabase.auth, 'getUser').mockResolvedValue({
+      data: { user: { id: 'usr-dev', email: 'dev@test.com' } },
+      error: null,
+    } as any);
+
+    const upsertSpy = vi.fn().mockResolvedValue({ error: null });
+    vi.spyOn(supabase, 'from').mockImplementation((table: string) => {
+      if (table === 'hospivo_sync_events') {
+        return {
+          upsert: upsertSpy,
+          select: vi.fn().mockReturnValue(
+            createMockArrayQueryChain([
+              {
+                device_id: 'dev-laptop-1',
+                created_at: '2026-11-25T08:00:00.000Z',
+                payload: {
+                  deviceId: 'dev-laptop-1',
+                  deviceName: 'Counter PC 1',
+                  platform: 'Web / Desktop',
+                  lastSeenAt: '2026-11-25T08:00:00.000Z',
+                },
+              },
+              {
+                device_id: 'dev-phone-2',
+                created_at: '2026-11-25T08:05:00.000Z',
+                payload: {
+                  deviceId: 'dev-phone-2',
+                  deviceName: 'Owner Android Phone',
+                  platform: 'Android App',
+                  lastSeenAt: '2026-11-25T08:05:00.000Z',
+                },
+              },
+            ])
+          ),
+        } as any;
+      }
+      return {
+        select: vi.fn().mockReturnValue(createMockArrayQueryChain([])),
+        upsert: vi.fn().mockResolvedValue({ error: null }),
+      } as any;
+    });
+
+    await registerCurrentDeviceInCloud('Counter PC 1');
+    expect(upsertSpy).toHaveBeenCalled();
+
+    const devices = await listConnectedDevices();
+    expect(devices.map((d) => d.deviceId)).toEqual(['dev-laptop-1', 'dev-phone-2']);
+    expect(devices[0].isCurrentDevice).toBe(true);
+    expect(devices[1].deviceName).toBe('Owner Android Phone');
   });
 });

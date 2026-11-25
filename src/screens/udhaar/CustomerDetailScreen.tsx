@@ -10,10 +10,10 @@ import { useBackHandler } from '../../logic/androidBack';
 import { formatRupees } from '../../logic/money';
 import { isOwner } from '../../logic/roles';
 import {
-  buildUdhaarWhatsAppUrl,
   getReminderUrgency,
   makeCustomerKey,
   normalizePhoneKey,
+  sendOrShareUdhaarReminder,
   toggleRegularReminderActive,
   type CustomerLedgerEntry,
 } from '../../logic/udhaar';
@@ -83,7 +83,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
         if (custNorm && normalizePhoneKey(r.customerPhone) === custNorm) return true;
         return makeCustomerKey(r.customerPhone, r.customerName) === custKey;
       })
-      .sort((a, b) => a.nextDueDate.localeCompare(b.nextDueDate));
+      .sort((a, b) => (a.nextDueDate || '').localeCompare(b.nextDueDate || ''));
   }, [reminders, customer]);
 
   const dueSoonReminders = useMemo(
@@ -107,31 +107,33 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
       amountPaise: number;
     }> = [];
 
-    for (const bill of customer.bills) {
+    for (const bill of customer.bills || []) {
       rows.push({
         id: `bill-${bill.id || bill.billNo}`,
         kind: 'bill',
-        date: bill.date,
-        sortKey: bill.createdAt || bill.date,
-        title: t('customers.row_udhaar_bill', { billNo: bill.billNo }),
-        subtitle: `${bill.date}${bill.doctorName ? ` · ${bill.doctorName}` : ''}`,
-        amountPaise: bill.totalPaise,
+        date: bill.date || '',
+        sortKey: bill.createdAt || bill.date || '',
+        title: t('customers.row_udhaar_bill', { billNo: bill.billNo || '—' }),
+        subtitle: `${bill.date || ''}${bill.doctorName ? ` · ${bill.doctorName}` : ''}`,
+        amountPaise: bill.totalPaise || 0,
       });
     }
 
-    for (const pay of customer.payments) {
+    for (const pay of customer.payments || []) {
+      const modeText = (pay.mode || 'cash').toUpperCase();
+      const dateStr = (pay.createdAt || '').split('T')[0];
       rows.push({
-        id: `pay-${pay.id}`,
+        id: `pay-${pay.id ?? dateStr}`,
         kind: 'payment',
-        date: (pay.createdAt || '').split('T')[0],
-        sortKey: pay.createdAt,
-        title: t('customers.row_payment_received', { mode: pay.mode.toUpperCase() }),
-        subtitle: `${(pay.createdAt || '').split('T')[0]}${pay.note ? ` · ${pay.note}` : ''}`,
-        amountPaise: pay.amountPaise,
+        date: dateStr,
+        sortKey: pay.createdAt || '',
+        title: t('customers.row_payment_received', { mode: modeText }),
+        subtitle: `${dateStr}${pay.note ? ` · ${pay.note}` : ''}`,
+        amountPaise: pay.amountPaise || 0,
       });
     }
 
-    rows.sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+    rows.sort((a, b) => (b.sortKey || '').localeCompare(a.sortKey || ''));
     return rows;
   }, [customer.bills, customer.payments, t]);
 
@@ -155,8 +157,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
         amount: formatRupees(customer.pendingBalancePaise),
         shop: shopName || '',
       });
-      const url = buildUdhaarWhatsAppUrl(customer.customerPhone, msg);
-      window.open(url, '_blank', 'noopener,noreferrer');
+      void sendOrShareUdhaarReminder(customer.customerPhone, msg);
     } catch (err) {
       console.error('WhatsApp open failed:', err);
     }
@@ -170,8 +171,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
         date: rem.nextDueDate,
         shop: shopName || '',
       });
-      const url = buildUdhaarWhatsAppUrl(customer.customerPhone, msg);
-      window.open(url, '_blank', 'noopener,noreferrer');
+      void sendOrShareUdhaarReminder(customer.customerPhone, msg);
     } catch (err) {
       console.error('WhatsApp open failed:', err);
     }
@@ -515,7 +515,7 @@ export const CustomerDetailScreen: React.FC<CustomerDetailScreenProps> = ({
                   <button
                     type="button"
                     onClick={handleSendWhatsAppLedger}
-                    disabled={customer.pendingBalancePaise <= 0}
+                    disabled={customer.pendingBalancePaise <= 0 && !customer.customerPhone?.trim()}
                     className="w-full h-14 min-h-[56px] px-4 bg-surface-container-low hover:bg-surface-container-high text-primary rounded-2xl flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-40"
                   >
                     <Icon name="chat" className="text-2xl" />

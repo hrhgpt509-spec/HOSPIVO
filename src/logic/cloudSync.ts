@@ -517,7 +517,27 @@ export async function applyRemoteEvent(event: any): Promise<void> {
   }
   if (!payload) return;
 
-  const entityType = event.entity_type as SyncEntityType;
+  const entityType = event.entity_type as SyncEntityType | 'device';
+
+  if (entityType === 'device') {
+    const devId = String(payload.deviceId || event.device_id || event.entity_id || '').trim();
+    if (devId) {
+      const cacheItem = await db.settings.get('connected_devices_cache');
+      const existingList = Array.isArray(cacheItem?.value) ? (cacheItem.value as ConnectedDeviceInfo[]) : [];
+      const currentDeviceId = (await getCloudConfig()).deviceId;
+      const entry: ConnectedDeviceInfo = {
+        deviceId: devId,
+        deviceName: String(payload.deviceName || 'Billing Desk'),
+        platform: String(payload.platform || 'Web / Desktop'),
+        lastSeenAt: String(payload.lastSeenAt || event.created_at || new Date().toISOString()),
+        isCurrentDevice: devId === currentDeviceId,
+      };
+      const merged = [entry, ...existingList.filter((d) => d.deviceId !== devId)];
+      await db.settings.put({ key: 'connected_devices_cache', value: merged });
+      emitSyncApplied(['device']);
+    }
+    return;
+  }
 
   switch (entityType) {
     case 'medicine': {
@@ -3010,5 +3030,190 @@ export async function backfillLocalDataToCloud(): Promise<BackfillLocalResult> {
     lastError: syncResult.lastError,
   };
 }
+
+// ---------------------------------------------------------------------------
+// MULTI-DEVICE REGISTRATION & CONNECTED DEVICES LIST
+// ---------------------------------------------------------------------------
+
+export interface ConnectedDeviceInfo {
+  deviceId: string;
+  deviceName: string;
+  platform: string;
+  lastSeenAt: string;
+  isCurrentDevice: boolean;
+}
+
+function detectDevicePlatform(): string {
+  if (Capacitor.isNativePlatform()) {
+    return 'Android App';
+  }
+  if (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '')) {
+    return 'Android Browser';
+  }
+  return 'Web / Desktop';
+}
+
+/**
+ * Registers or refreshes the current device under the active cloud shop in Supabase
+ * `hospivo_sync_events` (`entity_type = 'device'`) and updates the local cache.
+ */
+export async function registerCurrentDeviceInCloud(
+  overrideDeviceName?: string
+): Promise<ConnectedDeviceInfo | null> {
+  const config = await getCloudConfig();
+  const resolvedDeviceId = config.deviceId || 'device-local';
+  const deviceName = (overrideDeviceName || config.deviceName || 'Counter PC 1 (Billing Desk)').trim();
+  const platform = detectDevicePlatform();
+  const lastSeenAt = new Date().toISOString();
+
+  const currentInfo: ConnectedDeviceInfo = {
+    deviceId: resolvedDeviceId,
+    deviceName,
+    platform,
+    lastSeenAt,
+    isCurrentDevice: true,
+  };
+
+  // Always update local cache first
+  try {
+    const cacheItem = await db.settings.get('connected_devices_cache');
+    const existingList = Array.isArray(cacheItem?.value) ? (cacheItem.value as ConnectedDeviceInfo[]) : [];
+    const nextList = [
+      currentInfo,
+      ...existingList
+        .filter((d) => d.deviceId !== resolvedDeviceId)
+        .map((d) => ({ ...d, isCurrentDevice: false })),
+    ];
+    await db.settings.put({ key: 'connected_devices_cache', value: nextList });
+  } catch {
+    // Non-fatal
+  }
+
+  if (!config.cloudEnabled || !isBackendConfigured()) {
+    return currentInfo;
+  }
+
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return currentInfo;
+  }
+
+  try {
+    const session = await getCurrentCloudSession();
+    if (!session.isAuthenticated || !session.cloudShopUuid) {
+      return currentInfo;
+    }
+
+    const eventId = `device:${session.cloudShopUuid}:${resolvedDeviceId}`;
+    await supabase.from('hospivo_sync_events').upsert(
+      [
+        {
+          id: eventId,
+          shop_id: session.cloudShopUuid,
+          shop_sync_id: config.shopSyncId,
+          device_id: resolvedDeviceId,
+          entity_type: 'device',
+          entity_id: resolvedDeviceId,
+          operation: 'upsert',
+          payload: {
+            deviceId: resolvedDeviceId,
+            deviceName,
+            platform,
+            lastSeenAt,
+            shopSyncId: config.shopSyncId,
+          },
+          created_at: lastSeenAt,
+        },
+      ],
+      { onConflict: 'id' }
+    );
+  } catch (err) {
+    console.warn('Could not register device in cloud:', err);
+  }
+
+  return currentInfo;
+}
+
+/**
+ * Lists all devices connected to the active cloud shop (deduplicated by deviceId),
+ * merging remote Supabase `device` events with the local cache and current device.
+ */
+export async function listConnectedDevices(): Promise<ConnectedDeviceInfo[]> {
+  const config = await getCloudConfig();
+  const resolvedDeviceId = config.deviceId || 'device-local';
+  const byId = new Map<string, ConnectedDeviceInfo>();
+
+  // 1. Seed from local cache
+  try {
+    const cacheItem = await db.settings.get('connected_devices_cache');
+    const cached = Array.isArray(cacheItem?.value) ? (cacheItem.value as ConnectedDeviceInfo[]) : [];
+    for (const d of cached) {
+      if (d?.deviceId) {
+        byId.set(d.deviceId, {
+          ...d,
+          isCurrentDevice: d.deviceId === resolvedDeviceId,
+        });
+      }
+    }
+  } catch {
+    // Ignore cache read error
+  }
+
+  // 2. Always include this device
+  byId.set(resolvedDeviceId, {
+    deviceId: resolvedDeviceId,
+    deviceName: config.deviceName,
+    platform: detectDevicePlatform(),
+    lastSeenAt: byId.get(resolvedDeviceId)?.lastSeenAt || new Date().toISOString(),
+    isCurrentDevice: true,
+  });
+
+  // 3. Query remote devices for this cloud shop when authenticated & online
+  if (config.cloudEnabled && isBackendConfigured() && !(typeof navigator !== 'undefined' && navigator.onLine === false)) {
+    try {
+      const session = await getCurrentCloudSession();
+      if (session.isAuthenticated && session.cloudShopUuid) {
+        const { data, error } = await supabase
+          .from('hospivo_sync_events')
+          .select('device_id, payload, created_at')
+          .eq('shop_id', session.cloudShopUuid)
+          .eq('entity_type', 'device')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (!error && Array.isArray(data)) {
+          for (const row of data) {
+            const p = (row?.payload || {}) as Record<string, any>;
+            const devId = String(p.deviceId || row?.device_id || '').trim();
+            if (!devId) continue;
+            const prev = byId.get(devId);
+            const rowTime = String(p.lastSeenAt || row?.created_at || '');
+            if (!prev || rowTime >= prev.lastSeenAt) {
+              byId.set(devId, {
+                deviceId: devId,
+                deviceName: String(p.deviceName || prev?.deviceName || 'Billing Desk'),
+                platform: String(p.platform || prev?.platform || 'Web / Desktop'),
+                lastSeenAt: rowTime || new Date().toISOString(),
+                isCurrentDevice: devId === config.deviceId,
+              });
+            }
+          }
+          await db.settings.put({
+            key: 'connected_devices_cache',
+            value: Array.from(byId.values()),
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Could not list connected cloud devices:', err);
+    }
+  }
+
+  return Array.from(byId.values()).sort((a, b) => {
+    if (a.isCurrentDevice && !b.isCurrentDevice) return -1;
+    if (!a.isCurrentDevice && b.isCurrentDevice) return 1;
+    return b.lastSeenAt.localeCompare(a.lastSeenAt);
+  });
+}
+
 
 

@@ -20,6 +20,7 @@ interface OwnerMenuProps {
   onOpenBackup?: () => void;
   onOpenCloudSync?: () => void;
   onOpenApprovals?: () => void;
+  onOpenMultiShop?: () => void;
   currentUser?: {
     id?: string;
     name: string;
@@ -50,6 +51,7 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
   onOpenBackup,
   onOpenCloudSync,
   onOpenApprovals,
+  onOpenMultiShop,
   currentUser,
   shop,
   theme = 'light',
@@ -75,6 +77,7 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
   const tileSticker = tButton('owner_menu.tile_sticker');
   const tileSettings = tButton('owner_menu.tile_settings');
   const tileBackup = tButton('owner_menu.tile_backup');
+  const tileMultiShop = tButton('owner_menu.tile_multi_shop');
 
   const handleLockedClick = (tileName: string) => {
     setLockedNotice({
@@ -496,6 +499,27 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
                   </span>
                 ) : null}
               </button>
+
+              {/* 11. Multi-Shop Management */}
+              {onOpenMultiShop && (
+                <button
+                  type="button"
+                  onClick={onOpenMultiShop}
+                  className="group relative flex flex-col items-center justify-center min-h-[120px] lg:aspect-square rounded-2xl bg-surface-container-lowest shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer p-3.5 sm:p-4 text-center border-2 border-primary/25 hover:border-primary active:scale-[0.98] min-w-0"
+                >
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200 mb-2 shadow-inner">
+                    <Icon name="storefront" className="text-[28px] sm:text-[32px]" />
+                  </div>
+                  <span className="text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-tight truncate max-w-full">
+                    {tileMultiShop.main}
+                  </span>
+                  {tileMultiShop.sub ? (
+                    <span className="text-xs font-medium text-outline mt-0.5 truncate max-w-full">
+                      {tileMultiShop.sub}
+                    </span>
+                  ) : null}
+                </button>
+              )}
             </div>
           </div>
 

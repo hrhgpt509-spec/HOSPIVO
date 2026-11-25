@@ -17,6 +17,7 @@ interface MedicineCatalogPanelProps {
   validStockMap: Record<number, number>;
   onSelectMedicine: (med: Medicine) => void;
   onReturnHome: () => void;
+  onOpenCameraScanner?: () => void;
 }
 
 export const MedicineCatalogPanel: React.FC<MedicineCatalogPanelProps> = ({
@@ -29,6 +30,7 @@ export const MedicineCatalogPanel: React.FC<MedicineCatalogPanelProps> = ({
   validStockMap,
   onSelectMedicine,
   onReturnHome,
+  onOpenCameraScanner,
 }) => {
   const { t } = useTranslation();
   const returnHomeBtn = tButton('home.return_home_btn');
@@ -63,7 +65,7 @@ export const MedicineCatalogPanel: React.FC<MedicineCatalogPanelProps> = ({
         <button
           type="button"
           aria-label={t('dawai_becho.scan_aria')}
-          onClick={() => searchInputRef.current?.focus()}
+          onClick={() => (onOpenCameraScanner ? onOpenCameraScanner() : searchInputRef.current?.focus())}
           className="w-11 h-11 rounded-xl bg-surface-container flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-colors cursor-pointer shrink-0 ml-2"
         >
           <Icon name="barcode_scanner" className="text-[26px]" />

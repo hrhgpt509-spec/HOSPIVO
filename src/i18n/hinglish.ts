@@ -369,6 +369,7 @@ export const hinglish: TranslationSchema = {
     tile_suppliers: { main: 'Suppliers', sub: 'Suppliers' },
     tile_settings: { main: 'Settings', sub: 'Settings' },
     tile_backup: { main: 'Backup', sub: 'Backup and restore' },
+    tile_multi_shop: { main: 'Multi-Shop', sub: 'Stores & branches' },
     footer_db_synced: 'Offline Database: Active',
     build_version: 'Build: v4.12.8',
   },
@@ -1699,6 +1700,10 @@ export const hinglish: TranslationSchema = {
     sign_in_required_banner: 'Cloud mode chuna gaya hai, par account abhi connected nahi hai. Auto sync shuru karne ke liye neeche Sign In karein.',
     btn_sign_in_connect: { main: 'Login / Connect', sub: 'Cloud account jodein' },
     btn_sign_out: { main: 'Sign Out', sub: 'Cloud session disconnect karein' },
+    connected_devices_title: 'Connected Devices ({count})',
+    connected_devices_empty: 'Abhi koi aur device linked nahi hai. Apne phone ya dusre PC par isi account se sign in karein.',
+    this_device_badge: 'Yeh Device',
+    last_seen_prefix: 'Last active:',
   },
   remote_approval: {
     ask_owner_title: 'Owner ko poocho',
@@ -1831,6 +1836,17 @@ export const hinglish: TranslationSchema = {
     coming_soon: 'Jald Aa Raha Hai',
     coming_soon_msg: 'Multi-shop management aage ke update mein available hoga.',
     btn_switch_shop: { main: 'Dukaan Badlo', sub: 'Switch Shop' },
+  },
+  scanner: {
+    modal_title: 'Barcode Scan Karein',
+    modal_sub: 'Camera dawai ke barcode ya QR par rakhein',
+    starting_camera: 'Camera shuru ho raha hai...',
+    point_camera_hint: 'Barcode ko frame ke andar seedha rakhein',
+    camera_unavailable: 'Camera uplabdh nahi hai ya permission nahi mili. Neeche manually barcode dalein:',
+    manual_label: 'Ya barcode / short code manually dalein',
+    manual_placeholder: 'Barcode likhein ya scan karein...',
+    btn_use_code: { main: 'Code Lagao', sub: 'Use Code' },
+    btn_close: { main: 'Band Karein', sub: 'Close' },
   },
 };
 

@@ -21,6 +21,7 @@ import { paiseToRupees, rupeesToPaise, formatRupees } from '../logic/money';
 import { compressInvoicePhoto } from '../logic/image';
 import { useTranslation, tButton } from '../i18n';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { CameraBarcodeModal } from '../components/CameraBarcodeModal';
 import { triggerFeedback } from '../logic/feedback';
 import { Icon } from '../components/Icon';
 import { EmptyState } from '../components/EmptyState';
@@ -106,6 +107,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
 
   // Confirmation before leaving draft
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
 
   // Step 4: Review and Save
   const [isSaving, setIsSaving] = useState(false);
@@ -115,6 +117,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   // Step 5: Save result
   const [saveResult, setSaveResult] = useState<SavePurchaseResult | null>(null);
 
+  useBackHandler(isLeaveConfirmOpen, () => setIsLeaveConfirmOpen(false));
   useBackHandler(currentStep === 2 || currentStep === 3 || currentStep === 4, () => {
     setCurrentStep((prev) => (typeof prev === 'number' && prev > 1 ? ((prev - 1) as WizardStep) : prev));
   });
@@ -162,10 +165,12 @@ export const StockJodo: React.FC<StockJodoProps> = ({
     ? searchMedicines(medicines, searchQuery).slice(0, 8)
     : [];
 
-  // Helper to check if draft has unsaved progress
+  // Helper to check if draft has unsaved progress (do not count auto-selected default supplier)
   const hasUnsavedProgress =
     currentStep !== 'saved' &&
-    (selectedSupplierId !== null || invoiceNo.trim() !== '' || invoicePhoto !== '' || lines.length > 0);
+    (invoiceNo.trim() !== '' || invoicePhoto !== '' || lines.length > 0);
+
+  useBackHandler(currentStep === 1 && hasUnsavedProgress, () => setIsLeaveConfirmOpen(true));
 
   const handleAttemptReturnHome = () => {
     if (hasUnsavedProgress) {
@@ -808,8 +813,16 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                       setIsSearchOpen(true);
                     }}
                     placeholder={t('stock_jodo.medicine_search_placeholder')}
-                    className="w-full bg-transparent text-sm font-medium text-on-surface outline-none"
+                    className="w-full bg-transparent text-sm font-medium text-on-surface outline-none min-w-0"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setIsCameraScannerOpen(true)}
+                    aria-label={t('scanner.modal_title')}
+                    className="w-9 h-9 rounded-lg bg-primary/10 hover:bg-primary text-primary hover:text-on-primary flex items-center justify-center cursor-pointer shrink-0 ml-1 transition-colors"
+                  >
+                    <Icon name="barcode_scanner" className="text-[20px]" />
+                  </button>
                 </div>
 
                 {/* Instant Medicine Results Dropdown */}
@@ -1184,6 +1197,15 @@ export const StockJodo: React.FC<StockJodoProps> = ({
           accept="image/*"
           className="hidden"
           onChange={handlePhotoUpload}
+        />
+
+        <CameraBarcodeModal
+          isOpen={isCameraScannerOpen}
+          onClose={() => setIsCameraScannerOpen(false)}
+          onScan={(code) => {
+            setSearchQuery(code);
+            setIsCameraScannerOpen(false);
+          }}
         />
       </div>
     );
@@ -2840,6 +2862,31 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         confirmSubLabel={tButton('dialogs.btn_haan_wapas').sub}
         cancelLabel={tButton('common.btn_cancel').main}
         cancelSubLabel={tButton('common.btn_cancel').sub}
+      />
+
+      <CameraBarcodeModal
+        isOpen={isCameraScannerOpen}
+        onScan={(code) => {
+          const clean = code.trim();
+          if (!clean) return;
+          const q = clean.toLowerCase();
+          const exact = medicines.find(
+            (m) =>
+              (m.barcode && m.barcode.trim().toLowerCase() === q) ||
+              (m.shortCode && m.shortCode.trim().toLowerCase() === q)
+          );
+          if (exact) {
+            setSelectedMedicine(exact);
+            setSearchQuery(exact.name);
+            setIsSearchOpen(false);
+            if (exact.mrpPaise) setMrpInput(String(paiseToRupees(exact.mrpPaise)));
+            batchInputRef.current?.focus();
+          } else {
+            setSearchQuery(clean);
+            setIsSearchOpen(true);
+          }
+        }}
+        onClose={() => setIsCameraScannerOpen(false)}
       />
     </div>
   );

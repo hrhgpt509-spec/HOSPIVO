@@ -1,5 +1,19 @@
 import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+const mockWriteFile = vi.hoisted(() => vi.fn(async () => ({ uri: 'file:///cache/backup.json' })));
+const mockShare = vi.hoisted(() => vi.fn(async () => ({ activityType: 'test' })));
+
+vi.mock('@capacitor/filesystem', () => ({
+  Directory: { Documents: 'DOCUMENTS', Cache: 'CACHE' },
+  Encoding: { UTF8: 'utf8' },
+  Filesystem: { writeFile: mockWriteFile },
+}));
+
+vi.mock('@capacitor/share', () => ({
+  Share: { share: mockShare },
+}));
+
 import { db, resetDatabase, type DBUser } from '../db';
 import {
   createBackup,
@@ -548,6 +562,26 @@ describe('Backup, Staff PIN & Settings Logic', () => {
       const missingChecksumRes = verifyBackupPayload(JSON.stringify(missingChecksumObj));
       expect(missingChecksumRes.isValid).toBe(false);
       expect(missingChecksumRes.error).toMatch(/missing or invalid sha-256 checksum/i);
+    });
+
+    it('saves and shares backup natively on Capacitor Android without failing as cancelled', async () => {
+      const { Capacitor } = await import('@capacitor/core');
+      mockWriteFile.mockClear();
+      mockShare.mockClear();
+
+      const nativeSpy = vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+
+      try {
+        const payload = await createBackup('Native Test Pharmacy');
+        const result = await saveBackup(payload);
+        expect(result.status).toBe('saved');
+        expect(mockWriteFile).toHaveBeenCalled();
+        expect(mockShare).toHaveBeenCalled();
+        const status = await getBackupStatus();
+        expect(status.lastVerifiedBackupAt).toBeTruthy();
+      } finally {
+        nativeSpy.mockRestore();
+      }
     });
   });
 });

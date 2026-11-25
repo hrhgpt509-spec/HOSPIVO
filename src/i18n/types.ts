@@ -376,6 +376,7 @@ export interface TranslationSchema {
     tile_suppliers: ButtonLabel;
     tile_settings: ButtonLabel;
     tile_backup: ButtonLabel;
+    tile_multi_shop: ButtonLabel;
     footer_db_synced: string;
     build_version: string;
   };
@@ -1718,6 +1719,10 @@ export interface TranslationSchema {
     sign_in_required_banner: string;
     btn_sign_in_connect: ButtonLabel;
     btn_sign_out: ButtonLabel;
+    connected_devices_title: string;
+    connected_devices_empty: string;
+    this_device_badge: string;
+    last_seen_prefix: string;
   };
   remote_approval: {
     ask_owner_title: string;
@@ -1850,5 +1855,16 @@ export interface TranslationSchema {
     coming_soon: string;
     coming_soon_msg: string;
     btn_switch_shop: ButtonLabel;
+  };
+  scanner: {
+    modal_title: string;
+    modal_sub: string;
+    starting_camera: string;
+    point_camera_hint: string;
+    camera_unavailable: string;
+    manual_label: string;
+    manual_placeholder: string;
+    btn_use_code: ButtonLabel;
+    btn_close: ButtonLabel;
   };
 }

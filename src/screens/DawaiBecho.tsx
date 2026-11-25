@@ -5,6 +5,7 @@ import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ApprovalDialog } from '../components/ApprovalDialog';
+import { CameraBarcodeModal } from '../components/CameraBarcodeModal';
 import { useShop } from '../logic/useShop';
 import { formatRupees } from '../logic/money';
 import { searchMedicines } from '../logic/medicineSearch';
@@ -42,6 +43,7 @@ export interface DawaiBechoProps {
   onProceedToPayment?: (draft: BillDraft, approvalVerified: boolean) => void;
   onOpenOldBills?: () => void;
   onOpenReturns?: () => void;
+  initialScreen?: 'billing' | 'old_bills';
   currentUser?: DBUser | { id?: string; name: string; role?: string } | null;
   theme?: 'light' | 'dark';
   onToggleTheme?: () => void;
@@ -52,6 +54,7 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
   onProceedToPayment,
   onOpenOldBills,
   onOpenReturns,
+  initialScreen = 'billing',
   currentUser,
   theme = 'light',
   onToggleTheme,
@@ -89,10 +92,11 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
   const [isNewBillConfirmOpen, setIsNewBillConfirmOpen] = useState<boolean>(false);
   const [isApprovalOpen, setIsApprovalOpen] = useState<boolean>(false);
   const [isMobileBillSheetOpen, setIsMobileBillSheetOpen] = useState<boolean>(false);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState<boolean>(false);
   const isCompactViewport = useIsCompactViewport();
   const [activeScreen, setActiveScreen] = useState<
     'billing' | 'payment' | 'bill_done' | 'old_bills'
-  >('billing');
+  >(initialScreen);
 
   // Android back press closes open sheets & dialogs in DawaiBecho before navigating back
   useBackHandler(isMobileBillSheetOpen, () => setIsMobileBillSheetOpen(false));
@@ -100,8 +104,12 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
   useBackHandler(Boolean(scheduleHMedicine), () => setScheduleHMedicine(null));
   useBackHandler(Boolean(outOfStockMedicine), () => setOutOfStockMedicine(null));
   useBackHandler(activeScreen === 'old_bills', () => {
-    setActiveScreen('billing');
-    loadCatalogAndSettings();
+    if (initialScreen === 'old_bills') {
+      onReturnHome();
+    } else {
+      setActiveScreen('billing');
+      loadCatalogAndSettings();
+    }
   });
   const [activePaymentDraft, setActivePaymentDraft] = useState<{
     draft: BillDraft;
@@ -382,6 +390,26 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
       await handleSelectMedicine(exactMatch);
     }
   };
+
+  const handleCameraBarcodeScan = useCallback(
+    async (code: string) => {
+      const q = code.trim().toLowerCase();
+      if (!q) return;
+      const exactMatch = medicines.find(
+        (m) =>
+          (m.barcode && m.barcode.trim().toLowerCase() === q) ||
+          (m.shortCode && m.shortCode.trim().toLowerCase() === q)
+      );
+      if (exactMatch) {
+        setSearchQuery('');
+        await handleSelectMedicine(exactMatch);
+      } else {
+        setSearchQuery(code.trim());
+        triggerFeedback('error', t('dawai_becho.no_search_results'), code.trim());
+      }
+    },
+    [medicines, handleSelectMedicine, t]
+  );
 
   // Toggle Strip / Loose unit mode on a cart line
   const handleToggleUnitMode = async (lineId: string, nextMode: UnitMode) => {
@@ -843,8 +871,12 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
     return (
       <OldBillsReturnScreen
         onBackToBilling={() => {
-          setActiveScreen('billing');
-          loadCatalogAndSettings();
+          if (initialScreen === 'old_bills') {
+            onReturnHome();
+          } else {
+            setActiveScreen('billing');
+            loadCatalogAndSettings();
+          }
         }}
         onReturnHome={onReturnHome}
         currentUser={currentUser}
@@ -947,9 +979,14 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
                   <Icon name="close" className="text-[20px]" />
                 </button>
               ) : (
-                <div className="w-10 h-10 flex items-center justify-center bg-primary-fixed text-primary rounded-xl shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsCameraScannerOpen(true)}
+                  aria-label={t('dawai_becho.scan_aria')}
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center bg-primary-fixed hover:bg-primary text-primary hover:text-on-primary rounded-xl shrink-0 cursor-pointer transition-colors"
+                >
                   <Icon name="barcode_scanner" className="text-[20px]" />
-                </div>
+                </button>
               )}
             </div>
           </div>
@@ -1268,6 +1305,12 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
             setPendingBillDiscount(null);
           }}
         />
+
+        <CameraBarcodeModal
+          isOpen={isCameraScannerOpen}
+          onClose={() => setIsCameraScannerOpen(false)}
+          onScan={handleCameraBarcodeScan}
+        />
       </div>
     );
   }
@@ -1367,6 +1410,7 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
             validStockMap={validStockMap}
             onSelectMedicine={handleSelectMedicine}
             onReturnHome={onReturnHome}
+            onOpenCameraScanner={() => setIsCameraScannerOpen(true)}
           />
 
           {/* RIGHT COLUMN: Desktop Bill Panel (40% width -> col-span-5) */}
@@ -1505,6 +1549,12 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
           setIsApprovalOpen(false);
           setPendingBillDiscount(null);
         }}
+      />
+
+      <CameraBarcodeModal
+        isOpen={isCameraScannerOpen}
+        onScan={(code) => void handleCameraBarcodeScan(code)}
+        onClose={() => setIsCameraScannerOpen(false)}
       />
     </div>
   );

@@ -3,6 +3,7 @@ import { db, type DBUser, type Batch } from '../db';
 import { useShop } from '../logic/useShop';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { CameraBarcodeModal } from '../components/CameraBarcodeModal';
 import {
   type PendingFastBill,
   type FastBillCartItem,
@@ -74,6 +75,7 @@ export const FastBill: React.FC<FastBillProps> = ({
 
   // Persistent Scanner Input
   const [scanCodeInput, setScanCodeInput] = useState('');
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
   const scannerInputRef = useRef<HTMLInputElement>(null);
 
   // Modals
@@ -821,16 +823,21 @@ export const FastBill: React.FC<FastBillProps> = ({
             }}
             className="relative flex items-center w-full"
           >
-            <div className="absolute left-3.5 text-primary pointer-events-none">
+            <button
+              type="button"
+              onClick={() => setIsCameraScannerOpen(true)}
+              aria-label={t('scanner.modal_title')}
+              className="absolute left-1.5 w-10 h-10 rounded-xl bg-primary/10 hover:bg-primary text-primary hover:text-on-primary flex items-center justify-center cursor-pointer transition-colors"
+            >
               <Icon name="barcode_scanner" className="text-[22px]" />
-            </div>
+            </button>
             <input
               ref={scannerInputRef}
               type="text"
               value={scanCodeInput}
               onChange={(e) => setScanCodeInput(e.target.value)}
               placeholder="Scan barcode / short code (C1) / search..."
-              className="w-full h-13 min-h-[52px] pl-11 pr-14 rounded-2xl bg-surface-container-lowest border-2 border-primary/60 focus:border-primary text-sm sm:text-base text-on-surface outline-none shadow-xs transition-all"
+              className="w-full h-13 min-h-[52px] pl-13 pr-14 rounded-2xl bg-surface-container-lowest border-2 border-primary/60 focus:border-primary text-sm sm:text-base text-on-surface outline-none shadow-xs transition-all"
             />
             <button
               type="submit"
@@ -873,9 +880,14 @@ export const FastBill: React.FC<FastBillProps> = ({
         <div className="flex-1 w-full px-3 py-2 flex flex-col gap-2.5">
           {activeBill.items.length === 0 ? (
             <div className="p-8 bg-surface-container-lowest rounded-2xl border border-outline-variant/40 flex flex-col items-center justify-center text-center text-on-surface-variant gap-2 my-2">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => setIsCameraScannerOpen(true)}
+                aria-label={t('scanner.modal_title')}
+                className="w-16 h-16 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary flex items-center justify-center cursor-pointer transition-colors"
+              >
                 <Icon name="barcode_scanner" className="text-[36px]" />
-              </div>
+              </button>
               <span className="font-bold text-base text-on-surface">
                 {activeBill.billNumberLabel} - Ready for Scanning
               </span>
@@ -1094,6 +1106,12 @@ export const FastBill: React.FC<FastBillProps> = ({
           onClose={() => setIsUnknownModalOpen(false)}
         />
 
+        <CameraBarcodeModal
+          isOpen={isCameraScannerOpen}
+          onScan={(code) => handleExecuteScan(code)}
+          onClose={() => setIsCameraScannerOpen(false)}
+        />
+
         <BatchSelectModal
           isOpen={batchModalState.isOpen}
           medicineId={batchModalState.medicineId}
@@ -1188,11 +1206,16 @@ export const FastBill: React.FC<FastBillProps> = ({
                 value={scanCodeInput}
                 onChange={(e) => setScanCodeInput(e.target.value)}
                 placeholder="Scan barcode / short code (C1)..."
-                className="w-full h-10 md:h-11 pl-9 pr-16 rounded-xl bg-surface-container-low border border-outline-variant/60 font-body-md text-xs md:text-sm text-on-surface outline-none focus:border-primary focus:bg-surface-container-lowest transition-colors shadow-xs"
+                className="w-full h-10 md:h-11 pl-10 pr-16 rounded-xl bg-surface-container-low border border-outline-variant/60 font-body-md text-xs md:text-sm text-on-surface outline-none focus:border-primary focus:bg-surface-container-lowest transition-colors shadow-xs"
               />
-              <div className="absolute left-2.5 top-2.5 text-primary">
+              <button
+                type="button"
+                onClick={() => setIsCameraScannerOpen(true)}
+                aria-label={t('scanner.modal_title')}
+                className="absolute left-1.5 top-1.5 w-7 h-7 md:w-8 md:h-8 rounded-lg hover:bg-primary/10 text-primary flex items-center justify-center cursor-pointer"
+              >
                 <Icon name="barcode_scanner" className="text-[18px]" />
-              </div>
+              </button>
               <button
                 type="submit"
                 className="absolute right-1 top-1 h-8 md:h-9 px-2.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary text-xs font-bold transition-all cursor-pointer"
@@ -1415,6 +1438,12 @@ export const FastBill: React.FC<FastBillProps> = ({
             currentBatchId: 0,
           })
         }
+      />
+
+      <CameraBarcodeModal
+        isOpen={isCameraScannerOpen}
+        onScan={(code) => handleExecuteScan(code)}
+        onClose={() => setIsCameraScannerOpen(false)}
       />
     </div>
   );

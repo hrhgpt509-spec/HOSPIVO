@@ -223,6 +223,7 @@ export function App() {
       return (
         <ShopSelector
           onEnter={() => setScreen(nextScreen('shop_entered'))}
+          onBack={currentUser ? () => setScreen('home') : undefined}
           onAddShop={() => {
             void prepareNewShopSetup().then(() => {
               setCurrentUser(null);
@@ -247,6 +248,7 @@ export function App() {
             setIsLocked(false);
             setScreen('login');
           }}
+          onOpenMultiShop={() => setScreen(nextScreen('switch_shop'))}
         />
       );
     }

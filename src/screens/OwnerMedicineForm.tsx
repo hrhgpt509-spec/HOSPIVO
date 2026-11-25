@@ -15,6 +15,7 @@ import {
 import { useTranslation, tButton, shouldShowSub } from '../i18n';
 import { formatRupees } from '../logic/money';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { CameraBarcodeModal } from '../components/CameraBarcodeModal';
 import { triggerFeedback } from '../logic/feedback';
 import { FullscreenButton } from '../components/FullscreenButton';
 import { useShop } from '../logic/useShop';
@@ -95,6 +96,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
   const [newTypeName, setNewTypeName] = useState('');
   const [newTypeError, setNewTypeError] = useState('');
   const [previousSelectedForm, setPreviousSelectedForm] = useState(formData.form);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
 
   const { name: hookShopName, mode: hookMode, gstNo: hookGstNo } = useShop();
   const shopName = shop?.name || hookShopName || '';
@@ -386,37 +388,37 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
     <div className="w-full min-h-dvh bg-canvas text-on-surface flex flex-col justify-between antialiased select-none transition-colors">
       
       {/* 1. Header (Matching 38b) */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30">
-        <div className="h-16 w-full max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between">
+      <header className="sticky lg:fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/30 pt-[env(safe-area-inset-top)]">
+        <div className="min-h-[64px] w-full max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 py-2 flex items-center justify-between gap-2 min-w-0">
           {/* Brand + Shop + Mode */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <span className="text-xl md:text-2xl font-black tracking-tight text-primary uppercase">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <span className="text-lg sm:text-xl md:text-2xl font-black tracking-tight text-primary uppercase shrink-0">
               HOSPIVO
             </span>
-            <div className="hidden sm:block h-6 w-[2px] bg-outline-variant" />
-            <span className="hidden sm:inline text-lg md:text-xl font-bold text-on-surface">
+            <div className="hidden sm:block h-6 w-[2px] bg-outline-variant shrink-0" />
+            <span className="hidden sm:inline text-lg md:text-xl font-bold text-on-surface truncate">
               {shopName}
             </span>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-low text-xs font-medium text-on-surface-variant">
+            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-low text-xs font-medium text-on-surface-variant shrink-0">
               <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
               <span>{modeLabel}</span>
             </div>
           </div>
 
           {/* Right: Home + Theme Switch + User */}
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 shrink-0">
             <button
               type="button"
               onClick={handleHomeClick}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-primary hover:bg-[#088643] text-on-primary font-bold shadow-sm cursor-pointer transition-all active:translate-y-[1px]"
+              className="inline-flex items-center gap-2 min-h-[44px] px-3 sm:px-4 py-1.5 rounded-xl bg-primary hover:bg-[#088643] text-on-primary font-bold shadow-sm cursor-pointer transition-all active:translate-y-[1px] shrink-0"
             >
-              <svg className="w-5 h-5 text-on-primary stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-on-primary stroke-[2.2] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
               </svg>
               <div className="flex flex-col text-left leading-tight">
-                <span className="text-sm font-bold leading-none">{returnHomeBtn.main}</span>
+                <span className="text-xs sm:text-sm font-bold leading-none">{returnHomeBtn.main}</span>
                 {returnHomeBtn.sub ? (
-                  <span className="text-[11px] text-emerald-100 font-normal leading-none mt-0.5">
+                  <span className="hidden sm:inline text-[11px] text-emerald-100 font-normal leading-none mt-0.5">
                     {returnHomeBtn.sub}
                   </span>
                 ) : null}
@@ -428,7 +430,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                 type="button"
                 aria-label={t('common.toggle_theme')}
                 onClick={onToggleTheme}
-                className="w-10 h-10 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant shrink-0"
               >
                 {theme === 'dark' ? (
                   <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -442,9 +444,9 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
               </button>
             )}
 
-            <FullscreenButton className="w-10 h-10 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant" />
+            <FullscreenButton className="hidden sm:flex w-10 h-10 rounded-xl bg-surface-container-low hover:bg-surface-container items-center justify-center text-on-surface-variant transition-colors cursor-pointer border border-outline-variant shrink-0" />
 
-            <div className="inline-flex items-center gap-2 pl-3 pr-2 py-1 rounded-full bg-surface-container-low border border-outline-variant">
+            <div className="hidden sm:inline-flex items-center gap-2 pl-3 pr-2 py-1 rounded-full bg-surface-container-low border border-outline-variant shrink-0">
               <div className="flex flex-col text-right">
                 <span className="text-xs font-bold leading-tight text-on-surface">{displayUserName}</span>
                 <span className="text-[10px] text-outline font-medium leading-none">({currentUser?.role === 'cashier' ? t('common.role_cashier') : t('common.role_owner')})</span>
@@ -460,28 +462,28 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
       </header>
 
       {/* 2. Main Content Canvas */}
-      <main className="w-full pt-16 flex-1 flex flex-col justify-between max-w-[1440px] mx-auto px-4 md:px-8">
-        <div className="flex flex-col w-full min-h-[calc(100dvh-64px)] lg:min-h-[calc(100dvh-64px-44px)] lg:h-[calc(100vh-64px-44px)] lg:overflow-hidden p-2 select-none justify-between">
+      <main className="w-full pt-3 lg:pt-16 flex-1 flex flex-col justify-between max-w-[1440px] mx-auto px-3 sm:px-4 md:px-8 min-w-0">
+        <div className="flex flex-col w-full min-h-[calc(100dvh-64px)] lg:min-h-[calc(100dvh-64px-44px)] lg:h-[calc(100vh-64px-44px)] lg:overflow-hidden p-1 sm:p-2 select-none justify-between min-w-0">
           
           {/* Top Title & GST Compliant Badge */}
-          <div className="flex items-center justify-between gap-4 mb-2 shrink-0">
-            <div className="flex items-baseline gap-2">
-              <h1 className="text-2xl md:text-3xl font-extrabold text-on-surface tracking-tight">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4 mb-2 shrink-0 min-w-0">
+            <div className="flex flex-wrap items-baseline gap-2 min-w-0">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-on-surface tracking-tight break-words">
                 {isEditMode ? t('medicine_form.title_edit') : t('medicine_form.title_add')}
               </h1>
               {shouldShowSub(
                 isEditMode ? t('medicine_form.title_edit') : t('medicine_form.title_add'),
                 isEditMode ? t('medicine_form.sub_edit') : t('medicine_form.sub_add')
               ) && (
-                <span className="text-sm font-medium text-outline">
+                <span className="text-xs sm:text-sm font-medium text-outline break-words">
                   {isEditMode ? t('medicine_form.sub_edit') : t('medicine_form.sub_add')}
                 </span>
               )}
             </div>
 
             {/* GST Compliant Tag */}
-            <div className="flex items-center gap-2 bg-surface-container-low px-3 py-1 rounded-full text-on-surface-variant text-xs font-semibold border border-outline-variant">
-              <svg className="w-4 h-4 text-primary" fill="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center gap-1.5 sm:gap-2 bg-surface-container-low px-3 py-1 rounded-full text-on-surface-variant text-xs font-semibold border border-outline-variant shrink-0">
+              <svg className="w-4 h-4 text-primary shrink-0" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
               </svg>
               <span>{t('medicine_form.gst_compliant_tag')}</span>
@@ -534,7 +536,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
               </div>
 
               {/* 2 & 3: Strength and Form (Side by Side) */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* 2. Strength */}
                 <div className="flex flex-col">
                   <label className="text-base font-bold text-slate-900 dark:text-white mb-1">
@@ -646,7 +648,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
               </div>
 
               {/* 6, 7 & 8: GST, HSN, MRP Grid */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* 6. GST (Rule 6: no default, options 0%, 5%, 12%, 18%) */}
                 <div className="flex flex-col">
                   <label className="text-base font-bold text-slate-900 dark:text-white mb-1">
@@ -735,10 +737,10 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
             </div>
 
             {/* Right Column (Items 9 - 15) */}
-            <div className="flex flex-col justify-between h-full space-y-2">
+            <div className="flex flex-col gap-3.5 min-w-0">
               
               {/* 9 & 10: Pack Size & Short Code */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* 9. Pack Mein Kitni (Required whole number >= 1) */}
                 <div className="flex flex-col">
                   <label className="text-base font-bold text-slate-900 dark:text-white mb-1">
@@ -846,13 +848,20 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                         }
                       })}
                       placeholder={t('medicine_form.placeholder_barcode')}
-                      className={`w-full h-12 px-3.5 pr-10 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 ${
+                      className={`w-full h-12 px-3.5 pr-12 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 ${
                         errors.barcode ? 'ring-2 ring-red-500' : 'focus:ring-[#006B33]'
                       } outline-none transition-all border border-slate-200 dark:border-gray-700`}
                     />
-                    <svg className="w-5 h-5 absolute right-3 text-[#006B33] dark:text-[#72dc8e]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
-                    </svg>
+                    <button
+                      type="button"
+                      onClick={() => setIsCameraScannerOpen(true)}
+                      aria-label={t('scanner.modal_title')}
+                      className="absolute right-1.5 w-9 h-9 rounded-lg hover:bg-[#006B33]/10 text-[#006B33] dark:text-[#72dc8e] flex items-center justify-center cursor-pointer transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z" />
+                      </svg>
+                    </button>
                   </div>
                   {errors.barcode && (
                     <span className="text-xs font-semibold text-red-600 dark:text-red-400 mt-1">
@@ -887,16 +896,16 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
               </div>
 
               {/* 13 & 14: Schedule Type & Low Stock Limit */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* 13. Schedule Type */}
-                <div className="flex flex-col">
-                  <label className="text-base font-bold text-slate-900 dark:text-white mb-1">
+                <div className="flex flex-col min-w-0">
+                  <label className="text-base font-bold text-slate-900 dark:text-white mb-1 flex flex-wrap items-baseline gap-1">
                     {t('medicine_form.label_schedule')}{' '}
                     <span className="text-xs font-normal text-slate-500 dark:text-gray-400">
                       {t('medicine_form.sub_schedule')}
                     </span>
                   </label>
-                  <div className="grid grid-cols-3 gap-1 h-12 items-center">
+                  <div className="grid grid-cols-3 gap-1.5 min-h-[48px] items-stretch">
                     {(['none', 'H', 'H1'] as ScheduleType[]).map((st) => {
                       const isActive = formData.scheduleType === st;
                       return (
@@ -907,7 +916,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                             setFormData((prev) => ({ ...prev, scheduleType: st }));
                             setIsDirty(true);
                           }}
-                          className={`h-full rounded-xl font-bold text-sm flex flex-col items-center justify-center transition-all cursor-pointer ${
+                          className={`min-h-[48px] py-1.5 px-1 rounded-xl font-bold text-xs sm:text-sm flex flex-col items-center justify-center transition-all cursor-pointer ${
                             isActive
                               ? 'bg-[#006B33] text-white shadow-sm'
                               : 'bg-[#EBF6F0] dark:bg-gray-800 text-slate-800 dark:text-gray-200 hover:bg-[#E0EBE5] dark:hover:bg-gray-700'
@@ -973,7 +982,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                 />
 
                 {formData.packPhoto ? (
-                  <div className="h-24 w-full rounded-xl bg-[#EBF6F0] dark:bg-gray-800 flex items-center justify-between px-4 border border-slate-200 dark:border-gray-700">
+                  <div className="min-h-[96px] h-auto py-3 w-full rounded-xl bg-[#EBF6F0] dark:bg-gray-800 flex flex-wrap items-center justify-between gap-3 px-4 border border-slate-200 dark:border-gray-700">
                     <div className="flex items-center gap-3">
                       <img
                         src={formData.packPhoto}
@@ -995,7 +1004,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                 ) : (
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="h-24 w-full rounded-xl bg-[#EBF6F0] dark:bg-gray-800 hover:bg-[#E0EBE5] dark:hover:bg-gray-700/80 flex items-center justify-between px-4 cursor-pointer transition-all border border-dashed border-slate-300 dark:border-gray-700"
+                    className="min-h-[96px] h-auto py-3 w-full rounded-xl bg-[#EBF6F0] dark:bg-gray-800 hover:bg-[#E0EBE5] dark:hover:bg-gray-700/80 flex items-center justify-between gap-3 px-4 cursor-pointer transition-all border border-dashed border-slate-300 dark:border-gray-700"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-14 h-14 rounded-xl bg-[#DAE5DF] dark:bg-gray-700 flex items-center justify-center text-[#006B33] dark:text-[#72dc8e] shrink-0">
@@ -1316,6 +1325,18 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
           </div>
         </div>
       )}
+
+      <CameraBarcodeModal
+        isOpen={isCameraScannerOpen}
+        onScan={(code) => {
+          setFormData((prev) => ({ ...prev, barcode: formatField('code', code) }));
+          setIsDirty(true);
+          if (errors.barcode) {
+            setErrors((err) => ({ ...err, barcode: undefined }));
+          }
+        }}
+        onClose={() => setIsCameraScannerOpen(false)}
+      />
 
     </div>
   );

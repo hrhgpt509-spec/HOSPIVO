@@ -8,10 +8,9 @@ import { EmptyState } from '../components/EmptyState';
 import { textFieldProps } from '../logic/format';
 import { formatRupees } from '../logic/money';
 import {
-  buildUdhaarWhatsAppUrl,
   getReminderUrgency,
-  isYaadDilaoEligible,
   loadUdhaarDashboardData,
+  sendOrShareUdhaarReminder,
   type CustomerLedgerEntry,
 } from '../logic/udhaar';
 import { useIsCompactViewport } from '../logic/useViewport';
@@ -126,6 +125,8 @@ export const Udhaar: React.FC<UdhaarProps> = ({
     );
   }, [allCustomers, searchQuery]);
 
+  const isCompactViewport = useIsCompactViewport();
+
   const handleOpenWhatsAppMorning = (rem: RegularReminder) => {
     try {
       const msg = t('customers.wa_regular_text', {
@@ -134,8 +135,7 @@ export const Udhaar: React.FC<UdhaarProps> = ({
         date: rem.nextDueDate,
         shop: shopName || '',
       });
-      const url = buildUdhaarWhatsAppUrl(rem.customerPhone, msg);
-      window.open(url, '_blank', 'noopener,noreferrer');
+      void sendOrShareUdhaarReminder(rem.customerPhone, msg);
     } catch (err) {
       console.error('WhatsApp open failed:', err);
     }
@@ -178,8 +178,6 @@ export const Udhaar: React.FC<UdhaarProps> = ({
       .slice(0, 2)
       .map((w) => w.charAt(0).toUpperCase())
       .join('');
-
-  const isCompactViewport = useIsCompactViewport();
 
   if (isCompactViewport) {
     return (
@@ -340,7 +338,7 @@ export const Udhaar: React.FC<UdhaarProps> = ({
                 </div>
               ) : (
                 filteredPending.map((cust) => {
-                  const canRemind = isYaadDilaoEligible(cust.daysPending);
+                  const canRemind = cust.pendingBalancePaise > 0 || Boolean(cust.customerPhone?.trim());
                   return (
                     <div
                       key={cust.key}
@@ -722,7 +720,7 @@ export const Udhaar: React.FC<UdhaarProps> = ({
                 ) : (
                   <div className="flex flex-col gap-space-sm">
                     {filteredPending.map((cust) => {
-                      const canRemind = isYaadDilaoEligible(cust.daysPending);
+                      const canRemind = cust.pendingBalancePaise > 0 || Boolean(cust.customerPhone?.trim());
                       return (
                         <div
                           key={cust.key}

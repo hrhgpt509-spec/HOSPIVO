@@ -16,8 +16,11 @@ import {
   startRealtimeSync,
   stopRealtimeSync,
   subscribeToSyncUpdates,
+  registerCurrentDeviceInCloud,
+  listConnectedDevices,
   type CloudConfig,
   type HomeSyncState,
+  type ConnectedDeviceInfo,
 } from '../logic/cloudSync';
 import { triggerFeedback } from '../logic/feedback';
 import { CloudAccountAuth } from './CloudAccountAuth';
@@ -60,6 +63,8 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [highlightConnect, setHighlightConnect] = useState(false);
+  const [connectedDevices, setConnectedDevices] = useState<ConnectedDeviceInfo[]>([]);
+  const [isLoadingDevices, setIsLoadingDevices] = useState(false);
   const ownerAccountRef = useRef<HTMLElement | null>(null);
 
   useBackHandler(isAuthModalOpen, () => setIsAuthModalOpen(false));
@@ -87,6 +92,19 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     return { updatedConfig, updatedState, remaining };
   }, []);
 
+  const refreshConnectedDevices = useCallback(async () => {
+    setIsLoadingDevices(true);
+    try {
+      await registerCurrentDeviceInCloud().catch(() => {});
+      const list = await listConnectedDevices();
+      setConnectedDevices(list);
+    } catch {
+      // Non-fatal
+    } finally {
+      setIsLoadingDevices(false);
+    }
+  }, []);
+
   const loadData = useCallback(async () => {
     try {
       const [cfg, state, session, count] = await Promise.all([
@@ -104,17 +122,21 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
       setOwnerEmail(session.isAuthenticated ? session.ownerEmail || '' : '');
       setCloudShopUuid(session.isAuthenticated ? session.cloudShopUuid || '' : '');
       setPendingCount(count);
+      void refreshConnectedDevices();
     } catch (err) {
       console.error('Failed to load cloud config:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshConnectedDevices]);
 
   useEffect(() => {
     loadData();
-    return subscribeToSyncUpdates(() => {
+    return subscribeToSyncUpdates((entities) => {
       void refreshSyncStatus().catch(() => {});
+      if (entities.includes('device') || entities.includes('workspace_switched')) {
+        void listConnectedDevices().then(setConnectedDevices).catch(() => {});
+      }
     });
   }, [loadData, refreshSyncStatus]);
 
@@ -174,6 +196,8 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
         shopSyncId: shopSyncId.trim().toUpperCase(),
       });
       setConfig(updated);
+      await registerCurrentDeviceInCloud(deviceName.trim()).catch(() => {});
+      await listConnectedDevices().then(setConnectedDevices).catch(() => {});
       triggerFeedback('success', t('cloud_sync.toast_saved'));
     } catch {
       triggerFeedback('error', t('common.error_occurred'));
@@ -568,6 +592,64 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
                 <Icon name={copiedId ? 'check' : 'content_copy'} className="text-[18px] shrink-0" />
                 <span>{copiedId ? t('cloud_sync.toast_copied') : t('cloud_sync.btn_copy_id')}</span>
               </button>
+            </div>
+          </div>
+
+          {/* Connected Devices List */}
+          <div className="pt-3 border-t border-outline-variant/20 flex flex-col gap-2.5 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-bold text-on-surface">
+                {t('cloud_sync.connected_devices_title', { count: connectedDevices.length })}
+              </span>
+              <button
+                type="button"
+                onClick={() => void refreshConnectedDevices()}
+                disabled={isLoadingDevices}
+                className="min-h-[36px] px-3 rounded-lg bg-surface-container hover:bg-surface-container-high text-xs font-bold text-primary flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <Icon name="refresh" className={`text-[16px] ${isLoadingDevices ? 'animate-spin' : ''}`} />
+                <span>{t('cloud_sync.btn_sync_now').main}</span>
+              </button>
+            </div>
+
+            {connectedDevices.length <= 1 ? (
+              <p className="text-xs text-outline">{t('cloud_sync.connected_devices_empty')}</p>
+            ) : null}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {connectedDevices.map((dev) => (
+                <div
+                  key={dev.deviceId}
+                  className={`p-3 rounded-xl border flex items-center justify-between gap-2.5 min-w-0 ${
+                    dev.isCurrentDevice
+                      ? 'bg-primary/5 border-primary/40'
+                      : 'bg-surface-container-low border-outline-variant/40'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+                      <Icon
+                        name={dev.platform.includes('Android') ? 'smartphone' : 'computer'}
+                        className="text-[20px]"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-sm font-bold text-on-surface truncate">{dev.deviceName}</span>
+                        {dev.isCurrentDevice && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-on-primary shrink-0">
+                            {t('cloud_sync.this_device_badge')}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-outline block truncate">
+                        {dev.platform} · {t('cloud_sync.last_seen_prefix')}{' '}
+                        {new Date(dev.lastSeenAt).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>

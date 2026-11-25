@@ -79,56 +79,56 @@ export const Step2CashMatch: React.FC<Step2CashMatchProps> = ({
         )}
 
         {/* Row 1: System Expected Cash */}
-        <div className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm border border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-space-md">
-            <div className="w-16 h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
-              <Icon name="point_of_sale" className="text-[36px]" />
+        <div className="bg-surface-container-lowest rounded-2xl p-4 sm:p-space-lg shadow-sm border border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-3 sm:gap-space-md min-w-0 flex-1">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+              <Icon name="point_of_sale" className="text-[28px] sm:text-[36px]" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-headline-md text-xl sm:text-2xl text-on-surface font-bold">
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="font-headline-md text-lg sm:text-2xl text-on-surface font-bold break-words">
                 {t('din_band.expected_label')}
               </span>
-              <span className="text-sm sm:text-base text-on-surface-variant">
+              <span className="text-xs sm:text-base text-on-surface-variant break-words">
                 {t('din_band.expected_sub')}
               </span>
             </div>
           </div>
-          <span className="font-display-total text-[36px] sm:text-[44px] text-on-surface font-extrabold tracking-tight">
+          <span className="font-display-total text-2xl sm:text-[36px] lg:text-[44px] text-on-surface font-extrabold tracking-tight tabular-nums shrink-0">
             {formatRupees(expectedCashPaise)}
           </span>
         </div>
 
         {/* Row 2: Physical Counted Cash */}
-        <div className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm border border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-space-md">
-            <div className="w-16 h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-secondary shrink-0">
-              <Icon name="payments" className="text-[36px]" />
+        <div className="bg-surface-container-lowest rounded-2xl p-4 sm:p-space-lg shadow-sm border border-outline-variant/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 min-w-0">
+          <div className="flex items-center gap-3 sm:gap-space-md min-w-0 flex-1">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-surface-container-low flex items-center justify-center text-secondary shrink-0">
+              <Icon name="payments" className="text-[28px] sm:text-[36px]" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-headline-md text-xl sm:text-2xl text-on-surface font-bold">
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="font-headline-md text-lg sm:text-2xl text-on-surface font-bold break-words">
                 {t('din_band.counted_label')}
               </span>
-              <span className="text-sm sm:text-base text-on-surface-variant">
+              <span className="text-xs sm:text-base text-on-surface-variant break-words">
                 {t('din_band.counted_sub')}
               </span>
             </div>
           </div>
-          <span className="font-display-total text-[36px] sm:text-[44px] text-on-surface font-extrabold tracking-tight">
+          <span className="font-display-total text-2xl sm:text-[36px] lg:text-[44px] text-on-surface font-extrabold tracking-tight tabular-nums shrink-0">
             {formatRupees(countedCashPaise)}
           </span>
         </div>
 
         {/* Row 3: Difference Card */}
         <div
-          className={`rounded-2xl p-space-lg shadow-md border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+          className={`rounded-2xl p-4 sm:p-space-lg shadow-md border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 min-w-0 ${
             canProceedToStep3
               ? 'bg-primary-fixed/30 border-primary/40 text-on-surface'
               : 'bg-error-container border-error/50 text-on-error-container'
           }`}
         >
-          <div className="flex items-center gap-space-md">
+          <div className="flex items-center gap-3 sm:gap-space-md min-w-0 flex-1">
             <div
-              className={`w-16 h-16 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
+              className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
                 canProceedToStep3 ? 'bg-primary text-on-primary' : 'bg-error text-on-error'
               }`}
             >
@@ -140,19 +140,19 @@ export const Step2CashMatch: React.FC<Step2CashMatchProps> = ({
                       ? 'trending_down'
                       : 'trending_up'
                 }
-                className="text-[38px]"
+                className="text-[28px] sm:text-[38px]"
               />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0 flex-1">
               <span
-                className={`font-headline-md text-xl sm:text-2xl font-bold ${
+                className={`font-headline-md text-lg sm:text-2xl font-bold break-words ${
                   canProceedToStep3 ? 'text-primary' : 'text-error'
                 }`}
               >
                 {t('din_band.diff_label')}
               </span>
               <span
-                className={`text-sm sm:text-base font-bold ${
+                className={`text-xs sm:text-base font-bold break-words ${
                   canProceedToStep3 ? 'text-primary' : 'text-error'
                 }`}
               >
@@ -165,9 +165,9 @@ export const Step2CashMatch: React.FC<Step2CashMatchProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 shrink-0 min-w-0">
             <span
-              className={`font-display-total text-[36px] sm:text-[44px] font-extrabold tracking-tight ${
+              className={`font-display-total text-2xl sm:text-[36px] lg:text-[44px] font-extrabold tracking-tight tabular-nums break-words ${
                 canProceedToStep3 ? 'text-primary' : 'text-error'
               }`}
             >
@@ -177,7 +177,7 @@ export const Step2CashMatch: React.FC<Step2CashMatchProps> = ({
                   ? t('din_band.diff_short', { amount: formatRupees(evalResult.absPaise) })
                   : t('din_band.diff_excess', { amount: formatRupees(evalResult.absPaise) })}
             </span>
-            {canProceedToStep3 && <Icon name="verified" className="text-primary text-[40px]" />}
+            {canProceedToStep3 && <Icon name="verified" className="text-primary text-[28px] sm:text-[40px] shrink-0" />}
           </div>
         </div>
       </div>

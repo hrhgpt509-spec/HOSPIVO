@@ -19,6 +19,7 @@ interface StockDekhoProps {
   onReturnHome: () => void;
   onOpenShelfMap?: () => void;
   onOpenStickers?: (shelfCode?: string) => void;
+  initialFilter?: 'all' | 'low' | 'out';
   currentUser: DBUser | null;
   shop: Shop | null;
   theme: 'light' | 'dark';
@@ -31,6 +32,7 @@ export const StockDekho: React.FC<StockDekhoProps> = ({
   onReturnHome,
   onOpenShelfMap,
   onOpenStickers,
+  initialFilter = 'all',
   currentUser,
   shop,
   theme,
@@ -217,6 +219,7 @@ export const StockDekho: React.FC<StockDekhoProps> = ({
   return (
     <StockList
       stockSummaries={stockSummaries}
+      initialFilter={initialFilter}
       onSelectMedicine={(med) => {
         setSelectedMedicine(med);
         setCurrentView('batch_detail');

@@ -369,6 +369,7 @@ export const en: TranslationSchema = {
     tile_suppliers: { main: 'Suppliers', sub: 'Distributors' },
     tile_settings: { main: 'Settings', sub: '' },
     tile_backup: { main: 'Backup', sub: '' },
+    tile_multi_shop: { main: 'Multi-Shop', sub: 'Stores & branches' },
     footer_db_synced: 'Offline Database: Active',
     build_version: 'Build: v4.12.8',
   },
@@ -1699,6 +1700,10 @@ export const en: TranslationSchema = {
     sign_in_required_banner: 'Cloud mode is selected, but your account is not connected yet. Sign in below to start auto sync.',
     btn_sign_in_connect: { main: 'Sign In / Connect', sub: 'Connect cloud account' },
     btn_sign_out: { main: 'Sign Out', sub: 'Disconnect cloud session' },
+    connected_devices_title: 'Connected Devices ({count})',
+    connected_devices_empty: 'No other devices linked yet. Sign in on your phone or another PC with the same account.',
+    this_device_badge: 'This Device',
+    last_seen_prefix: 'Last active:',
   },
   remote_approval: {
     ask_owner_title: 'Ask Owner',
@@ -1831,6 +1836,17 @@ export const en: TranslationSchema = {
     coming_soon: 'Coming Soon',
     coming_soon_msg: 'Multi-shop management will be available in a future update.',
     btn_switch_shop: { main: 'Switch Shop', sub: 'Dukaan badlo' },
+  },
+  scanner: {
+    modal_title: 'Scan Barcode',
+    modal_sub: 'Point camera at medicine barcode or QR',
+    starting_camera: 'Starting camera...',
+    point_camera_hint: 'Hold barcode steady inside the frame',
+    camera_unavailable: 'Camera not available or permission denied. Enter barcode manually below:',
+    manual_label: 'Or enter barcode / short code manually',
+    manual_placeholder: 'Type or scan barcode...',
+    btn_use_code: { main: 'Use Code', sub: 'Apply barcode' },
+    btn_close: { main: 'Close', sub: 'Band karein' },
   },
 };
 

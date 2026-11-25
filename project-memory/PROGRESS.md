@@ -405,6 +405,25 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
   - Updated `provisionCloudShop(..., { forceCreateNew: true })` and `listCloudShopsForUser()` so new accounts and additional branches always create/list separate shops without overwriting or mixing with previous shops.
   - Enabled functional multi-shop creation and switching in `ShopSelector.tsx` (`+ Add Another Shop`, per-shop isolated workspace switching & cloud hydration, zero popups) and added `multiShop.test.ts`.
 
+- Android Backup Export, Add Stock Navigation & Live Camera Barcode Scanner (`backup.ts`, `StockJodo.tsx`, `CameraBarcodeModal.tsx`, `FastBill.tsx`, `DawaiBecho.tsx`, `StockList.tsx`, `OwnerMedicineForm.tsx`, `LinkBarcodeModal.tsx`, `AndroidManifest.xml`):
+  - Added `Capacitor.isNativePlatform()` native backup path in `saveBackup()` using `@capacitor/filesystem` + `@capacitor/share` so Android APK backup export saves & opens the native share sheet instead of failing as cancelled, and added unit test coverage in `backupAndSettings.test.ts`.
+  - Fixed `StockJodo.tsx` Home/Back navigation by removing `selectedSupplierId !== null` from `hasUnsavedProgress` (auto-selected supplier no longer blocks Step 1) and adding `useBackHandler` for the discard dialog.
+  - Built `CameraBarcodeModal.tsx` (`html5-qrcode` live camera + manual barcode fallback + `CAMERA` permission in `AndroidManifest.xml`) and wired every barcode scanner button across Fast Bill, Dawai Becho, Find Medicine (`StockList`), Add Stock (`StockJodo`), `OwnerMedicineForm`, and `LinkBarcodeModal`.
+
+- Udhaar Customer Detail Crash, Send Reminder & Interactive Home Summary Cards (`Udhaar.tsx`, `CustomerDetailScreen.tsx`, `YaadDilaoModal.tsx`, `udhaar.ts`, `Home.tsx`, `DawaiBecho.tsx`, `StockDekho.tsx`, `StockList.tsx`):
+  - Fixed the blank/white screen crash when tapping a customer in `Udhaar.tsx` by moving `useIsCompactViewport()` before the early `if (selectedCustomer)` return (Rules-of-Hooks fix) and hardening `CustomerDetailScreen` ledger/reminder sorting against missing fields.
+  - Enabled "Send Reminder" whenever a customer has a pending balance or phone number, routed through `sendOrShareUdhaarReminder()` (WhatsApp, Capacitor Share, SMS, or clipboard fallback).
+  - Made Home summary cards (Today's Sales, Today's Bills, 30-Day Expiry, Low Stock) interactive `<button>` controls opening Owner Reports, Old Bills (`DawaiBecho`), 30-Day Expiry, and Low-Stock-filtered `StockDekho` directly.
+
+- Cloud Isolation, Multi-Device List & Multi-Shop Management (`cloudAuth.ts`, `cloudSync.ts`, `OwnerCloudSync.tsx`, `OwnerMenu.tsx`, `ShopSelector.tsx`, `Home.tsx`, `App.tsx`, `multiShop.test.ts`):
+  - Updated `signOutOwner()` in `cloudAuth.ts` to restore `local_mode_snapshot` via `switchToLocalWorkspace()` when present so signing out of cloud returns cleanly to the device's offline Local Mode data without leaking cloud records.
+  - Added `registerCurrentDeviceInCloud()` and `listConnectedDevices()` in `cloudSync.ts` (persisting device heartbeats as `entity_type = 'device'` in `hospivo_sync_events` + local cache) and rendered the Connected Devices list in `OwnerCloudSync.tsx`.
+  - Connected Multi-Shop Management (`ShopSelector` with Back + "+ Add Another Shop" + shop switching) directly inside `OwnerMenu.tsx`, `Home.tsx`, and `App.tsx`.
+
+- Android WebView Layout Overlap & Header Polish (`Home.tsx`, `OldBillsReturnScreen.tsx`, `Step2CashMatch.tsx`, `OwnerStaff.tsx`, `OwnerMedicineForm.tsx`):
+  - Redesigned `Home.tsx` compact mobile header into a clean two-tier bar so the Cloud Enabled / Sync status badge never crowds or truncates against shop name and controls.
+  - Fixed button text overlaps in `OldBillsReturnScreen.tsx` (Reprint / Process Return), `Step2CashMatch.tsx` (Match Cash cards), `OwnerStaff.tsx` (bottom status ribbon), and `OwnerMedicineForm.tsx` (360px responsive grid stacking, sticky header, and flexible heights).
+
 
 
 

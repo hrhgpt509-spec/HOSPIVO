@@ -369,6 +369,7 @@ export const hi: TranslationSchema = {
     tile_suppliers: { main: 'सप्लायर', sub: 'Suppliers' },
     tile_settings: { main: 'सेटिंग्स', sub: 'Settings' },
     tile_backup: { main: 'बैकअप', sub: 'Backup and restore' },
+    tile_multi_shop: { main: 'मल्टी-शॉप', sub: 'दुकानें और शाखाएँ' },
     footer_db_synced: 'ऑफ़लाइन डेटाबेस: सुरक्षित',
     build_version: 'Build: v4.12.8',
   },
@@ -1699,6 +1700,10 @@ export const hi: TranslationSchema = {
     sign_in_required_banner: 'क्लाउड मोड चुना गया है, लेकिन खाता अभी जुड़ा नहीं है। ऑटो सिंक शुरू करने के लिए नीचे लॉगिन करें।',
     btn_sign_in_connect: { main: 'लॉगिन / कनेक्ट', sub: 'क्लाउड खाता जोड़ें' },
     btn_sign_out: { main: 'लॉग आउट', sub: 'क्लाउड डिस्कनेक्ट करें' },
+    connected_devices_title: 'जुड़े हुए डिवाइस ({count})',
+    connected_devices_empty: 'अभी कोई अन्य डिवाइस जुड़ा नहीं है। अपने फ़ोन या दूसरे कंप्यूटर पर इसी खाते से लॉगिन करें।',
+    this_device_badge: 'यह डिवाइस',
+    last_seen_prefix: 'आखिरी सक्रियता:',
   },
   remote_approval: {
     ask_owner_title: 'मालिक से पूछें',
@@ -1831,6 +1836,17 @@ export const hi: TranslationSchema = {
     coming_soon: 'जल्द आ रहा है',
     coming_soon_msg: 'मल्टी-शॉप प्रबंधन आगे के अपडेट में उपलब्ध होगा।',
     btn_switch_shop: { main: 'दुकान बदलें', sub: 'Switch Shop' },
+  },
+  scanner: {
+    modal_title: 'बारकोड स्कैन करें',
+    modal_sub: 'कैमरा दवा के बारकोड या QR की ओर रखें',
+    starting_camera: 'कैमरा शुरू हो रहा है...',
+    point_camera_hint: 'बारकोड को फ्रेम के अंदर स्थिर रखें',
+    camera_unavailable: 'कैमरा उपलब्ध नहीं है या अनुमति नहीं मिली। नीचे मैन्युअल कोड दर्ज करें:',
+    manual_label: 'या बारकोड / शॉर्ट कोड लिखें',
+    manual_placeholder: 'बारकोड लिखें या स्कैन करें...',
+    btn_use_code: { main: 'कोड उपयोग करें', sub: 'Use Code' },
+    btn_close: { main: 'बंद करें', sub: 'Close' },
   },
 };
 

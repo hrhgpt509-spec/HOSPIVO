@@ -55,6 +55,7 @@ interface HomeProps {
   } | null;
   onLock?: () => void;
   onSwitchUser?: () => void;
+  onOpenMultiShop?: () => void;
 }
 
 type ActivePage =
@@ -82,7 +83,7 @@ type ActivePage =
   | 'medicine_list'
   | 'suppliers';
 
-export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser }) => {
+export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser, onOpenMultiShop }) => {
   const isCompactViewport = useIsCompactViewport();
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('hospivo_theme');
@@ -198,18 +199,50 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
   };
 
   // Click on tile handler
+  const [pendingOwnerPage, setPendingOwnerPage] = useState<ActivePage>('owner');
+  const [stockDekhoInitialFilter, setStockDekhoInitialFilter] = useState<'all' | 'low' | 'out'>('all');
+  const [dawaiBechoInitialScreen, setDawaiBechoInitialScreen] = useState<'billing' | 'old_bills'>('billing');
+
   const handleTileClick = (page: ActivePage) => {
     if (page === 'owner') {
+      setPendingOwnerPage('owner');
       setIsOwnerGateOpen(true);
     } else {
+      if (page === 'stock_dekho') setStockDekhoInitialFilter('all');
+      if (page === 'dawai_becho') setDawaiBechoInitialScreen('billing');
       setActivePage(page);
     }
+  };
+
+  const handleOpenSalesSummary = () => {
+    if (currentUser?.role === 'owner') {
+      setActivePage('owner_reports');
+    } else {
+      setPendingOwnerPage('owner_reports');
+      setIsOwnerGateOpen(true);
+    }
+  };
+
+  const handleOpenBillsSummary = () => {
+    setDawaiBechoInitialScreen('old_bills');
+    setActivePage('dawai_becho');
+  };
+
+  const handleOpenExpirySummary = () => {
+    setActivePage('expiry');
+  };
+
+  const handleOpenLowStockSummary = () => {
+    setStockDekhoInitialFilter('low');
+    setActivePage('stock_dekho');
   };
 
   // When Owner PIN is correctly entered in gate
   const handleOwnerGateSuccess = () => {
     setIsOwnerGateOpen(false);
-    setActivePage('owner');
+    const target = pendingOwnerPage;
+    setPendingOwnerPage('owner');
+    setActivePage(target);
   };
 
   const [isBackingUp, setIsBackingUp] = useState<boolean>(false);
@@ -317,6 +350,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
         onOpenBackup={() => setActivePage('owner_backup')}
         onOpenCloudSync={() => setActivePage('owner_cloud_sync')}
         onOpenApprovals={() => setActivePage('owner_approvals')}
+        onOpenMultiShop={onOpenMultiShop}
         currentUser={currentUser}
         shop={shop}
         theme={theme}
@@ -366,6 +400,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
           setTargetShelfForStickers(shelfCode);
           setActivePage('owner_stickers');
         }}
+        initialFilter={stockDekhoInitialFilter}
         currentUser={currentUser as any}
         shop={shop}
         theme={theme}
@@ -393,6 +428,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
     return (
       <DawaiBecho
         onReturnHome={handleReturnHome}
+        initialScreen={dawaiBechoInitialScreen}
         currentUser={currentUser as any}
         theme={theme}
         onToggleTheme={toggleTheme}
@@ -693,49 +729,88 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
         <div className="w-full max-w-[1024px] mx-auto flex flex-col gap-3 sm:gap-4 relative min-w-0">
 
           {/* COMPACT TOP BAR */}
-          <header className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 p-3 flex items-center justify-between gap-2 min-w-0">
-            {/* Left: Hospivo + Shop Name */}
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className="w-10 h-10 rounded-xl bg-brand flex items-center justify-center text-white shrink-0 shadow-sm">
-                <svg className="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
+          <header className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 p-3 flex flex-col gap-2.5 min-w-0">
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              {/* Left: Hospivo + Shop Name */}
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className="w-10 h-10 rounded-xl bg-brand flex items-center justify-center text-white shrink-0 shadow-sm">
+                  <svg className="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-base font-black tracking-wide text-brand leading-none block truncate">HOSPIVO</span>
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate block mt-0.5">{shopName}</span>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <span className="text-base font-black tracking-wide text-brand leading-none block truncate">HOSPIVO</span>
-                <span className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate block mt-0.5">{shopName}</span>
+
+              {/* Right: Theme Switch + Switch User/Lock */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  aria-label={t('common.toggle_theme')}
+                  onClick={toggleTheme}
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-yellow-400 transition cursor-pointer shrink-0"
+                >
+                  {theme === 'dark' ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                  )}
+                </button>
+
+                {/* Switch User / Lock Button (>= 44px touch target) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onSwitchUser) onSwitchUser();
+                    else if (onLock) onLock();
+                  }}
+                  className="min-h-[44px] px-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 flex items-center gap-1.5 text-gray-800 dark:text-gray-100 font-bold text-xs transition cursor-pointer shrink-0"
+                  title="Switch User / Lock"
+                >
+                  <div className="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                    {userInitial}
+                  </div>
+                  <span className="hidden sm:inline truncate max-w-[75px]">{userName}</span>
+                  <Icon name="lock" className="text-sm text-gray-500 shrink-0" />
+                </button>
               </div>
             </div>
 
-            {/* Right: Offline/Sync Status Pill + Theme Switch + User/Lock */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            {/* Crisp Full-Width Mode & Sync Status Sub-Bar */}
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100 dark:border-gray-800 min-w-0">
               {syncState?.cloudEnabled ? (
                 syncState.status === 'not_connected' ? (
                   <StatusChip
                     variant="pending_sync"
                     label={t('cloud_sync.status_sign_in_required')}
-                    className="cursor-pointer text-xs max-w-[120px] truncate"
+                    className="cursor-pointer text-xs max-w-full"
                     onClick={handleOpenCloudSync}
                   />
                 ) : syncState.status === 'offline' ? (
                   <StatusChip
                     variant="offline"
                     label={syncState.chipLabel}
-                    className="cursor-pointer text-xs max-w-[110px] truncate"
+                    className="cursor-pointer text-xs max-w-full"
                     onClick={handleOpenCloudSync}
                   />
                 ) : syncState.status === 'failed' ? (
                   <StatusChip
                     variant="sync_failed"
                     label={syncState.chipLabel}
-                    className="cursor-pointer text-xs max-w-[110px] truncate"
+                    className="cursor-pointer text-xs max-w-full"
                     onClick={handleOpenCloudSync}
                   />
                 ) : (
                   <StatusChip
                     variant="synced"
                     label={syncState.chipLabel}
-                    className="cursor-pointer text-xs max-w-[110px] truncate"
+                    className="cursor-pointer text-xs max-w-full"
                     onClick={handleOpenCloudSync}
                   />
                 )
@@ -743,45 +818,14 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
                 <StatusChip
                   variant="local"
                   label={syncState?.chipLabel || modeLabel}
-                  className="cursor-pointer text-xs max-w-[110px] truncate"
+                  className="cursor-pointer text-xs max-w-full"
                   onClick={handleOpenCloudSync}
                 />
               )}
 
-              {/* Theme toggle (>= 48px touch target) */}
-              <button
-                type="button"
-                aria-label={t('common.toggle_theme')}
-                onClick={toggleTheme}
-                className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-yellow-400 transition cursor-pointer"
-              >
-                {theme === 'dark' ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                )}
-              </button>
-
-              {/* Switch User / Lock Button (>= 48px touch target) */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (onSwitchUser) onSwitchUser();
-                  else if (onLock) onLock();
-                }}
-                className="min-h-[48px] px-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-700 flex items-center gap-1.5 text-gray-800 dark:text-gray-100 font-bold text-xs transition cursor-pointer"
-                title="Switch User / Lock"
-              >
-                <div className="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center font-bold text-[11px]">
-                  {userInitial}
-                </div>
-                <span className="hidden sm:inline truncate max-w-[65px]">{userName}</span>
-                <Icon name="lock" className="text-sm text-gray-500" />
-              </button>
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 truncate sm:hidden">
+                {userName}
+              </span>
             </div>
           </header>
 
@@ -1003,23 +1047,35 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
           <div className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 p-3 sm:p-4">
             <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
               {/* Sales */}
-              <div className="p-2.5 sm:p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex flex-col justify-center min-w-0">
+              <button
+                type="button"
+                onClick={handleOpenSalesSummary}
+                className="min-h-[48px] p-2.5 sm:p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-[0.98] transition-all flex flex-col justify-center text-left min-w-0 cursor-pointer border border-transparent hover:border-brand/30"
+              >
                 <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-0.5 truncate">{t('home.stat_sales')}</div>
                 <div className="text-xl sm:text-2xl font-black text-brand tracking-tight leading-none truncate">
                   {formatRupees(liveCounters.todaySalesPaise)}
                 </div>
-              </div>
+              </button>
 
               {/* Bills */}
-              <div className="p-2.5 sm:p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 flex flex-col justify-center min-w-0">
+              <button
+                type="button"
+                onClick={handleOpenBillsSummary}
+                className="min-h-[48px] p-2.5 sm:p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-[0.98] transition-all flex flex-col justify-center text-left min-w-0 cursor-pointer border border-transparent hover:border-brand/30"
+              >
                 <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-0.5 truncate">{t('home.stat_bills')}</div>
                 <div className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-none truncate">
                   {liveCounters.todayBillsCount}
                 </div>
-              </div>
+              </button>
 
               {/* Expiring 30d */}
-              <div className="p-2.5 sm:p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/30 flex flex-col justify-center min-w-0">
+              <button
+                type="button"
+                onClick={handleOpenExpirySummary}
+                className="min-h-[48px] p-2.5 sm:p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/30 hover:bg-orange-100/70 dark:hover:bg-orange-950/50 active:scale-[0.98] transition-all flex flex-col justify-center text-left min-w-0 cursor-pointer border border-transparent hover:border-semantic-orange/40"
+              >
                 <div className="text-xs font-semibold text-semantic-orange mb-0.5 flex items-center gap-1 min-w-0">
                   <svg className="w-3.5 h-3.5 stroke-[2.2] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
@@ -1029,10 +1085,14 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
                 <div className="text-xl sm:text-2xl font-black text-semantic-orange tracking-tight leading-none truncate">
                   {t('home.dawai_count').replace(/^0/, String(liveCounters.expiring30Count))}
                 </div>
-              </div>
+              </button>
 
               {/* Low Stock */}
-              <div className="p-2.5 sm:p-3 rounded-xl bg-red-50/60 dark:bg-rose-950/30 flex flex-col justify-center min-w-0">
+              <button
+                type="button"
+                onClick={handleOpenLowStockSummary}
+                className="min-h-[48px] p-2.5 sm:p-3 rounded-xl bg-red-50/60 dark:bg-rose-950/30 hover:bg-red-100/70 dark:hover:bg-rose-950/50 active:scale-[0.98] transition-all flex flex-col justify-center text-left min-w-0 cursor-pointer border border-transparent hover:border-semantic-red/40"
+              >
                 <div className="text-xs font-semibold text-semantic-red mb-0.5 flex items-center gap-1 min-w-0">
                   <svg className="w-3.5 h-3.5 stroke-[2.2] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -1042,7 +1102,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
                 <div className="text-xl sm:text-2xl font-black text-semantic-red tracking-tight leading-none truncate">
                   {t('home.dawai_count').replace(/^0/, String(liveCounters.lowStockCount))}
                 </div>
-              </div>
+              </button>
             </div>
           </div>
 
@@ -1476,27 +1536,39 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
         </main>
 
         {/* BELOW: SUMMARY STRIP WITH REAL DATABASE VALUES */}
-        <footer className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 p-5 relative">
+        <footer className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200/80 dark:border-gray-800 p-3 sm:p-5 relative">
           <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-200 dark:divide-gray-800 gap-y-4 md:gap-y-0">
 
             {/* Metric 1: Aaj ki bikri */}
-            <div className="px-6 flex flex-col justify-center">
+            <button
+              type="button"
+              onClick={handleOpenSalesSummary}
+              className="px-6 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 active:scale-[0.98] transition-all flex flex-col justify-center text-left cursor-pointer"
+            >
               <div className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-1">{t('home.stat_sales')}</div>
               <div className="text-[38px] font-black text-brand tracking-tight leading-none">
                 {formatRupees(liveCounters.todaySalesPaise)}
               </div>
-            </div>
+            </button>
 
             {/* Metric 2: Bills */}
-            <div className="px-6 flex flex-col justify-center">
+            <button
+              type="button"
+              onClick={handleOpenBillsSummary}
+              className="px-6 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 active:scale-[0.98] transition-all flex flex-col justify-center text-left cursor-pointer"
+            >
               <div className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-1">{t('home.stat_bills')}</div>
               <div className="text-[38px] font-black text-gray-900 dark:text-white tracking-tight leading-none">
                 {liveCounters.todayBillsCount}
               </div>
-            </div>
+            </button>
 
             {/* Metric 3: Expiry 30 din (orange) */}
-            <div className="px-6 flex flex-col justify-center">
+            <button
+              type="button"
+              onClick={handleOpenExpirySummary}
+              className="px-6 py-2 rounded-xl hover:bg-orange-50/60 dark:hover:bg-orange-950/30 active:scale-[0.98] transition-all flex flex-col justify-center text-left cursor-pointer"
+            >
               <div className="flex items-center space-x-2 text-lg font-semibold text-semantic-orange mb-1">
                 <svg className="w-5 h-5 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
@@ -1506,10 +1578,14 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
               <div className="text-[38px] font-black text-semantic-orange tracking-tight leading-none">
                 {t('home.dawai_count').replace(/^0/, String(liveCounters.expiring30Count))}
               </div>
-            </div>
+            </button>
 
             {/* Metric 4: Kam stock (red) */}
-            <div className="px-6 flex flex-col justify-center">
+            <button
+              type="button"
+              onClick={handleOpenLowStockSummary}
+              className="px-6 py-2 rounded-xl hover:bg-red-50/60 dark:hover:bg-rose-950/30 active:scale-[0.98] transition-all flex flex-col justify-center text-left cursor-pointer"
+            >
               <div className="flex items-center space-x-2 text-lg font-semibold text-semantic-red mb-1">
                 <svg className="w-5 h-5 stroke-[2.2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -1519,7 +1595,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser })
               <div className="text-[38px] font-black text-semantic-red tracking-tight leading-none">
                 {t('home.dawai_count').replace(/^0/, String(liveCounters.lowStockCount))}
               </div>
-            </div>
+            </button>
 
           </div>
         </footer>

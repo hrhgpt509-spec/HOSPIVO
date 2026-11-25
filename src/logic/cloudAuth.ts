@@ -12,6 +12,7 @@ import {
   backfillLocalDataToCloud,
   enqueueSyncItem,
   switchToCloudWorkspace,
+  switchToLocalWorkspace,
   inspectLocalModeData,
   stashLocalDataAndStartCleanCloud,
   captureWorkspaceSnapshot,
@@ -738,28 +739,36 @@ export async function signOutOwner(): Promise<void> {
     }
   }
 
+  // Restore offline Local Mode snapshot if this device had Local Mode data prior to cloud sign-in
+  await switchToLocalWorkspace().catch((err) => {
+    console.warn('Could not restore local workspace on sign-out:', err);
+  });
+
   await db.settings.put({ key: 'cloud_enabled', value: false });
   await db.settings.put({ key: 'owner_email', value: '' });
   await db.settings.delete('cloud_shop_uuid');
   await db.settings.put({ key: 'last_cloud_sync_status', value: 'never' });
   await db.settings.delete('last_cloud_sync_at');
-  await db.settings.put({ key: 'active_data_scope', value: 'local' });
 
   // Clear pending cloud outbox items so nothing pushes unexpectedly later
   await db.syncOutbox.where('status').equals('pending').delete().catch(() => {});
 
-  // Keep existing device data usable in Local Mode
+  // Ensure active db.shop is cleanly in Local Mode with no stale cloud references
   try {
     const localShops = await db.shop.toArray();
     if (localShops.length > 0 && localShops[0].id !== undefined) {
-      await db.shop.update(localShops[0].id, { mode: 'local' });
+      await db.shop.update(localShops[0].id, {
+        mode: 'local',
+        cloudShopUuid: undefined,
+        ownerEmail: undefined,
+      });
     }
   } catch (err) {
     console.warn('Could not update local shop mode on sign-out:', err);
   }
 
   await addAudit('Cloud', 'owner_sign_out', 'Owner', 'Signed out of cloud account; continuing in Local Mode');
-  emitSyncApplied(['shop', 'sync_status']);
+  emitSyncApplied(['shop', 'staff', 'bill', 'medicine', 'batch', 'customer', 'udhaar_payment', 'sync_status', 'workspace_switched']);
 }
 
 /**

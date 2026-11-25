@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Icon } from '../components/Icon';
 import { LanguageSwitch } from '../components/LanguageSwitch';
 import { useTranslation, tButton } from '../i18n';
+import { useBackHandler } from '../logic/androidBack';
 import { subscribeToSyncUpdates } from '../logic/cloudSync';
 import {
   getAvailableShops,
@@ -14,10 +15,13 @@ interface ShopSelectorProps {
   onEnter: () => void;
   /** Start a fresh, isolated New Shop setup flow. */
   onAddShop?: () => void;
+  /** Return to the previous screen when opened from inside the app. */
+  onBack?: () => void;
 }
 
-export const ShopSelector: React.FC<ShopSelectorProps> = ({ onEnter, onAddShop }) => {
+export const ShopSelector: React.FC<ShopSelectorProps> = ({ onEnter, onAddShop, onBack }) => {
   const { t } = useTranslation();
+  useBackHandler(Boolean(onBack), () => onBack?.());
   const [shops, setShops] = useState<ShopDirectoryEntry[]>([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const [ownerEmail, setOwnerEmail] = useState<string | null>(null);
@@ -65,6 +69,16 @@ export const ShopSelector: React.FC<ShopSelectorProps> = ({ onEnter, onAddShop }
       <header className="w-full max-w-md mx-auto min-w-0 flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2.5 min-w-0">
           <div className="flex items-center gap-2.5 min-w-0">
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                aria-label={tButton('common.btn_back').main}
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center shrink-0 cursor-pointer"
+              >
+                <Icon name="arrow_back" className="text-[22px]" />
+              </button>
+            )}
             <div className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0 shadow-sm">
               <Icon name="add" className="text-[24px]" />
             </div>

@@ -714,19 +714,19 @@ export const OldBillsReturnScreen: React.FC<OldBillsReturnScreenProps> = ({
                 )}
 
                 {/* Action Buttons Footer */}
-                <div className="grid grid-cols-12 gap-space-md pt-1 shrink-0">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-space-md pt-1 shrink-0 min-w-0">
                   <button
                     type="button"
                     onClick={() => setShowPrintPicker(true)}
-                    className="col-span-5 h-16 min-h-[56px] rounded-2xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface shadow-sm active:translate-y-0.5 transition-all flex items-center justify-center gap-space-sm px-3 cursor-pointer"
+                    className="sm:col-span-5 min-h-[56px] h-auto py-2.5 rounded-2xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface shadow-sm active:translate-y-0.5 transition-all flex items-center justify-center gap-space-sm px-3 cursor-pointer min-w-0"
                   >
-                    <Icon name="print" className="text-[26px] text-on-surface-variant shrink-0" />
-                    <div className="flex flex-col items-start leading-tight">
-                      <span className="font-title-hinglish font-bold text-base text-on-surface">
+                    <Icon name="print" className="text-[24px] sm:text-[26px] text-on-surface-variant shrink-0" />
+                    <div className="flex flex-col items-start leading-tight min-w-0">
+                      <span className="font-title-hinglish font-bold text-sm sm:text-base text-on-surface break-words text-left">
                         {reprintBtn.main}
                       </span>
                       {reprintBtn.sub && (
-                        <span className="text-xs text-on-surface-variant">{reprintBtn.sub}</span>
+                        <span className="text-xs text-on-surface-variant break-words text-left">{reprintBtn.sub}</span>
                       )}
                     </div>
                   </button>
@@ -735,15 +735,15 @@ export const OldBillsReturnScreen: React.FC<OldBillsReturnScreenProps> = ({
                     type="button"
                     onClick={handleRequestReturn}
                     disabled={isProcessingReturn || selectedBill.status === 'returned_full'}
-                    className="col-span-7 h-16 min-h-[56px] rounded-2xl bg-primary hover:bg-primary-container text-on-primary shadow-md active:translate-y-0.5 transition-all flex items-center justify-center gap-space-sm px-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="sm:col-span-7 min-h-[56px] h-auto py-2.5 rounded-2xl bg-primary hover:bg-primary-container text-on-primary shadow-md active:translate-y-0.5 transition-all flex items-center justify-center gap-space-sm px-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed min-w-0"
                   >
-                    <Icon name="assignment_return" className="text-[28px] shrink-0" />
-                    <div className="flex flex-col items-start leading-tight">
-                      <span className="font-title-hinglish font-bold text-base text-on-primary">
+                    <Icon name="assignment_return" className="text-[24px] sm:text-[28px] shrink-0" />
+                    <div className="flex flex-col items-start leading-tight min-w-0">
+                      <span className="font-title-hinglish font-bold text-sm sm:text-base text-on-primary break-words text-left">
                         {processReturnBtn.main}
                       </span>
                       {processReturnBtn.sub && (
-                        <span className="text-xs text-primary-fixed">{processReturnBtn.sub}</span>
+                        <span className="text-xs text-primary-fixed break-words text-left">{processReturnBtn.sub}</span>
                       )}
                     </div>
                   </button>

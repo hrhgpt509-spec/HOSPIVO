@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { db, type Bill, type BillReturn, type Customer, type UdhaarPayment } from '../db';
 import {
   aggregateDoctorReferralSales,
@@ -14,6 +14,7 @@ import {
   recordUdhaarPayment,
   saveCustomerProfile,
   saveRegularReminder,
+  sendOrShareUdhaarReminder,
 } from './udhaar';
 
 function makeBill(overrides: Partial<Bill>): Bill {
@@ -444,5 +445,28 @@ describe('customer ledger statement & reminder message', () => {
 
     expect(formatUdhaarReminderMessage('Shop', 'Cust', 0)).toBe('');
     expect(formatUdhaarReminderMessage('Shop', 'Cust', -500)).toBe('');
+  });
+
+  it('sendOrShareUdhaarReminder opens WhatsApp for valid phone and falls back to clipboard when phone is missing', async () => {
+    const openSpy = vi.fn(() => ({ closed: false }));
+    const writeTextSpy = vi.fn(async () => {});
+    vi.stubGlobal('window', { open: openSpy, location: { href: '' } });
+    vi.stubGlobal('navigator', { clipboard: { writeText: writeTextSpy } });
+
+    try {
+      const waResult = await sendOrShareUdhaarReminder('9820111223', 'Reminder Rs. 500');
+      expect(waResult).toBe('whatsapp');
+      expect(openSpy).toHaveBeenCalledWith(
+        expect.stringContaining('https://wa.me/919820111223?text='),
+        '_blank',
+        'noopener,noreferrer'
+      );
+
+      const clipResult = await sendOrShareUdhaarReminder('', 'Reminder Rs. 500');
+      expect(clipResult).toBe('clipboard');
+      expect(writeTextSpy).toHaveBeenCalledWith('Reminder Rs. 500');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

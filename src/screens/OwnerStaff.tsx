@@ -576,16 +576,16 @@ export const OwnerStaff: React.FC<OwnerStaffProps> = ({
             </div>
 
             {/* Bottom Status Ribbon */}
-            <div className="h-14 bg-surface-container-low px-6 rounded-2xl flex items-center justify-between shrink-0 font-label-sub-english text-label-sub-english text-on-surface-variant border border-outline-variant/20 mt-auto">
-              <div className="flex items-center gap-3">
-                <span className="w-3 h-3 rounded-full bg-primary animate-pulse" />
-                <span className="text-on-surface font-semibold">
+            <div className="min-h-[52px] h-auto py-3 bg-surface-container-low px-4 sm:px-6 rounded-2xl flex flex-wrap items-center justify-between gap-2 shrink-0 font-label-sub-english text-label-sub-english text-on-surface-variant border border-outline-variant/20 mt-auto min-w-0">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 min-w-0">
+                <span className="w-3 h-3 rounded-full bg-primary animate-pulse shrink-0" />
+                <span className="text-on-surface font-semibold break-words">
                   {t('owner_staff.bottom_counter_active').replace('{count}', String(activeOperatorsCount))}
                 </span>
-                <span>•</span>
-                <span>{t('owner_staff.bottom_total_bills').replace('{count}', String(totalBillsToday))}</span>
+                <span aria-hidden="true">•</span>
+                <span className="break-words">{t('owner_staff.bottom_total_bills').replace('{count}', String(totalBillsToday))}</span>
               </div>
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2 shrink-0">
                 <Icon name="verified_user" className="text-[20px] text-primary" />
                 <span className="text-on-surface font-medium">{t('owner_staff.bottom_terminal_info')}</span>
               </div>

@@ -1,3 +1,6 @@
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { db, resetDatabase } from '../db';
 import { addAudit } from '../db/audit';
 
@@ -581,7 +584,98 @@ export interface SaveBackupResult {
 }
 
 /**
+ * Native Capacitor Android/iOS backup export:
+ * Writes verified JSON to Documents/Hospivo (when permitted) and Cache,
+ * then opens the native Android Share sheet so the user can save or send it.
+ */
+async function saveBackupNative(
+  payload: BackupPayload,
+  who = 'owner',
+  filename?: string
+): Promise<SaveBackupResult> {
+  const contentStr = serializeBackupContent(payload.meta, payload.tables);
+  const checksum = payload.checksum || payload.meta?.checksum || (await computeSha256(contentStr));
+  const payloadWithChecksum: BackupPayload = {
+    ...payload,
+    meta: {
+      ...payload.meta,
+      checksum,
+    },
+    checksum,
+  };
+
+  const fallbackDate = payloadWithChecksum.meta?.exportedAt
+    ? new Date(payloadWithChecksum.meta.exportedAt)
+    : new Date();
+  const fileName = filename || getBackupFilename(fallbackDate);
+  const jsonStr = JSON.stringify(payloadWithChecksum, null, 2);
+
+  let savedToDocuments = false;
+  let shareUri = '';
+
+  try {
+    const docRes = await Filesystem.writeFile({
+      path: `Hospivo/${fileName}`,
+      data: jsonStr,
+      directory: Directory.Documents,
+      encoding: Encoding.UTF8,
+      recursive: true,
+    });
+    savedToDocuments = true;
+    shareUri = docRes.uri;
+  } catch (err) {
+    console.warn('Documents write failed on native platform, falling back to Cache:', err);
+  }
+
+  try {
+    const cacheRes = await Filesystem.writeFile({
+      path: fileName,
+      data: jsonStr,
+      directory: Directory.Cache,
+      encoding: Encoding.UTF8,
+    });
+    if (cacheRes.uri) {
+      shareUri = cacheRes.uri;
+    }
+  } catch (err) {
+    console.warn('Cache write failed on native platform:', err);
+  }
+
+  if (shareUri) {
+    try {
+      await Share.share({
+        title: fileName,
+        text: 'Hospivo Backup',
+        url: shareUri,
+        dialogTitle: fileName,
+      });
+      await recordVerifiedBackup(payloadWithChecksum, who);
+      return { status: 'saved' };
+    } catch (shareErr: any) {
+      const msg = String(shareErr?.message || '').toLowerCase();
+      const isCancelled = shareErr?.name === 'AbortError' || msg.includes('cancel');
+      if (savedToDocuments) {
+        await recordVerifiedBackup(payloadWithChecksum, who);
+        return { status: 'saved' };
+      }
+      if (isCancelled) {
+        return { status: 'cancelled' };
+      }
+      throw shareErr;
+    }
+  }
+
+  if (savedToDocuments) {
+    await recordVerifiedBackup(payloadWithChecksum, who);
+    return { status: 'saved' };
+  }
+
+  throw new Error('Could not write backup file on device');
+}
+
+/**
  * Step B (Save to disk & conditional commit):
+ * 0. On Capacitor native Android/iOS, export via Filesystem + Share.
  * 1. Checks for a saved FileSystemDirectoryHandle in IndexedDB (from Setup or Settings)
  *    and writes directly to that folder if permission is granted.
  * 2. If no saved handle, prompts with showDirectoryPicker if supported.
@@ -593,6 +687,9 @@ export async function saveBackup(
   who = 'owner',
   filename?: string
 ): Promise<SaveBackupResult> {
+  if (Capacitor.isNativePlatform()) {
+    return saveBackupNative(payload, who, filename);
+  }
   // 1. Try saved directory handle first
   try {
     const savedHandle = await getSavedBackupDirectoryHandle();

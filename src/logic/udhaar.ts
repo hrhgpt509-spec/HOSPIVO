@@ -7,6 +7,8 @@ import {
   type UdhaarPayment,
   type UdhaarPaymentMode,
 } from '../db';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
 import { addAudit } from '../db/audit';
 import { enqueueSyncItem } from './cloudSync';
 import { filterDigits, formatField } from './format';
@@ -313,6 +315,67 @@ export function buildUdhaarWhatsAppUrl(phone: string, message: string): string {
     return `https://wa.me/${formattedPhone}?text=${encoded}`;
   }
   return `https://wa.me/?text=${encoded}`;
+}
+
+/**
+ * Sends or shares an Udhaar / medicine reminder cleanly across Android APK,
+ * mobile browsers, and desktop browsers with Share / SMS / clipboard fallbacks.
+ */
+export async function sendOrShareUdhaarReminder(
+  phone: string,
+  message: string
+): Promise<'whatsapp' | 'share' | 'sms' | 'clipboard'> {
+  const hasPhone = Boolean(normalizePhoneKey(phone));
+  const waUrl = buildUdhaarWhatsAppUrl(phone, message);
+
+  if (hasPhone && typeof window !== 'undefined') {
+    try {
+      const win = window.open(waUrl, '_blank', 'noopener,noreferrer');
+      if (win || Capacitor.isNativePlatform()) {
+        return 'whatsapp';
+      }
+    } catch {
+      // Fall through to Share / SMS / clipboard
+    }
+  }
+
+  try {
+    if (Capacitor.isNativePlatform()) {
+      await Share.share({
+        title: 'Hospivo Reminder',
+        text: message,
+      });
+      return 'share';
+    }
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      await navigator.share({ text: message });
+      return 'share';
+    }
+  } catch {
+    // User cancelled or Share unavailable; fall through
+  }
+
+  if (hasPhone && typeof window !== 'undefined') {
+    try {
+      const smsPhone = buildWhatsAppPhone(phone);
+      const smsUrl = `sms:+${smsPhone}?body=${encodeURIComponent(message)}`;
+      window.location.href = smsUrl;
+      return 'sms';
+    } catch {
+      // Fall through to clipboard
+    }
+  }
+
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(message);
+      return 'clipboard';
+    } catch {
+      // Ignore clipboard permission errors
+    }
+  }
+
+  return 'whatsapp';
 }
 
 export interface CreditLimitCheckResult {

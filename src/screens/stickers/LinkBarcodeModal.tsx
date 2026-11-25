@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db, type Medicine, type DBUser } from '../../db';
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
+import { CameraBarcodeModal } from '../../components/CameraBarcodeModal';
 import { addAudit } from '../../db/audit';
 import { textFieldProps } from '../../logic/format';
 
@@ -26,6 +27,7 @@ export const LinkBarcodeModal: React.FC<LinkBarcodeModalProps> = ({
   const [search, setSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
   const barcodeInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -182,11 +184,16 @@ export const LinkBarcodeModal: React.FC<LinkBarcodeModalProps> = ({
                 }
               }}
               placeholder="e.g. 8901117002138"
-              className="w-full h-14 bg-surface-container-lowest border-2 border-primary rounded-2xl px-4 text-xl font-mono font-bold text-on-surface focus:ring-4 focus:ring-primary/20 outline-none"
+              className="w-full h-14 bg-surface-container-lowest border-2 border-primary rounded-2xl pl-4 pr-16 text-xl font-mono font-bold text-on-surface focus:ring-4 focus:ring-primary/20 outline-none"
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-on-surface-variant uppercase">
-              Scan now
-            </span>
+            <button
+              type="button"
+              onClick={() => setIsCameraScannerOpen(true)}
+              aria-label={t('scanner.modal_title')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-primary/10 hover:bg-primary text-primary hover:text-on-primary flex items-center justify-center cursor-pointer transition-colors"
+            >
+              <Icon name="barcode_scanner" className="text-[22px]" />
+            </button>
           </div>
         </div>
 
@@ -221,6 +228,12 @@ export const LinkBarcodeModal: React.FC<LinkBarcodeModalProps> = ({
           </button>
         </div>
       </div>
+
+      <CameraBarcodeModal
+        isOpen={isCameraScannerOpen}
+        onScan={(code) => setBarcode(code.trim())}
+        onClose={() => setIsCameraScannerOpen(false)}
+      />
     </div>
   );
 };

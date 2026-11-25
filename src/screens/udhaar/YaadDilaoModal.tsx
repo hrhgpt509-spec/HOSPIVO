@@ -3,7 +3,7 @@ import { useTranslation, tButton } from '../../i18n';
 import { useShop } from '../../logic/useShop';
 import { Icon } from '../../components/Icon';
 import { formatRupees } from '../../logic/money';
-import { buildUdhaarWhatsAppUrl, type CustomerLedgerEntry } from '../../logic/udhaar';
+import { sendOrShareUdhaarReminder, type CustomerLedgerEntry } from '../../logic/udhaar';
 
 interface YaadDilaoModalProps {
   isOpen: boolean;
@@ -28,8 +28,7 @@ export const YaadDilaoModal: React.FC<YaadDilaoModalProps> = ({
 
   const handleOpenWhatsApp = () => {
     try {
-      const url = buildUdhaarWhatsAppUrl(customer.customerPhone, message);
-      window.open(url, '_blank', 'noopener,noreferrer');
+      void sendOrShareUdhaarReminder(customer.customerPhone, message);
     } catch (err) {
       console.error('WhatsApp open failed:', err);
     }
