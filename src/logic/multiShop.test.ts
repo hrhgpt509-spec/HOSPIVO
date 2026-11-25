@@ -637,11 +637,13 @@ describe('strict account/shop isolation & multi-shop management', () => {
       error: null,
     } as any);
 
-    const upsertSpy = vi.fn().mockResolvedValue({ error: null });
+    const upsertSpy = vi.fn().mockResolvedValue({ error: { message: 'RLS update blocked' } });
+    const insertSpy = vi.fn().mockResolvedValue({ error: null });
     vi.spyOn(supabase, 'from').mockImplementation((table: string) => {
       if (table === 'hospivo_sync_events') {
         return {
           upsert: upsertSpy,
+          insert: insertSpy,
           select: vi.fn().mockReturnValue(
             createMockArrayQueryChain([
               {
@@ -676,6 +678,7 @@ describe('strict account/shop isolation & multi-shop management', () => {
 
     await registerCurrentDeviceInCloud('Counter PC 1');
     expect(upsertSpy).toHaveBeenCalled();
+    expect(insertSpy).toHaveBeenCalled();
 
     const devices = await listConnectedDevices();
     expect(devices.map((d) => d.deviceId)).toEqual(['dev-laptop-1', 'dev-phone-2']);

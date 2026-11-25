@@ -3,6 +3,7 @@ import type { DBUser } from '../../db';
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
 import { textFieldProps } from '../../logic/format';
+import { NumericLimitWarning } from '../../components/NumericLimitWarning';
 import { rupeesToPaise } from '../../logic/money';
 import { isOwner } from '../../logic/roles';
 import { triggerFeedback } from '../../logic/feedback';
@@ -135,6 +136,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             <label className="text-sm font-bold text-on-surface">
               {t('customers.phone_label')} <span className="text-error">*</span>
             </label>
+            <NumericLimitWarning value={phone} maxLength={10} />
             <input
               {...textFieldProps('phone', phone, setPhone)}
               type="text"

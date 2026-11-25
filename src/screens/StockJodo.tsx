@@ -26,7 +26,8 @@ import { triggerFeedback } from '../logic/feedback';
 import { Icon } from '../components/Icon';
 import { EmptyState } from '../components/EmptyState';
 import { FullscreenButton } from '../components/FullscreenButton';
-import { formatField, textFieldProps } from '../logic/format';
+import { formatField, textFieldProps, numericInputProps } from '../logic/format';
+import { NumericLimitWarning } from '../components/NumericLimitWarning';
 import { useShop } from '../logic/useShop';
 import { useIsCompactViewport } from '../logic/useViewport';
 import { useBackHandler } from '../logic/androidBack';
@@ -520,6 +521,234 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   const addMoreStockLabel = tButton('stock_jodo.btn_add_more_stock');
   const doneLabel = tButton('stock_jodo.btn_done');
 
+  const handleCameraScan = (code: string) => {
+    const clean = code.trim();
+    if (!clean) return;
+    const q = clean.toLowerCase();
+    const exact = medicines.find(
+      (m) =>
+        (m.barcode && m.barcode.trim().toLowerCase() === q) ||
+        (m.shortCode && m.shortCode.trim().toLowerCase() === q)
+    );
+    if (exact) {
+      setSelectedMedicine(exact);
+      setSearchQuery(exact.name);
+      setIsSearchOpen(false);
+      if (exact.mrpPaise) setMrpInput(String(paiseToRupees(exact.mrpPaise)));
+      batchInputRef.current?.focus();
+    } else {
+      setSearchQuery(clean);
+      setIsSearchOpen(true);
+    }
+  };
+
+  const sharedModals = (
+    <>
+      {/* POPUP: ADD NEW SUPPLIER MODAL */}
+      {isNewSupplierOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-surface-container-lowest dark:bg-gray-900 rounded-2xl shadow-2xl p-space-lg flex flex-col gap-space-md max-h-[90dvh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-headline-md font-bold text-on-surface">
+                  {t('stock_jodo.new_supplier_modal_title')}
+                </h3>
+                <p className="font-label-sub-english text-on-surface-variant">
+                  {t('stock_jodo.new_supplier_modal_sub')}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewSupplierOpen(false)}
+                className="w-9 h-9 rounded-lg hover:bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
+              >
+                <Icon name="close" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-space-sm">
+              <div>
+                <label className="block font-label-sub-english text-on-surface-variant font-bold mb-1">
+                  {t('stock_jodo.supplier_name_label')} *
+                </label>
+                <input
+                  type="text"
+                  {...textFieldProps('name', newSupplierName, setNewSupplierName)}
+                  placeholder={t('stock_jodo.supplier_name_placeholder')}
+                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface placeholder:text-outline/60 outline-none focus:ring-2 focus:ring-primary shadow-inner"
+                />
+              </div>
+
+              <div>
+                <label className="block font-label-sub-english text-on-surface-variant font-bold mb-1">
+                  {t('stock_jodo.supplier_phone_label')}
+                </label>
+                <NumericLimitWarning value={newSupplierPhone} maxLength={10} />
+                <input
+                  type="text"
+                  {...textFieldProps('phone', newSupplierPhone, setNewSupplierPhone)}
+                  placeholder={t('stock_jodo.supplier_phone_placeholder')}
+                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface placeholder:text-outline/60 outline-none focus:ring-2 focus:ring-primary shadow-inner"
+                />
+              </div>
+
+              <div>
+                <label className="block font-label-sub-english text-on-surface-variant font-bold mb-1">
+                  {t('stock_jodo.supplier_address_label')}
+                </label>
+                <input
+                  type="text"
+                  {...textFieldProps('name', newSupplierAddress, setNewSupplierAddress)}
+                  placeholder={t('stock_jodo.supplier_address_placeholder')}
+                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface placeholder:text-outline/60 outline-none focus:ring-2 focus:ring-primary shadow-inner"
+                />
+              </div>
+
+              <div>
+                <label className="block font-label-sub-english text-on-surface-variant font-bold mb-1">
+                  {t('stock_jodo.supplier_gst_label')}
+                </label>
+                <input
+                  type="text"
+                  {...textFieldProps('code', newSupplierGst, setNewSupplierGst)}
+                  placeholder={t('stock_jodo.supplier_gst_placeholder')}
+                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary shadow-inner"
+                />
+              </div>
+
+              {supplierError && (
+                <div className="text-error font-label-sub-english font-bold">
+                  {supplierError}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-space-sm pt-2">
+              <button
+                type="button"
+                onClick={() => setIsNewSupplierOpen(false)}
+                className="h-12 px-space-md rounded-xl hover:bg-surface-container text-on-surface font-title-hinglish cursor-pointer"
+              >
+                {tButton('common.btn_cancel').main}
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateSupplier}
+                className="h-12 px-space-lg rounded-xl bg-primary text-on-primary hover:bg-primary-container font-title-hinglish font-bold shadow-md cursor-pointer"
+              >
+                {tButton('stock_jodo.btn_save_supplier').main}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP: INSPECT INVOICE PHOTO MODAL (Step 4) */}
+      {inspectPhotoOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-3xl max-h-[90vh] bg-surface-container-lowest dark:bg-gray-900 rounded-2xl shadow-2xl p-space-md flex flex-col items-center justify-between overflow-hidden">
+            <div className="w-full flex items-center justify-between pb-2 border-b border-outline-variant/30">
+              <span className="font-title-hinglish font-bold text-on-surface">
+                {selectedSupplier?.name} · {invoiceNo}
+              </span>
+              <button
+                type="button"
+                onClick={() => setInspectPhotoOpen(false)}
+                className="w-9 h-9 rounded-lg hover:bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
+              >
+                <Icon name="close" />
+              </button>
+            </div>
+
+            <div className="w-full flex-1 overflow-auto p-4 flex items-center justify-center">
+              <img
+                src={invoicePhoto}
+                alt={t('stock_jodo.alt_enlarged_invoice')}
+                className="max-h-[70vh] object-contain rounded-lg shadow-lg"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setInspectPhotoOpen(false)}
+              className="mt-2 h-12 px-space-xl bg-surface-container hover:bg-surface-container-high rounded-xl font-title-hinglish font-bold cursor-pointer"
+            >
+              {t('stock_jodo.modal_close')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        isOpen={duplicateWarningOpen}
+        title={t('stock_jodo.duplicate_invoice_title')}
+        subtitle={t('stock_jodo.duplicate_invoice_sub')}
+        onConfirm={() => {
+          setDuplicateWarningOpen(false);
+          setCurrentStep(2);
+        }}
+        onCancel={() => setDuplicateWarningOpen(false)}
+        confirmLabel={t('stock_jodo.duplicate_invoice_proceed')}
+        confirmSubLabel=""
+        cancelLabel={tButton('common.btn_cancel').main}
+        cancelSubLabel={tButton('common.btn_cancel').sub}
+        isDanger={false}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(lineToDeleteId)}
+        title={t('stock_jodo.confirm_delete_line_title')}
+        subtitle={t('stock_jodo.confirm_delete_line_sub')}
+        onConfirm={handleConfirmDeleteLine}
+        onCancel={() => setLineToDeleteId(null)}
+        confirmLabel={tButton('common.btn_delete').main}
+        confirmSubLabel={tButton('common.btn_delete').sub}
+        cancelLabel={tButton('common.btn_cancel').main}
+        cancelSubLabel={tButton('common.btn_cancel').sub}
+      />
+
+      <ConfirmDialog
+        isOpen={isExpiryConfirmOpen}
+        title={t('stock_jodo.expiry_warning_title')}
+        subtitle={t('stock_jodo.expiry_warning_sub')}
+        onConfirm={() => {
+          if (pendingLineToAdd) applyLine(pendingLineToAdd);
+          setPendingLineToAdd(null);
+          setIsExpiryConfirmOpen(false);
+        }}
+        onCancel={() => {
+          setPendingLineToAdd(null);
+          setIsExpiryConfirmOpen(false);
+        }}
+        confirmLabel={tButton('dialogs.btn_haan_jodo').main}
+        confirmSubLabel={tButton('dialogs.btn_haan_jodo').sub}
+        cancelLabel={tButton('common.btn_cancel').main}
+        cancelSubLabel={tButton('common.btn_cancel').sub}
+      />
+
+      <ConfirmDialog
+        isOpen={isLeaveConfirmOpen}
+        title={t('medicine_form.confirm_discard_title')}
+        subtitle={t('medicine_form.confirm_discard_sub')}
+        onConfirm={() => {
+          setIsLeaveConfirmOpen(false);
+          onReturnHome();
+        }}
+        onCancel={() => setIsLeaveConfirmOpen(false)}
+        confirmLabel={tButton('dialogs.btn_haan_wapas').main}
+        confirmSubLabel={tButton('dialogs.btn_haan_wapas').sub}
+        cancelLabel={tButton('common.btn_cancel').main}
+        cancelSubLabel={tButton('common.btn_cancel').sub}
+      />
+
+      <CameraBarcodeModal
+        isOpen={isCameraScannerOpen}
+        onScan={handleCameraScan}
+        onClose={() => setIsCameraScannerOpen(false)}
+      />
+    </>
+  );
+
   // Dedicated Mobile & Portrait-Tablet Layout (< 1024px)
   if (isCompactViewport) {
     const stepNum = currentStep === 1 ? 1 : currentStep === 2 ? 2 : currentStep === 3 ? 3 : currentStep === 4 ? 4 : 4;
@@ -893,6 +1122,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   <input
                     ref={packsInputRef}
                     type="number"
+                    {...numericInputProps('integer')}
                     min={1}
                     value={packsInput}
                     onChange={(e) => setPacksInput(e.target.value)}
@@ -906,6 +1136,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   <input
                     ref={freePacksInputRef}
                     type="number"
+                    {...numericInputProps('integer')}
                     min={0}
                     value={freePacksInput}
                     onChange={(e) => setFreePacksInput(e.target.value)}
@@ -923,6 +1154,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                     <input
                       ref={rateInputRef}
                       type="number"
+                      {...numericInputProps('decimal')}
                       step="any"
                       min={0}
                       value={purchaseRateInput}
@@ -939,6 +1171,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   <input
                     ref={mrpInputRef}
                     type="number"
+                    {...numericInputProps('decimal')}
                     step="any"
                     min={0}
                     value={mrpInput}
@@ -1199,14 +1432,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
           onChange={handlePhotoUpload}
         />
 
-        <CameraBarcodeModal
-          isOpen={isCameraScannerOpen}
-          onClose={() => setIsCameraScannerOpen(false)}
-          onScan={(code) => {
-            setSearchQuery(code);
-            setIsCameraScannerOpen(false);
-          }}
-        />
+        {sharedModals}
       </div>
     );
   }
@@ -1916,6 +2142,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                         <input
                           ref={packsInputRef}
                           type="number"
+                          {...numericInputProps('integer')}
                           min="0"
                           value={packsInput}
                           onChange={(e) => setPacksInput(e.target.value)}
@@ -1936,6 +2163,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                         <input
                           ref={freePacksInputRef}
                           type="number"
+                          {...numericInputProps('integer')}
                           min="0"
                           value={freePacksInput}
                           onChange={(e) => setFreePacksInput(e.target.value)}
@@ -1960,6 +2188,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                         <input
                           ref={rateInputRef}
                           type="number"
+                          {...numericInputProps('decimal')}
                           step="0.01"
                           min="0"
                           value={purchaseRateInput}
@@ -1985,6 +2214,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                         <input
                           ref={mrpInputRef}
                           type="number"
+                          {...numericInputProps('decimal')}
                           step="0.01"
                           min="0"
                           value={mrpInput}
@@ -2652,242 +2882,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
         )}
       </main>
 
-      {/* ============================================================== */}
-      {/* POPUP: ADD NEW SUPPLIER MODAL */}
-      {/* ============================================================== */}
-      {isNewSupplierOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg bg-surface-container-lowest dark:bg-gray-900 rounded-2xl shadow-2xl p-space-lg flex flex-col gap-space-md">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-headline-md font-bold text-on-surface">
-                  {t('stock_jodo.new_supplier_modal_title')}
-                </h3>
-                <p className="font-label-sub-english text-on-surface-variant">
-                  {t('stock_jodo.new_supplier_modal_sub')}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsNewSupplierOpen(false)}
-                className="w-9 h-9 rounded-lg hover:bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
-              >
-                <Icon name="close" />
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-space-sm">
-              <div>
-                <label className="block font-label-sub-english text-on-surface-variant font-bold mb-1">
-                  {t('stock_jodo.supplier_name_label')} *
-                </label>
-                <input
-                  type="text"
-                  {...textFieldProps('name', newSupplierName, setNewSupplierName)}
-                  placeholder={t('stock_jodo.supplier_name_placeholder')}
-                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface placeholder:text-outline/60 outline-none focus:ring-2 focus:ring-primary shadow-inner"
-                />
-              </div>
-
-              <div>
-                <label className="block font-label-sub-english text-on-surface-variant font-bold mb-1">
-                  {t('stock_jodo.supplier_phone_label')}
-                </label>
-                <input
-                  type="text"
-                  {...textFieldProps('phone', newSupplierPhone, setNewSupplierPhone)}
-                  placeholder={t('stock_jodo.supplier_phone_placeholder')}
-                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface placeholder:text-outline/60 outline-none focus:ring-2 focus:ring-primary shadow-inner"
-                />
-              </div>
-
-              <div>
-                <label className="block font-label-sub-english text-on-surface-variant font-bold mb-1">
-                  {t('stock_jodo.supplier_address_label')}
-                </label>
-                <input
-                  type="text"
-                  {...textFieldProps('name', newSupplierAddress, setNewSupplierAddress)}
-                  placeholder={t('stock_jodo.supplier_address_placeholder')}
-                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface placeholder:text-outline/60 outline-none focus:ring-2 focus:ring-primary shadow-inner"
-                />
-              </div>
-
-              <div>
-                <label className="block font-label-sub-english text-on-surface-variant font-bold mb-1">
-                  {t('stock_jodo.supplier_gst_label')}
-                </label>
-                <input
-                  type="text"
-                  {...textFieldProps('code', newSupplierGst, setNewSupplierGst)}
-                  placeholder={t('stock_jodo.supplier_gst_placeholder')}
-                  className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary shadow-inner"
-                />
-              </div>
-
-              {supplierError && (
-                <div className="text-error font-label-sub-english font-bold">
-                  {supplierError}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-space-sm pt-2">
-              <button
-                type="button"
-                onClick={() => setIsNewSupplierOpen(false)}
-                className="h-12 px-space-md rounded-xl hover:bg-surface-container text-on-surface font-title-hinglish cursor-pointer"
-              >
-                {tButton('common.btn_cancel').main}
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateSupplier}
-                className="h-12 px-space-lg rounded-xl bg-primary text-on-primary hover:bg-primary-container font-title-hinglish font-bold shadow-md cursor-pointer"
-              >
-                {tButton('stock_jodo.btn_save_supplier').main}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================== */}
-      {/* POPUP: INSPECT INVOICE PHOTO MODAL (Step 4) */}
-      {/* ============================================================== */}
-      {inspectPhotoOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-3xl max-h-[90vh] bg-surface-container-lowest dark:bg-gray-900 rounded-2xl shadow-2xl p-space-md flex flex-col items-center justify-between overflow-hidden">
-            <div className="w-full flex items-center justify-between pb-2 border-b border-outline-variant/30">
-              <span className="font-title-hinglish font-bold text-on-surface">
-                {selectedSupplier?.name} · {invoiceNo}
-              </span>
-              <button
-                type="button"
-                onClick={() => setInspectPhotoOpen(false)}
-                className="w-9 h-9 rounded-lg hover:bg-surface-container flex items-center justify-center text-on-surface-variant cursor-pointer"
-              >
-                <Icon name="close" />
-              </button>
-            </div>
-
-            <div className="w-full flex-1 overflow-auto p-4 flex items-center justify-center">
-              <img
-                src={invoicePhoto}
-                alt={t('stock_jodo.alt_enlarged_invoice')}
-                className="max-h-[70vh] object-contain rounded-lg shadow-lg"
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setInspectPhotoOpen(false)}
-              className="mt-2 h-12 px-space-xl bg-surface-container hover:bg-surface-container-high rounded-xl font-title-hinglish font-bold cursor-pointer"
-            >
-              {t('stock_jodo.modal_close')}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================== */}
-      {/* CONFIRMATION: DUPLICATE INVOICE WARNING */}
-      {/* ============================================================== */}
-      <ConfirmDialog
-        isOpen={duplicateWarningOpen}
-        title={t('stock_jodo.duplicate_invoice_title')}
-        subtitle={t('stock_jodo.duplicate_invoice_sub')}
-        onConfirm={() => {
-          setDuplicateWarningOpen(false);
-          setCurrentStep(2);
-        }}
-        onCancel={() => setDuplicateWarningOpen(false)}
-        confirmLabel={t('stock_jodo.duplicate_invoice_proceed')}
-        confirmSubLabel=""
-        cancelLabel={tButton('common.btn_cancel').main}
-        cancelSubLabel={tButton('common.btn_cancel').sub}
-        isDanger={false}
-      />
-
-      {/* ============================================================== */}
-      {/* CONFIRMATION: DELETE MEDICINE LINE */}
-      {/* ============================================================== */}
-      <ConfirmDialog
-        isOpen={Boolean(lineToDeleteId)}
-        title={t('stock_jodo.confirm_delete_line_title')}
-        subtitle={t('stock_jodo.confirm_delete_line_sub')}
-        onConfirm={handleConfirmDeleteLine}
-        onCancel={() => setLineToDeleteId(null)}
-        confirmLabel={tButton('common.btn_delete').main}
-        confirmSubLabel={tButton('common.btn_delete').sub}
-        cancelLabel={tButton('common.btn_cancel').main}
-        cancelSubLabel={tButton('common.btn_cancel').sub}
-      />
-
-      {/* ============================================================== */}
-      {/* CONFIRMATION: EXPIRED BATCH WARNING */}
-      {/* ============================================================== */}
-      <ConfirmDialog
-        isOpen={isExpiryConfirmOpen}
-        title={t('stock_jodo.expiry_warning_title')}
-        subtitle={t('stock_jodo.expiry_warning_sub')}
-        onConfirm={() => {
-          if (pendingLineToAdd) applyLine(pendingLineToAdd);
-          setPendingLineToAdd(null);
-          setIsExpiryConfirmOpen(false);
-        }}
-        onCancel={() => {
-          setPendingLineToAdd(null);
-          setIsExpiryConfirmOpen(false);
-        }}
-        confirmLabel={tButton('dialogs.btn_haan_jodo').main}
-        confirmSubLabel={tButton('dialogs.btn_haan_jodo').sub}
-        cancelLabel={tButton('common.btn_cancel').main}
-        cancelSubLabel={tButton('common.btn_cancel').sub}
-      />
-
-      {/* ============================================================== */}
-      {/* CONFIRMATION: LEAVE DRAFT IN PROGRESS */}
-      {/* ============================================================== */}
-      <ConfirmDialog
-        isOpen={isLeaveConfirmOpen}
-        title={t('medicine_form.confirm_discard_title')}
-        subtitle={t('medicine_form.confirm_discard_sub')}
-        onConfirm={() => {
-          setIsLeaveConfirmOpen(false);
-          onReturnHome();
-        }}
-        onCancel={() => setIsLeaveConfirmOpen(false)}
-        confirmLabel={tButton('dialogs.btn_haan_wapas').main}
-        confirmSubLabel={tButton('dialogs.btn_haan_wapas').sub}
-        cancelLabel={tButton('common.btn_cancel').main}
-        cancelSubLabel={tButton('common.btn_cancel').sub}
-      />
-
-      <CameraBarcodeModal
-        isOpen={isCameraScannerOpen}
-        onScan={(code) => {
-          const clean = code.trim();
-          if (!clean) return;
-          const q = clean.toLowerCase();
-          const exact = medicines.find(
-            (m) =>
-              (m.barcode && m.barcode.trim().toLowerCase() === q) ||
-              (m.shortCode && m.shortCode.trim().toLowerCase() === q)
-          );
-          if (exact) {
-            setSelectedMedicine(exact);
-            setSearchQuery(exact.name);
-            setIsSearchOpen(false);
-            if (exact.mrpPaise) setMrpInput(String(paiseToRupees(exact.mrpPaise)));
-            batchInputRef.current?.focus();
-          } else {
-            setSearchQuery(clean);
-            setIsSearchOpen(true);
-          }
-        }}
-        onClose={() => setIsCameraScannerOpen(false)}
-      />
+      {sharedModals}
     </div>
   );
 };

@@ -39,6 +39,7 @@ export const en: TranslationSchema = {
     error_occurred: 'An error occurred',
     generic_error: 'Something went wrong',
     saved_badge: 'Saved',
+    limit_exceeded_warning: 'Limit exceeded: maximum {max} digits allowed',
   },
   login: {
     pos_title: 'Pharmacy POS',

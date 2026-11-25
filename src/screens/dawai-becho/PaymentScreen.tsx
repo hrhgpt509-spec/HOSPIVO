@@ -8,6 +8,7 @@ import { ApprovalDialog } from '../../components/ApprovalDialog';
 import { useShop } from '../../logic/useShop';
 import { formatRupees, rupeesToPaise } from '../../logic/money';
 import { textFieldProps } from '../../logic/format';
+import { NumericLimitWarning } from '../../components/NumericLimitWarning';
 import { triggerFeedback } from '../../logic/feedback';
 import { useNumpadKeyboard } from '../../logic/useNumpadKeyboard';
 import { useBackHandler } from '../../logic/androidBack';
@@ -780,6 +781,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                       <label className="text-xs font-bold text-on-surface-variant">
                         {t('billing_flow.udhaar_phone_label')} <span className="text-error">*</span>
                       </label>
+                      <NumericLimitWarning value={customerPhone} maxLength={10} />
                       <input
                         {...textFieldProps('phone', customerPhone, setCustomerPhone)}
                         type="text"

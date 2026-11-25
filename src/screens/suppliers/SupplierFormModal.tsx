@@ -3,6 +3,7 @@ import { type Supplier } from '../../db';
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
 import { textFieldProps } from '../../logic/format';
+import { NumericLimitWarning } from '../../components/NumericLimitWarning';
 import { saveSupplier } from '../../logic/suppliers';
 import { triggerFeedback } from '../../logic/feedback';
 
@@ -138,6 +139,7 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
             <label className="font-body-md text-body-md font-bold text-on-surface">
               {t('suppliers.label_phone_input')}
             </label>
+            <NumericLimitWarning value={phone} maxLength={10} />
             <input
               {...textFieldProps('phone', phone, setPhone)}
               placeholder={t('suppliers.placeholder_phone')}

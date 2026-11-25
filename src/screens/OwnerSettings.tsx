@@ -7,6 +7,7 @@ import { MobileTopBar } from '../components/MobileTopBar';
 import { useShop } from '../logic/useShop';
 import { isOwner } from '../logic/roles';
 import { textFieldProps } from '../logic/format';
+import { NumericLimitWarning } from '../components/NumericLimitWarning';
 import { getPinLengthSetting, hashPin, verifyPin } from '../logic/pin';
 import {
   DEFAULT_APPROVAL_RULES,
@@ -1051,6 +1052,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-bold text-on-surface">{t('owner_settings.label_phone')}</label>
+                <NumericLimitWarning value={editPhone} maxLength={10} />
                 <input
                   type="text"
                   className="h-13 px-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface font-medium focus:outline-primary"

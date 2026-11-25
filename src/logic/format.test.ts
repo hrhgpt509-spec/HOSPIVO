@@ -5,6 +5,8 @@ import {
   filterDigits,
   formatField,
   textFieldProps,
+  getNumericLimitStatus,
+  numericInputProps,
 } from './format';
 
 describe('format.ts logic tests', () => {
@@ -158,6 +160,37 @@ describe('format.ts logic tests', () => {
       expect(currentVal).toBe('ABC');
       // "ab " before cursor formats to "AB" (length 2), so cursor stays at 2
       expect(setSelectionRangeMock).toHaveBeenCalledWith(2, 2);
+    });
+  });
+
+  describe('getNumericLimitStatus & numericInputProps', () => {
+    it('flags 11th digit on 10-digit phone numbers without blocking editing', () => {
+      expect(getNumericLimitStatus('9876543210', 10)).toEqual({
+        exceeded: false,
+        currentLength: 10,
+        maxLength: 10,
+      });
+      expect(getNumericLimitStatus('98765432101', 10)).toEqual({
+        exceeded: true,
+        currentLength: 11,
+        maxLength: 10,
+      });
+      // Backspace back to 10 clears the warning
+      expect(getNumericLimitStatus('9876543210', 10).exceeded).toBe(false);
+    });
+
+    it('returns mobile number-pad inputMode and pattern attributes', () => {
+      expect(numericInputProps('integer')).toEqual({
+        inputMode: 'numeric',
+        pattern: '[0-9]*',
+      });
+      expect(numericInputProps('decimal')).toEqual({
+        inputMode: 'decimal',
+      });
+      expect(numericInputProps('phone')).toEqual({
+        inputMode: 'tel',
+        pattern: '[0-9]*',
+      });
     });
   });
 });

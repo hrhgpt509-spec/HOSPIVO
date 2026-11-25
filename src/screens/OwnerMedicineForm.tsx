@@ -713,6 +713,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                     </span>
                     <input
                       type="text"
+                      inputMode="decimal"
                       value={formData.mrpRupees}
                       onChange={(e) => {
                         setFormData((prev) => ({ ...prev, mrpRupees: e.target.value }));
@@ -751,6 +752,8 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                   </label>
                   <input
                     type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     min="1"
                     step="1"
                     value={formData.unitsPerPack}
@@ -950,6 +953,8 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                   </label>
                   <input
                     type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     min="0"
                     step="1"
                     value={formData.minStockUnits}

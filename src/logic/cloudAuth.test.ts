@@ -1021,7 +1021,7 @@ describe('cloudAuth unit tests', () => {
 
       const cloudOnlyBills = await db.bills.toArray();
       expect(cloudOnlyBills.map((b) => b.billNo)).toEqual(['CLOUD-MERGE/0001']);
-      expect(pushedDuringMerge.length).toBe(0);
+      expect(pushedDuringMerge.filter((e) => e.entity_type !== 'device').length).toBe(0);
     });
 
     it('Scenario 4 (Sign-Out): stops cloud sync cleanly and keeps device data usable in Local Mode with zero future cloud queueing', async () => {

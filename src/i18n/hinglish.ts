@@ -39,6 +39,7 @@ export const hinglish: TranslationSchema = {
     error_occurred: 'Ek error aaya',
     generic_error: 'Kuch galat ho gaya',
     saved_badge: 'Save ho gaya',
+    limit_exceeded_warning: 'Limit exceed: maximum {max} digits hi allowed hain',
   },
   login: {
     pos_title: 'दवा दुकान POS',

@@ -428,6 +428,13 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
   - Removed hardcoded `'My Medical Store'` fallbacks in `runSyncCycle()`, `resolveCloudSignInChoice()`, and `registerCurrentShopInDirectory()` so pre-setup syncs or incomplete states never auto-provision a phantom shop.
   - Updated `Setup.tsx` to persist `cloudShopUuid` back onto `db.shop` after `provisionCloudShop()` so `ShopSelector` lists strictly the single shop entered by the user.
 
+- Multi-Device Cloud Registration & Sync Now Refresh (`cloudSync.ts`, `cloudAuth.ts`, `OwnerCloudSync.tsx`, `Setup.tsx`, `multiShop.test.ts`):
+  - Hooked `registerCurrentDeviceInCloud()` into `runSyncCycle()`, `hydrateExistingCloudShopOnly()`, and `mergeLocalWithCloudShop()`, added `userId`/`storeId`/`lastActiveAt` payload fields and append-only `.insert()` fallback if `.upsert()` is blocked by RLS, used platform-aware default device names (`Android Mobile` vs `Counter PC 1 (Billing Desk)`), and refreshed Connected Devices on **Sync Now**.
+
+- Add Stock Mobile Modals/Navigation & Numeric Keypad + Limit Warning (`StockJodo.tsx`, `NumericLimitWarning.tsx`, `format.ts`, `format.test.ts` + phone/numeric inputs):
+  - Extracted `sharedModals` in `StockJodo.tsx` and mounted them in BOTH compact mobile and desktop views so **Back/Home** (including when an invoice number is typed without a supplier) and **+ New Supplier** work cleanly without trapping the user.
+  - Added `numericInputProps()`, `getNumericLimitStatus()`, and `<NumericLimitWarning>` (`common.limit_exceeded_warning` in en/hi/hinglish) so mobile keyboards open the number pad automatically and typing an 11th digit on 10-digit phone fields shows a red warning above the field without blocking editing.
+
 
 
 

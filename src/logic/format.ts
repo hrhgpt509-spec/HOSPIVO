@@ -74,8 +74,41 @@ export interface TextFieldProps {
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   autoCapitalize?: 'words' | 'characters' | 'none' | 'off';
-  inputMode?: 'tel' | 'text';
+  inputMode?: 'tel' | 'numeric' | 'decimal' | 'text';
+  pattern?: string;
   autoComplete: string;
+}
+
+/**
+ * Checks whether a numeric/digit field has exceeded its maximum allowed length
+ * without blocking typing, backspace, or editing.
+ */
+export function getNumericLimitStatus(
+  value: string,
+  maxLength: number
+): { exceeded: boolean; currentLength: number; maxLength: number } {
+  const digits = filterDigits(value || '');
+  return {
+    exceeded: digits.length > maxLength,
+    currentLength: digits.length,
+    maxLength,
+  };
+}
+
+/**
+ * Standard mobile/Android numeric keyboard attributes.
+ */
+export function numericInputProps(kind: 'integer' | 'decimal' | 'phone'): {
+  inputMode: 'numeric' | 'decimal' | 'tel';
+  pattern?: string;
+} {
+  if (kind === 'decimal') {
+    return { inputMode: 'decimal' };
+  }
+  if (kind === 'phone') {
+    return { inputMode: 'tel', pattern: '[0-9]*' };
+  }
+  return { inputMode: 'numeric', pattern: '[0-9]*' };
 }
 
 /**
@@ -89,6 +122,7 @@ export function textFieldProps(
 ): TextFieldProps {
   let autoCapitalize: TextFieldProps['autoCapitalize'];
   let inputMode: TextFieldProps['inputMode'];
+  let pattern: TextFieldProps['pattern'];
 
   if (kind === 'name') {
     autoCapitalize = 'words';
@@ -98,6 +132,7 @@ export function textFieldProps(
 
   if (kind === 'phone') {
     inputMode = 'tel';
+    pattern = '[0-9]*';
   }
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -134,6 +169,7 @@ export function textFieldProps(
     onChange,
     autoCapitalize,
     inputMode,
+    ...(pattern ? { pattern } : {}),
     autoComplete: 'off',
   };
 }

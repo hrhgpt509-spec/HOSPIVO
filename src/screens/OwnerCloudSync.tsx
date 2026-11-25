@@ -210,6 +210,7 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
     try {
       const res = await runSyncCycle({ force: true });
       const { remaining } = await refreshSyncStatus();
+      await refreshConnectedDevices();
 
       if (res.success) {
         triggerFeedback('success', t('cloud_sync.toast_synced'));
@@ -235,6 +236,7 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
       await retryFailedSyncItems();
       const res = await runSyncCycle();
       const { remaining } = await refreshSyncStatus();
+      await refreshConnectedDevices();
 
       if (res.success) {
         triggerFeedback('success', t('cloud_sync.toast_synced'));

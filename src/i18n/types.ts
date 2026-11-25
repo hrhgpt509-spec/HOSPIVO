@@ -46,6 +46,7 @@ export interface TranslationSchema {
     error_occurred: string;
     generic_error: string;
     saved_badge: string;
+    limit_exceeded_warning: string;
   };
   login: {
     pos_title: string;

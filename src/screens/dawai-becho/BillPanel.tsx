@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
 import { formatRupees } from '../../logic/money';
-import { textFieldProps } from '../../logic/format';
+import { textFieldProps, numericInputProps } from '../../logic/format';
+import { NumericLimitWarning } from '../../components/NumericLimitWarning';
 import type { BillTotalsResult } from '../../logic/billing';
 import { BillDiscountRow, type BillDiscountMode } from './BillDiscountRow';
 import type { CartItem } from './types';
@@ -167,12 +168,15 @@ export const BillPanel: React.FC<BillPanelProps> = ({
               placeholder={t('dawai_becho.customer_name_placeholder')}
               className="h-11 px-3 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            <input
-              {...textFieldProps('phone', customerPhone, onCustomerPhoneChange)}
-              type="text"
-              placeholder={t('dawai_becho.customer_phone_placeholder')}
-              className="h-11 px-3 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+            <div className="flex flex-col">
+              <NumericLimitWarning value={customerPhone} maxLength={10} />
+              <input
+                {...textFieldProps('phone', customerPhone, onCustomerPhoneChange)}
+                type="text"
+                placeholder={t('dawai_becho.customer_phone_placeholder')}
+                className="h-11 px-3 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
             <input
               {...textFieldProps('name', doctorName, onDoctorNameChange)}
               type="text"
@@ -185,6 +189,7 @@ export const BillPanel: React.FC<BillPanelProps> = ({
               </span>
               <input
                 type="number"
+                {...numericInputProps('integer')}
                 min={0}
                 max={100}
                 step={1}

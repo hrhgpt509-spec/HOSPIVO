@@ -39,6 +39,7 @@ export const hi: TranslationSchema = {
     error_occurred: 'एक त्रुटि हुई',
     generic_error: 'कुछ गलत हो गया',
     saved_badge: 'सहेजा गया',
+    limit_exceeded_warning: 'सीमा पार: अधिकतम {max} अंक ही मान्य हैं',
   },
   login: {
     pos_title: 'दवा दुकान POS',

@@ -20,6 +20,7 @@ import {
   startRealtimeSync,
   stopRealtimeSync,
   emitSyncApplied,
+  registerCurrentDeviceInCloud,
   type LocalDataSummary,
 } from './cloudSync';
 
@@ -240,8 +241,9 @@ export async function hydrateExistingCloudShopOnly(
     console.warn('Initial shop hydration warning:', syncErr);
   }
 
-  // 3. Final deduplication pass and start silent Realtime subscription
+  // 3. Final deduplication pass, register device, and start silent Realtime subscription
   await deduplicateLocalUsers().catch(() => {});
+  void registerCurrentDeviceInCloud().catch(() => {});
   void startRealtimeSync(existingShop.id).catch(() => {});
 }
 
@@ -313,6 +315,7 @@ export async function mergeLocalWithCloudShop(
   }
 
   emitSyncApplied(['shop', 'staff', 'bill', 'medicine', 'batch', 'customer', 'udhaar_payment', 'sync_status']);
+  void registerCurrentDeviceInCloud().catch(() => {});
   void startRealtimeSync(existingShop.id).catch(() => {});
 }
 

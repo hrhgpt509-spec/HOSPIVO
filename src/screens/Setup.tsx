@@ -12,6 +12,7 @@ import {
   type ApprovalRuleType,
 } from '../logic/approvals';
 import { formatField, textFieldProps, filterDigits } from '../logic/format';
+import { NumericLimitWarning } from '../components/NumericLimitWarning';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { useBackHandler } from '../logic/androidBack';
 import { useTranslation, tButton } from '../i18n';
@@ -455,7 +456,12 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
     await db.settings.put({ key: 'pinLength', value: 4 });
     await db.settings.put({ key: 'cloud_enabled', value: mode === 'cloud' });
     await db.settings.put({ key: 'shop_sync_id', value: shopSyncId.trim().toUpperCase() });
-    await db.settings.put({ key: 'device_name', value: 'Counter PC 1 (Billing Desk)' });
+    const defaultDeviceName = Capacitor.isNativePlatform()
+      ? 'Android Mobile'
+      : typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '')
+        ? 'Android Device'
+        : 'Counter PC 1 (Billing Desk)';
+    await db.settings.put({ key: 'device_name', value: defaultDeviceName });
     if (ownerEmail) {
       await db.settings.put({ key: 'owner_email', value: ownerEmail.trim().toLowerCase() });
     }
@@ -767,6 +773,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
                     <span className="text-[16px] font-medium text-[#5C6E66]">{t('setup.phone_sub_label')}</span>
                   ) : null}
                 </label>
+                <NumericLimitWarning value={phone} maxLength={10} />
                 <div className="relative flex items-center">
                   <div className="absolute left-4 text-[#1B8F4A] pointer-events-none">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

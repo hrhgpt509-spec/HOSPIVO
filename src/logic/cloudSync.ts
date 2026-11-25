@@ -135,7 +135,12 @@ export async function getCloudConfig(): Promise<CloudConfig> {
   const hasCustomRestConfig = Boolean(savedUrl && savedKey);
   const cloudUrl = savedUrl || envUrl;
   const cloudAnonKey = savedKey || envKey;
-  const deviceName = (deviceItem?.value as string) || 'Counter PC 1 (Billing Desk)';
+  const defaultDeviceName = Capacitor.isNativePlatform()
+    ? 'Android Mobile'
+    : typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '')
+      ? 'Android Device'
+      : 'Counter PC 1 (Billing Desk)';
+  const deviceName = (deviceItem?.value as string) || defaultDeviceName;
   const lastCloudSyncAt = (lastSyncItem?.value as number) || null;
   const lastStatus = (statusItem?.value as CloudConfig['lastStatus']) || 'never';
   const lastError = (errorItem?.value as string) || null;
@@ -1571,6 +1576,7 @@ export async function runSyncCycle(options?: {
     // 3. Remote pull phase (pull remote deltas & approvals)
     if (cloudShopUuid) {
       await pullRemoteEvents(config, cloudShopUuid).catch(() => {});
+      void registerCurrentDeviceInCloud().catch(() => {});
     }
     await syncApprovalRequests(config, cloudShopUuid).catch(() => {});
 
@@ -3106,28 +3112,40 @@ export async function registerCurrentDeviceInCloud(
     }
 
     const eventId = `device:${session.cloudShopUuid}:${resolvedDeviceId}`;
-    await supabase.from('hospivo_sync_events').upsert(
-      [
+    const eventRow = {
+      id: eventId,
+      shop_id: session.cloudShopUuid,
+      shop_sync_id: config.shopSyncId,
+      device_id: resolvedDeviceId,
+      entity_type: 'device',
+      entity_id: resolvedDeviceId,
+      operation: 'upsert',
+      payload: {
+        deviceId: resolvedDeviceId,
+        deviceName,
+        platform,
+        userId: session.user?.id || null,
+        storeId: session.cloudShopUuid,
+        lastActiveAt: lastSeenAt,
+        lastSeenAt,
+        shopSyncId: config.shopSyncId,
+      },
+      created_at: lastSeenAt,
+    };
+
+    const { error: upsertErr } = await supabase
+      .from('hospivo_sync_events')
+      .upsert([eventRow], { onConflict: 'id' });
+
+    if (upsertErr) {
+      await supabase.from('hospivo_sync_events').insert([
         {
-          id: eventId,
-          shop_id: session.cloudShopUuid,
-          shop_sync_id: config.shopSyncId,
-          device_id: resolvedDeviceId,
-          entity_type: 'device',
-          entity_id: resolvedDeviceId,
-          operation: 'upsert',
-          payload: {
-            deviceId: resolvedDeviceId,
-            deviceName,
-            platform,
-            lastSeenAt,
-            shopSyncId: config.shopSyncId,
-          },
-          created_at: lastSeenAt,
+          ...eventRow,
+          id: `${eventId}:${Date.now()}`,
+          operation: 'insert',
         },
-      ],
-      { onConflict: 'id' }
-    );
+      ]);
+    }
   } catch (err) {
     console.warn('Could not register device in cloud:', err);
   }
@@ -3188,14 +3206,14 @@ export async function listConnectedDevices(): Promise<ConnectedDeviceInfo[]> {
             const devId = String(p.deviceId || row?.device_id || '').trim();
             if (!devId) continue;
             const prev = byId.get(devId);
-            const rowTime = String(p.lastSeenAt || row?.created_at || '');
+            const rowTime = String(p.lastActiveAt || p.lastSeenAt || row?.created_at || '');
             if (!prev || rowTime >= prev.lastSeenAt) {
               byId.set(devId, {
                 deviceId: devId,
                 deviceName: String(p.deviceName || prev?.deviceName || 'Billing Desk'),
                 platform: String(p.platform || prev?.platform || 'Web / Desktop'),
                 lastSeenAt: rowTime || new Date().toISOString(),
-                isCurrentDevice: devId === config.deviceId,
+                isCurrentDevice: devId === resolvedDeviceId,
               });
             }
           }
