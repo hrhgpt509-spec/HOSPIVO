@@ -899,9 +899,39 @@ describe('strict account/shop isolation & multi-shop management', () => {
     const cachedAfter = (await db.settings.get('connected_devices_cache'))?.value as any[];
     expect(cachedAfter.some((d) => d.deviceId === 'dev-stale-2')).toBe(false);
 
-    // Remote revocation on THIS device wipes local database and signs out
+    // Seed localStorage, sessionStorage, and a mock Web FileSystemDirectoryHandle with backup files
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('hospivo_shop_directory', JSON.stringify([{ name: 'Revoke Test Medical' }]));
+    }
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('hospivo_active_tab', 'home');
+    }
+    const removeEntrySpy = vi.fn().mockResolvedValue(undefined);
+    const { saveBackupDirectoryHandle, getSavedBackupDirectoryHandle } = await import('./backup');
+    await saveBackupDirectoryHandle({
+      name: 'HospivoBackups',
+      async *values() {
+        yield { kind: 'file', name: 'hospivo_backup_2026-05-01.json' };
+        yield { kind: 'file', name: 'auto_hospivo_backup_2026-05-02.json' };
+        yield { kind: 'file', name: 'unrelated_notes.txt' };
+      },
+      removeEntry: removeEntrySpy,
+    });
+
+    // Remote revocation on THIS device wipes backup files, localStorage/sessionStorage, Dexie DB, and signs out locally
     await wipeDeviceOnRemoteRevocation();
-    expect(signOutSpy).toHaveBeenCalled();
+    expect(removeEntrySpy).toHaveBeenCalledWith('hospivo_backup_2026-05-01.json');
+    expect(removeEntrySpy).toHaveBeenCalledWith('auto_hospivo_backup_2026-05-02.json');
+    expect(removeEntrySpy).not.toHaveBeenCalledWith('unrelated_notes.txt');
+    expect(await getSavedBackupDirectoryHandle()).toBeNull();
+    expect(signOutSpy).toHaveBeenCalledWith({ scope: 'local' });
     expect(await db.shop.count()).toBe(0);
+    expect(await db.settings.count()).toBe(0);
+    if (typeof localStorage !== 'undefined') {
+      expect(localStorage.length).toBe(0);
+    }
+    if (typeof sessionStorage !== 'undefined') {
+      expect(sessionStorage.length).toBe(0);
+    }
   });
 });

@@ -1,6 +1,7 @@
 import Dexie from 'dexie';
 import { Capacitor } from '@capacitor/core';
 import { scheduleAutoBackupAfterChange } from './autoBackup';
+import { deleteAllLocalBackupFiles } from './backup';
 import {
   db,
   resetDatabase,
@@ -315,7 +316,7 @@ export async function enqueueSyncItem(
 
     // Non-blocking silent sync cycle trigger whenever backend or custom REST is configured
     if (isBackendConfigured() || (config.cloudUrl && config.cloudAnonKey)) {
-      runSyncCycle().catch(() => {});
+      runSyncCycle().catch(() => { });
     }
 
     return id as number;
@@ -1188,58 +1189,58 @@ export async function pullRemoteEvents(
         break;
       }
 
-    if (!data || data.length === 0) {
-      hasMore = false;
+      if (!data || data.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      const appliedTypes = new Set<string>();
+      for (const event of data) {
+        const isSameDevice =
+          Boolean(config.deviceId && event.device_id && event.device_id === config.deviceId);
+
+        // CRITICAL: For staff/user records, or if the entity does NOT exist locally in Dexie,
+        // apply it even if device tags match (e.g. multi-device with same name, or cleared db).
+        let shouldApply = !isSameDevice;
+        if (!shouldApply && event.entity_type === 'staff') {
+          const localUser = await db.users.get(String(event.entity_id));
+          if (!localUser) {
+            shouldApply = true;
+          }
+        }
+
+        if (shouldApply) {
+          try {
+            await applyRemoteEvent(event);
+            if (event.entity_type) {
+              appliedTypes.add(String(event.entity_type));
+            }
+          } catch (applyErr) {
+            console.warn('Failed to apply remote event:', applyErr);
+          }
+        }
+
+        if (typeof event.seq === 'number' && event.seq > currentSeq) {
+          currentSeq = event.seq;
+        }
+      }
+
+      if (appliedTypes.has('staff')) {
+        await deduplicateLocalUsers().catch(() => { });
+      }
+      if (appliedTypes.size > 0) {
+        emitSyncApplied(Array.from(appliedTypes));
+      }
+
+      totalPulled += data.length;
+      if (data.length < 200) {
+        hasMore = false;
+      }
+    } catch (err) {
+      console.warn('pullRemoteEvents fetch error:', err);
       break;
     }
-
-    const appliedTypes = new Set<string>();
-    for (const event of data) {
-      const isSameDevice =
-        Boolean(config.deviceId && event.device_id && event.device_id === config.deviceId);
-
-      // CRITICAL: For staff/user records, or if the entity does NOT exist locally in Dexie,
-      // apply it even if device tags match (e.g. multi-device with same name, or cleared db).
-      let shouldApply = !isSameDevice;
-      if (!shouldApply && event.entity_type === 'staff') {
-        const localUser = await db.users.get(String(event.entity_id));
-        if (!localUser) {
-          shouldApply = true;
-        }
-      }
-
-      if (shouldApply) {
-        try {
-          await applyRemoteEvent(event);
-          if (event.entity_type) {
-            appliedTypes.add(String(event.entity_type));
-          }
-        } catch (applyErr) {
-          console.warn('Failed to apply remote event:', applyErr);
-        }
-      }
-
-      if (typeof event.seq === 'number' && event.seq > currentSeq) {
-        currentSeq = event.seq;
-      }
-    }
-
-    if (appliedTypes.has('staff')) {
-      await deduplicateLocalUsers().catch(() => {});
-    }
-    if (appliedTypes.size > 0) {
-      emitSyncApplied(Array.from(appliedTypes));
-    }
-
-    totalPulled += data.length;
-    if (data.length < 200) {
-      hasMore = false;
-    }
-  } catch (err) {
-    console.warn('pullRemoteEvents fetch error:', err);
-    break;
   }
-}
 
   await db.settings.put({ key: 'last_pulled_seq', value: currentSeq });
 
@@ -1595,10 +1596,10 @@ export async function runSyncCycle(options?: {
 
     // 3. Remote pull phase (pull remote deltas & approvals)
     if (cloudShopUuid) {
-      await pullRemoteEvents(config, cloudShopUuid).catch(() => {});
-      void registerCurrentDeviceInCloud().catch(() => {});
+      await pullRemoteEvents(config, cloudShopUuid).catch(() => { });
+      void registerCurrentDeviceInCloud().catch(() => { });
     }
-    await syncApprovalRequests(config, cloudShopUuid).catch(() => {});
+    await syncApprovalRequests(config, cloudShopUuid).catch(() => { });
 
     const [remainingPendingCount, totalFailedCount] = await Promise.all([
       db.syncOutbox.where('status').equals('pending').count(),
@@ -1772,7 +1773,7 @@ export async function getPendingApprovalRequests(): Promise<ApprovalRequest[]> {
  */
 export async function pollApprovalRequest(requestId: number): Promise<ApprovalRequest | null> {
   // If remote URL is configured, run a quick sync cycle in background to pull remote changes
-  runSyncCycle().catch(() => {});
+  runSyncCycle().catch(() => { });
   return (await db.approvalRequests.get(requestId)) || null;
 }
 
@@ -1949,7 +1950,7 @@ export async function pullAndHydrateStaffAccounts(cloudShopUuid: string): Promis
       for (const evt of staffEvents) {
         await applyRemoteEvent(evt);
       }
-      await deduplicateLocalUsers().catch(() => {});
+      await deduplicateLocalUsers().catch(() => { });
       if (staffEvents.length > 0) {
         emitSyncApplied(['staff']);
       }
@@ -2410,7 +2411,7 @@ export async function switchToLocalWorkspace(): Promise<{ restored: boolean }> {
     if (shops.length > 0 && shops[0].id) {
       await db.shop.update(shops[0].id, { mode: 'local' });
     }
-    await deduplicateLocalUsers().catch(() => {});
+    await deduplicateLocalUsers().catch(() => { });
     emitSyncApplied(['shop', 'staff', 'bill', 'medicine', 'batch', 'customer', 'udhaar_payment']);
     return { restored: true };
   }
@@ -2543,7 +2544,7 @@ export async function startRealtimeSync(overrideShopUuid?: string): Promise<bool
           try {
             await applyRemoteEvent(event);
             if (event.entity_type === 'staff') {
-              await deduplicateLocalUsers().catch(() => {});
+              await deduplicateLocalUsers().catch(() => { });
             }
 
             if (typeof event.seq === 'number') {
@@ -2624,7 +2625,7 @@ export async function ensureCloudSyncActive(options?: { reconnectRealtime?: bool
         stopRealtimeSync();
       }
       await startRealtimeSync(session.cloudShopUuid);
-      void registerCurrentDeviceInCloud().catch(() => {});
+      void registerCurrentDeviceInCloud().catch(() => { });
     }
     await runSyncCycle();
   } catch {
@@ -2743,7 +2744,7 @@ export function initNetworkSyncListeners(): () => void {
             handle = h;
           }
         })
-        .catch(() => {});
+        .catch(() => { });
       cleanups.push(() => {
         removed = true;
         handle?.remove?.();
@@ -2766,7 +2767,7 @@ export function initNetworkSyncListeners(): () => void {
             handle = h;
           }
         })
-        .catch(() => {});
+        .catch(() => { });
       cleanups.push(() => {
         removed = true;
         handle?.remove?.();
@@ -3520,10 +3521,18 @@ export function isDeviceStale(lastSeenAt: string, now: Date = new Date()): boole
  */
 export async function wipeDeviceOnRemoteRevocation(): Promise<void> {
   stopRealtimeSync();
+  // 1. Delete saved local backup files BEFORE clearing settings/storage
+  await deleteAllLocalBackupFiles().catch(() => {});
+
+  // 2. Sign out of Supabase Auth locally on this device only
   if (isBackendConfigured()) {
-    await supabase.auth.signOut().catch(() => {});
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
   }
+
+  // 3. Delete & re-open Dexie IndexedDB database (clears all tables & settings)
   await resetDatabase();
+
+  // 4. Clear browser/WebView localStorage, sessionStorage, and Cache Storage
   if (typeof localStorage !== 'undefined') {
     try {
       localStorage.clear();
@@ -3538,6 +3547,15 @@ export async function wipeDeviceOnRemoteRevocation(): Promise<void> {
       // ignore
     }
   }
+  if (typeof caches !== 'undefined' && typeof caches.keys === 'function') {
+    try {
+      const cacheKeys = await caches.keys();
+      await Promise.all(cacheKeys.map((key) => caches.delete(key).catch(() => false)));
+    } catch {
+      // ignore
+    }
+  }
+
   emitSyncApplied(['device_revoked', 'workspace_reset']);
 }
 
@@ -3565,7 +3583,7 @@ export async function deleteConnectedDevice(targetDeviceId: string): Promise<Con
 
   // 2. Record audit log before wiping if self-delete
   await addAudit('Cloud', 'device_deleted', targetDeviceId, 'Removed linked device from Connected Devices').catch(
-    () => {}
+    () => { }
   );
 
   // 3. Push `device_revoked` event & remove `device` event in Supabase

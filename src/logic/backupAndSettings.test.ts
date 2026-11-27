@@ -2,12 +2,27 @@ import 'fake-indexeddb/auto';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const mockWriteFile = vi.hoisted(() => vi.fn(async () => ({ uri: 'file:///cache/backup.json' })));
+const mockReaddir = vi.hoisted(() =>
+  vi.fn(async ({ path }: { path: string }) => {
+    if (path === 'Hospivo') {
+      return { files: [{ name: 'auto_hospivo_2026-05-01.json' }, { name: 'hospivo_2026-05-02.json' }] };
+    }
+    return { files: [] };
+  })
+);
+const mockDeleteFile = vi.hoisted(() => vi.fn(async () => undefined));
+const mockRmdir = vi.hoisted(() => vi.fn(async () => undefined));
 const mockShare = vi.hoisted(() => vi.fn(async () => ({ activityType: 'test' })));
 
 vi.mock('@capacitor/filesystem', () => ({
-  Directory: { Documents: 'DOCUMENTS', Cache: 'CACHE' },
+  Directory: { Documents: 'DOCUMENTS', Data: 'DATA', Cache: 'CACHE' },
   Encoding: { UTF8: 'utf8' },
-  Filesystem: { writeFile: mockWriteFile },
+  Filesystem: {
+    writeFile: mockWriteFile,
+    readdir: mockReaddir,
+    deleteFile: mockDeleteFile,
+    rmdir: mockRmdir,
+  },
 }));
 
 vi.mock('@capacitor/share', () => ({
@@ -31,6 +46,7 @@ import {
 } from './notifications';
 import {
   createBackup,
+  deleteAllLocalBackupFiles,
   createBackupJson,
   computeSha256,
   computeSha256Sync,
@@ -683,6 +699,30 @@ describe('Backup, Staff PIN & Settings Logic', () => {
       expect(isQuietHoursActive(loaded, new Date(2026, 4, 10, 6, 30, 0))).toBe(true);
       // 14:00 is outside quiet hours
       expect(isQuietHoursActive(loaded, new Date(2026, 4, 10, 14, 0, 0))).toBe(false);
+    });
+
+    it('deletes Capacitor Android local backup files and Hospivo backup folders gracefully on device wipe', async () => {
+      const { Capacitor } = await import('@capacitor/core');
+      mockReaddir.mockClear();
+      mockDeleteFile.mockClear();
+      mockRmdir.mockClear();
+      await db.settings.put({
+        key: 'auto_backup_records',
+        value: [{ filename: 'auto_hospivo_2026-05-01.json', nativePath: 'Hospivo/auto_hospivo_2026-05-01.json' }],
+      });
+
+      const nativeSpy = vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+      try {
+        await deleteAllLocalBackupFiles();
+        expect(mockDeleteFile).toHaveBeenCalledWith(
+          expect.objectContaining({ path: 'Hospivo/auto_hospivo_2026-05-01.json' })
+        );
+        expect(mockRmdir).toHaveBeenCalledWith(
+          expect.objectContaining({ path: 'Hospivo', recursive: true })
+        );
+      } finally {
+        nativeSpy.mockRestore();
+      }
     });
   });
 });

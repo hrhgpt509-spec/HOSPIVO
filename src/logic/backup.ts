@@ -940,3 +940,110 @@ export async function restoreBackup(
     totalRecords,
   };
 }
+
+const HOSPIVO_BACKUP_FILE_RE = /^(auto_)?hospivo.*\.json$/i;
+
+/**
+ * Best-effort deletion of all locally saved Hospivo backup files on this device
+ * (Capacitor Android Documents/Data/Cache folders + Web File System Access API directory handle).
+ * Never throws so device revocation wipe can always proceed cleanly.
+ */
+export async function deleteAllLocalBackupFiles(): Promise<void> {
+  const knownFilenames = new Set<string>();
+  const knownNativePaths = new Set<string>();
+  try {
+    const autoRecItem = await db.settings.get('auto_backup_records');
+    if (autoRecItem && Array.isArray(autoRecItem.value)) {
+      for (const rec of autoRecItem.value as Array<{ filename?: string; nativePath?: string }>) {
+        if (rec?.filename) knownFilenames.add(rec.filename);
+        if (rec?.nativePath) knownNativePaths.add(rec.nativePath);
+      }
+    }
+    const historyItem = await db.settings.get('backup_history');
+    if (historyItem && Array.isArray(historyItem.value)) {
+      for (const rec of historyItem.value as Array<{ filename?: string }>) {
+        if (rec?.filename) knownFilenames.add(rec.filename);
+      }
+    }
+  } catch {
+    // Ignore DB read errors
+  }
+
+  if (Capacitor.isNativePlatform()) {
+    const dirsToScan = [Directory.Documents, Directory.Data, Directory.Cache].filter(Boolean);
+
+    for (const nativePath of knownNativePaths) {
+      for (const dir of dirsToScan) {
+        await Filesystem.deleteFile({ path: nativePath, directory: dir }).catch(() => {});
+      }
+    }
+
+    for (const dir of dirsToScan) {
+      try {
+        if (typeof Filesystem.readdir === 'function') {
+          const subRes = await Filesystem.readdir({ path: 'Hospivo', directory: dir }).catch(() => null);
+          const subFiles = Array.isArray(subRes?.files) ? subRes.files : [];
+          for (const entry of subFiles) {
+            const name = typeof entry === 'string' ? entry : entry?.name;
+            if (name) {
+              await Filesystem.deleteFile({ path: `Hospivo/${name}`, directory: dir }).catch(() => {});
+            }
+          }
+        }
+        if (typeof Filesystem.rmdir === 'function') {
+          await Filesystem.rmdir({ path: 'Hospivo', directory: dir, recursive: true }).catch(() => {});
+        }
+        if (typeof Filesystem.readdir === 'function') {
+          const rootRes = await Filesystem.readdir({ path: '', directory: dir }).catch(() => null);
+          const rootFiles = Array.isArray(rootRes?.files) ? rootRes.files : [];
+          for (const entry of rootFiles) {
+            const name = typeof entry === 'string' ? entry : entry?.name;
+            if (name && (HOSPIVO_BACKUP_FILE_RE.test(name) || knownFilenames.has(name))) {
+              await Filesystem.deleteFile({ path: name, directory: dir }).catch(() => {});
+            }
+          }
+        }
+      } catch {
+        // Non-fatal: missing directory or OS permission restriction
+      }
+    }
+  }
+
+  try {
+    const dirHandle = await getSavedBackupDirectoryHandle();
+    if (dirHandle && typeof dirHandle.removeEntry === 'function') {
+      const filesToDelete = new Set<string>(knownFilenames);
+      if (typeof dirHandle.values === 'function') {
+        try {
+          for await (const entry of dirHandle.values()) {
+            const name = entry?.name;
+            if (name && (HOSPIVO_BACKUP_FILE_RE.test(name) || knownFilenames.has(name))) {
+              filesToDelete.add(name);
+            }
+          }
+        } catch {
+          // Ignore iteration errors / revoked handle permissions
+        }
+      } else if (typeof dirHandle.entries === 'function') {
+        try {
+          for await (const [, entry] of dirHandle.entries()) {
+            const name = entry?.name;
+            if (name && (HOSPIVO_BACKUP_FILE_RE.test(name) || knownFilenames.has(name))) {
+              filesToDelete.add(name);
+            }
+          }
+        } catch {
+          // Ignore iteration errors
+        }
+      }
+
+      for (const fileName of filesToDelete) {
+        await dirHandle.removeEntry(fileName).catch(() => {});
+      }
+    }
+  } catch {
+    // Non-fatal
+  } finally {
+    _resetBackupDirectoryHandleForTesting();
+  }
+}
