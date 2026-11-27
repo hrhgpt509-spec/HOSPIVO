@@ -647,24 +647,26 @@ describe('strict account/shop isolation & multi-shop management', () => {
           select: vi.fn().mockReturnValue(
             createMockArrayQueryChain([
               {
-                device_id: 'dev-laptop-1',
-                created_at: '2026-11-25T08:00:00.000Z',
-                payload: {
+                entity_id: 'dev-laptop-1',
+                client_created_at: Date.parse('2026-11-25T08:00:00.000Z'),
+                payload_json: JSON.stringify({
                   deviceId: 'dev-laptop-1',
                   deviceName: 'Counter PC 1',
                   platform: 'Web / Desktop',
-                  lastSeenAt: '2026-11-25T08:00:00.000Z',
-                },
+                  appVersion: '4.12.8',
+                  lastActiveAt: '2026-11-25T08:00:00.000Z',
+                }),
               },
               {
-                device_id: 'dev-phone-2',
-                created_at: '2026-11-25T08:05:00.000Z',
-                payload: {
+                entity_id: 'dev-phone-2',
+                client_created_at: Date.parse('2026-11-25T08:05:00.000Z'),
+                payload_json: JSON.stringify({
                   deviceId: 'dev-phone-2',
                   deviceName: 'Owner Android Phone',
                   platform: 'Android App',
-                  lastSeenAt: '2026-11-25T08:05:00.000Z',
-                },
+                  appVersion: '4.12.8',
+                  lastActiveAt: '2026-11-25T08:05:00.000Z',
+                }),
               },
             ])
           ),
@@ -679,6 +681,10 @@ describe('strict account/shop isolation & multi-shop management', () => {
     await registerCurrentDeviceInCloud('Counter PC 1');
     expect(upsertSpy).toHaveBeenCalled();
     expect(insertSpy).toHaveBeenCalled();
+    const pushedRow = upsertSpy.mock.calls[0][0][0];
+    expect(pushedRow).toHaveProperty('payload_json');
+    expect(pushedRow).not.toHaveProperty('device_id');
+    expect(pushedRow).not.toHaveProperty('payload');
 
     const devices = await listConnectedDevices();
     expect(devices.map((d) => d.deviceId)).toEqual(['dev-laptop-1', 'dev-phone-2']);

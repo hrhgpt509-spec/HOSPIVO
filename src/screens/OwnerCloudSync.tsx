@@ -197,8 +197,9 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
       });
       setConfig(updated);
       await registerCurrentDeviceInCloud(deviceName.trim()).catch(() => {});
-      await listConnectedDevices().then(setConnectedDevices).catch(() => {});
-      triggerFeedback('success', t('cloud_sync.toast_saved'));
+      const list = await listConnectedDevices().catch(() => []);
+      if (list.length > 0) setConnectedDevices(list);
+      triggerFeedback('success', t('cloud_sync.toast_device_linked'));
     } catch {
       triggerFeedback('error', t('common.error_occurred'));
     }

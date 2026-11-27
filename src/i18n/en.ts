@@ -1705,6 +1705,7 @@ export const en: TranslationSchema = {
     connected_devices_empty: 'No other devices linked yet. Sign in on your phone or another PC with the same account.',
     this_device_badge: 'This Device',
     last_seen_prefix: 'Last active:',
+    toast_device_linked: 'Device linked & connected devices refreshed',
   },
   remote_approval: {
     ask_owner_title: 'Ask Owner',

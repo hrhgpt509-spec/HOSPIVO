@@ -1705,6 +1705,7 @@ export const hinglish: TranslationSchema = {
     connected_devices_empty: 'Abhi koi aur device linked nahi hai. Apne phone ya dusre PC par isi account se sign in karein.',
     this_device_badge: 'Yeh Device',
     last_seen_prefix: 'Last active:',
+    toast_device_linked: 'Device link ho gaya aur connected devices refresh hue',
   },
   remote_approval: {
     ask_owner_title: 'Owner ko poocho',

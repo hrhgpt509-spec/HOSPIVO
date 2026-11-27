@@ -2604,6 +2604,7 @@ export async function ensureCloudSyncActive(options?: { reconnectRealtime?: bool
         stopRealtimeSync();
       }
       await startRealtimeSync(session.cloudShopUuid);
+      void registerCurrentDeviceInCloud().catch(() => {});
     }
     await runSyncCycle();
   } catch {
@@ -3047,9 +3048,12 @@ export interface ConnectedDeviceInfo {
   deviceId: string;
   deviceName: string;
   platform: string;
+  appVersion?: string;
   lastSeenAt: string;
   isCurrentDevice: boolean;
 }
+
+const APP_VERSION = (import.meta as any).env?.VITE_APP_VERSION || '4.12.8';
 
 function detectDevicePlatform(): string {
   if (Capacitor.isNativePlatform()) {
@@ -3078,6 +3082,7 @@ export async function registerCurrentDeviceInCloud(
     deviceId: resolvedDeviceId,
     deviceName,
     platform,
+    appVersion: APP_VERSION,
     lastSeenAt,
     isCurrentDevice: true,
   };
@@ -3112,25 +3117,32 @@ export async function registerCurrentDeviceInCloud(
     }
 
     const eventId = `device:${session.cloudShopUuid}:${resolvedDeviceId}`;
+    const payloadObj = {
+      device_id: resolvedDeviceId,
+      deviceId: resolvedDeviceId,
+      device_name: deviceName,
+      deviceName,
+      platform,
+      app_version: APP_VERSION,
+      appVersion: APP_VERSION,
+      user_id: session.user?.id || null,
+      userId: session.user?.id || null,
+      store_id: session.cloudShopUuid,
+      storeId: session.cloudShopUuid,
+      last_active_at: lastSeenAt,
+      lastActiveAt: lastSeenAt,
+      lastSeenAt,
+      shopSyncId: config.shopSyncId,
+    };
+
     const eventRow = {
       id: eventId,
       shop_id: session.cloudShopUuid,
       shop_sync_id: config.shopSyncId,
-      device_id: resolvedDeviceId,
       entity_type: 'device',
       entity_id: resolvedDeviceId,
-      operation: 'upsert',
-      payload: {
-        deviceId: resolvedDeviceId,
-        deviceName,
-        platform,
-        userId: session.user?.id || null,
-        storeId: session.cloudShopUuid,
-        lastActiveAt: lastSeenAt,
-        lastSeenAt,
-        shopSyncId: config.shopSyncId,
-      },
-      created_at: lastSeenAt,
+      payload_json: JSON.stringify(payloadObj),
+      client_created_at: Date.now(),
     };
 
     const { error: upsertErr } = await supabase
@@ -3142,7 +3154,6 @@ export async function registerCurrentDeviceInCloud(
         {
           ...eventRow,
           id: `${eventId}:${Date.now()}`,
-          operation: 'insert',
         },
       ]);
     }
@@ -3194,24 +3205,37 @@ export async function listConnectedDevices(): Promise<ConnectedDeviceInfo[]> {
       if (session.isAuthenticated && session.cloudShopUuid) {
         const { data, error } = await supabase
           .from('hospivo_sync_events')
-          .select('device_id, payload, created_at')
+          .select('entity_id, payload_json, client_created_at, created_at')
           .eq('shop_id', session.cloudShopUuid)
           .eq('entity_type', 'device')
-          .order('created_at', { ascending: false })
+          .order('client_created_at', { ascending: false })
           .limit(50);
 
         if (!error && Array.isArray(data)) {
-          for (const row of data) {
-            const p = (row?.payload || {}) as Record<string, any>;
-            const devId = String(p.deviceId || row?.device_id || '').trim();
+          for (const row of data as any[]) {
+            let p: Record<string, any> = {};
+            if (row?.payload_json) {
+              try {
+                p = typeof row.payload_json === 'string' ? JSON.parse(row.payload_json) : row.payload_json;
+              } catch {
+                p = {};
+              }
+            } else if (row?.payload) {
+              p = row.payload;
+            }
+            const devId = String(p.deviceId || p.device_id || row?.entity_id || row?.device_id || '').trim();
             if (!devId) continue;
             const prev = byId.get(devId);
-            const rowTime = String(p.lastActiveAt || p.lastSeenAt || row?.created_at || '');
+            const fallbackTs = row?.client_created_at
+              ? new Date(Number(row.client_created_at)).toISOString()
+              : String(row?.created_at || '');
+            const rowTime = String(p.lastActiveAt || p.last_active_at || p.lastSeenAt || fallbackTs || '');
             if (!prev || rowTime >= prev.lastSeenAt) {
               byId.set(devId, {
                 deviceId: devId,
-                deviceName: String(p.deviceName || prev?.deviceName || 'Billing Desk'),
+                deviceName: String(p.deviceName || p.device_name || prev?.deviceName || 'Billing Desk'),
                 platform: String(p.platform || prev?.platform || 'Web / Desktop'),
+                appVersion: p.appVersion || p.app_version || prev?.appVersion,
                 lastSeenAt: rowTime || new Date().toISOString(),
                 isCurrentDevice: devId === resolvedDeviceId,
               });

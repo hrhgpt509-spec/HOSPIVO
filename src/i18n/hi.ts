@@ -1705,6 +1705,7 @@ export const hi: TranslationSchema = {
     connected_devices_empty: 'अभी कोई अन्य डिवाइस जुड़ा नहीं है। अपने फ़ोन या दूसरे कंप्यूटर पर इसी खाते से लॉगिन करें।',
     this_device_badge: 'यह डिवाइस',
     last_seen_prefix: 'आखिरी सक्रियता:',
+    toast_device_linked: 'डिवाइस जुड़ गया और जुड़े डिवाइस अपडेट हुए',
   },
   remote_approval: {
     ask_owner_title: 'मालिक से पूछें',

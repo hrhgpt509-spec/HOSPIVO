@@ -435,6 +435,10 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
   - Extracted `sharedModals` in `StockJodo.tsx` and mounted them in BOTH compact mobile and desktop views so **Back/Home** (including when an invoice number is typed without a supplier) and **+ New Supplier** work cleanly without trapping the user.
   - Added `numericInputProps()`, `getNumericLimitStatus()`, and `<NumericLimitWarning>` (`common.limit_exceeded_warning` in en/hi/hinglish) so mobile keyboards open the number pad automatically and typing an 11th digit on 10-digit phone fields shows a red warning above the field without blocking editing.
 
+- Connected Devices Schema Fix (`cloudSync.ts`, `OwnerCloudSync.tsx`, `multiShop.test.ts` + en/hi/hinglish):
+  - Fixed `registerCurrentDeviceInCloud()` and `listConnectedDevices()` to use exact `hospivo_sync_events` columns (`entity_id`, `payload_json`, `client_created_at`) instead of non-existent `device_id`/`payload` columns, and hooked device registration into `ensureCloudSyncActive()` on app startup/resume.
+  - Updated **Link Device** in `OwnerCloudSync.tsx` to register/refresh the current device, fetch connected devices, and show `toast_device_linked`.
+
 
 
 

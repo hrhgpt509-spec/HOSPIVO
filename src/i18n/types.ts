@@ -1724,6 +1724,7 @@ export interface TranslationSchema {
     connected_devices_empty: string;
     this_device_badge: string;
     last_seen_prefix: string;
+    toast_device_linked: string;
   };
   remote_approval: {
     ask_owner_title: string;
