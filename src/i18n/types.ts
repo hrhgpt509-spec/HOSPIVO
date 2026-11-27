@@ -47,6 +47,7 @@ export interface TranslationSchema {
     generic_error: string;
     saved_badge: string;
     limit_exceeded_warning: string;
+    char_limit_exceeded_warning: string;
   };
   login: {
     pos_title: string;
@@ -1796,6 +1797,8 @@ export interface TranslationSchema {
     btn_resend_link: ButtonLabel;
     btn_change_email: ButtonLabel;
     resend_cooldown: string;
+    attempts_remaining: string;
+    err_cooldown_active: string;
     toast_link_sent: string;
     toast_otp_sent: string;
     err_otp_invalid: string;

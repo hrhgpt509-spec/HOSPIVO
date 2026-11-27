@@ -1046,3 +1046,35 @@ export async function createRecoveryOwnerPin(params: {
 
   return { success: true, user: ownerUser };
 }
+
+export const MAX_CLOUD_SIGNIN_ATTEMPTS = 4;
+export const CLOUD_SIGNIN_COOLDOWN_SECONDS = 60;
+
+export interface CloudSignInFailureState {
+  failedAttempts: number;
+  remainingAttempts: number;
+  isLockedOut: boolean;
+  cooldownSeconds: number;
+}
+
+/**
+ * Tracks failed cloud sign-in / OTP verification attempts:
+ * Allows 4 failed attempts before starting a 60-second cooldown on the 4th failure.
+ */
+export function recordCloudSignInFailure(previousFailures: number): CloudSignInFailureState {
+  const failedAttempts = Math.max(0, previousFailures) + 1;
+  if (failedAttempts >= MAX_CLOUD_SIGNIN_ATTEMPTS) {
+    return {
+      failedAttempts,
+      remainingAttempts: 0,
+      isLockedOut: true,
+      cooldownSeconds: CLOUD_SIGNIN_COOLDOWN_SECONDS,
+    };
+  }
+  return {
+    failedAttempts,
+    remainingAttempts: MAX_CLOUD_SIGNIN_ATTEMPTS - failedAttempts,
+    isLockedOut: false,
+    cooldownSeconds: 0,
+  };
+}

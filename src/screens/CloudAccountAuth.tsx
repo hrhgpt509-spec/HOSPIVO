@@ -9,6 +9,7 @@ import {
   sendEmailOtp,
   verifyEmailOtp,
   resolveCloudSignInChoice,
+  recordCloudSignInFailure,
   ACCOUNT_NOT_FOUND_MESSAGE,
   NETWORK_ERROR_MESSAGE,
   RATE_LIMIT_MESSAGE,
@@ -73,6 +74,8 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [failedSignInAttempts, setFailedSignInAttempts] = useState(0);
+  const [signInCooldown, setSignInCooldown] = useState(0);
   const [pendingScenario, setPendingScenario] = useState<CloudSignInScenario | null>(null);
   const [pendingExistingShop, setPendingExistingShop] = useState<ExistingShopInfo | null>(null);
   const [pendingLocalSummary, setPendingLocalSummary] = useState<LocalDataSummary | null>(null);
@@ -93,7 +96,7 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
 
   const configured = isBackendConfigured();
 
-  // Cooldown countdown timer
+  // Cooldown countdown timers
   useEffect(() => {
     if (cooldown <= 0) return;
     const timer = setInterval(() => {
@@ -101,6 +104,14 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
     }, 1000);
     return () => clearInterval(timer);
   }, [cooldown]);
+
+  useEffect(() => {
+    if (signInCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setSignInCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [signInCooldown]);
 
   // Focus OTP input on step change
   useEffect(() => {
@@ -180,6 +191,10 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
 
   const handleVerifyOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (signInCooldown > 0) {
+      setError(t('cloud_auth.err_cooldown_active', { seconds: signInCooldown }));
+      return;
+    }
     const cleanOtp = otp.trim();
     if (cleanOtp.length !== 6) {
       setError(t('cloud_auth.err_otp_invalid'));
@@ -197,12 +212,26 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
     try {
       const res = await verifyEmailOtp(cleanEmail, cleanOtp, { deferHydration: true });
       if (res.error) {
-        setError(otpErrorText(res.errorCode, res.error));
+        const failure = recordCloudSignInFailure(failedSignInAttempts);
+        if (failure.isLockedOut) {
+          setFailedSignInAttempts(0);
+          setSignInCooldown(failure.cooldownSeconds);
+          setError(t('cloud_auth.err_cooldown_active', { seconds: failure.cooldownSeconds }));
+        } else {
+          setFailedSignInAttempts(failure.failedAttempts);
+          setError(
+            `${otpErrorText(res.errorCode, res.error)} ${t('cloud_auth.attempts_remaining', {
+              count: failure.remainingAttempts,
+            })}`
+          );
+        }
         setIsLoading(false);
         return;
       }
 
       if (res.user) {
+        setFailedSignInAttempts(0);
+        setSignInCooldown(0);
         const resolvedEmail = res.user.email || cleanEmail;
 
         // Scenarios 1, 3 & 5 (when local data exists): ask the user explicitly before pushing/merging
@@ -508,12 +537,16 @@ export const CloudAccountAuth: React.FC<CloudAccountAuthProps> = ({
                 {/* Primary Verify Button */}
                 <button
                   type="submit"
-                  disabled={isLoading || otp.length !== 6}
+                  disabled={isLoading || otp.length !== 6 || signInCooldown > 0}
                   className="min-h-[56px] py-2.5 w-full px-5 sm:px-8 bg-primary hover:bg-primary-container disabled:opacity-50 text-on-primary rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md active:scale-[0.99] cursor-pointer font-bold disabled:cursor-not-allowed min-w-0"
                 >
                   <Icon name="verified_user" className={`text-[22px] shrink-0 ${isLoading ? 'animate-spin' : ''}`} />
                   <div className="flex flex-col text-left min-w-0">
-                    <span className="text-base font-bold leading-tight break-words">{btnVerifyOtp.main}</span>
+                    <span className="text-base font-bold leading-tight break-words">
+                      {signInCooldown > 0
+                        ? t('cloud_auth.err_cooldown_active', { seconds: signInCooldown })
+                        : btnVerifyOtp.main}
+                    </span>
                     {btnVerifyOtp.sub && (
                       <span className="text-xs text-on-primary/80 font-normal leading-tight mt-0.5 break-words">
                         {btnVerifyOtp.sub}

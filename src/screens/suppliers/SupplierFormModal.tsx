@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { type Supplier } from '../../db';
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
-import { textFieldProps } from '../../logic/format';
+import { textFieldProps, useLimitWarning } from '../../logic/format';
 import { NumericLimitWarning } from '../../components/NumericLimitWarning';
 import { saveSupplier } from '../../logic/suppliers';
 import { triggerFeedback } from '../../logic/feedback';
@@ -29,6 +29,8 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
   const [address, setAddress] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const phoneLimit = useLimitWarning();
+  const gstLimit = useLimitWarning();
 
   useEffect(() => {
     if (initialSupplier) {
@@ -139,9 +141,12 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
             <label className="font-body-md text-body-md font-bold text-on-surface">
               {t('suppliers.label_phone_input')}
             </label>
-            <NumericLimitWarning value={phone} maxLength={10} />
+            <NumericLimitWarning value={phone} maxLength={10} exceeded={phoneLimit.exceeded} />
             <input
-              {...textFieldProps('phone', phone, setPhone)}
+              {...textFieldProps('phone', phone, setPhone, {
+                maxLength: 10,
+                onLimitExceeded: phoneLimit.trigger,
+              })}
               placeholder={t('suppliers.placeholder_phone')}
               className="h-14 px-4 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />
@@ -152,8 +157,12 @@ export const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
             <label className="font-body-md text-body-md font-bold text-on-surface">
               {t('suppliers.label_gst_input')}
             </label>
+            <NumericLimitWarning value={gstNo} maxLength={15} exceeded={gstLimit.exceeded} kind="chars" />
             <input
-              {...textFieldProps('code', gstNo, setGstNo)}
+              {...textFieldProps('code', gstNo, setGstNo, {
+                maxLength: 15,
+                onLimitExceeded: gstLimit.trigger,
+              })}
               placeholder={t('suppliers.placeholder_gst')}
               className="h-14 px-4 rounded-xl border border-outline-variant bg-surface-container-low text-on-surface text-lg font-mono uppercase focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
             />

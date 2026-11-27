@@ -6,7 +6,7 @@ import { FullscreenButton } from '../components/FullscreenButton';
 import { MobileTopBar } from '../components/MobileTopBar';
 import { useShop } from '../logic/useShop';
 import { isOwner } from '../logic/roles';
-import { textFieldProps } from '../logic/format';
+import { textFieldProps, useLimitWarning } from '../logic/format';
 import { NumericLimitWarning } from '../components/NumericLimitWarning';
 import { getPinLengthSetting, hashPin, verifyPin } from '../logic/pin';
 import {
@@ -74,6 +74,9 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
   const [editPhone, setEditPhone] = useState('');
   const [editGstNo, setEditGstNo] = useState('');
   const [editDrugLicence, setEditDrugLicence] = useState('');
+  const editPhoneLimit = useLimitWarning();
+  const editGstLimit = useLimitWarning();
+  const editDlLimit = useLimitWarning();
 
   // PIN Change Form States
   const [pinCurrent, setPinCurrent] = useState('');
@@ -1104,11 +1107,14 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
 
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-bold text-on-surface">{t('owner_settings.label_phone')}</label>
-                <NumericLimitWarning value={editPhone} maxLength={10} />
+                <NumericLimitWarning value={editPhone} maxLength={10} exceeded={editPhoneLimit.exceeded} />
                 <input
                   type="text"
                   className="h-13 px-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface font-medium focus:outline-primary"
-                  {...textFieldProps('phone', editPhone, setEditPhone)}
+                  {...textFieldProps('phone', editPhone, setEditPhone, {
+                    maxLength: 10,
+                    onLimitExceeded: editPhoneLimit.trigger,
+                  })}
                 />
               </div>
 
@@ -1124,18 +1130,26 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-bold text-on-surface">{t('owner_settings.label_gst_no')}</label>
+                  <NumericLimitWarning value={editGstNo} maxLength={15} exceeded={editGstLimit.exceeded} kind="chars" />
                   <input
                     type="text"
                     className="h-13 px-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface font-bold uppercase focus:outline-primary"
-                    {...textFieldProps('code', editGstNo, setEditGstNo)}
+                    {...textFieldProps('code', editGstNo, setEditGstNo, {
+                      maxLength: 15,
+                      onLimitExceeded: editGstLimit.trigger,
+                    })}
                   />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-bold text-on-surface">{t('owner_settings.label_drug_licence')}</label>
+                  <NumericLimitWarning value={editDrugLicence} maxLength={30} exceeded={editDlLimit.exceeded} kind="chars" />
                   <input
                     type="text"
                     className="h-13 px-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface font-bold uppercase focus:outline-primary"
-                    {...textFieldProps('code', editDrugLicence, setEditDrugLicence)}
+                    {...textFieldProps('code', editDrugLicence, setEditDrugLicence, {
+                      maxLength: 30,
+                      onLimitExceeded: editDlLimit.trigger,
+                    })}
                   />
                 </div>
               </div>

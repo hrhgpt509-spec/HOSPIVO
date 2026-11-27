@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, type Medicine, type Shop, type DBUser, type ScheduleType } from '../db';
 import { shortCodeFor } from '../logic/stock';
-import { formatField, textFieldProps } from '../logic/format';
+import { formatField, textFieldProps, useLimitWarning } from '../logic/format';
+import { NumericLimitWarning } from '../components/NumericLimitWarning';
 import {
   validateMedicineForm,
   checkDuplicateMedicine,
@@ -82,6 +83,9 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
   const [isEditingShortCode, setIsEditingShortCode] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hsnLimit = useLimitWarning();
+  const shortCodeLimit = useLimitWarning();
+  const barcodeLimit = useLimitWarning();
 
   // Discard / leave confirmation dialog
   const [confirmLeaveTarget, setConfirmLeaveTarget] = useState<'back' | 'home' | null>(null);
@@ -688,11 +692,15 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                       {t('medicine_form.sub_hsn')}
                     </span>
                   </label>
+                  <NumericLimitWarning value={formData.hsn} maxLength={8} exceeded={hsnLimit.exceeded} kind="chars" />
                   <input
                     type="text"
                     {...textFieldProps('code', formData.hsn, (val) => {
                       setFormData((prev) => ({ ...prev, hsn: val }));
                       setIsDirty(true);
+                    }, {
+                      maxLength: 8,
+                      onLimitExceeded: hsnLimit.trigger,
                     })}
                     placeholder={t('medicine_form.placeholder_hsn')}
                     className="w-full h-12 px-3 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 focus:ring-[#006B33] outline-none transition-all border border-slate-200 dark:border-gray-700"
@@ -794,23 +802,29 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                     </button>
                   </div>
                   {isEditingShortCode ? (
-                    <div className="relative flex items-center">
-                      <span className="absolute left-3 text-[#006B33] font-black text-lg">#</span>
-                      <input
-                        type="text"
-                        {...textFieldProps('code', formData.shortCode, (val) => {
-                          setFormData((prev) => ({ ...prev, shortCode: val }));
-                          setIsShortCodeCustomized(true);
-                          setIsDirty(true);
-                          if (errors.shortCode) {
-                            setErrors((err) => ({ ...err, shortCode: undefined }));
-                          }
-                        })}
-                        className={`w-full h-12 pl-8 pr-3 rounded-xl bg-white dark:bg-gray-800 text-slate-900 dark:text-white font-bold text-lg focus:ring-2 ${
-                          errors.shortCode ? 'ring-2 ring-red-500' : 'focus:ring-[#006B33]'
-                        } outline-none border border-slate-200 dark:border-gray-700`}
-                      />
-                    </div>
+                    <>
+                      <NumericLimitWarning value={formData.shortCode} maxLength={12} exceeded={shortCodeLimit.exceeded} kind="chars" />
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3 text-[#006B33] font-black text-lg">#</span>
+                        <input
+                          type="text"
+                          {...textFieldProps('code', formData.shortCode, (val) => {
+                            setFormData((prev) => ({ ...prev, shortCode: val }));
+                            setIsShortCodeCustomized(true);
+                            setIsDirty(true);
+                            if (errors.shortCode) {
+                              setErrors((err) => ({ ...err, shortCode: undefined }));
+                            }
+                          }, {
+                            maxLength: 12,
+                            onLimitExceeded: shortCodeLimit.trigger,
+                          })}
+                          className={`w-full h-12 pl-8 pr-3 rounded-xl bg-white dark:bg-gray-800 text-slate-900 dark:text-white font-bold text-lg focus:ring-2 ${
+                            errors.shortCode ? 'ring-2 ring-red-500' : 'focus:ring-[#006B33]'
+                          } outline-none border border-slate-200 dark:border-gray-700`}
+                        />
+                      </div>
+                    </>
                   ) : (
                     <div
                       onClick={() => setIsEditingShortCode(true)}
@@ -840,6 +854,7 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                       {t('medicine_form.sub_barcode')}
                     </span>
                   </label>
+                  <NumericLimitWarning value={formData.barcode} maxLength={32} exceeded={barcodeLimit.exceeded} kind="chars" />
                   <div className="relative flex items-center">
                     <input
                       type="text"
@@ -849,6 +864,9 @@ export const OwnerMedicineForm: React.FC<OwnerMedicineFormProps> = ({
                         if (errors.barcode) {
                           setErrors((err) => ({ ...err, barcode: undefined }));
                         }
+                      }, {
+                        maxLength: 32,
+                        onLimitExceeded: barcodeLimit.trigger,
                       })}
                       placeholder={t('medicine_form.placeholder_barcode')}
                       className={`w-full h-12 px-3.5 pr-12 rounded-xl bg-[#EBF6F0] dark:bg-gray-800 text-slate-900 dark:text-white text-base focus:bg-white dark:focus:bg-gray-900 focus:ring-2 ${

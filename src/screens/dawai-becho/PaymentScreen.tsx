@@ -7,7 +7,7 @@ import { MobileTopBar } from '../../components/MobileTopBar';
 import { ApprovalDialog } from '../../components/ApprovalDialog';
 import { useShop } from '../../logic/useShop';
 import { formatRupees, rupeesToPaise } from '../../logic/money';
-import { textFieldProps } from '../../logic/format';
+import { textFieldProps, useLimitWarning } from '../../logic/format';
 import { NumericLimitWarning } from '../../components/NumericLimitWarning';
 import { triggerFeedback } from '../../logic/feedback';
 import { useNumpadKeyboard } from '../../logic/useNumpadKeyboard';
@@ -65,6 +65,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const [existingCustomers, setExistingCustomers] = useState<UdhaarCustomerSummary[]>([]);
   const [customerName, setCustomerName] = useState<string>(draft.customerName || '');
   const [customerPhone, setCustomerPhone] = useState<string>(draft.customerPhone || '');
+  const phoneLimit = useLimitWarning();
 
   // Split (Cash + UPI) fields in rupee strings
   const halfRupees = Math.floor(totalRupeesInt / 2);
@@ -781,9 +782,12 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                       <label className="text-xs font-bold text-on-surface-variant">
                         {t('billing_flow.udhaar_phone_label')} <span className="text-error">*</span>
                       </label>
-                      <NumericLimitWarning value={customerPhone} maxLength={10} />
+                      <NumericLimitWarning value={customerPhone} maxLength={10} exceeded={phoneLimit.exceeded} />
                       <input
-                        {...textFieldProps('phone', customerPhone, setCustomerPhone)}
+                        {...textFieldProps('phone', customerPhone, setCustomerPhone, {
+                          maxLength: 10,
+                          onLimitExceeded: phoneLimit.trigger,
+                        })}
                         type="text"
                         placeholder={t('billing_flow.udhaar_phone_label')}
                         className="h-14 px-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface font-bold text-base focus:outline-none focus:ring-2 focus:ring-primary"

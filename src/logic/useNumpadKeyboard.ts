@@ -7,6 +7,9 @@ export interface UseNumpadKeyboardOptions {
   onEnter?: () => void;
   disabled?: boolean;
   allowInsideDialog?: boolean;
+  maxLength?: number;
+  currentLength?: number;
+  onLimitExceeded?: () => void;
 }
 
 export interface NumpadKeyEventLike {
@@ -69,6 +72,14 @@ export function handleNumpadKeyDown(
 
   if (/^[0-9]$/.test(e.key)) {
     e.preventDefault?.();
+    if (
+      options.maxLength !== undefined &&
+      options.currentLength !== undefined &&
+      options.currentLength >= options.maxLength
+    ) {
+      options.onLimitExceeded?.();
+      return true;
+    }
     options.onDigit(e.key);
     return true;
   }
@@ -109,6 +120,9 @@ export function useNumpadKeyboard({
   onEnter,
   disabled = false,
   allowInsideDialog = false,
+  maxLength,
+  currentLength,
+  onLimitExceeded,
 }: UseNumpadKeyboardOptions) {
   useEffect(() => {
     if (disabled || typeof window === 'undefined') return;
@@ -121,11 +135,14 @@ export function useNumpadKeyboard({
         onEnter,
         disabled,
         allowInsideDialog,
+        maxLength,
+        currentLength,
+        onLimitExceeded,
       });
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onDigit, onBackspace, onClear, onEnter, disabled, allowInsideDialog]);
+  }, [onDigit, onBackspace, onClear, onEnter, disabled, allowInsideDialog, maxLength, currentLength, onLimitExceeded]);
 }
 

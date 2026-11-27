@@ -40,6 +40,7 @@ export const hinglish: TranslationSchema = {
     generic_error: 'Kuch galat ho gaya',
     saved_badge: 'Save ho gaya',
     limit_exceeded_warning: 'Limit exceed: maximum {max} digits hi allowed hain',
+    char_limit_exceeded_warning: 'Limit exceed: maximum {max} characters hi allowed hain',
   },
   login: {
     pos_title: 'दवा दुकान POS',
@@ -1777,6 +1778,8 @@ export const hinglish: TranslationSchema = {
     btn_resend_link: { main: 'Link Dobara Bhejein', sub: 'Naya verification link bhejein' },
     btn_change_email: { main: 'Email Badlein', sub: 'Dusra email dalein' },
     resend_cooldown: '{seconds}s mein dobara bhejein',
+    attempts_remaining: '1-minute cooldown se pehle {count} attempts bache hain.',
+    err_cooldown_active: 'Zyada galat attempts ho gaye. Kripya {seconds}s baad try karein.',
     toast_link_sent: 'Verification link bhej diya gaya! Kripya apna inbox check karein.',
     toast_otp_sent: '6-digit OTP bhej diya gaya! Kripya apna email check karein.',
     err_otp_invalid: 'Kripya sahi 6-digit OTP code darj karein',

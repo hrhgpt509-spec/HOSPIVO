@@ -40,6 +40,7 @@ export const en: TranslationSchema = {
     generic_error: 'Something went wrong',
     saved_badge: 'Saved',
     limit_exceeded_warning: 'Limit exceeded: maximum {max} digits allowed',
+    char_limit_exceeded_warning: 'Limit exceeded: maximum {max} characters allowed',
   },
   login: {
     pos_title: 'Pharmacy POS',
@@ -1777,6 +1778,8 @@ export const en: TranslationSchema = {
     btn_resend_link: { main: 'Resend Link', sub: 'Send new verification link' },
     btn_change_email: { main: 'Change Email', sub: 'Enter a different email' },
     resend_cooldown: 'Resend in {seconds}s',
+    attempts_remaining: '{count} attempts remaining before 1-minute cooldown.',
+    err_cooldown_active: 'Too many failed attempts. Please wait {seconds}s before trying again.',
     toast_link_sent: 'Verification link sent! Please check your inbox.',
     toast_otp_sent: '6-digit OTP sent! Please check your email.',
     err_otp_invalid: 'Please enter a valid 6-digit OTP code',

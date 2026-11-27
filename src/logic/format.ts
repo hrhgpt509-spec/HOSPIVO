@@ -111,6 +111,69 @@ export function numericInputProps(kind: 'integer' | 'decimal' | 'phone'): {
   return { inputMode: 'numeric', pattern: '[0-9]*' };
 }
 
+export interface TextFieldOptions {
+  maxLength?: number;
+  onLimitExceeded?: () => void;
+}
+
+/**
+ * Formats an input value according to `kind` and enforces a strict `maxLength` cap.
+ * Triggers `onLimitExceeded` whenever the formatted value exceeds `maxLength`.
+ */
+export function applyCappedInput(
+  kind: FieldKind,
+  rawValue: string,
+  maxLength?: number,
+  onLimitExceeded?: () => void
+): string {
+  const formatted = formatField(kind, rawValue);
+  if (maxLength !== undefined && formatted.length > maxLength) {
+    onLimitExceeded?.();
+    return formatted.slice(0, maxLength);
+  }
+  return formatted;
+}
+
+/**
+ * React hook for transient above-field red limit warnings when typing/pasting
+ * beyond a field's hard character or digit cap.
+ */
+export function useLimitWarning(autoHideMs = 3500): {
+  exceeded: boolean;
+  trigger: () => void;
+  clear: () => void;
+} {
+  const [exceeded, setExceeded] = React.useState(false);
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const clear = React.useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setExceeded(false);
+  }, []);
+
+  const trigger = React.useCallback(() => {
+    setExceeded(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (autoHideMs > 0) {
+      timerRef.current = setTimeout(() => {
+        timerRef.current = null;
+        setExceeded(false);
+      }, autoHideMs);
+    }
+  }, [autoHideMs]);
+
+  return { exceeded, trigger, clear };
+}
+
 /**
  * Returns props for controlled text inputs / textareas to enforce consistent formatting
  * while preserving the user's cursor position when typing or editing in the middle.
@@ -118,7 +181,8 @@ export function numericInputProps(kind: 'integer' | 'decimal' | 'phone'): {
 export function textFieldProps(
   kind: FieldKind,
   value: string,
-  setValue: (val: string) => void
+  setValue: (val: string) => void,
+  options?: TextFieldOptions
 ): TextFieldProps {
   let autoCapitalize: TextFieldProps['autoCapitalize'];
   let inputMode: TextFieldProps['inputMode'];
@@ -131,7 +195,7 @@ export function textFieldProps(
   }
 
   if (kind === 'phone') {
-    inputMode = 'tel';
+    inputMode = 'numeric';
     pattern = '[0-9]*';
   }
 
@@ -141,9 +205,10 @@ export function textFieldProps(
     const start = target.selectionStart ?? raw.length;
     const beforeCursor = raw.slice(0, start);
     const formattedBefore = formatField(kind, beforeCursor);
-    const newCursor = formattedBefore.length;
+    const maxLen = options?.maxLength;
+    const newCursor = maxLen !== undefined ? Math.min(formattedBefore.length, maxLen) : formattedBefore.length;
 
-    const formatted = formatField(kind, raw);
+    const formatted = applyCappedInput(kind, raw, maxLen, options?.onLimitExceeded);
     setValue(formatted);
 
     // Keep cursor where it was instead of jumping to the end

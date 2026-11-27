@@ -85,6 +85,10 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
   const [dl1, setDl1] = useState('');
   const [dl2, setDl2] = useState('');
   const [step1Error, setStep1Error] = useState('');
+  const [phoneLimitExceeded, setPhoneLimitExceeded] = useState(false);
+  const [gstLimitExceeded, setGstLimitExceeded] = useState(false);
+  const [dl1LimitExceeded, setDl1LimitExceeded] = useState(false);
+  const [dl2LimitExceeded, setDl2LimitExceeded] = useState(false);
 
   // Step 2: Mode choice & Cloud config
   const [mode, setMode] = useState<'local' | 'cloud'>('local');
@@ -769,7 +773,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
                     <span className="text-[16px] font-medium text-[#5C6E66]">{t('setup.phone_sub_label')}</span>
                   ) : null}
                 </label>
-                <NumericLimitWarning value={phone} maxLength={10} />
+                <NumericLimitWarning value={phone} maxLength={10} exceeded={phoneLimitExceeded} />
                 <div className="relative flex items-center">
                   <div className="absolute left-4 text-[#1B8F4A] pointer-events-none">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -778,7 +782,13 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
                   </div>
                   <input
                     type="text"
-                    {...textFieldProps('phone', phone, setPhone)}
+                    {...textFieldProps('phone', phone, (v) => {
+                      setPhoneLimitExceeded(false);
+                      setPhone(v);
+                    }, {
+                      maxLength: 10,
+                      onLimitExceeded: () => setPhoneLimitExceeded(true),
+                    })}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
                     placeholder={`${t('common.example')} ${t('setup.phone_hint')}`}
                   />
@@ -793,6 +803,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
                     <span className="text-[16px] font-medium text-[#5C6E66]">{t('setup.gst_sub_label')}</span>
                   ) : null}
                 </label>
+                <NumericLimitWarning value={gstNo} maxLength={15} exceeded={gstLimitExceeded} kind="chars" />
                 <div className="relative flex items-center">
                   <div className="absolute left-4 text-[#1B8F4A] pointer-events-none">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -801,7 +812,13 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
                   </div>
                   <input
                     type="text"
-                    {...textFieldProps('code', gstNo, setGstNo)}
+                    {...textFieldProps('code', gstNo, (v) => {
+                      setGstLimitExceeded(false);
+                      setGstNo(v);
+                    }, {
+                      maxLength: 15,
+                      onLimitExceeded: () => setGstLimitExceeded(true),
+                    })}
                     className="w-full h-[60px] pl-14 pr-4 text-[18px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
                     placeholder={`${t('common.example')} ${t('setup.gst_hint')}`}
                   />
@@ -814,9 +831,16 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
                   <label className="block text-[17px] font-bold text-[#1A1F1C] mb-1.5 truncate">
                     {t('setup.dl1_label')}
                   </label>
+                  <NumericLimitWarning value={dl1} maxLength={30} exceeded={dl1LimitExceeded} kind="chars" />
                   <input
                     type="text"
-                    {...textFieldProps('code', dl1, setDl1)}
+                    {...textFieldProps('code', dl1, (v) => {
+                      setDl1LimitExceeded(false);
+                      setDl1(v);
+                    }, {
+                      maxLength: 30,
+                      onLimitExceeded: () => setDl1LimitExceeded(true),
+                    })}
                     className="w-full h-[60px] px-4 text-[17px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
                     placeholder={`${t('common.example')} ${t('setup.dl1_hint')}`}
                   />
@@ -826,9 +850,16 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
                   <label className="block text-[17px] font-bold text-[#1A1F1C] mb-1.5 truncate">
                     {t('setup.dl2_label')}
                   </label>
+                  <NumericLimitWarning value={dl2} maxLength={30} exceeded={dl2LimitExceeded} kind="chars" />
                   <input
                     type="text"
-                    {...textFieldProps('code', dl2, setDl2)}
+                    {...textFieldProps('code', dl2, (v) => {
+                      setDl2LimitExceeded(false);
+                      setDl2(v);
+                    }, {
+                      maxLength: 30,
+                      onLimitExceeded: () => setDl2LimitExceeded(true),
+                    })}
                     className="w-full h-[60px] px-4 text-[17px] font-semibold text-[#1A1F1C] bg-[#FBFDFB] border-2 border-[#D2DDD7] rounded-2xl focus:border-[#1B8F4A] focus:outline-none"
                     placeholder={`${t('common.example')} ${t('setup.dl2_hint')}`}
                   />

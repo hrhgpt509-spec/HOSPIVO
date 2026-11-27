@@ -40,6 +40,7 @@ export const hi: TranslationSchema = {
     generic_error: 'कुछ गलत हो गया',
     saved_badge: 'सहेजा गया',
     limit_exceeded_warning: 'सीमा पार: अधिकतम {max} अंक ही मान्य हैं',
+    char_limit_exceeded_warning: 'सीमा पार: अधिकतम {max} अक्षर ही मान्य हैं',
   },
   login: {
     pos_title: 'दवा दुकान POS',
@@ -1777,6 +1778,8 @@ export const hi: TranslationSchema = {
     btn_resend_link: { main: 'लिंक दोबारा भेजें', sub: 'नया वेरिफिकेशन लिंक भेजें' },
     btn_change_email: { main: 'ईमेल बदलें', sub: 'दूसरा ईमेल पता डालें' },
     resend_cooldown: '{seconds} सेकंड में दोबारा भेजें',
+    attempts_remaining: '1 मिनट के कूलडाउन से पहले {count} प्रयास शेष हैं।',
+    err_cooldown_active: 'बहुत अधिक गलत प्रयास। कृपया {seconds} सेकंड प्रतीक्षा करें।',
     toast_link_sent: 'वेरिफिकेशन लिंक भेजा गया! कृपया अपना इनबॉक्स देखें।',
     toast_otp_sent: '6-अंकों का OTP भेजा गया! कृपया अपना ईमेल देखें।',
     err_otp_invalid: 'कृपया सही 6-अंकों का OTP कोड दर्ज करें',

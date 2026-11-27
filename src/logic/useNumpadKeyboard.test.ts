@@ -186,5 +186,23 @@ describe('useNumpadKeyboard / handleNumpadKeyDown', () => {
     expect(onClear).not.toHaveBeenCalled();
     expect(onEnter).not.toHaveBeenCalled();
   });
+
+  it('enforces maxLength cap and triggers onLimitExceeded when typing beyond limit', () => {
+    const onDigit = vi.fn();
+    const onBackspace = vi.fn();
+    const onLimitExceeded = vi.fn();
+    const preventDefault = vi.fn();
+
+    const handled = handleNumpadKeyDown(
+      { key: '9', preventDefault },
+      { onDigit, onBackspace, maxLength: 4, currentLength: 4, onLimitExceeded },
+      createDoc('BODY')
+    );
+
+    expect(handled).toBe(true);
+    expect(preventDefault).toHaveBeenCalledTimes(1);
+    expect(onDigit).not.toHaveBeenCalled();
+    expect(onLimitExceeded).toHaveBeenCalledTimes(1);
+  });
 });
 

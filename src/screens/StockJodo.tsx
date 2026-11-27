@@ -26,7 +26,7 @@ import { triggerFeedback } from '../logic/feedback';
 import { Icon } from '../components/Icon';
 import { EmptyState } from '../components/EmptyState';
 import { FullscreenButton } from '../components/FullscreenButton';
-import { formatField, textFieldProps, numericInputProps } from '../logic/format';
+import { formatField, textFieldProps, numericInputProps, useLimitWarning } from '../logic/format';
 import { NumericLimitWarning } from '../components/NumericLimitWarning';
 import { useShop } from '../logic/useShop';
 import { useIsCompactViewport } from '../logic/useViewport';
@@ -83,6 +83,10 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   const [newSupplierGst, setNewSupplierGst] = useState('');
   const [supplierError, setSupplierError] = useState<string>('');
   const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false);
+  const newSupplierPhoneLimit = useLimitWarning();
+  const newSupplierGstLimit = useLimitWarning();
+  const invoiceNoLimit = useLimitWarning();
+  const batchNoLimit = useLimitWarning();
 
   // Step 2: Photo upload refs
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -583,10 +587,13 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 <label className="block font-label-sub-english text-on-surface-variant font-bold mb-1">
                   {t('stock_jodo.supplier_phone_label')}
                 </label>
-                <NumericLimitWarning value={newSupplierPhone} maxLength={10} />
+                <NumericLimitWarning value={newSupplierPhone} maxLength={10} exceeded={newSupplierPhoneLimit.exceeded} />
                 <input
                   type="text"
-                  {...textFieldProps('phone', newSupplierPhone, setNewSupplierPhone)}
+                  {...textFieldProps('phone', newSupplierPhone, setNewSupplierPhone, {
+                    maxLength: 10,
+                    onLimitExceeded: newSupplierPhoneLimit.trigger,
+                  })}
                   placeholder={t('stock_jodo.supplier_phone_placeholder')}
                   className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface placeholder:text-outline/60 outline-none focus:ring-2 focus:ring-primary shadow-inner"
                 />
@@ -608,9 +615,13 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 <label className="block font-label-sub-english text-on-surface-variant font-bold mb-1">
                   {t('stock_jodo.supplier_gst_label')}
                 </label>
+                <NumericLimitWarning value={newSupplierGst} maxLength={15} exceeded={newSupplierGstLimit.exceeded} kind="chars" />
                 <input
                   type="text"
-                  {...textFieldProps('code', newSupplierGst, setNewSupplierGst)}
+                  {...textFieldProps('code', newSupplierGst, setNewSupplierGst, {
+                    maxLength: 15,
+                    onLimitExceeded: newSupplierGstLimit.trigger,
+                  })}
                   placeholder={t('stock_jodo.supplier_gst_placeholder')}
                   className="w-full h-12 px-space-sm bg-surface-container-low dark:bg-gray-800 rounded-lg font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary shadow-inner"
                 />
@@ -879,9 +890,13 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 <label className="text-xs font-bold text-on-surface-variant">
                   {t('stock_jodo.invoice_no_label')} *
                 </label>
+                <NumericLimitWarning value={invoiceNo} maxLength={24} exceeded={invoiceNoLimit.exceeded} kind="chars" />
                 <input
                   type="text"
-                  {...textFieldProps('code', invoiceNo, setInvoiceNo)}
+                  {...textFieldProps('code', invoiceNo, setInvoiceNo, {
+                    maxLength: 24,
+                    onLimitExceeded: invoiceNoLimit.trigger,
+                  })}
                   placeholder={t('stock_jodo.invoice_no_placeholder')}
                   className="w-full h-12 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
                 />
@@ -893,7 +908,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 </label>
                 <input
                   type="text"
-                  {...textFieldProps('code', invoiceDate, setInvoiceDate)}
+                  {...textFieldProps('code', invoiceDate, setInvoiceDate, { maxLength: 10 })}
                   placeholder="DD/MM/YYYY"
                   className="w-full h-12 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
                 />
@@ -1092,10 +1107,14 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   <label className="text-xs font-bold text-on-surface-variant block mb-1">
                     {t('stock_jodo.batch_no_label')} *
                   </label>
+                  <NumericLimitWarning value={batchNo} maxLength={24} exceeded={batchNoLimit.exceeded} kind="chars" />
                   <input
                     ref={batchInputRef}
                     type="text"
-                    {...textFieldProps('code', batchNo, setBatchNo)}
+                    {...textFieldProps('code', batchNo, setBatchNo, {
+                      maxLength: 24,
+                      onLimitExceeded: batchNoLimit.trigger,
+                    })}
                     placeholder={t('stock_jodo.batch_no_placeholder')}
                     className="w-full h-11 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
                   />
@@ -1107,7 +1126,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                   <input
                     ref={expiryInputRef}
                     type="text"
-                    {...textFieldProps('code', expiryInput, setExpiryInput)}
+                    {...textFieldProps('code', expiryInput, setExpiryInput, { maxLength: 7 })}
                     placeholder="MM/YYYY"
                     className="w-full h-11 px-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-sm font-bold text-on-surface outline-none focus:ring-2 focus:ring-primary"
                   />

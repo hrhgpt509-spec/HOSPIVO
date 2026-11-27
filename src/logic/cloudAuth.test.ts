@@ -15,6 +15,9 @@ import {
   createRecoveryOwnerPin,
   classifyCloudSignInScenario,
   resolveCloudSignInChoice,
+  recordCloudSignInFailure,
+  MAX_CLOUD_SIGNIN_ATTEMPTS,
+  CLOUD_SIGNIN_COOLDOWN_SECONDS,
 } from './cloudAuth';
 import { runWithSyncWorkspaceBypass } from '../db';
 import { enqueueSyncItem, getHomeSyncState } from './cloudSync';
@@ -1054,6 +1057,25 @@ describe('cloudAuth unit tests', () => {
       // Future writes do NOT enqueue cloud sync items until signed back in
       const queuedAfterSignOut = await enqueueSyncItem('bill', 999, { billNo: 'LOCAL-ONLY/1' });
       expect(queuedAfterSignOut).toBeNull();
+    });
+
+    it('allows 4 failed sign-in verification attempts before triggering 60s cooldown', () => {
+      expect(MAX_CLOUD_SIGNIN_ATTEMPTS).toBe(4);
+      expect(CLOUD_SIGNIN_COOLDOWN_SECONDS).toBe(60);
+
+      // Attempts 1, 2, 3 show remaining attempts with zero cooldown
+      const try1 = recordCloudSignInFailure(0);
+      expect(try1).toEqual({ failedAttempts: 1, remainingAttempts: 3, isLockedOut: false, cooldownSeconds: 0 });
+
+      const try2 = recordCloudSignInFailure(try1.failedAttempts);
+      expect(try2).toEqual({ failedAttempts: 2, remainingAttempts: 2, isLockedOut: false, cooldownSeconds: 0 });
+
+      const try3 = recordCloudSignInFailure(try2.failedAttempts);
+      expect(try3).toEqual({ failedAttempts: 3, remainingAttempts: 1, isLockedOut: false, cooldownSeconds: 0 });
+
+      // 4th failed attempt triggers 60-second cooldown
+      const try4 = recordCloudSignInFailure(try3.failedAttempts);
+      expect(try4).toEqual({ failedAttempts: 4, remainingAttempts: 0, isLockedOut: true, cooldownSeconds: 60 });
     });
   });
 });

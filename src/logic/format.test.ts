@@ -5,6 +5,7 @@ import {
   filterDigits,
   formatField,
   textFieldProps,
+  applyCappedInput,
   getNumericLimitStatus,
   numericInputProps,
 } from './format';
@@ -104,7 +105,7 @@ describe('format.ts logic tests', () => {
 
       const phoneProps = textFieldProps('phone', '123', fn);
       expect(phoneProps.autoCapitalize).toBeUndefined();
-      expect(phoneProps.inputMode).toBe('tel');
+      expect(phoneProps.inputMode).toBe('numeric');
       expect(phoneProps.autoComplete).toBe('off');
 
       const freeProps = textFieldProps('free', 'anything', fn);
@@ -191,6 +192,40 @@ describe('format.ts logic tests', () => {
         inputMode: 'tel',
         pattern: '[0-9]*',
       });
+    });
+
+    it('enforces hard 10-digit phone cap & 15-char GSTIN cap while triggering limit warning callback', () => {
+      const phoneWarn = vi.fn();
+      expect(applyCappedInput('phone', '9876543210', 10, phoneWarn)).toBe('9876543210');
+      expect(phoneWarn).not.toHaveBeenCalled();
+
+      // Typing or pasting an 11th+ digit slices strictly to 10 digits and triggers warning
+      expect(applyCappedInput('phone', '987654321099', 10, phoneWarn)).toBe('9876543210');
+      expect(phoneWarn).toHaveBeenCalledTimes(1);
+
+      let phoneVal = '9876543210';
+      const setPhoneVal = (v: string) => {
+        phoneVal = v;
+      };
+      const props = textFieldProps('phone', phoneVal, setPhoneVal, {
+        maxLength: 10,
+        onLimitExceeded: phoneWarn,
+      });
+      expect(props.inputMode).toBe('numeric');
+      props.onChange({
+        currentTarget: {
+          value: '98765432101',
+          selectionStart: 11,
+          setSelectionRange: vi.fn(),
+        } as unknown as HTMLInputElement,
+      } as React.ChangeEvent<HTMLInputElement>);
+      expect(phoneVal).toBe('9876543210');
+      expect(phoneWarn).toHaveBeenCalledTimes(2);
+
+      // GSTIN strictly capped at 15 upper-alphanumeric characters
+      const gstWarn = vi.fn();
+      expect(applyCappedInput('code', '27aabcu9603r1zm99', 15, gstWarn)).toBe('27AABCU9603R1ZM');
+      expect(gstWarn).toHaveBeenCalledTimes(1);
     });
   });
 });

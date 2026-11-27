@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { DBUser } from '../../db';
 import { useTranslation, tButton } from '../../i18n';
 import { Icon } from '../../components/Icon';
-import { textFieldProps } from '../../logic/format';
+import { textFieldProps, useLimitWarning } from '../../logic/format';
 import { NumericLimitWarning } from '../../components/NumericLimitWarning';
 import { rupeesToPaise } from '../../logic/money';
 import { isOwner } from '../../logic/roles';
@@ -40,6 +40,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const [creditLimitStr, setCreditLimitStr] = useState<string>('0');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const phoneLimit = useLimitWarning();
 
   const canEditLimit = isOwner(currentUser) || limitEditableUnlocked;
 
@@ -136,9 +137,12 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
             <label className="text-sm font-bold text-on-surface">
               {t('customers.phone_label')} <span className="text-error">*</span>
             </label>
-            <NumericLimitWarning value={phone} maxLength={10} />
+            <NumericLimitWarning value={phone} maxLength={10} exceeded={phoneLimit.exceeded} />
             <input
-              {...textFieldProps('phone', phone, setPhone)}
+              {...textFieldProps('phone', phone, setPhone, {
+                maxLength: 10,
+                onLimitExceeded: phoneLimit.trigger,
+              })}
               type="text"
               placeholder={t('customers.phone_placeholder')}
               className="h-14 px-4 rounded-xl bg-surface-container-low border border-outline-variant text-on-surface font-bold text-base focus:outline-none focus:ring-2 focus:ring-primary"
