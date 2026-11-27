@@ -553,6 +553,16 @@ export interface TranslationSchema {
     medicine_name_label: string;
     medicine_search_placeholder: string;
     medicine_not_found: string;
+    quick_add_medicine_btn: string;
+    quick_add_title: string;
+    quick_add_sub: string;
+    quick_add_pack_type: string;
+    quick_add_units_per_pack: string;
+    quick_add_schedule: string;
+    quick_add_schedule_normal: string;
+    quick_add_schedule_h: string;
+    quick_add_schedule_h1: string;
+    quick_add_save: string;
     batch_no_label: string;
     batch_no_placeholder: string;
     expiry_label: string;
@@ -1937,5 +1947,13 @@ export interface TranslationSchema {
     cadence_instant: string;
     cadence_daily: string;
     cadence_weekly: string;
+    security_pin_alert_title: string;
+    security_pin_alert_desc: string;
+    btn_change_permission_pin: string;
+    btn_dismiss_alert: string;
+    modal_change_perm_pin_title: string;
+    modal_change_perm_pin_sub: string;
+    err_perm_pin_same_current: string;
+    toast_perm_pin_changed: string;
   };
 }

@@ -6,6 +6,9 @@ import {
   verifyApprovalPin,
   validateApprovalPin,
   validateStaffPin,
+  recordPermissionPinDiscountAlert,
+  getPermissionPinSecurityAlerts,
+  rotateApprovalPinWithValidation,
   _resetApprovalStoreForTesting,
   _seedUserForTesting,
 } from './approvals';
@@ -326,6 +329,56 @@ describe('roles.ts role helper tests', () => {
     expect(canSeePurchasePrice(cashierUser)).toBe(false);
     expect(canSeePurchasePrice(runnerUser)).toBe(false);
     expect(canSeePurchasePrice(null)).toBe(false);
+  });
+});
+
+describe('Permission PIN security notification & rotation validation', () => {
+  it('records security alert when staff uses Permission PIN and enforces PIN uniqueness on rotation', async () => {
+    _resetApprovalStoreForTesting();
+    const ownerHash = await hashPin('1111');
+    const staffHash = await hashPin('2222');
+    _seedUserForTesting({
+      id: 'owner',
+      name: 'Owner',
+      role: 'owner',
+      pinHash: ownerHash.hash,
+      pinSalt: ownerHash.salt,
+      active: true,
+    });
+    _seedUserForTesting({
+      id: 'staff-1',
+      name: 'Raju',
+      role: 'cashier',
+      pinHash: staffHash.hash,
+      pinSalt: staffHash.salt,
+      active: true,
+    });
+    await setApprovalPin('9999');
+
+    const alert = await recordPermissionPinDiscountAlert({
+      operatorName: 'Raju',
+      billId: 42,
+      billNo: '25-26/0042',
+      totalPaise: 85000,
+      discountPaise: 15000,
+      discountPercent: 15,
+    });
+    expect(alert.operatorName).toBe('Raju');
+    expect((await getPermissionPinSecurityAlerts()).length).toBe(1);
+
+    // Rejects wrong length
+    expect((await rotateApprovalPinWithValidation('12')).error).toBe('approval_pin_length');
+    // Rejects current Permission PIN
+    expect((await rotateApprovalPinWithValidation('9999')).error).toBe('approval_pin_same_as_current');
+    // Rejects Owner PIN and Staff PIN
+    expect((await rotateApprovalPinWithValidation('1111')).error).toBe('approval_pin_same_as_owner_or_staff');
+    expect((await rotateApprovalPinWithValidation('2222')).error).toBe('approval_pin_same_as_owner_or_staff');
+
+    // Accepts a distinct valid PIN, updates Permission PIN, and clears the alert
+    const rotated = await rotateApprovalPinWithValidation('7788');
+    expect(rotated.ok).toBe(true);
+    expect((await getPermissionPinSecurityAlerts()).length).toBe(0);
+    expect((await verifyApprovalPin('7788')).ok).toBe(true);
   });
 });
 

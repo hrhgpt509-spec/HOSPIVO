@@ -6,6 +6,7 @@ import {
   computeMedicineChanges,
   minStockUnitsToPacks,
   alertPacksToMinUnits,
+  quickCreateMedicineInCatalog,
   type MedicineFormData,
 } from './medicineForm';
 import { findDuplicateMedicines } from './stock';
@@ -219,6 +220,41 @@ describe('medicineForm validation and business rules', () => {
       // Zero or negative returns 0
       expect(minStockUnitsToPacks(0, 10)).toBe(0);
       expect(minStockUnitsToPacks(undefined, 10)).toBe(0);
+    });
+  });
+
+  describe('quickCreateMedicineInCatalog (Add Stock Quick Add)', () => {
+    it('creates a new medicine in Dexie with auto shortCode, schedule, barcode, and sync outbox item', async () => {
+      await db.medicines.clear();
+      await db.syncOutbox.clear();
+      await db.auditLog.clear();
+      await db.settings.put({ key: 'cloud_enabled', value: true });
+
+      const created = await quickCreateMedicineInCatalog(
+        {
+          name: 'Azithral 500',
+          salt: 'Azithromycin',
+          company: 'Alembic',
+          form: 'Tablet',
+          unitsPerPack: 5,
+          scheduleType: 'H',
+          barcode: '8901234567890',
+        },
+        'Ramesh'
+      );
+
+      expect(created.id).toBeDefined();
+      expect(created.name).toBe('Azithral 500');
+      expect(created.unitsPerPack).toBe(5);
+      expect(created.scheduleType).toBe('H');
+      expect(created.barcode).toBe('8901234567890');
+      expect(created.shortCode).toBeTruthy();
+
+      const stored = await db.medicines.get(created.id!);
+      expect(stored?.name).toBe('Azithral 500');
+
+      const outbox = await db.syncOutbox.where('entityType').equals('medicine').toArray();
+      expect(outbox.length).toBe(1);
     });
   });
 });

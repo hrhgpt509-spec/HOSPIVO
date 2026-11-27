@@ -70,7 +70,8 @@ export interface ApprovalPinLockState {
 export type ApprovalPinErrorCode =
   | 'approval_pin_length'
   | 'approval_pin_mismatch'
-  | 'approval_pin_same_as_owner_or_staff';
+  | 'approval_pin_same_as_owner_or_staff'
+  | 'approval_pin_same_as_current';
 
 export interface SetApprovalPinResult {
   ok: boolean;
@@ -357,4 +358,167 @@ export function shouldBlockProtectedActionOffline(
   isOnline: boolean = typeof navigator === 'undefined' ? true : navigator.onLine
 ): boolean {
   return rule === 'blocked_offline' && !isOnline;
+}
+
+export const PERMISSION_PIN_ALERTS_KEY = 'permission_pin_security_alerts';
+
+export interface PermissionPinSecurityAlert {
+  id: string;
+  operatorName: string;
+  billId?: number;
+  billNo: string;
+  totalPaise: number;
+  discountPaise: number;
+  discountPercent: number;
+  createdAt: string;
+  dismissed: boolean;
+  resolvedAt?: string;
+}
+
+/**
+ * Returns active (non-dismissed) Permission PIN security alerts for the store, newest first.
+ */
+export async function getPermissionPinSecurityAlerts(): Promise<PermissionPinSecurityAlert[]> {
+  const stored = await getSetting<PermissionPinSecurityAlert[]>(PERMISSION_PIN_ALERTS_KEY);
+  if (!Array.isArray(stored)) return [];
+  return stored.filter((a) => a && !a.dismissed);
+}
+
+/**
+ * Records an owner security alert whenever a staff operator uses the Permission PIN
+ * to authorize an excess discount on a bill, queues cloud sync, and fires an Android local alert.
+ */
+export async function recordPermissionPinDiscountAlert(params: {
+  operatorName: string;
+  billId?: number;
+  billNo: string;
+  totalPaise: number;
+  discountPaise: number;
+  discountPercent: number;
+}): Promise<PermissionPinSecurityAlert> {
+  const existing = (await getSetting<PermissionPinSecurityAlert[]>(PERMISSION_PIN_ALERTS_KEY)) || [];
+  const alert: PermissionPinSecurityAlert = {
+    id: `pin-alert-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    operatorName: params.operatorName || 'Staff',
+    billId: params.billId,
+    billNo: params.billNo,
+    totalPaise: Math.round(params.totalPaise),
+    discountPaise: Math.round(params.discountPaise),
+    discountPercent: params.discountPercent,
+    createdAt: new Date().toISOString(),
+    dismissed: false,
+  };
+
+  const nextList = [alert, ...existing].slice(0, 20);
+  await setSetting(PERMISSION_PIN_ALERTS_KEY, nextList);
+
+  await recordAudit(
+    alert.operatorName,
+    'permission_pin_discount_alert',
+    params.billNo,
+    `Staff ${alert.operatorName} authorized ${params.discountPercent}% discount (${params.discountPaise}p) using Permission PIN`
+  );
+
+  try {
+    const { enqueueSyncItem, emitSyncApplied } = await import('./cloudSync');
+    await enqueueSyncItem('settings', PERMISSION_PIN_ALERTS_KEY, {
+      key: PERMISSION_PIN_ALERTS_KEY,
+      value: nextList,
+    });
+    emitSyncApplied(['settings']);
+  } catch {
+    // Non-fatal in isolated tests
+  }
+
+  try {
+    const { notifyPermissionPinUsed } = await import('./notifications');
+    await notifyPermissionPinUsed({
+      operatorName: alert.operatorName,
+      billNo: alert.billNo,
+      discountPercent: alert.discountPercent,
+    });
+  } catch {
+    // Non-fatal
+  }
+
+  return alert;
+}
+
+/**
+ * Dismisses a specific Permission PIN security alert (or all active alerts if no ID given).
+ */
+export async function dismissPermissionPinSecurityAlert(alertId?: string): Promise<void> {
+  const existing = (await getSetting<PermissionPinSecurityAlert[]>(PERMISSION_PIN_ALERTS_KEY)) || [];
+  if (existing.length === 0) return;
+
+  const now = new Date().toISOString();
+  const nextList = existing.map((a) =>
+    !alertId || a.id === alertId ? { ...a, dismissed: true, resolvedAt: a.resolvedAt || now } : a
+  );
+  await setSetting(PERMISSION_PIN_ALERTS_KEY, nextList);
+
+  try {
+    const { enqueueSyncItem, emitSyncApplied } = await import('./cloudSync');
+    await enqueueSyncItem('settings', PERMISSION_PIN_ALERTS_KEY, {
+      key: PERMISSION_PIN_ALERTS_KEY,
+      value: nextList,
+    });
+    emitSyncApplied(['settings']);
+  } catch {
+    // Non-fatal
+  }
+}
+
+/**
+ * Rotates the store's Permission PIN ("Ijazat PIN") after validating:
+ * - Matches required store PIN length (4 or 6 digits)
+ * - Differs from current Permission PIN
+ * - Differs from Owner PIN and every Staff PIN
+ * Clears active Permission PIN security alerts and queues sync on success.
+ */
+export async function rotateApprovalPinWithValidation(
+  newPin: string
+): Promise<SetApprovalPinResult> {
+  const reqLen = await getPinLengthSetting();
+  if (!/^\d+$/.test(newPin) || newPin.length !== reqLen) {
+    return { ok: false, error: 'approval_pin_length' };
+  }
+
+  if (await isPinEqualToApprovalPin(newPin)) {
+    return { ok: false, error: 'approval_pin_same_as_current' };
+  }
+
+  // Enforce Owner PIN & Staff PIN uniqueness (supporting both 4 and 6 digit store PIN lengths)
+  const users = await getAllUsers();
+  for (const user of users) {
+    if (user.pinHash && user.pinSalt) {
+      const isMatch = await verifyPin(newPin, user);
+      if (isMatch) {
+        return { ok: false, error: 'approval_pin_same_as_owner_or_staff' };
+      }
+    }
+  }
+
+  const { hash, salt } = await hashPin(newPin);
+  await setSetting('approval_pin', { hash, salt });
+  await setSetting('approval_pin_lock', { failedAttempts: 0, lockedUntil: null });
+  await dismissPermissionPinSecurityAlert();
+  await recordAudit(
+    'owner',
+    'approval_pin_rotated',
+    'settings',
+    'Owner rotated Permission PIN from security notification'
+  );
+
+  try {
+    const { enqueueSyncItem } = await import('./cloudSync');
+    await enqueueSyncItem('settings', 'approval_pin', {
+      key: 'approval_pin',
+      value: { hash, salt },
+    });
+  } catch {
+    // Non-fatal
+  }
+
+  return { ok: true };
 }

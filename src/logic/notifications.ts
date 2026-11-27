@@ -282,3 +282,36 @@ export async function notifyPendingApprovalRequest(
     // Non-fatal
   }
 }
+
+/**
+ * Fires an immediate Android local security notification when a staff operator
+ * uses the Permission PIN to authorize an excess discount on a bill.
+ * Tapping it deep-links straight to the Owner Permission PIN rotation prompt.
+ */
+export async function notifyPermissionPinUsed(params: {
+  operatorName: string;
+  billNo: string;
+  discountPercent: number;
+}): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    const config = await getNotificationsConfig();
+    if (!config.masterEnabled || isQuietHoursActive(config)) return;
+    const perm = await LocalNotifications.checkPermissions();
+    if (perm.display !== 'granted') return;
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: Math.floor(Date.now() % 100000) + 9500,
+          title: 'Security Alert: Permission PIN Used',
+          body: `${params.operatorName} gave ${params.discountPercent}% discount on ${params.billNo}. Tap to change Permission PIN.`,
+          schedule: { at: new Date(Date.now() + 250) },
+          extra: { targetScreen: 'owner_pin_rotate' },
+        },
+      ],
+    });
+  } catch {
+    // Non-fatal
+  }
+}

@@ -5,6 +5,7 @@ import { FullscreenButton } from '../components/FullscreenButton';
 import { MobileTopBar } from '../components/MobileTopBar';
 import { useShop } from '../logic/useShop';
 import { getPendingApprovalRequests, subscribeToSyncUpdates } from '../logic/cloudSync';
+import { PermissionPinAlertBanner } from '../components/PermissionPinAlertBanner';
 
 interface OwnerMenuProps {
   onReturnHome: () => void;
@@ -22,6 +23,8 @@ interface OwnerMenuProps {
   onOpenCloudSync?: () => void;
   onOpenApprovals?: () => void;
   onOpenMultiShop?: () => void;
+  openPinRotateSignal?: boolean;
+  onPinRotateSignalHandled?: () => void;
   currentUser?: {
     id?: string;
     name: string;
@@ -53,6 +56,8 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
   onOpenCloudSync,
   onOpenApprovals,
   onOpenMultiShop,
+  openPinRotateSignal = false,
+  onPinRotateSignalHandled,
   currentUser,
   shop,
   theme = 'light',
@@ -281,6 +286,14 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
               </button>
             </div>
           )}
+
+          {/* Security Alert Banner when Staff uses Permission PIN */}
+          <div className="w-full max-w-6xl mx-auto mt-3">
+            <PermissionPinAlertBanner
+              openModalSignal={openPinRotateSignal}
+              onModalSignalHandled={onPinRotateSignalHandled}
+            />
+          </div>
 
           {/* Mobile-only Quick Cloud Sync & Approvals Strip */}
           {(onOpenCloudSync || onOpenApprovals) && (

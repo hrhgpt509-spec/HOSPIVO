@@ -1,5 +1,7 @@
-import type { Medicine, ScheduleType } from '../db';
-import { findDuplicateMedicines } from './stock';
+import { db, type Medicine, type ScheduleType } from '../db';
+import { findDuplicateMedicines, shortCodeFor } from './stock';
+import { addAudit } from '../db/audit';
+import { enqueueSyncItem } from './cloudSync';
 
 export interface MedicineFormData {
   name: string;
@@ -186,4 +188,61 @@ export async function compressImageToDataUrl(
     reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsDataURL(file);
   });
+}
+
+export interface QuickMedicineInput {
+  name: string;
+  salt?: string;
+  company?: string;
+  form?: string;
+  unitsPerPack?: number;
+  scheduleType?: ScheduleType;
+  barcode?: string;
+  mrpPaise?: number;
+}
+
+/**
+ * Quickly creates a new medicine in the active store's Dexie catalog,
+ * writes an audit entry, and queues it for silent background cloud sync.
+ */
+export async function quickCreateMedicineInCatalog(
+  input: QuickMedicineInput,
+  who = 'owner'
+): Promise<Medicine> {
+  const cleanName = input.name.trim();
+  if (!cleanName) {
+    throw new Error('Medicine name is required');
+  }
+
+  const shortCode = await shortCodeFor(cleanName);
+  const now = new Date().toISOString();
+  const unitsPerPack = Math.max(1, Math.round(input.unitsPerPack || 10));
+  const cleanBarcode = input.barcode?.trim() || undefined;
+
+  const newMedicine: Omit<Medicine, 'id'> = {
+    name: cleanName,
+    strength: '',
+    form: input.form?.trim() || 'Tablet',
+    salt: input.salt?.trim() || '',
+    company: input.company?.trim() || '',
+    gstPercent: 12,
+    hsn: '',
+    mrpPaise: Math.max(0, Math.round(input.mrpPaise || 0)),
+    unitsPerPack,
+    shortCode,
+    barcode: cleanBarcode || '',
+    shelf: '',
+    scheduleType: input.scheduleType || 'none',
+    minStockUnits: 0,
+    active: true,
+    createdAt: now,
+  };
+
+  const id = (await db.medicines.add(newMedicine as Medicine)) as number;
+  const created: Medicine = { ...newMedicine, id };
+
+  await addAudit(who, 'medicine_created', String(id), `Quick-added medicine: ${cleanName}`);
+  await enqueueSyncItem('medicine', id, created).catch(() => {});
+
+  return created;
 }

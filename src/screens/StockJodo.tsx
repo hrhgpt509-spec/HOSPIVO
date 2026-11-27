@@ -31,6 +31,7 @@ import { NumericLimitWarning } from '../components/NumericLimitWarning';
 import { useShop } from '../logic/useShop';
 import { useIsCompactViewport } from '../logic/useViewport';
 import { useBackHandler } from '../logic/androidBack';
+import { QuickAddMedicineModal } from './stock-jodo/QuickAddMedicineModal';
 
 interface StockJodoProps {
   onReturnHome: () => void;
@@ -83,6 +84,7 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   const [newSupplierGst, setNewSupplierGst] = useState('');
   const [supplierError, setSupplierError] = useState<string>('');
   const [duplicateWarningOpen, setDuplicateWarningOpen] = useState(false);
+  const [isQuickAddMedOpen, setIsQuickAddMedOpen] = useState(false);
   const newSupplierPhoneLimit = useLimitWarning();
   const newSupplierGstLimit = useLimitWarning();
   const invoiceNoLimit = useLimitWarning();
@@ -166,9 +168,20 @@ export const StockJodo: React.FC<StockJodoProps> = ({
   const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId);
 
   // Filtered medicines for Step 3 search
-  const filteredMedicines = searchQuery.trim()
-    ? searchMedicines(medicines, searchQuery).slice(0, 8)
+  const trimmedSearchQuery = searchQuery.trim();
+  const filteredMedicines = trimmedSearchQuery
+    ? searchMedicines(medicines, trimmedSearchQuery).slice(0, 8)
     : [];
+  const hasExactMedicineMatch =
+    trimmedSearchQuery.length > 0 &&
+    medicines.some((m) => {
+      const q = trimmedSearchQuery.toLowerCase();
+      return (
+        m.name.trim().toLowerCase() === q ||
+        (m.barcode && m.barcode.trim().toLowerCase() === q) ||
+        (m.shortCode && m.shortCode.trim().toLowerCase() === q)
+      );
+    });
 
   // Helper to check if draft has unsaved progress (do not count auto-selected default supplier)
   const hasUnsavedProgress =
@@ -548,6 +561,22 @@ export const StockJodo: React.FC<StockJodoProps> = ({
 
   const sharedModals = (
     <>
+      <QuickAddMedicineModal
+        isOpen={isQuickAddMedOpen}
+        initialQuery={searchQuery}
+        currentUserName={currentUser?.name || 'owner'}
+        onClose={() => setIsQuickAddMedOpen(false)}
+        onCreated={(createdMed) => {
+          setMedicines((prev) => [...prev, createdMed]);
+          setSelectedMedicine(createdMed);
+          setSearchQuery(createdMed.name);
+          setIsSearchOpen(false);
+          setIsQuickAddMedOpen(false);
+          setTimeout(() => {
+            batchInputRef.current?.focus();
+          }, 60);
+        }}
+      />
       {/* POPUP: ADD NEW SUPPLIER MODAL */}
       {isNewSupplierOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -1070,8 +1099,8 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                 </div>
 
                 {/* Instant Medicine Results Dropdown */}
-                {isSearchOpen && filteredMedicines.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                {isSearchOpen && trimmedSearchQuery.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-surface-container-lowest border border-outline-variant rounded-xl shadow-lg max-h-56 overflow-y-auto">
                     {filteredMedicines.map((m) => (
                       <div
                         key={m.id}
@@ -1088,6 +1117,21 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                         {m.shelf && <span className="text-xs text-on-surface-variant">Shelf: {m.shelf}</span>}
                       </div>
                     ))}
+                    {!hasExactMedicineMatch && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsSearchOpen(false);
+                          setIsQuickAddMedOpen(true);
+                        }}
+                        className="w-full px-3 py-3 text-left bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm flex items-center gap-2 cursor-pointer"
+                      >
+                        <Icon name="add_circle" className="text-[20px] shrink-0" />
+                        <span className="break-words">
+                          {t('stock_jodo.quick_add_medicine_btn', { query: trimmedSearchQuery })}
+                        </span>
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -2080,32 +2124,41 @@ export const StockJodo: React.FC<StockJodoProps> = ({
                       />
 
                       {/* Dropdown Results */}
-                      {isSearchOpen && searchQuery.trim().length > 0 && (
-                        <div className="absolute left-0 right-0 top-full mt-1 bg-surface-container-lowest dark:bg-gray-800 border border-outline-variant rounded-xl shadow-xl z-30 max-h-56 overflow-y-auto">
-                          {filteredMedicines.length > 0 ? (
-                            filteredMedicines.map((m) => (
-                              <div
-                                key={m.id}
-                                onClick={() => handleSelectMedicine(m)}
-                                className="px-space-md py-2.5 hover:bg-surface-container cursor-pointer flex items-center justify-between border-b border-surface-container-high last:border-b-0"
-                              >
-                                <div className="flex flex-col">
-                                  <span className="font-body-md font-bold text-on-surface">
-                                    {m.name} {m.strength}
-                                  </span>
-                                  <span className="font-label-sub-english text-on-surface-variant text-[13px]">
-                                    {m.company || m.salt || ''} · {t('medicine.mrp_label')} {formatRupees(m.mrpPaise)}
-                                  </span>
-                                </div>
-                                <span className="text-[12px] font-bold px-2 py-0.5 rounded bg-surface-container-high text-primary flex items-center justify-center">
-                                  {m.shortCode || <Icon name="medication" className="text-base" />}
+                      {isSearchOpen && trimmedSearchQuery.length > 0 && (
+                        <div className="absolute left-0 right-0 top-full mt-1 bg-surface-container-lowest dark:bg-gray-800 border border-outline-variant rounded-xl shadow-xl z-30 max-h-64 overflow-y-auto">
+                          {filteredMedicines.map((m) => (
+                            <div
+                              key={m.id}
+                              onClick={() => handleSelectMedicine(m)}
+                              className="px-space-md py-2.5 hover:bg-surface-container cursor-pointer flex items-center justify-between border-b border-surface-container-high last:border-b-0"
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-body-md font-bold text-on-surface">
+                                  {m.name} {m.strength}
+                                </span>
+                                <span className="font-label-sub-english text-on-surface-variant text-[13px]">
+                                  {m.company || m.salt || ''} · {t('medicine.mrp_label')} {formatRupees(m.mrpPaise)}
                                 </span>
                               </div>
-                            ))
-                          ) : (
-                            <div className="p-space-md text-center text-error font-body-md">
-                              {t('stock_jodo.medicine_not_found')}
+                              <span className="text-[12px] font-bold px-2 py-0.5 rounded bg-surface-container-high text-primary flex items-center justify-center">
+                                {m.shortCode || <Icon name="medication" className="text-base" />}
+                              </span>
                             </div>
+                          ))}
+                          {!hasExactMedicineMatch && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsSearchOpen(false);
+                                setIsQuickAddMedOpen(true);
+                              }}
+                              className="w-full px-space-md py-3 text-left bg-primary/10 hover:bg-primary/20 text-primary font-bold text-sm flex items-center gap-2 cursor-pointer border-t border-outline-variant/30"
+                            >
+                              <Icon name="add_circle" className="text-[20px] shrink-0" />
+                              <span className="break-words">
+                                {t('stock_jodo.quick_add_medicine_btn', { query: trimmedSearchQuery })}
+                              </span>
+                            </button>
                           )}
                         </div>
                       )}

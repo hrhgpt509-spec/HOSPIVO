@@ -96,6 +96,7 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser, o
   const [activePage, setActivePage] = useState<ActivePage>('home');
   const [targetShelfForStickers, setTargetShelfForStickers] = useState<string | undefined>(undefined);
   const [isOwnerGateOpen, setIsOwnerGateOpen] = useState<boolean>(false);
+  const [openPinRotateSignal, setOpenPinRotateSignal] = useState<boolean>(false);
   const [liveCounters, setLiveCounters] = useState<HomeLiveCounters>({
     todaySalesPaise: 0,
     todayBillsCount: 0,
@@ -149,9 +150,13 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser, o
         target === 'stock_dekho' ||
         target === 'owner_reports' ||
         target === 'udhaar' ||
-        target === 'owner_backup'
+        target === 'owner_backup' ||
+        target === 'owner_approvals'
       ) {
         setActivePage(target);
+      } else if (target === 'owner_pin_rotate') {
+        setOpenPinRotateSignal(true);
+        setActivePage('owner');
       }
     };
     window.addEventListener(NOTIFICATION_DEEP_LINK_EVENT, handleNotifDeepLink);
@@ -369,6 +374,8 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser, o
         onOpenCloudSync={() => setActivePage('owner_cloud_sync')}
         onOpenApprovals={() => setActivePage('owner_approvals')}
         onOpenMultiShop={onOpenMultiShop}
+        openPinRotateSignal={openPinRotateSignal}
+        onPinRotateSignalHandled={() => setOpenPinRotateSignal(false)}
         currentUser={currentUser}
         shop={shop}
         theme={theme}

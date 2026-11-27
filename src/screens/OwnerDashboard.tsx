@@ -14,6 +14,7 @@ import {
   type ReportPreset,
 } from '../logic/reports';
 import { subscribeToSyncUpdates } from '../logic/cloudSync';
+import { PermissionPinAlertBanner } from '../components/PermissionPinAlertBanner';
 
 interface OwnerDashboardProps {
   onReturnHome: () => void;
@@ -264,6 +265,7 @@ export const OwnerDashboard: React.FC<OwnerDashboardProps> = ({
                 </div>
               ) : (
                 <>
+                  <PermissionPinAlertBanner />
                   {/* Row 1: 4 Key Stat Cards */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-space-md">
                     <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30 flex flex-col justify-between">

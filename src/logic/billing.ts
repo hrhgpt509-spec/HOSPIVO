@@ -13,7 +13,8 @@ import {
 } from '../db';
 import { addAudit } from '../db/audit';
 import { enqueueSyncItem } from './cloudSync';
-import type { ApprovalActionCategory } from './approvals';
+import { recordPermissionPinDiscountAlert, type ApprovalActionCategory } from './approvals';
+import { isOwner } from './roles';
 import { batchStock, isExpired, parseDateOnly, pickBatchesForSale } from './stock';
 
 export const DEFAULT_DISCOUNT_LIMIT_PERCENT = 5;
@@ -620,7 +621,16 @@ export async function finalizeBill(
   const cashierId = user?.id || 'cashier';
   const cashierName = user?.name || (user?.role === 'owner' ? 'Owner' : 'Cashier');
 
-  return db.transaction(
+  let permissionPinAlertPayload: {
+    operatorName: string;
+    billId?: number;
+    billNo: string;
+    totalPaise: number;
+    discountPaise: number;
+    discountPercent: number;
+  } | null = null;
+
+  const result = await db.transaction(
     'rw',
     [db.bills, db.billItems, db.batches, db.stockMovements, db.medicines, db.auditLog, db.settings],
     async () => {
@@ -808,6 +818,17 @@ export async function finalizeBill(
         enqueueSyncItem('stock_movement', mv.id, mv).catch(() => {});
       }
 
+      if (totals.requiresApproval && options?.approvalVerified && !isOwner(user)) {
+        permissionPinAlertPayload = {
+          operatorName: cashierName,
+          billId,
+          billNo,
+          totalPaise: totals.totalPaise,
+          discountPaise: totals.discountPaise,
+          discountPercent: totals.effectiveDiscountPercent,
+        };
+      }
+
       return {
         billId,
         billNo,
@@ -819,6 +840,12 @@ export async function finalizeBill(
       };
     }
   );
+
+  if (permissionPinAlertPayload) {
+    await recordPermissionPinDiscountAlert(permissionPinAlertPayload).catch(() => {});
+  }
+
+  return result;
 }
 
 export interface ReturnLineInput {
