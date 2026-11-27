@@ -11,6 +11,7 @@ import {
   resolveRemoteApprovalRequest,
   formatTimeHoursMinutes,
   getCloudConfig,
+  subscribeToSyncUpdates,
   type CloudConfig,
 } from '../logic/cloudSync';
 import { triggerFeedback } from '../logic/feedback';
@@ -80,8 +81,14 @@ export const RemoteApprovalInbox: React.FC<RemoteApprovalInboxProps> = ({
 
   useEffect(() => {
     loadRequests();
+    const unsub = subscribeToSyncUpdates(() => {
+      void loadRequests();
+    }, ['approval_request']);
     const interval = setInterval(loadRequests, 5000);
-    return () => clearInterval(interval);
+    return () => {
+      unsub();
+      clearInterval(interval);
+    };
   }, [loadRequests]);
 
   const handleOpenDecisionModal = (reqId: number, decision: 'approved' | 'rejected') => {

@@ -11,7 +11,10 @@ import { formatRupees } from '../logic/money';
 import { searchMedicines } from '../logic/medicineSearch';
 import { isExpired, pickBatchesForSale } from '../logic/stock';
 import { triggerFeedback } from '../logic/feedback';
-import { DEFAULT_APPROVAL_RULES, type ApprovalActionCategory, type ApprovalRuleType } from '../logic/approvals';
+import {
+  getApprovalRuleForCategory,
+  shouldBlockProtectedActionOffline,
+} from '../logic/approvals';
 import {
   calculateBillTotals,
   computeQtyUnits,
@@ -570,17 +573,8 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
       return;
     }
 
-    let rule: ApprovalRuleType = DEFAULT_APPROVAL_RULES.discount_above_limit;
-    try {
-      const setting = await db.settings.get('approval_rules');
-      const rules = setting?.value as Partial<Record<ApprovalActionCategory, ApprovalRuleType>> | undefined;
-      if (rules && rules.discount_above_limit) {
-        rule = rules.discount_above_limit;
-      }
-    } catch {
-      // use default
-    }
-    if (rule === 'blocked_offline' || rule === 'remote_approval') {
+    const rule = await getApprovalRuleForCategory('discount_above_limit');
+    if (shouldBlockProtectedActionOffline(rule)) {
       triggerFeedback('error', t('dawai_becho.err_discount_blocked_offline'));
       return;
     }
@@ -762,18 +756,8 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
     }
 
     if (totals.requiresApproval && !discountApproved) {
-      let rule: ApprovalRuleType = DEFAULT_APPROVAL_RULES.discount_above_limit;
-      try {
-        const setting = await db.settings.get('approval_rules');
-        const rules = setting?.value as Partial<Record<ApprovalActionCategory, ApprovalRuleType>> | undefined;
-        if (rules && rules.discount_above_limit) {
-          rule = rules.discount_above_limit;
-        }
-      } catch {
-        // use default
-      }
-
-      if (rule === 'blocked_offline' || rule === 'remote_approval') {
+      const rule = await getApprovalRuleForCategory('discount_above_limit');
+      if (shouldBlockProtectedActionOffline(rule)) {
         triggerFeedback('error', t('dawai_becho.err_discount_blocked_offline'));
         return;
       }

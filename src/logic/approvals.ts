@@ -334,3 +334,27 @@ export async function isPinEqualToApprovalPin(candidatePin: string): Promise<boo
   const { hash } = await hashPin(candidatePin, stored.salt);
   return hash === stored.hash;
 }
+
+/**
+ * Reads the active per-store approval rule for a given protected action category.
+ */
+export async function getApprovalRuleForCategory(
+  category: ApprovalActionCategory
+): Promise<ApprovalRuleType> {
+  const rules = await getSetting<Partial<Record<ApprovalActionCategory, ApprovalRuleType>>>('approval_rules');
+  if (rules && rules[category]) {
+    return rules[category]!;
+  }
+  return DEFAULT_APPROVAL_RULES[category] || 'local_pin';
+}
+
+/**
+ * Returns true ONLY when the store rule is `blocked_offline` and the device is offline.
+ * Never blocks `remote_approval` or `local_pin` rules.
+ */
+export function shouldBlockProtectedActionOffline(
+  rule: ApprovalRuleType,
+  isOnline: boolean = typeof navigator === 'undefined' ? true : navigator.onLine
+): boolean {
+  return rule === 'blocked_offline' && !isOnline;
+}

@@ -2,6 +2,7 @@ import Dexie from 'dexie';
 import { Capacitor } from '@capacitor/core';
 import { scheduleAutoBackupAfterChange } from './autoBackup';
 import { deleteAllLocalBackupFiles } from './backup';
+import { notifyPendingApprovalRequest } from './notifications';
 import {
   db,
   resetDatabase,
@@ -1108,6 +1109,9 @@ export async function applyRemoteEvent(event: any): Promise<void> {
           await db.approvalRequests.update(Number(req.id), req);
         } else {
           await db.approvalRequests.put(req);
+          if (req.status === 'pending') {
+            void notifyPendingApprovalRequest(req.summary, req.requestedBy).catch(() => {});
+          }
         }
       }
       break;
@@ -1699,6 +1703,9 @@ export async function createRemoteApprovalRequest(params: {
   request.id = id;
 
   await enqueueSyncItem('approval_request', id, request);
+  if (config.cloudEnabled && !(typeof navigator !== 'undefined' && navigator.onLine === false)) {
+    runSyncCycle({ force: true }).catch(() => {});
+  }
 
   return request;
 }
@@ -3522,11 +3529,11 @@ export function isDeviceStale(lastSeenAt: string, now: Date = new Date()): boole
 export async function wipeDeviceOnRemoteRevocation(): Promise<void> {
   stopRealtimeSync();
   // 1. Delete saved local backup files BEFORE clearing settings/storage
-  await deleteAllLocalBackupFiles().catch(() => {});
+  await deleteAllLocalBackupFiles().catch(() => { });
 
   // 2. Sign out of Supabase Auth locally on this device only
   if (isBackendConfigured()) {
-    await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
   }
 
   // 3. Delete & re-open Dexie IndexedDB database (clears all tables & settings)

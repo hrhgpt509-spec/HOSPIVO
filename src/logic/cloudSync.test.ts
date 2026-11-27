@@ -31,6 +31,11 @@ import { finalizeBill } from './billing';
 import { recordUdhaarPayment } from './udhaar';
 import { subscribeFeedback } from './feedback';
 import { signOutOwner } from './cloudAuth';
+import {
+  DEFAULT_APPROVAL_RULES,
+  getApprovalRuleForCategory,
+  shouldBlockProtectedActionOffline,
+} from './approvals';
 
 describe('cloudSync & remote approvals engine', () => {
   beforeEach(async () => {
@@ -939,7 +944,7 @@ describe('cloudSync & remote approvals engine', () => {
           networkCb!({ connected: true });
 
           // Wait briefly for silent async flush
-          await new Promise((r) => setTimeout(r, 120));
+          await new Promise((r) => setTimeout(r, 400));
 
           const remainingPending = await db.syncOutbox.where('status').equals('pending').count();
           expect(remainingPending).toBe(0);
@@ -956,6 +961,40 @@ describe('cloudSync & remote approvals engine', () => {
       } finally {
         unsubFeedback();
       }
+    });
+
+    it('wires Excess Discount Remote Approval rule without blind offline blocking and resolves live', async () => {
+      await db.settings.put({
+        key: 'approval_rules',
+        value: {
+          ...DEFAULT_APPROVAL_RULES,
+          discount_above_limit: 'remote_approval',
+        },
+      });
+      await db.settings.put({ key: 'cloud_enabled', value: true });
+      await db.settings.put({ key: 'shop_sync_id', value: 'HOSP-APPR-1111' });
+
+      const rule = await getApprovalRuleForCategory('discount_above_limit');
+      expect(rule).toBe('remote_approval');
+      // Remote Approval must NOT blindly block even when offline (PIN fallback handles offline)
+      expect(shouldBlockProtectedActionOffline(rule, false)).toBe(false);
+      // Only blocked_offline blocks when offline
+      expect(shouldBlockProtectedActionOffline('blocked_offline', false)).toBe(true);
+      expect(shouldBlockProtectedActionOffline('blocked_offline', true)).toBe(false);
+
+      const created = await createRemoteApprovalRequest({
+        actionCategory: 'discount_above_limit',
+        summary: 'Bill #101: 12% discount (Rs. 120) on Rs. 1000',
+        details: { deviceName: 'Counter PC 1', shopSyncId: 'HOSP-APPR-1111' },
+        requestedBy: 'Ravi',
+      });
+      expect(created.status).toBe('pending');
+      expect((await getPendingApprovalRequests()).some((r) => r.id === created.id)).toBe(true);
+
+      // Owner resolves remotely -> unlocks immediately
+      await resolveRemoteApprovalRequest(created.id!, 'approved', 'Owner');
+      const polled = await pollApprovalRequest(created.id!);
+      expect(polled?.status).toBe('approved');
     });
   });
 });

@@ -12,8 +12,10 @@ import {
   getCloudConfig,
   createRemoteApprovalRequest,
   pollApprovalRequest,
+  subscribeToSyncUpdates,
   type CloudConfig,
 } from '../logic/cloudSync';
+import { getPinLengthSetting } from '../logic/pin';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { useBackHandler } from '../logic/androidBack';
 import { triggerFeedback } from '../logic/feedback';
@@ -47,6 +49,7 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
 
   // Local PIN state
   const [pin, setPin] = useState<string>('');
+  const [pinLength, setPinLength] = useState<number>(4);
   const [hasError, setHasError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [lockMinutes, setLockMinutes] = useState<number>(0);
@@ -67,8 +70,9 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
   // Load rules and initial mode
   const initDialog = useCallback(async () => {
     try {
-      const cfg = await getCloudConfig();
+      const [cfg, len] = await Promise.all([getCloudConfig(), getPinLengthSetting()]);
       setCloudConfig(cfg);
+      setPinLength(len);
 
       const rulesItem = await db.settings.get('approval_rules');
       const rules: Record<ApprovalActionCategory, ApprovalRuleType> = {
@@ -82,7 +86,7 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
 
       if (categoryRule === 'blocked_offline' && !online) {
         setDialogMode('blocked');
-      } else if (categoryRule === 'remote_approval' && cfg.cloudEnabled) {
+      } else if (categoryRule === 'remote_approval') {
         setDialogMode('remote');
       } else {
         setDialogMode('pin');
@@ -111,29 +115,41 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
     initDialog();
   }, [isOpen, initDialog]);
 
-  // Polling remote approval status
+  // Realtime + polling remote approval status
   useEffect(() => {
     if (isOpen && dialogMode === 'remote' && remoteRequestId && remoteStatus === 'sent') {
-      pollTimerRef.current = setInterval(async () => {
+      const checkStatus = async () => {
         try {
           const req = await pollApprovalRequest(remoteRequestId);
           if (req && req.status === 'approved') {
-            clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
+            if (pollTimerRef.current) {
+              clearInterval(pollTimerRef.current);
+              pollTimerRef.current = null;
+            }
             triggerFeedback('success', t('remote_approval.toast_approved'));
             onApproved();
           } else if (req && req.status === 'rejected') {
-            clearInterval(pollTimerRef.current);
-            pollTimerRef.current = null;
+            if (pollTimerRef.current) {
+              clearInterval(pollTimerRef.current);
+              pollTimerRef.current = null;
+            }
             setRemoteStatus('rejected');
             triggerFeedback('error', t('remote_approval.toast_rejected'));
           }
         } catch (err) {
           console.error('Error polling remote approval:', err);
         }
+      };
+
+      const unsubRealtime = subscribeToSyncUpdates(() => {
+        void checkStatus();
+      }, ['approval_request']);
+      pollTimerRef.current = setInterval(() => {
+        void checkStatus();
       }, 2500);
 
       return () => {
+        unsubRealtime();
         if (pollTimerRef.current) {
           clearInterval(pollTimerRef.current);
           pollTimerRef.current = null;
@@ -190,17 +206,17 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
     (digit: string) => {
       if (!isOpen || dialogMode !== 'pin' || lockMinutes > 0) return;
       setPin((prev) => {
-        if (prev.length >= 4) return prev;
+        if (prev.length >= pinLength) return prev;
         const next = prev + digit;
         setHasError(false);
         setErrorMessage('');
-        if (next.length === 4) {
+        if (next.length === pinLength) {
           setTimeout(() => handleVerify(next), 60);
         }
         return next;
       });
     },
-    [isOpen, dialogMode, lockMinutes, handleVerify]
+    [isOpen, dialogMode, lockMinutes, pinLength, handleVerify]
   );
 
   const handleBackspace = useCallback(() => {
@@ -227,11 +243,11 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
 
   const handleMobilePinChange = (raw: string) => {
     if (!isOpen || dialogMode !== 'pin' || lockMinutes > 0) return;
-    const digits = raw.replace(/\D/g, '').slice(0, 4);
+    const digits = raw.replace(/\D/g, '').slice(0, pinLength);
     setPin(digits);
     setHasError(false);
     setErrorMessage('');
-    if (digits.length === 4) {
+    if (digits.length === pinLength) {
       setTimeout(() => handleVerify(digits), 60);
     }
   };
@@ -245,7 +261,12 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
       const created = await createRemoteApprovalRequest({
         actionCategory,
         summary: recordDescription,
-        details: { reason: reason.trim(), shopName },
+        details: {
+          reason: reason.trim(),
+          shopName,
+          deviceName: cloudConfig?.deviceName || '',
+          shopSyncId: cloudConfig?.shopSyncId || '',
+        },
         requestedBy: requesterName,
       });
 
@@ -570,7 +591,7 @@ export const ApprovalDialog: React.FC<ApprovalDialogProps> = ({
             pattern="[0-9]*"
             autoComplete="one-time-code"
             autoFocus
-            maxLength={4}
+            maxLength={pinLength}
             disabled={lockMinutes > 0}
             value={pin}
             onChange={(e) => handleMobilePinChange(e.target.value)}

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation, tButton } from '../i18n';
 import { Icon } from '../components/Icon';
 import { FullscreenButton } from '../components/FullscreenButton';
 import { MobileTopBar } from '../components/MobileTopBar';
 import { useShop } from '../logic/useShop';
+import { getPendingApprovalRequests, subscribeToSyncUpdates } from '../logic/cloudSync';
 
 interface OwnerMenuProps {
   onReturnHome: () => void;
@@ -59,6 +60,19 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
 }) => {
   const { t } = useTranslation();
   const [lockedNotice, setLockedNotice] = useState<{ title: string; subtitle: string } | null>(null);
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!onOpenApprovals) return;
+    const loadCount = () => {
+      getPendingApprovalRequests()
+        .then((list) => setPendingApprovalsCount(list.length))
+        .catch(() => {});
+    };
+    loadCount();
+    const unsub = subscribeToSyncUpdates(loadCount, ['approval_request']);
+    return () => unsub();
+  }, [onOpenApprovals]);
 
   const { name: hookShopName, mode: hookMode } = useShop();
   const shopName = shop?.name || hookShopName || '';
@@ -145,6 +159,11 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
               >
                 <Icon name="verified_user" className="text-[18px] text-primary" />
                 <span>{t('remote_approval.inbox_title')}</span>
+                {pendingApprovalsCount > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-error text-on-error text-[10px] font-black leading-none">
+                    {pendingApprovalsCount}
+                  </span>
+                )}
               </button>
             )}
             {/* User pill */}
@@ -295,9 +314,16 @@ export const OwnerMenu: React.FC<OwnerMenuProps> = ({
                     <Icon name="verified_user" className="text-[22px]" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-bold text-on-surface truncate">
-                      {t('remote_approval.inbox_title')}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-bold text-on-surface truncate">
+                        {t('remote_approval.inbox_title')}
+                      </span>
+                      {pendingApprovalsCount > 0 && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-error text-on-error text-[10px] font-black leading-none shrink-0">
+                          {pendingApprovalsCount}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[11px] text-on-surface-variant font-medium truncate">
                       PIN / Cloud
                     </span>

@@ -251,3 +251,34 @@ export function initNotificationDeepLinks(): () => void {
     void listenerHandle?.remove().catch(() => {});
   };
 }
+
+/**
+ * Fires an immediate local Android notification when a counter staff member
+ * submits a new Remote Approval request (respecting master toggle & quiet hours).
+ */
+export async function notifyPendingApprovalRequest(
+  summary: string,
+  requestedBy: string
+): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    const config = await getNotificationsConfig();
+    if (!config.masterEnabled || isQuietHoursActive(config)) return;
+    const perm = await LocalNotifications.checkPermissions();
+    if (perm.display !== 'granted') return;
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: Math.floor(Date.now() % 100000) + 9000,
+          title: `Approval Needed (${requestedBy || 'Staff'})`,
+          body: summary,
+          schedule: { at: new Date(Date.now() + 250) },
+          extra: { targetScreen: 'owner_approvals' },
+        },
+      ],
+    });
+  } catch {
+    // Non-fatal
+  }
+}

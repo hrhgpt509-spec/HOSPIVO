@@ -230,7 +230,7 @@ export const OldBillsReturnScreen: React.FC<OldBillsReturnScreenProps> = ({
     }
 
     const rule = await getBillReturnApprovalRule();
-    if (rule === 'blocked_offline' || rule === 'remote_approval') {
+    if (rule === 'blocked_offline' && typeof navigator !== 'undefined' && navigator.onLine === false) {
       triggerFeedback('error', t('billing_flow.err_return_blocked_offline'));
       return;
     }
