@@ -878,6 +878,9 @@ export interface TranslationSchema {
     btn_undo_last: ButtonLabel;
     confirm_new_bill_title: string;
     confirm_new_bill_sub: string;
+    owner_discount_confirm_title: string;
+    owner_discount_confirm_sub: string;
+    btn_confirm_apply_discount: string;
     err_empty_cart: string;
     err_insufficient_stock: string;
     err_discount_blocked_offline: string;

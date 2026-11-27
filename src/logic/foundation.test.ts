@@ -9,6 +9,7 @@ import {
   recordPermissionPinDiscountAlert,
   getPermissionPinSecurityAlerts,
   rotateApprovalPinWithValidation,
+  resolveExcessDiscountGate,
   _resetApprovalStoreForTesting,
   _seedUserForTesting,
 } from './approvals';
@@ -379,6 +380,19 @@ describe('Permission PIN security notification & rotation validation', () => {
     expect(rotated.ok).toBe(true);
     expect((await getPermissionPinSecurityAlerts()).length).toBe(0);
     expect((await verifyApprovalPin('7788')).ok).toBe(true);
+  });
+
+  it('routes Owner excess discount to confirmation dialog (no PIN, block, or remote approval) while keeping Staff gated', () => {
+    const owner = { id: 'owner', name: 'Owner', role: 'owner' };
+    const cashier = { id: 'staff-1', name: 'Raju', role: 'cashier' };
+
+    expect(resolveExcessDiscountGate(owner, 'local_pin', true)).toBe('owner_confirm');
+    expect(resolveExcessDiscountGate(owner, 'remote_approval', true)).toBe('owner_confirm');
+    expect(resolveExcessDiscountGate(owner, 'blocked_offline', false)).toBe('owner_confirm');
+
+    expect(resolveExcessDiscountGate(cashier, 'local_pin', true)).toBe('approval_required');
+    expect(resolveExcessDiscountGate(cashier, 'remote_approval', false)).toBe('approval_required');
+    expect(resolveExcessDiscountGate(cashier, 'blocked_offline', false)).toBe('blocked_offline');
   });
 });
 

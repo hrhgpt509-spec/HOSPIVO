@@ -360,6 +360,30 @@ export function shouldBlockProtectedActionOffline(
   return rule === 'blocked_offline' && !isOnline;
 }
 
+export type ExcessDiscountGateDecision =
+  | 'owner_confirm'
+  | 'blocked_offline'
+  | 'approval_required';
+
+/**
+ * Determines how an above-limit discount should be gated based on user role:
+ * - Owner: bypasses PIN, offline block, and remote approval -> shows simple confirmation.
+ * - Staff: respects store rule (offline block vs. Permission PIN / Remote Approval).
+ */
+export function resolveExcessDiscountGate(
+  user: DBUser | { id?: string; name?: string; role?: string; isOwner?: boolean } | null | undefined,
+  rule: ApprovalRuleType,
+  isOnline: boolean = typeof navigator === 'undefined' ? true : navigator.onLine
+): ExcessDiscountGateDecision {
+  if (user?.role === 'owner' || (user as { isOwner?: boolean } | null | undefined)?.isOwner === true) {
+    return 'owner_confirm';
+  }
+  if (shouldBlockProtectedActionOffline(rule, isOnline)) {
+    return 'blocked_offline';
+  }
+  return 'approval_required';
+}
+
 export const PERMISSION_PIN_ALERTS_KEY = 'permission_pin_security_alerts';
 
 export interface PermissionPinSecurityAlert {

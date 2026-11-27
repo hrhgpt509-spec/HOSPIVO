@@ -13,7 +13,7 @@ import { isExpired, pickBatchesForSale } from '../logic/stock';
 import { triggerFeedback } from '../logic/feedback';
 import {
   getApprovalRuleForCategory,
-  shouldBlockProtectedActionOffline,
+  resolveExcessDiscountGate,
 } from '../logic/approvals';
 import {
   calculateBillTotals,
@@ -87,6 +87,11 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
     description: string;
   } | null>(null);
   const [discountApproved, setDiscountApproved] = useState<boolean>(false);
+  const [isOwnerDiscountConfirmOpen, setIsOwnerDiscountConfirmOpen] = useState<boolean>(false);
+  const [ownerDiscountPreview, setOwnerDiscountPreview] = useState<{
+    percent: number;
+    discountPaise: number;
+  } | null>(null);
 
   // Modals & mobile sheet state
   const [scheduleHMedicine, setScheduleHMedicine] = useState<Medicine | null>(null);
@@ -574,7 +579,8 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
     }
 
     const rule = await getApprovalRuleForCategory('discount_above_limit');
-    if (shouldBlockProtectedActionOffline(rule)) {
+    const decision = resolveExcessDiscountGate(currentUser, rule);
+    if (decision === 'blocked_offline') {
       triggerFeedback('error', t('dawai_becho.err_discount_blocked_offline'));
       return;
     }
@@ -584,6 +590,16 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
       value,
       description: `Bill #${nextBillNo}: ${preview.effectiveDiscountPercent}% discount (${formatRupees(preview.discountPaise)}) on ${formatRupees(preview.subtotalPaise)}`,
     });
+
+    if (decision === 'owner_confirm') {
+      setOwnerDiscountPreview({
+        percent: preview.effectiveDiscountPercent,
+        discountPaise: preview.discountPaise,
+      });
+      setIsOwnerDiscountConfirmOpen(true);
+      return;
+    }
+
     setIsApprovalOpen(true);
   };
 
@@ -757,8 +773,18 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
 
     if (totals.requiresApproval && !discountApproved) {
       const rule = await getApprovalRuleForCategory('discount_above_limit');
-      if (shouldBlockProtectedActionOffline(rule)) {
+      const decision = resolveExcessDiscountGate(currentUser, rule);
+      if (decision === 'blocked_offline') {
         triggerFeedback('error', t('dawai_becho.err_discount_blocked_offline'));
+        return;
+      }
+
+      if (decision === 'owner_confirm') {
+        setOwnerDiscountPreview({
+          percent: totals.effectiveDiscountPercent,
+          discountPaise: totals.discountPaise,
+        });
+        setIsOwnerDiscountConfirmOpen(true);
         return;
       }
 
@@ -1505,6 +1531,38 @@ export const DawaiBecho: React.FC<DawaiBechoProps> = ({
           resetCurrentBill();
         }}
         onCancel={() => setIsNewBillConfirmOpen(false)}
+      />
+
+      {/* 7b. Owner Excess Discount Confirmation Dialog (no PIN / no Remote Approval) */}
+      <ConfirmDialog
+        isOpen={isOwnerDiscountConfirmOpen}
+        title={t('dawai_becho.owner_discount_confirm_title')}
+        subtitle={t('dawai_becho.owner_discount_confirm_sub', {
+          applied: ownerDiscountPreview?.percent ?? totals.effectiveDiscountPercent,
+          limit: discountLimit,
+        })}
+        confirmLabel={t('dawai_becho.btn_confirm_apply_discount')}
+        confirmSubLabel=""
+        cancelLabel={tButton('common.btn_cancel').main}
+        cancelSubLabel=""
+        isDanger={false}
+        onConfirm={() => {
+          setIsOwnerDiscountConfirmOpen(false);
+          setOwnerDiscountPreview(null);
+          setDiscountApproved(true);
+          if (pendingBillDiscount) {
+            applyBillDiscount(pendingBillDiscount.mode, pendingBillDiscount.value);
+            setPendingBillDiscount(null);
+            triggerFeedback('success', t('dawai_becho.bill_disc_applied_toast'));
+            return;
+          }
+          executePaymentProceed(true);
+        }}
+        onCancel={() => {
+          setIsOwnerDiscountConfirmOpen(false);
+          setOwnerDiscountPreview(null);
+          setPendingBillDiscount(null);
+        }}
       />
 
       {/* 8. Approval PIN Dialog for discount_above_limit */}
