@@ -20,14 +20,18 @@ import { subscribeFeedback } from './feedback';
 import {
   captureWorkspaceSnapshot,
   detectDefaultDeviceName,
+  deleteConnectedDevice,
+  isDeviceStale,
   listConnectedDevices,
   registerCurrentDeviceInCloud,
   renameConnectedDevice,
+  wipeDeviceOnRemoteRevocation,
 } from './cloudSync';
 
 function createMockArrayQueryChain(resolvedData: any[] = []) {
   const query: any = {
     eq: vi.fn().mockImplementation(() => query),
+    in: vi.fn().mockImplementation(() => query),
     gt: vi.fn().mockImplementation(() => query),
     order: vi.fn().mockImplementation(() => query),
     limit: vi.fn().mockImplementation(() => query),
@@ -812,6 +816,7 @@ describe('strict account/shop isolation & multi-shop management', () => {
       if (table === 'hospivo_sync_events') {
         return {
           upsert: upsertSpy,
+          delete: vi.fn().mockReturnValue(createMockArrayQueryChain([])),
           select: vi.fn().mockReturnValue(createMockArrayQueryChain([])),
         } as any;
       }
@@ -825,5 +830,78 @@ describe('strict account/shop isolation & multi-shop management', () => {
     expect((await db.settings.get('device_name'))?.value).toBe('Cashier Counter 2');
     expect(updated[0].deviceName).toBe('Cashier Counter 2');
     expect(upsertSpy).toHaveBeenCalled();
+  });
+
+  it('detects stale (>7d) devices, revokes remote devices, and wipes local data when this device is revoked', async () => {
+    const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    expect(isDeviceStale(tenDaysAgo)).toBe(true);
+    expect(isDeviceStale(oneHourAgo)).toBe(false);
+
+    await db.settings.put({ key: 'cloud_enabled', value: true });
+    await db.settings.put({ key: 'cloud_shop_uuid', value: 'cloud-rev-1' });
+    await db.settings.put({ key: 'shop_sync_id', value: 'HOSP-REV1-0001' });
+    await db.settings.put({ key: 'device_id', value: 'dev-owner-1' });
+    await db.settings.put({ key: 'device_name', value: 'Owner Phone' });
+    await db.settings.put({
+      key: 'connected_devices_cache',
+      value: [
+        { deviceId: 'dev-owner-1', deviceName: 'Owner Phone', platform: 'Android', lastSeenAt: oneHourAgo, isCurrentDevice: true },
+        { deviceId: 'dev-stale-2', deviceName: 'Old Counter PC', platform: 'Windows PC', lastSeenAt: tenDaysAgo, isCurrentDevice: false },
+      ],
+    });
+    await db.shop.add({
+      name: 'Revoke Test Medical',
+      ownerName: 'Owner',
+      address: 'Main',
+      phone: '9999999999',
+      gstNo: '',
+      drugLicenceNos: '',
+      mode: 'cloud',
+      shopSyncId: 'HOSP-REV1-0001',
+    });
+
+    vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
+      data: { session: { user: { id: 'usr-rev', email: 'rev@test.com' } } },
+      error: null,
+    } as any);
+    vi.spyOn(supabase.auth, 'getUser').mockResolvedValue({
+      data: { user: { id: 'usr-rev', email: 'rev@test.com' } },
+      error: null,
+    } as any);
+    const signOutSpy = vi.spyOn(supabase.auth, 'signOut').mockResolvedValue({ error: null } as any);
+    const upsertSpy = vi.fn().mockResolvedValue({ error: null });
+    vi.spyOn(supabase, 'from').mockImplementation((table: string) => {
+      if (table === 'hospivo_sync_events') {
+        return {
+          upsert: upsertSpy,
+          delete: vi.fn().mockReturnValue(createMockArrayQueryChain([])),
+          select: vi.fn().mockReturnValue(createMockArrayQueryChain([])),
+        } as any;
+      }
+      return {
+        select: vi.fn().mockReturnValue(createMockArrayQueryChain([])),
+        upsert: vi.fn().mockResolvedValue({ error: null }),
+      } as any;
+    });
+
+    // Delete stale remote device
+    await deleteConnectedDevice('dev-stale-2');
+    expect(upsertSpy).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          entity_type: 'device_revoked',
+          entity_id: 'dev-stale-2',
+        }),
+      ]),
+      expect.any(Object)
+    );
+    const cachedAfter = (await db.settings.get('connected_devices_cache'))?.value as any[];
+    expect(cachedAfter.some((d) => d.deviceId === 'dev-stale-2')).toBe(false);
+
+    // Remote revocation on THIS device wipes local database and signs out
+    await wipeDeviceOnRemoteRevocation();
+    expect(signOutSpy).toHaveBeenCalled();
+    expect(await db.shop.count()).toBe(0);
   });
 });

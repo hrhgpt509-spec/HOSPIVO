@@ -17,6 +17,7 @@ import { FullscreenButton } from '../components/FullscreenButton';
 import { ApprovalDialog } from '../components/ApprovalDialog';
 import { formatRupees, rupeesToPaise } from '../logic/money';
 import { triggerFeedback } from '../logic/feedback';
+import { triggerAutoBackupOnCloseDay } from '../logic/autoBackup';
 import { DEFAULT_APPROVAL_RULES, type ApprovalRuleType } from '../logic/approvals';
 import {
   computeDayClosingSummary,
@@ -173,6 +174,7 @@ export const DinBand: React.FC<DinBandProps> = ({
       setStep(4);
 
       if (result.status === 'completed') {
+        void triggerAutoBackupOnCloseDay().catch(() => {});
         triggerFeedback('success', t('din_band.toast_saved_completed'));
       } else {
         triggerFeedback('error', t('din_band.toast_saved_pending'));

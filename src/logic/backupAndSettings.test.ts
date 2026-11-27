@@ -16,6 +16,20 @@ vi.mock('@capacitor/share', () => ({
 
 import { db, resetDatabase, type DBUser } from '../db';
 import {
+  DEFAULT_AUTO_BACKUP_CONFIG,
+  applyAutoBackupRetention,
+  executeAutoBackup,
+  getAutoBackupRecords,
+  isScheduledAutoBackupDue,
+  saveAutoBackupConfig,
+} from './autoBackup';
+import {
+  DEFAULT_NOTIFICATIONS_CONFIG,
+  getNotificationsConfig,
+  isQuietHoursActive,
+  saveNotificationsConfig,
+} from './notifications';
+import {
   createBackup,
   createBackupJson,
   computeSha256,
@@ -582,6 +596,93 @@ describe('Backup, Staff PIN & Settings Logic', () => {
       } finally {
         nativeSpy.mockRestore();
       }
+    });
+  });
+
+  describe('Auto-Backup Scheduling & Retention & Notification Settings', () => {
+    it('evaluates daily and weekly scheduled auto-backup due times accurately', () => {
+      const dailyCfg = {
+        ...DEFAULT_AUTO_BACKUP_CONFIG,
+        triggerMode: 'scheduled' as const,
+        scheduleFrequency: 'daily' as const,
+        scheduleTime: '21:30',
+        lastAutoBackupAt: null,
+      };
+      // Before 21:30 -> not due
+      expect(isScheduledAutoBackupDue(dailyCfg, new Date(2026, 4, 10, 21, 15, 0))).toBe(false);
+      // At/after 21:30 with no prior backup -> due
+      expect(isScheduledAutoBackupDue(dailyCfg, new Date(2026, 4, 10, 21, 35, 0))).toBe(true);
+      // Already backed up after today's 21:30 -> not due again today
+      const alreadyToday = {
+        ...dailyCfg,
+        lastAutoBackupAt: new Date(2026, 4, 10, 21, 31, 0).toISOString(),
+      };
+      expect(isScheduledAutoBackupDue(alreadyToday, new Date(2026, 4, 10, 23, 0, 0))).toBe(false);
+
+      // Weekly on Sunday (day 0)
+      const weeklyCfg = {
+        ...dailyCfg,
+        scheduleFrequency: 'weekly' as const,
+        scheduleDayOfWeek: 0,
+      };
+      // Monday (2026-05-11 is Monday) -> not due
+      expect(isScheduledAutoBackupDue(weeklyCfg, new Date(2026, 4, 11, 22, 0, 0))).toBe(false);
+      // Sunday (2026-05-10 is Sunday) after 21:30 -> due
+      expect(isScheduledAutoBackupDue(weeklyCfg, new Date(2026, 4, 10, 22, 0, 0))).toBe(true);
+    });
+
+    it('enforces rolling backup retention and prunes older auto-backups', async () => {
+      await db.shop.add({
+        name: 'Auto Backup Store',
+        ownerName: 'Owner',
+        address: 'Main',
+        phone: '9999999999',
+        gstNo: '',
+        drugLicenceNos: '',
+        mode: 'local',
+        shopSyncId: 'HOSP-AUTO-1111',
+      });
+      await saveAutoBackupConfig({
+        ...DEFAULT_AUTO_BACKUP_CONFIG,
+        triggerMode: 'interval',
+        retentionCount: 5,
+      });
+
+      // Newest-first order, matching executeAutoBackup's prepending
+      const records = Array.from({ length: 7 }, (_, i) => ({
+        id: `ab-${6 - i}`,
+        fileName: `hospivo_auto_2026-05-0${7 - i}.json`,
+        createdAt: new Date(2026, 4, 7 - i, 10, 0, 0).toISOString(),
+        trigger: 'interval' as const,
+        checksum: `chk-${6 - i}`,
+      }));
+      const pruned = await applyAutoBackupRetention(records, 5);
+      expect(pruned).toHaveLength(5);
+      expect(pruned[0].id).toBe('ab-6');
+
+      const res = await executeAutoBackup('manual');
+      expect(res.success).toBe(true);
+      const savedRecords = await getAutoBackupRecords();
+      expect(savedRecords.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('saves notification settings and evaluates overnight quiet hours', async () => {
+      await saveNotificationsConfig({
+        ...DEFAULT_NOTIFICATIONS_CONFIG,
+        enabled: true,
+        expiryWindowDays: 60,
+        quietHours: { enabled: true, start: '22:30', end: '08:00' },
+      });
+      const loaded = await getNotificationsConfig();
+      expect(loaded.enabled).toBe(true);
+      expect(loaded.expiryWindowDays).toBe(60);
+
+      // 23:15 is inside 22:30 -> 08:00
+      expect(isQuietHoursActive(loaded, new Date(2026, 4, 10, 23, 15, 0))).toBe(true);
+      // 06:30 is inside 22:30 -> 08:00
+      expect(isQuietHoursActive(loaded, new Date(2026, 4, 10, 6, 30, 0))).toBe(true);
+      // 14:00 is outside quiet hours
+      expect(isQuietHoursActive(loaded, new Date(2026, 4, 10, 14, 0, 0))).toBe(false);
     });
   });
 });

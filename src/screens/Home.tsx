@@ -45,6 +45,7 @@ import { OwnerCloudSync } from './OwnerCloudSync';
 import { RemoteApprovalInbox } from './RemoteApprovalInbox';
 import { useIsCompactViewport } from '../logic/useViewport';
 import { useBackHandler } from '../logic/androidBack';
+import { NOTIFICATION_DEEP_LINK_EVENT } from '../logic/notifications';
 
 interface HomeProps {
   currentUser?: {
@@ -139,6 +140,23 @@ export const Home: React.FC<HomeProps> = ({ currentUser, onLock, onSwitchUser, o
       clearInterval(interval);
     };
   }, [activePage]);
+
+  useEffect(() => {
+    const handleNotifDeepLink = (event: Event) => {
+      const target = (event as CustomEvent<{ targetScreen?: string }>).detail?.targetScreen;
+      if (
+        target === 'expiry' ||
+        target === 'stock_dekho' ||
+        target === 'owner_reports' ||
+        target === 'udhaar' ||
+        target === 'owner_backup'
+      ) {
+        setActivePage(target);
+      }
+    };
+    window.addEventListener(NOTIFICATION_DEEP_LINK_EVENT, handleNotifDeepLink);
+    return () => window.removeEventListener(NOTIFICATION_DEEP_LINK_EVENT, handleNotifDeepLink);
+  }, []);
 
   useEffect(() => {
     if (theme === 'dark') {

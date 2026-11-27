@@ -1,7 +1,9 @@
 import Dexie from 'dexie';
 import { Capacitor } from '@capacitor/core';
+import { scheduleAutoBackupAfterChange } from './autoBackup';
 import {
   db,
+  resetDatabase,
   runWithSyncWorkspaceBypass,
   type SyncOutboxItem,
   type SyncEntityType,
@@ -286,6 +288,9 @@ export async function enqueueSyncItem(
   entityId: string | number,
   payload: unknown
 ): Promise<number | null> {
+  if (entityType !== 'audit') {
+    scheduleAutoBackupAfterChange();
+  }
   return await Dexie.ignoreTransaction(async () => {
     const config = await getCloudConfig();
     if (!config.cloudEnabled) {
@@ -518,7 +523,26 @@ export async function applyRemoteEvent(event: any): Promise<void> {
   }
   if (!payload) return;
 
-  const entityType = event.entity_type as SyncEntityType | 'device';
+  const entityType = event.entity_type as SyncEntityType | 'device' | 'device_revoked';
+
+  if (entityType === 'device_revoked') {
+    const revokedId = String(payload.deviceId || payload.device_id || event.entity_id || '').trim();
+    if (revokedId) {
+      const currentDeviceId = (await getCloudConfig()).deviceId;
+      if (revokedId === currentDeviceId) {
+        await wipeDeviceOnRemoteRevocation();
+        return;
+      }
+      const cacheItem = await db.settings.get('connected_devices_cache');
+      const existingList = Array.isArray(cacheItem?.value) ? (cacheItem.value as ConnectedDeviceInfo[]) : [];
+      await db.settings.put({
+        key: 'connected_devices_cache',
+        value: existingList.filter((d) => d.deviceId !== revokedId),
+      });
+      emitSyncApplied(['device']);
+    }
+    return;
+  }
 
   if (entityType === 'device') {
     const devId = String(payload.deviceId || event.device_id || event.entity_id || '').trim();
@@ -3309,13 +3333,14 @@ export async function listConnectedDevices(): Promise<ConnectedDeviceInfo[]> {
       if (session.isAuthenticated && session.cloudShopUuid) {
         const { data, error } = await supabase
           .from('hospivo_sync_events')
-          .select('entity_id, payload_json, client_created_at, created_at')
+          .select('entity_type, entity_id, payload_json, client_created_at, created_at')
           .eq('shop_id', session.cloudShopUuid)
-          .eq('entity_type', 'device')
+          .in('entity_type', ['device', 'device_revoked'])
           .order('client_created_at', { ascending: false })
-          .limit(50);
+          .limit(100);
 
         if (!error && Array.isArray(data)) {
+          const revokedAtById = new Map<string, string>();
           for (const row of data as any[]) {
             let p: Record<string, any> = {};
             if (row?.payload_json) {
@@ -3329,10 +3354,20 @@ export async function listConnectedDevices(): Promise<ConnectedDeviceInfo[]> {
             }
             const devId = String(p.deviceId || p.device_id || row?.entity_id || row?.device_id || '').trim();
             if (!devId) continue;
-            const prev = byId.get(devId);
             const fallbackTs = row?.client_created_at
               ? new Date(Number(row.client_created_at)).toISOString()
               : String(row?.created_at || '');
+
+            if (row?.entity_type === 'device_revoked') {
+              const revTs = String(p.revokedAt || fallbackTs || new Date().toISOString());
+              const prevRev = revokedAtById.get(devId);
+              if (!prevRev || revTs > prevRev) {
+                revokedAtById.set(devId, revTs);
+              }
+              continue;
+            }
+
+            const prev = byId.get(devId);
             const rowTime = String(p.lastActiveAt || p.last_active_at || p.lastSeenAt || fallbackTs || '');
             if (!prev || rowTime >= prev.lastSeenAt) {
               byId.set(devId, {
@@ -3345,6 +3380,18 @@ export async function listConnectedDevices(): Promise<ConnectedDeviceInfo[]> {
               });
             }
           }
+
+          for (const [revId, revTs] of revokedAtById.entries()) {
+            const dev = byId.get(revId);
+            if (!dev || revTs >= dev.lastSeenAt) {
+              byId.delete(revId);
+              if (revId === resolvedDeviceId) {
+                await wipeDeviceOnRemoteRevocation();
+                return [];
+              }
+            }
+          }
+
           await db.settings.put({
             key: 'connected_devices_cache',
             value: Array.from(byId.values()),
@@ -3453,6 +3500,118 @@ export async function renameConnectedDevice(
     } catch (err) {
       console.warn('Could not sync renamed device to cloud:', err);
     }
+  }
+
+  emitSyncApplied(['device']);
+  return listConnectedDevices();
+}
+
+export const STALE_DEVICE_DAYS = 7;
+
+export function isDeviceStale(lastSeenAt: string, now: Date = new Date()): boolean {
+  const ts = Date.parse(lastSeenAt);
+  if (!Number.isFinite(ts)) return false;
+  return now.getTime() - ts > STALE_DEVICE_DAYS * 24 * 60 * 60 * 1000;
+}
+
+/**
+ * Completely signs out and wipes ALL local pharmacy/account data on a device
+ * that was remotely deleted/revoked by the owner.
+ */
+export async function wipeDeviceOnRemoteRevocation(): Promise<void> {
+  stopRealtimeSync();
+  if (isBackendConfigured()) {
+    await supabase.auth.signOut().catch(() => {});
+  }
+  await resetDatabase();
+  if (typeof localStorage !== 'undefined') {
+    try {
+      localStorage.clear();
+    } catch {
+      // ignore
+    }
+  }
+  if (typeof sessionStorage !== 'undefined') {
+    try {
+      sessionStorage.clear();
+    } catch {
+      // ignore
+    }
+  }
+  emitSyncApplied(['device_revoked', 'workspace_reset']);
+}
+
+/**
+ * PIN-protected remote device deletion:
+ * Removes the device from Supabase `hospivo_sync_events`, emits a `device_revoked`
+ * event so the target device wipes its local data and signs out, and updates local cache.
+ */
+export async function deleteConnectedDevice(targetDeviceId: string): Promise<ConnectedDeviceInfo[]> {
+  const config = await getCloudConfig();
+  const resolvedCurrentId = config.deviceId || 'device-local';
+  const nowIso = new Date().toISOString();
+
+  // 1. Remove from local cache immediately
+  try {
+    const cacheItem = await db.settings.get('connected_devices_cache');
+    const existingList = Array.isArray(cacheItem?.value) ? (cacheItem.value as ConnectedDeviceInfo[]) : [];
+    await db.settings.put({
+      key: 'connected_devices_cache',
+      value: existingList.filter((d) => d.deviceId !== targetDeviceId),
+    });
+  } catch {
+    // Non-fatal
+  }
+
+  // 2. Record audit log before wiping if self-delete
+  await addAudit('Cloud', 'device_deleted', targetDeviceId, 'Removed linked device from Connected Devices').catch(
+    () => {}
+  );
+
+  // 3. Push `device_revoked` event & remove `device` event in Supabase
+  if (config.cloudEnabled && isBackendConfigured() && !(typeof navigator !== 'undefined' && navigator.onLine === false)) {
+    try {
+      const session = await getCurrentCloudSession();
+      if (session.isAuthenticated && session.cloudShopUuid) {
+        const revokeId = `device_revoked:${session.cloudShopUuid}:${targetDeviceId}`;
+        const revokeRow = {
+          id: revokeId,
+          shop_id: session.cloudShopUuid,
+          shop_sync_id: config.shopSyncId,
+          entity_type: 'device_revoked',
+          entity_id: targetDeviceId,
+          payload_json: JSON.stringify({
+            deviceId: targetDeviceId,
+            revokedAt: nowIso,
+            shopId: session.cloudShopUuid,
+          }),
+          client_created_at: Date.now(),
+        };
+        const { error: upsertErr } = await supabase
+          .from('hospivo_sync_events')
+          .upsert([revokeRow], { onConflict: 'id' });
+        if (upsertErr) {
+          await supabase.from('hospivo_sync_events').insert([
+            { ...revokeRow, id: `${revokeId}:${Date.now()}` },
+          ]);
+        }
+
+        await supabase
+          .from('hospivo_sync_events')
+          .delete()
+          .eq('shop_id', session.cloudShopUuid)
+          .eq('entity_type', 'device')
+          .eq('entity_id', targetDeviceId);
+      }
+    } catch (err) {
+      console.warn('Could not revoke device in cloud:', err);
+    }
+  }
+
+  // 4. If deleting THIS device, wipe local data & sign out immediately
+  if (targetDeviceId === resolvedCurrentId) {
+    await wipeDeviceOnRemoteRevocation();
+    return [];
   }
 
   emitSyncApplied(['device']);

@@ -19,6 +19,8 @@ import {
   registerCurrentDeviceInCloud,
   listConnectedDevices,
   renameConnectedDevice,
+  isDeviceStale,
+  deleteConnectedDevice,
   MAX_DEVICE_NAME_LENGTH,
   type CloudConfig,
   type HomeSyncState,
@@ -28,6 +30,7 @@ import { triggerFeedback } from '../logic/feedback';
 import { CloudAccountAuth } from './CloudAccountAuth';
 import { getCurrentCloudSession, signOutOwner } from '../logic/cloudAuth';
 import { useBackHandler } from '../logic/androidBack';
+import { OwnerPinGate } from '../components/OwnerPinGate';
 
 export interface OwnerCloudSyncProps {
   currentUser?: DBUser | null;
@@ -71,6 +74,8 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
   const [editingDeviceName, setEditingDeviceName] = useState('');
   const [renameError, setRenameError] = useState('');
   const [isRenaming, setIsRenaming] = useState(false);
+  const [pendingDeleteDevice, setPendingDeleteDevice] = useState<ConnectedDeviceInfo | null>(null);
+  const [isDeletingDevice, setIsDeletingDevice] = useState(false);
   const ownerAccountRef = useRef<HTMLElement | null>(null);
 
   useBackHandler(isAuthModalOpen, () => setIsAuthModalOpen(false));
@@ -191,6 +196,23 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
       await loadData();
     } catch {
       triggerFeedback('error', t('common.error_occurred'));
+    }
+  };
+
+  const handleConfirmDeleteDevice = async () => {
+    const target = pendingDeleteDevice;
+    setPendingDeleteDevice(null);
+    if (!target) return;
+    setIsDeletingDevice(true);
+    try {
+      await deleteConnectedDevice(target.deviceId);
+      triggerFeedback('success', t('cloud_sync.toast_device_deleted'));
+      const list = await listConnectedDevices().catch(() => []);
+      setConnectedDevices(list);
+    } catch {
+      triggerFeedback('error', t('common.error_occurred'));
+    } finally {
+      setIsDeletingDevice(false);
     }
   };
 
@@ -686,11 +708,16 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
                           />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                             <span className="text-sm font-bold text-on-surface truncate">{dev.deviceName}</span>
                             {dev.isCurrentDevice && (
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-on-primary shrink-0">
                                 {t('cloud_sync.this_device_badge')}
+                              </span>
+                            )}
+                            {isDeviceStale(dev.lastSeenAt) && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-error/15 text-error shrink-0">
+                                {t('cloud_sync.stale_device_badge')}
                               </span>
                             )}
                           </div>
@@ -702,15 +729,27 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
                       </div>
 
                       {!isEditing && (
-                        <button
-                          type="button"
-                          onClick={() => handleStartRename(dev)}
-                          aria-label={t('cloud_sync.btn_rename_device')}
-                          title={t('cloud_sync.btn_rename_device')}
-                          className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-primary flex items-center justify-center cursor-pointer shrink-0 transition-colors"
-                        >
-                          <Icon name="edit" className="text-[18px]" />
-                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleStartRename(dev)}
+                            aria-label={t('cloud_sync.btn_rename_device')}
+                            title={t('cloud_sync.btn_rename_device')}
+                            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-primary flex items-center justify-center cursor-pointer shrink-0 transition-colors"
+                          >
+                            <Icon name="edit" className="text-[18px]" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isDeletingDevice}
+                            onClick={() => setPendingDeleteDevice(dev)}
+                            aria-label={t('cloud_sync.btn_delete_device')}
+                            title={t('cloud_sync.btn_delete_device')}
+                            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-lg bg-error/10 hover:bg-error/20 text-error flex items-center justify-center cursor-pointer shrink-0 transition-colors disabled:opacity-50"
+                          >
+                            <Icon name="delete_forever" className="text-[18px]" />
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -1078,6 +1117,11 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
           </div>
         </button>
       </footer>
+      <OwnerPinGate
+        isOpen={Boolean(pendingDeleteDevice)}
+        onSuccess={() => void handleConfirmDeleteDevice()}
+        onClose={() => setPendingDeleteDevice(null)}
+      />
     </div>
   );
 };

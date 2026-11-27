@@ -20,6 +20,8 @@ import {
   prepareNewShopSetup,
   registerCurrentShopInDirectory,
 } from './logic/multiShop';
+import { initAutoBackupScheduler } from './logic/autoBackup';
+import { initNotificationDeepLinks } from './logic/notifications';
 
 // Default 5 minutes of inactivity triggers auto-lock
 export const DEFAULT_INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
@@ -92,6 +94,8 @@ export function App() {
   // Silent automatic cloud sync, offline/online & Capacitor Network listeners, and Realtime subscription
   useEffect(() => {
     const cleanupNetworkListeners = initNetworkSyncListeners();
+    const cleanupAutoBackup = initAutoBackupScheduler();
+    const cleanupNotifLinks = initNotificationDeepLinks();
 
     let authSubscription: { unsubscribe: () => void } | null = null;
     if (isBackendConfigured() && typeof supabase.auth?.onAuthStateChange === 'function') {
@@ -107,6 +111,8 @@ export function App() {
 
     return () => {
       cleanupNetworkListeners();
+      cleanupAutoBackup();
+      cleanupNotifLinks();
       authSubscription?.unsubscribe();
     };
   }, []);

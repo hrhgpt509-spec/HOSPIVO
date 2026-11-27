@@ -22,6 +22,8 @@ import { triggerFeedback } from '../logic/feedback';
 import { usePinKeyboard } from '../logic/usePinKeyboard';
 import { useBackHandler } from '../logic/androidBack';
 import { OwnerCloudSync } from './OwnerCloudSync';
+import { OwnerAutoBackupPanel } from './settings/OwnerAutoBackupPanel';
+import { OwnerNotificationsPanel } from './settings/OwnerNotificationsPanel';
 import { getCloudConfig, getHomeSyncState, enqueueSyncItem, type CloudConfig, type HomeSyncState } from '../logic/cloudSync';
 
 interface OwnerSettingsProps {
@@ -31,7 +33,7 @@ interface OwnerSettingsProps {
   onToggleTheme?: () => void;
 }
 
-type SettingsView = 'main' | 'approval_rules' | 'cloud_sync';
+type SettingsView = 'main' | 'approval_rules' | 'cloud_sync' | 'auto_backup' | 'notifications';
 
 export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
   currentUser,
@@ -526,7 +528,7 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
       <MobileTopBar
         title={t('owner_settings.page_title')}
         subtitle={shopName || undefined}
-        onBack={currentView === 'approval_rules' ? () => setCurrentView('main') : onBack}
+        onBack={currentView !== 'main' ? () => setCurrentView('main') : onBack}
         backIcon="arrow_back"
         theme={theme}
         onToggleTheme={onToggleTheme}
@@ -854,8 +856,58 @@ export const OwnerSettings: React.FC<OwnerSettingsProps> = ({
                   <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
                 </div>
               </div>
+
+              <div className="h-[1px] w-full bg-surface-container-high" />
+
+              {/* Row 12: Auto-Backup */}
+              <div
+                onClick={() => setCurrentView('auto_backup')}
+                className="min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
+              >
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="backup" className="text-[24px] sm:text-[28px]" />
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words">
+                      {t('auto_backup.row_title')}
+                    </span>
+                    <span className="font-label-sub-english text-xs text-on-surface-variant leading-snug break-words">
+                      {t('auto_backup.row_sub')}
+                    </span>
+                  </div>
+                </div>
+                <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
+              </div>
+
+              <div className="h-[1px] w-full bg-surface-container-high" />
+
+              {/* Row 13: Notifications */}
+              <div
+                onClick={() => setCurrentView('notifications')}
+                className="min-h-[72px] px-3.5 sm:px-6 py-3 flex items-center justify-between gap-2.5 sm:gap-4 cursor-pointer hover:bg-surface-container-low transition-colors min-w-0"
+              >
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary shrink-0">
+                    <Icon name="notifications_active" className="text-[24px] sm:text-[28px]" />
+                  </div>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="font-title-hinglish text-sm sm:text-base font-bold text-on-surface leading-snug break-words">
+                      {t('notifications.row_title')}
+                    </span>
+                    <span className="font-label-sub-english text-xs text-on-surface-variant leading-snug break-words">
+                      {t('notifications.row_sub')}
+                    </span>
+                  </div>
+                </div>
+                <Icon name="chevron_right" className="text-outline text-[20px] sm:text-[24px] shrink-0" />
+              </div>
             </div>
           </div>
+        ) : currentView === 'auto_backup' ? (
+          <OwnerAutoBackupPanel onBack={() => setCurrentView('main')} />
+        ) : currentView === 'notifications' ? (
+          <OwnerNotificationsPanel onBack={() => setCurrentView('main')} />
         ) : (
           /* ============================================================ */
           /* 40b: APPROVAL RULES MATRIX (5 PROTECTED ACTIONS)              */
