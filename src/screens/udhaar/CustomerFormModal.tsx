@@ -165,6 +165,8 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
               </label>
               <input
                 type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 min={0}
                 value={creditLimitStr}
                 onChange={(e) => setCreditLimitStr(e.target.value.replace(/[^0-9]/g, ''))}

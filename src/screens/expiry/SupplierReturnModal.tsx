@@ -240,6 +240,8 @@ export const SupplierReturnModal: React.FC<SupplierReturnModalProps> = ({
                   </button>
                   <input
                     type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     min={0}
                     value={packsStr}
                     onChange={(e) => {
@@ -273,6 +275,8 @@ export const SupplierReturnModal: React.FC<SupplierReturnModalProps> = ({
                   </button>
                   <input
                     type="number"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     min={0}
                     value={looseStr}
                     onChange={(e) => {

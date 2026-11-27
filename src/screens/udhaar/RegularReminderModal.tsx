@@ -171,6 +171,8 @@ export const RegularReminderModal: React.FC<RegularReminderModalProps> = ({
             </div>
             <input
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
               min={1}
               value={packDaysStr}
               onChange={(e) => setPackDaysStr(e.target.value.replace(/[^0-9]/g, ''))}

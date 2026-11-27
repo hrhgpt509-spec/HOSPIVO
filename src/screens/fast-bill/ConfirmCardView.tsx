@@ -173,6 +173,8 @@ export const ConfirmCardView: React.FC<ConfirmCardViewProps> = ({
                 <input
                   id="quantity-input"
                   type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   min="1"
                   value={item.quantity}
                   onChange={(e) => {

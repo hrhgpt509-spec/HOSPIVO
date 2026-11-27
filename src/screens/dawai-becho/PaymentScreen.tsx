@@ -895,6 +895,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                       </label>
                       <input
                         type="number"
+                        inputMode="decimal"
                         min={0}
                         value={splitCashStr}
                         onChange={(e) => handleSplitCashChange(e.target.value)}
@@ -907,6 +908,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                       </label>
                       <input
                         type="number"
+                        inputMode="decimal"
                         min={0}
                         value={splitUpiStr}
                         onChange={(e) => handleSplitUpiChange(e.target.value)}

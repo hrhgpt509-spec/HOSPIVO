@@ -309,6 +309,7 @@ export const BillPanel: React.FC<BillPanelProps> = ({
                         </span>
                         <input
                           type="number"
+                          {...numericInputProps('integer')}
                           min={0}
                           max={100}
                           step={1}
