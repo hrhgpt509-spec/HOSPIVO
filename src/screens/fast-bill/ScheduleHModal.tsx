@@ -137,11 +137,10 @@ export const ScheduleHModal: React.FC<ScheduleHModalProps> = ({
               <button
                 type="button"
                 onClick={() => setRxVerified(true)}
-                className={`h-12 min-w-[100px] px-4 rounded-xl font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                  rxVerified === true
-                    ? 'bg-primary text-on-primary'
-                    : 'bg-surface-container-highest text-on-surface-variant'
-                }`}
+                className={`h-12 min-w-[100px] px-4 rounded-xl font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all ${rxVerified === true
+                  ? 'bg-primary text-on-primary'
+                  : 'bg-surface-container-highest text-on-surface-variant'
+                  }`}
               >
                 <Icon name="check_circle" className="text-[20px]" />
                 <span>{t('fast_bill.schedule_h.yes')}</span>
@@ -150,11 +149,10 @@ export const ScheduleHModal: React.FC<ScheduleHModalProps> = ({
               <button
                 type="button"
                 onClick={() => setRxVerified(false)}
-                className={`h-12 min-w-[100px] px-4 rounded-xl font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
-                  rxVerified === false
-                    ? 'bg-error text-on-error'
-                    : 'bg-surface-container-highest text-on-surface-variant'
-                }`}
+                className={`h-12 min-w-[100px] px-4 rounded-xl font-bold shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all ${rxVerified === false
+                  ? 'bg-error text-on-error'
+                  : 'bg-surface-container-highest text-on-surface-variant'
+                  }`}
               >
                 <Icon name="cancel" className="text-[20px]" />
                 <span>{t('fast_bill.schedule_h.no')}</span>

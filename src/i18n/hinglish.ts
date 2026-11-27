@@ -1706,6 +1706,11 @@ export const hinglish: TranslationSchema = {
     this_device_badge: 'Yeh Device',
     last_seen_prefix: 'Last active:',
     toast_device_linked: 'Device link ho gaya aur connected devices refresh hue',
+    btn_rename_device: 'Rename',
+    rename_placeholder: 'Device ka naam likhein (max 40 chars)',
+    rename_err_empty: 'Kripya device ka naam likhein',
+    rename_err_too_long: 'Device ka naam 40 akshar se kam rakhein',
+    toast_device_renamed: 'Device ka naam badal gaya',
   },
   remote_approval: {
     ask_owner_title: 'Owner ko poocho',

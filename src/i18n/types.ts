@@ -1725,6 +1725,11 @@ export interface TranslationSchema {
     this_device_badge: string;
     last_seen_prefix: string;
     toast_device_linked: string;
+    btn_rename_device: string;
+    rename_placeholder: string;
+    rename_err_empty: string;
+    rename_err_too_long: string;
+    toast_device_renamed: string;
   };
   remote_approval: {
     ask_owner_title: string;

@@ -1706,6 +1706,11 @@ export const en: TranslationSchema = {
     this_device_badge: 'This Device',
     last_seen_prefix: 'Last active:',
     toast_device_linked: 'Device linked & connected devices refreshed',
+    btn_rename_device: 'Rename',
+    rename_placeholder: 'Enter device name (max 40 chars)',
+    rename_err_empty: 'Please enter a device name',
+    rename_err_too_long: 'Device name must be 40 characters or less',
+    toast_device_renamed: 'Device renamed',
   },
   remote_approval: {
     ask_owner_title: 'Ask Owner',

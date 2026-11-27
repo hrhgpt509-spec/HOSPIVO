@@ -19,8 +19,10 @@ import {
 import { subscribeFeedback } from './feedback';
 import {
   captureWorkspaceSnapshot,
+  detectDefaultDeviceName,
   listConnectedDevices,
   registerCurrentDeviceInCloud,
+  renameConnectedDevice,
 } from './cloudSync';
 
 function createMockArrayQueryChain(resolvedData: any[] = []) {
@@ -754,5 +756,74 @@ describe('strict account/shop isolation & multi-shop management', () => {
     expect(avail.shops).toHaveLength(1);
     expect(avail.shops[0].name).toBe('Maa Durga Medical Hall');
     expect(avail.shops.some((s) => s.name === 'My Medical Store')).toBe(false);
+  });
+
+  it('generates distinguishable default device names for Android vs Web/Desktop and persists custom renames', async () => {
+    expect(
+      detectDefaultDeviceName({
+        isNative: true,
+        userAgent: 'Mozilla/5.0 (Linux; Android 14; SM-A546E Build/UP1A)',
+        isTablet: false,
+      })
+    ).toBe('Android Phone (SM-A546E)');
+
+    expect(
+      detectDefaultDeviceName({
+        isNative: true,
+        userAgent: 'Mozilla/5.0 (Linux; Android 13; K)',
+        isTablet: true,
+      })
+    ).toBe('Android Tablet');
+
+    expect(
+      detectDefaultDeviceName({
+        isNative: false,
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+      })
+    ).toBe('Windows PC · Chrome');
+
+    // Collision suffixing when another device shares the same default name
+    expect(
+      detectDefaultDeviceName({
+        isNative: false,
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
+        deviceId: 'DEV-ABCD1234',
+        existingNames: ['Windows PC · Chrome'],
+      })
+    ).toBe('Windows PC · Chrome (1234)');
+
+    // Custom rename persists locally and syncs to Supabase
+    await db.settings.put({ key: 'cloud_enabled', value: true });
+    await db.settings.put({ key: 'cloud_shop_uuid', value: 'cloud-ren-1' });
+    await db.settings.put({ key: 'shop_sync_id', value: 'HOSP-REN1-0001' });
+    await db.settings.put({ key: 'device_id', value: 'dev-ren-1' });
+    await db.settings.put({ key: 'device_name', value: 'Windows PC · Chrome' });
+
+    vi.spyOn(supabase.auth, 'getSession').mockResolvedValue({
+      data: { session: { user: { id: 'usr-ren', email: 'ren@test.com' } } },
+      error: null,
+    } as any);
+    vi.spyOn(supabase.auth, 'getUser').mockResolvedValue({
+      data: { user: { id: 'usr-ren', email: 'ren@test.com' } },
+      error: null,
+    } as any);
+    const upsertSpy = vi.fn().mockResolvedValue({ error: null });
+    vi.spyOn(supabase, 'from').mockImplementation((table: string) => {
+      if (table === 'hospivo_sync_events') {
+        return {
+          upsert: upsertSpy,
+          select: vi.fn().mockReturnValue(createMockArrayQueryChain([])),
+        } as any;
+      }
+      return {
+        select: vi.fn().mockReturnValue(createMockArrayQueryChain([])),
+        upsert: vi.fn().mockResolvedValue({ error: null }),
+      } as any;
+    });
+
+    const updated = await renameConnectedDevice('dev-ren-1', 'Cashier Counter 2');
+    expect((await db.settings.get('device_name'))?.value).toBe('Cashier Counter 2');
+    expect(updated[0].deviceName).toBe('Cashier Counter 2');
+    expect(upsertSpy).toHaveBeenCalled();
   });
 });

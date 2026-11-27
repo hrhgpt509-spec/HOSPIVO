@@ -135,12 +135,8 @@ export async function getCloudConfig(): Promise<CloudConfig> {
   const hasCustomRestConfig = Boolean(savedUrl && savedKey);
   const cloudUrl = savedUrl || envUrl;
   const cloudAnonKey = savedKey || envKey;
-  const defaultDeviceName = Capacitor.isNativePlatform()
-    ? 'Android Mobile'
-    : typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '')
-      ? 'Android Device'
-      : 'Counter PC 1 (Billing Desk)';
-  const deviceName = (deviceItem?.value as string) || defaultDeviceName;
+  const savedDeviceName = ((deviceItem?.value as string) || '').trim();
+  const deviceName = savedDeviceName || detectDefaultDeviceName({ deviceId });
   const lastCloudSyncAt = (lastSyncItem?.value as number) || null;
   const lastStatus = (statusItem?.value as CloudConfig['lastStatus']) || 'never';
   const lastError = (errorItem?.value as string) || null;
@@ -3054,6 +3050,93 @@ export interface ConnectedDeviceInfo {
 }
 
 const APP_VERSION = (import.meta as any).env?.VITE_APP_VERSION || '4.12.8';
+export const MAX_DEVICE_NAME_LENGTH = 40;
+
+/**
+ * Generates a clear, distinguishable default device name based on platform/OS/browser
+ * and avoids colliding with existing device names in the same store.
+ */
+export function detectDefaultDeviceName(params?: {
+  isNative?: boolean;
+  userAgent?: string;
+  deviceId?: string;
+  existingNames?: string[];
+  isTablet?: boolean;
+}): string {
+  const isNative = params?.isNative ?? Capacitor.isNativePlatform();
+  const ua = params?.userAgent ?? (typeof navigator !== 'undefined' ? navigator.userAgent || '' : '');
+  const isTablet =
+    params?.isTablet ??
+    (/iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua)));
+
+  let baseName = 'Counter PC 1 (Billing Desk)';
+
+  if (isNative) {
+    const modelMatch = ua.match(/Android[^;]*;\s*([^;)]+?)(?:\s+Build\/|\))/i);
+    const rawModel = modelMatch?.[1]?.trim() || '';
+    const cleanModel =
+      rawModel && !/^(K|Mobile|Linux|U)$/i.test(rawModel) ? rawModel.slice(0, 22) : '';
+    if (cleanModel) {
+      baseName = isTablet ? `Android Tablet (${cleanModel})` : `Android Phone (${cleanModel})`;
+    } else {
+      baseName = isTablet ? 'Android Tablet' : 'Android Device';
+    }
+  } else if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) {
+    const browser = /EdgA|EdgiOS|Edg\//i.test(ua)
+      ? 'Edge'
+      : /Firefox|FxiOS/i.test(ua)
+        ? 'Firefox'
+        : /CriOS|Chrome/i.test(ua)
+          ? 'Chrome'
+          : /Safari/i.test(ua)
+            ? 'Safari'
+            : '';
+    if (/iPad/i.test(ua)) {
+      baseName = browser ? `iPad · ${browser}` : 'iPad Browser';
+    } else if (/iPhone|iPod/i.test(ua)) {
+      baseName = browser ? `iPhone · ${browser}` : 'iPhone Browser';
+    } else if (/Android/i.test(ua)) {
+      baseName = browser ? `Android · ${browser}` : 'Mobile Browser';
+    } else {
+      baseName = 'Mobile Browser';
+    }
+  } else if (/Windows|Macintosh|Mac OS|Linux|CrOS/i.test(ua)) {
+    const os = /Windows/i.test(ua)
+      ? 'Windows PC'
+      : /Macintosh|Mac OS/i.test(ua)
+        ? 'Mac'
+        : /CrOS/i.test(ua)
+          ? 'Chromebook'
+          : 'Linux PC';
+    const browser = /Edg\//i.test(ua)
+      ? 'Edge'
+      : /OPR\/|Opera/i.test(ua)
+        ? 'Opera'
+        : /Firefox\//i.test(ua)
+          ? 'Firefox'
+          : /Chrome\//i.test(ua)
+            ? 'Chrome'
+            : /Safari\//i.test(ua)
+              ? 'Safari'
+              : '';
+    baseName = browser ? `${os} · ${browser}` : os;
+  }
+
+  const existing = (params?.existingNames || []).map((n) => n.trim().toLowerCase()).filter(Boolean);
+  if (existing.includes(baseName.toLowerCase())) {
+    const suffix = params?.deviceId ? params.deviceId.replace(/[^A-Z0-9]/gi, '').slice(-4).toUpperCase() : '';
+    if (suffix && !existing.includes(`${baseName} (${suffix})`.toLowerCase())) {
+      return `${baseName} (${suffix})`.slice(0, MAX_DEVICE_NAME_LENGTH);
+    }
+    let counter = 2;
+    while (existing.includes(`${baseName} #${counter}`.toLowerCase())) {
+      counter++;
+    }
+    return `${baseName} #${counter}`.slice(0, MAX_DEVICE_NAME_LENGTH);
+  }
+
+  return baseName.slice(0, MAX_DEVICE_NAME_LENGTH);
+}
 
 function detectDevicePlatform(): string {
   if (Capacitor.isNativePlatform()) {
@@ -3074,7 +3157,28 @@ export async function registerCurrentDeviceInCloud(
 ): Promise<ConnectedDeviceInfo | null> {
   const config = await getCloudConfig();
   const resolvedDeviceId = config.deviceId || 'device-local';
-  const deviceName = (overrideDeviceName || config.deviceName || 'Counter PC 1 (Billing Desk)').trim();
+  const savedDeviceItem = await db.settings.get('device_name');
+  const savedDeviceName = ((savedDeviceItem?.value as string) || '').trim();
+
+  let existingOtherNames: string[] = [];
+  try {
+    const cacheItem = await db.settings.get('connected_devices_cache');
+    const cached = Array.isArray(cacheItem?.value) ? (cacheItem.value as ConnectedDeviceInfo[]) : [];
+    existingOtherNames = cached
+      .filter((d) => d?.deviceId && d.deviceId !== resolvedDeviceId && d.deviceName)
+      .map((d) => d.deviceName);
+  } catch {
+    // Non-fatal
+  }
+
+  let deviceName = (overrideDeviceName || savedDeviceName || '').trim();
+  if (!deviceName) {
+    deviceName = detectDefaultDeviceName({
+      deviceId: resolvedDeviceId,
+      existingNames: existingOtherNames,
+    });
+    await db.settings.put({ key: 'device_name', value: deviceName });
+  }
   const platform = detectDevicePlatform();
   const lastSeenAt = new Date().toISOString();
 
@@ -3257,6 +3361,102 @@ export async function listConnectedDevices(): Promise<ConnectedDeviceInfo[]> {
     if (!a.isCurrentDevice && b.isCurrentDevice) return 1;
     return b.lastSeenAt.localeCompare(a.lastSeenAt);
   });
+}
+
+/**
+ * Renames any linked device (including the current device), persists locally,
+ * and syncs the updated device_name to Supabase `hospivo_sync_events`.
+ */
+export async function renameConnectedDevice(
+  targetDeviceId: string,
+  rawNewName: string
+): Promise<ConnectedDeviceInfo[]> {
+  const cleanName = rawNewName.trim().slice(0, MAX_DEVICE_NAME_LENGTH);
+  if (!cleanName) {
+    throw new Error('Device name cannot be empty');
+  }
+
+  const config = await getCloudConfig();
+  const resolvedCurrentId = config.deviceId || 'device-local';
+  const isCurrent = targetDeviceId === resolvedCurrentId;
+  const nowIso = new Date().toISOString();
+
+  if (isCurrent) {
+    await db.settings.put({ key: 'device_name', value: cleanName });
+  }
+
+  let targetPlatform = isCurrent ? detectDevicePlatform() : 'Web / Desktop';
+  try {
+    const cacheItem = await db.settings.get('connected_devices_cache');
+    const existingList = Array.isArray(cacheItem?.value) ? (cacheItem.value as ConnectedDeviceInfo[]) : [];
+    const existingEntry = existingList.find((d) => d.deviceId === targetDeviceId);
+    if (existingEntry?.platform) targetPlatform = existingEntry.platform;
+
+    const updatedEntry: ConnectedDeviceInfo = {
+      deviceId: targetDeviceId,
+      deviceName: cleanName,
+      platform: targetPlatform,
+      appVersion: existingEntry?.appVersion || APP_VERSION,
+      lastSeenAt: isCurrent ? nowIso : existingEntry?.lastSeenAt || nowIso,
+      isCurrentDevice: isCurrent,
+    };
+
+    const nextList = [updatedEntry, ...existingList.filter((d) => d.deviceId !== targetDeviceId)];
+    await db.settings.put({ key: 'connected_devices_cache', value: nextList });
+  } catch {
+    // Non-fatal
+  }
+
+  if (config.cloudEnabled && isBackendConfigured() && !(typeof navigator !== 'undefined' && navigator.onLine === false)) {
+    try {
+      const session = await getCurrentCloudSession();
+      if (session.isAuthenticated && session.cloudShopUuid) {
+        const eventId = `device:${session.cloudShopUuid}:${targetDeviceId}`;
+        const payloadObj = {
+          device_id: targetDeviceId,
+          deviceId: targetDeviceId,
+          device_name: cleanName,
+          deviceName: cleanName,
+          platform: targetPlatform,
+          app_version: APP_VERSION,
+          appVersion: APP_VERSION,
+          user_id: session.user?.id || null,
+          userId: session.user?.id || null,
+          store_id: session.cloudShopUuid,
+          storeId: session.cloudShopUuid,
+          last_active_at: nowIso,
+          lastActiveAt: nowIso,
+          lastSeenAt: nowIso,
+          shopSyncId: config.shopSyncId,
+        };
+        const eventRow = {
+          id: eventId,
+          shop_id: session.cloudShopUuid,
+          shop_sync_id: config.shopSyncId,
+          entity_type: 'device',
+          entity_id: targetDeviceId,
+          payload_json: JSON.stringify(payloadObj),
+          client_created_at: Date.now(),
+        };
+        const { error: upsertErr } = await supabase
+          .from('hospivo_sync_events')
+          .upsert([eventRow], { onConflict: 'id' });
+        if (upsertErr) {
+          await supabase.from('hospivo_sync_events').insert([
+            {
+              ...eventRow,
+              id: `${eventId}:${Date.now()}`,
+            },
+          ]);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync renamed device to cloud:', err);
+    }
+  }
+
+  emitSyncApplied(['device']);
+  return listConnectedDevices();
 }
 
 

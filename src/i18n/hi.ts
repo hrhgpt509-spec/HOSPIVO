@@ -1706,6 +1706,11 @@ export const hi: TranslationSchema = {
     this_device_badge: 'यह डिवाइस',
     last_seen_prefix: 'आखिरी सक्रियता:',
     toast_device_linked: 'डिवाइस जुड़ गया और जुड़े डिवाइस अपडेट हुए',
+    btn_rename_device: 'नाम बदलें',
+    rename_placeholder: 'डिवाइस का नाम लिखें (अधिकतम 40 अक्षर)',
+    rename_err_empty: 'कृपया डिवाइस का नाम लिखें',
+    rename_err_too_long: 'डिवाइस का नाम 40 अक्षर से कम रखें',
+    toast_device_renamed: 'डिवाइस का नाम बदला गया',
   },
   remote_approval: {
     ask_owner_title: 'मालिक से पूछें',

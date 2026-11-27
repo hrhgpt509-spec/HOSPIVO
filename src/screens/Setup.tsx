@@ -25,6 +25,7 @@ import {
   enqueueSyncItem,
   runSyncCycle,
   pullAndHydrateStaffAccounts,
+  detectDefaultDeviceName,
 } from '../logic/cloudSync';
 import { provisionCloudShop } from '../logic/cloudAuth';
 import {
@@ -456,12 +457,7 @@ export const Setup: React.FC<SetupProps> = ({ onComplete, onCancel }) => {
     await db.settings.put({ key: 'pinLength', value: 4 });
     await db.settings.put({ key: 'cloud_enabled', value: mode === 'cloud' });
     await db.settings.put({ key: 'shop_sync_id', value: shopSyncId.trim().toUpperCase() });
-    const defaultDeviceName = Capacitor.isNativePlatform()
-      ? 'Android Mobile'
-      : typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '')
-        ? 'Android Device'
-        : 'Counter PC 1 (Billing Desk)';
-    await db.settings.put({ key: 'device_name', value: defaultDeviceName });
+    await db.settings.put({ key: 'device_name', value: detectDefaultDeviceName() });
     if (ownerEmail) {
       await db.settings.put({ key: 'owner_email', value: ownerEmail.trim().toLowerCase() });
     }

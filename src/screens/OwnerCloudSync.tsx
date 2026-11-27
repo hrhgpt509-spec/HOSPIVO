@@ -18,6 +18,8 @@ import {
   subscribeToSyncUpdates,
   registerCurrentDeviceInCloud,
   listConnectedDevices,
+  renameConnectedDevice,
+  MAX_DEVICE_NAME_LENGTH,
   type CloudConfig,
   type HomeSyncState,
   type ConnectedDeviceInfo,
@@ -65,6 +67,10 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
   const [highlightConnect, setHighlightConnect] = useState(false);
   const [connectedDevices, setConnectedDevices] = useState<ConnectedDeviceInfo[]>([]);
   const [isLoadingDevices, setIsLoadingDevices] = useState(false);
+  const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null);
+  const [editingDeviceName, setEditingDeviceName] = useState('');
+  const [renameError, setRenameError] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
   const ownerAccountRef = useRef<HTMLElement | null>(null);
 
   useBackHandler(isAuthModalOpen, () => setIsAuthModalOpen(false));
@@ -202,6 +208,46 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
       triggerFeedback('success', t('cloud_sync.toast_device_linked'));
     } catch {
       triggerFeedback('error', t('common.error_occurred'));
+    }
+  };
+
+  const handleStartRename = (dev: ConnectedDeviceInfo) => {
+    setEditingDeviceId(dev.deviceId);
+    setEditingDeviceName(dev.deviceName);
+    setRenameError('');
+  };
+
+  const handleCancelRename = () => {
+    setEditingDeviceId(null);
+    setEditingDeviceName('');
+    setRenameError('');
+  };
+
+  const handleSaveRename = async (dev: ConnectedDeviceInfo) => {
+    const trimmed = editingDeviceName.trim();
+    if (!trimmed) {
+      setRenameError(t('cloud_sync.rename_err_empty'));
+      return;
+    }
+    if (trimmed.length > MAX_DEVICE_NAME_LENGTH) {
+      setRenameError(t('cloud_sync.rename_err_too_long'));
+      return;
+    }
+    setIsRenaming(true);
+    setRenameError('');
+    try {
+      const updatedList = await renameConnectedDevice(dev.deviceId, trimmed);
+      setConnectedDevices(updatedList);
+      if (dev.isCurrentDevice) {
+        setDeviceName(trimmed);
+      }
+      setEditingDeviceId(null);
+      setEditingDeviceName('');
+      triggerFeedback('success', t('cloud_sync.toast_device_renamed'));
+    } catch {
+      triggerFeedback('error', t('common.error_occurred'));
+    } finally {
+      setIsRenaming(false);
     }
   };
 
@@ -620,39 +666,102 @@ export const OwnerCloudSync: React.FC<OwnerCloudSyncProps> = ({
             ) : null}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {connectedDevices.map((dev) => (
-                <div
-                  key={dev.deviceId}
-                  className={`p-3 rounded-xl border flex items-center justify-between gap-2.5 min-w-0 ${
-                    dev.isCurrentDevice
-                      ? 'bg-primary/5 border-primary/40'
-                      : 'bg-surface-container-low border-outline-variant/40'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
-                      <Icon
-                        name={dev.platform.includes('Android') ? 'smartphone' : 'computer'}
-                        className="text-[20px]"
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="text-sm font-bold text-on-surface truncate">{dev.deviceName}</span>
-                        {dev.isCurrentDevice && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-on-primary shrink-0">
-                            {t('cloud_sync.this_device_badge')}
+              {connectedDevices.map((dev) => {
+                const isEditing = editingDeviceId === dev.deviceId;
+                return (
+                  <div
+                    key={dev.deviceId}
+                    className={`p-3 rounded-xl border flex flex-col gap-2 min-w-0 ${
+                      dev.isCurrentDevice
+                        ? 'bg-primary/5 border-primary/40'
+                        : 'bg-surface-container-low border-outline-variant/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2.5 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+                          <Icon
+                            name={dev.platform.includes('Android') ? 'smartphone' : 'computer'}
+                            className="text-[20px]"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-sm font-bold text-on-surface truncate">{dev.deviceName}</span>
+                            {dev.isCurrentDevice && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary text-on-primary shrink-0">
+                                {t('cloud_sync.this_device_badge')}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-outline block truncate">
+                            {dev.platform} · {t('cloud_sync.last_seen_prefix')}{' '}
+                            {new Date(dev.lastSeenAt).toLocaleString()}
                           </span>
+                        </div>
+                      </div>
+
+                      {!isEditing && (
+                        <button
+                          type="button"
+                          onClick={() => handleStartRename(dev)}
+                          aria-label={t('cloud_sync.btn_rename_device')}
+                          title={t('cloud_sync.btn_rename_device')}
+                          className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-primary flex items-center justify-center cursor-pointer shrink-0 transition-colors"
+                        >
+                          <Icon name="edit" className="text-[18px]" />
+                        </button>
+                      )}
+                    </div>
+
+                    {isEditing && (
+                      <div className="flex flex-col gap-1.5 pt-1 border-t border-outline-variant/30">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={editingDeviceName}
+                            maxLength={MAX_DEVICE_NAME_LENGTH + 5}
+                            onChange={(e) => {
+                              setEditingDeviceName(e.target.value);
+                              if (renameError) setRenameError('');
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                void handleSaveRename(dev);
+                              } else if (e.key === 'Escape') {
+                                handleCancelRename();
+                              }
+                            }}
+                            placeholder={t('cloud_sync.rename_placeholder')}
+                            className="flex-1 min-w-0 h-10 px-2.5 rounded-lg border border-primary bg-surface-container-lowest text-sm font-semibold text-on-surface outline-none"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            disabled={isRenaming}
+                            onClick={() => void handleSaveRename(dev)}
+                            className="h-10 px-3 rounded-lg bg-primary text-on-primary font-bold text-xs cursor-pointer shrink-0 disabled:opacity-50"
+                          >
+                            {btnSave.main}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isRenaming}
+                            onClick={handleCancelRename}
+                            className="h-10 px-2.5 rounded-lg bg-surface-container text-on-surface font-bold text-xs cursor-pointer shrink-0"
+                          >
+                            {tButton('common.btn_cancel').main}
+                          </button>
+                        </div>
+                        {renameError && (
+                          <span className="text-xs font-bold text-error">{renameError}</span>
                         )}
                       </div>
-                      <span className="text-xs text-outline block truncate">
-                        {dev.platform} · {t('cloud_sync.last_seen_prefix')}{' '}
-                        {new Date(dev.lastSeenAt).toLocaleString()}
-                      </span>
-                    </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>

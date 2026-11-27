@@ -439,6 +439,10 @@ Cloud Sync & Outbox Reliability Hardening (Idempotent Event IDs, 50-item Chunkin
   - Fixed `registerCurrentDeviceInCloud()` and `listConnectedDevices()` to use exact `hospivo_sync_events` columns (`entity_id`, `payload_json`, `client_created_at`) instead of non-existent `device_id`/`payload` columns, and hooked device registration into `ensureCloudSyncActive()` on app startup/resume.
   - Updated **Link Device** in `OwnerCloudSync.tsx` to register/refresh the current device, fetch connected devices, and show `toast_device_linked`.
 
+- Smart Default Device Naming & Rename Device (`cloudSync.ts`, `OwnerCloudSync.tsx`, `Setup.tsx`, `multiShop.test.ts` + en/hi/hinglish):
+  - Added `detectDefaultDeviceName()` (`Android Phone (<Model>)`, `Android Tablet`, `Windows PC · Chrome`, `Mac · Safari`, etc., with collision suffixing) and preserved custom `device_name` across heartbeats/syncs.
+  - Added `renameConnectedDevice()` and an inline Rename (pencil) control on every row in `OwnerCloudSync.tsx` Connected Devices (with 40-char validation) syncing updates to Supabase.
+
 
 
 
